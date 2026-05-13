@@ -1,0 +1,48 @@
+{
+  "name": "@cairn/shared-contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cairn shared contracts: Zod schemas, ts-rest HTTP contracts, and WebSocket event schemas.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./schemas": {
+      "types": "./src/schemas/index.ts",
+      "import": "./src/schemas/index.ts"
+    },
+    "./contracts": {
+      "types": "./src/contracts/index.ts",
+      "import": "./src/contracts/index.ts"
+    },
+    "./ws-events": {
+      "types": "./src/ws-events/index.ts",
+      "import": "./src/ws-events/index.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "build": "echo 'shared-contracts is source-only; nothing to build'",
+    "clean": "rimraf .turbo dist"
+  },
+  "dependencies": {
+    "zod": "catalog:",
+    "@ts-rest/core": "catalog:"
+  },
+  "devDependencies": {
+    "@asteasolutions/zod-to-openapi": "catalog:",
+    "@types/node": "catalog:",
+    "rimraf": "^6.0.1",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
