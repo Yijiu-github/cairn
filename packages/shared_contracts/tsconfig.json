@@ -6,6 +6,6 @@
     "tsBuildInfoFile": ".turbo/tsbuildinfo",
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.ts", "vitest.config.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

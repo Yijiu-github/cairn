@@ -20,13 +20,11 @@
     "dev:desktop": "turbo run dev --filter=@cairn/desktop...",
     "dev:web": "turbo run dev --filter=@cairn/web...",
     "dev:core": "turbo run dev --filter=@cairn/workspace-core...",
-
     "//—— 构建 ——": "",
     "build": "turbo run build",
     "build:desktop": "turbo run build --filter=@cairn/desktop...",
     "build:web": "turbo run build --filter=@cairn/web...",
     "build:core": "turbo run build --filter=@cairn/workspace-core...",
-
     "//—— 校验 ——": "",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
@@ -35,7 +33,6 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}\"",
     "docs:lint": "markdownlint-cli2 \"docs/**/*.md\" \"*.md\"",
     "check": "pnpm run typecheck && pnpm run lint && pnpm run docs:lint && pnpm run format:check",
-
     "//—— 测试 ——": "",
     "test": "turbo run test",
     "test:unit": "turbo run test:unit",
@@ -43,25 +40,20 @@
     "test:integration": "turbo run test:integration",
     "test:e2e": "turbo run test:e2e",
     "test:coverage": "turbo run test:coverage",
-
     "//—— 数据库 ——": "",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "db:reset": "turbo run db:reset",
-
     "//—— 契约 ——": "",
     "contracts:openapi": "turbo run contracts:openapi",
-
     "//—— 打包 / 发布 ——": "",
     "package": "turbo run package",
     "package:desktop": "turbo run package --filter=@cairn/desktop",
-
     "//—— 维护 ——": "",
     "clean": "turbo run clean && rimraf node_modules **/node_modules **/dist **/build **/.turbo",
     "deps:audit": "pnpm audit --prod",
     "deps:knip": "knip",
     "deps:notices": "license-checker-rseidelsohn --production --csv --excludePrivatePackages > docs/legal/third-party-notices.csv",
-
     "//—— Git Hooks ——": "",
     "prepare": "husky"
   },
@@ -73,6 +65,7 @@
     "@vitest/eslint-plugin": "catalog:",
     "eslint": "catalog:",
     "eslint-config-prettier": "catalog:",
+    "eslint-import-resolver-typescript": "catalog:",
     "eslint-plugin-import": "catalog:",
     "eslint-plugin-unicorn": "catalog:",
     "globals": "catalog:",
