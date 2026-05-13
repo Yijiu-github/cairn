@@ -31,8 +31,10 @@
     "lint": "eslint src",
     "test": "vitest run",
     "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "build": "echo 'shared-contracts is source-only; nothing to build'",
-    "clean": "rimraf .turbo dist"
+    "clean": "rimraf .turbo dist coverage"
   },
   "dependencies": {
     "zod": "catalog:",
@@ -41,6 +43,7 @@
   "devDependencies": {
     "@asteasolutions/zod-to-openapi": "catalog:",
     "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "rimraf": "^6.0.1",
     "typescript": "catalog:",
     "vitest": "catalog:"
