@@ -1,0 +1,18 @@
+Cairn
+Copyright 2026 Cairn Authors
+
+This product includes software developed by the Cairn project
+(https://github.com/OWNER/REPO).
+
+Licensed under the Apache License, Version 2.0 (the "License").
+You may not use this product except in compliance with the License.
+A copy of the License is provided in the LICENSE file.
+
+================================================================================
+Third-party notices
+================================================================================
+Third-party dependency licenses are tracked in:
+  docs/legal/third-party-notices.md   (human readable)
+  docs/legal/third-party-notices.csv  (CI-generated; produced by `pnpm deps:notices`)
+
+This NOTICE file is informational only and does not modify the License.

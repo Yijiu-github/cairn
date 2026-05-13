@@ -1,0 +1,93 @@
+# ============================================================================
+# Cairn — .gitignore
+# 预置规则；代码工程启动后按需调整
+# ============================================================================
+
+# --- Node / pnpm ---
+node_modules/
+.pnpm-store/
+.pnp.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Build output ---
+dist/
+build/
+out/
+.turbo/
+.next/
+.nuxt/
+.vite/
+*.tsbuildinfo
+
+# --- Electron / desktop ---
+release/
+app-builds/
+*.app/
+*.dmg
+*.exe
+*.msi
+*.AppImage
+*.deb
+*.snap
+
+# --- Native binaries / sidecar ---
+binaries/
+sidecar/native/
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+
+# --- Local databases / artifacts ---
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+data/
+artifacts-local/
+workspace-data/
+
+# --- Logs ---
+logs/
+*.log
+
+# --- Editor / OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+
+# .vscode 用 path 形式（父目录不能整体 ignore，否则 negate 失效）
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+!.vscode/launch.json
+!.vscode/tasks.json
+
+*.swp
+*.swo
+.vs/
+
+# --- Test coverage ---
+coverage/
+.nyc_output/
+
+# --- Temp ---
+tmp/
+temp/
+*.tmp
+
+# --- Cursor / Claude tooling ---
+.cursor/
+.claude/
+.aider*

@@ -1,0 +1,111 @@
+{
+  "name": "cairn",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cairn — local-first, self-hosted multi-agent collaboration workspace.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.15.0"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "//—— 开发 ——": "",
+    "dev": "turbo run dev",
+    "dev:desktop": "turbo run dev --filter=@cairn/desktop...",
+    "dev:web": "turbo run dev --filter=@cairn/web...",
+    "dev:core": "turbo run dev --filter=@cairn/workspace-core...",
+
+    "//—— 构建 ——": "",
+    "build": "turbo run build",
+    "build:desktop": "turbo run build --filter=@cairn/desktop...",
+    "build:web": "turbo run build --filter=@cairn/web...",
+    "build:core": "turbo run build --filter=@cairn/workspace-core...",
+
+    "//—— 校验 ——": "",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "lint:fix": "turbo run lint:fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,json,md,yml,yaml}\"",
+    "docs:lint": "markdownlint-cli2 \"docs/**/*.md\" \"*.md\"",
+    "check": "pnpm run typecheck && pnpm run lint && pnpm run docs:lint && pnpm run format:check",
+
+    "//—— 测试 ——": "",
+    "test": "turbo run test",
+    "test:unit": "turbo run test:unit",
+    "test:contract": "turbo run test:contract",
+    "test:integration": "turbo run test:integration",
+    "test:e2e": "turbo run test:e2e",
+    "test:coverage": "turbo run test:coverage",
+
+    "//—— 数据库 ——": "",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "db:reset": "turbo run db:reset",
+
+    "//—— 契约 ——": "",
+    "contracts:openapi": "turbo run contracts:openapi",
+
+    "//—— 打包 / 发布 ——": "",
+    "package": "turbo run package",
+    "package:desktop": "turbo run package --filter=@cairn/desktop",
+
+    "//—— 维护 ——": "",
+    "clean": "turbo run clean && rimraf node_modules **/node_modules **/dist **/build **/.turbo",
+    "deps:audit": "pnpm audit --prod",
+    "deps:knip": "knip",
+    "deps:notices": "license-checker-rseidelsohn --production --csv --excludePrivatePackages > docs/legal/third-party-notices.csv",
+
+    "//—— Git Hooks ——": "",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "catalog:",
+    "@commitlint/config-conventional": "catalog:",
+    "@eslint/js": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/eslint-plugin": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-import": "catalog:",
+    "eslint-plugin-unicorn": "catalog:",
+    "globals": "catalog:",
+    "husky": "catalog:",
+    "knip": "catalog:",
+    "lint-staged": "catalog:",
+    "markdownlint-cli2": "catalog:",
+    "prettier": "catalog:",
+    "rimraf": "^6.0.1",
+    "tsx": "catalog:",
+    "turbo": "^2.3.3",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,yml,yaml}": [
+      "prettier --write"
+    ],
+    "*.md": [
+      "prettier --write",
+      "markdownlint-cli2 --fix"
+    ]
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "react": "19",
+        "react-dom": "19"
+      }
+    }
+  }
+}

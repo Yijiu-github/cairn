@@ -1,0 +1,142 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "ui": "tui",
+  "globalDependencies": [
+    "tsconfig.base.json",
+    ".eslintrc*",
+    "eslint.config.js",
+    ".prettierrc*",
+    ".env",
+    ".env.local"
+  ],
+  "globalPassThroughEnv": [
+    "NODE_ENV",
+    "CI",
+    "GITHUB_*",
+    "TURBO_*",
+    "CAIRN_*",
+    "VITE_*",
+    "ELECTRON_*",
+    "DATABASE_URL"
+  ],
+  "remoteCache": {
+    "signature": true
+  },
+  "tasks": {
+    "//#format": {
+      "cache": false
+    },
+    "//#format:check": {
+      "cache": false
+    },
+    "//#docs:lint": {
+      "cache": false
+    },
+
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "build/**", ".vite/**", "out/**"],
+      "inputs": [
+        "src/**",
+        "package.json",
+        "tsconfig*.json",
+        "vite.config.*",
+        "electron.vite.config.*",
+        "tsup.config.*"
+      ]
+    },
+
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["src/**", "tsconfig*.json", "package.json"]
+    },
+
+    "lint": {
+      "outputs": [],
+      "inputs": ["src/**", "*.{ts,tsx,js,mjs,cjs}", "eslint.config.js"]
+    },
+
+    "lint:fix": {
+      "cache": false
+    },
+
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "inputs": [
+        "src/**",
+        "tests/**",
+        "**/*.{spec,test}.{ts,tsx}",
+        "vitest.config.*",
+        "package.json"
+      ]
+    },
+
+    "test:unit": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["src/**", "**/*.{spec,test}.{ts,tsx}", "vitest.config.*"]
+    },
+
+    "test:contract": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["src/**", "tests/contract/**", "vitest.config.*"]
+    },
+
+    "test:integration": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      "inputs": ["src/**", "tests/integration/**", "vitest.config.*"]
+    },
+
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "outputs": ["playwright-report/**", "test-results/**"],
+      "inputs": ["src/**", "tests/e2e/**", "playwright.config.*"],
+      "cache": false
+    },
+
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "inputs": ["src/**", "**/*.{spec,test}.{ts,tsx}", "vitest.config.*"]
+    },
+
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": []
+    },
+
+    "clean": {
+      "cache": false
+    },
+
+    "db:generate": {
+      "cache": false,
+      "outputs": ["packages/storage/migrations/**"]
+    },
+
+    "db:migrate": {
+      "cache": false
+    },
+
+    "db:reset": {
+      "cache": false
+    },
+
+    "contracts:openapi": {
+      "dependsOn": ["^build"],
+      "outputs": ["openapi.generated.*"],
+      "inputs": ["src/**"]
+    },
+
+    "package": {
+      "dependsOn": ["^build", "build"],
+      "outputs": ["release/**", "app-builds/**"],
+      "cache": false
+    }
+  }
+}

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 安全问题 / Security Issue
+    url: https://github.com/OWNER/REPO/security/advisories/new
+    about: 请勿在公开 issue 中披露未公开的安全漏洞，使用安全公告通道。
+  - name: 一般讨论 / Discussions
+    url: https://github.com/OWNER/REPO/discussions
+    about: 设计讨论、使用问题、想法交流。

@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    /* === 目标与模块 === */
+    "target": "ES2022",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "useDefineForClassFields": true,
+
+    /* === 严格性（不可放松）=== */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "alwaysStrict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+
+    /* === 性能与构建 === */
+    "skipLibCheck": true,
+    "incremental": true,
+    "composite": false,
+
+    /* === 输出 === */
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false,
+    "newLine": "lf",
+    "forceConsistentCasingInFileNames": true,
+
+    /* === 路径别名（与 repo-layout.md §7 同步）=== */
+    "baseUrl": ".",
+    "paths": {
+      "@cairn/domain": ["packages/domain/src"],
+      "@cairn/domain/*": ["packages/domain/src/*"],
+      "@cairn/application": ["packages/application/src"],
+      "@cairn/application/*": ["packages/application/src/*"],
+      "@cairn/runtime-gateway": ["packages/runtime_gateway/src"],
+      "@cairn/runtime-gateway/*": ["packages/runtime_gateway/src/*"],
+      "@cairn/storage": ["packages/storage/src"],
+      "@cairn/storage/*": ["packages/storage/src/*"],
+      "@cairn/ui": ["packages/ui/src"],
+      "@cairn/ui/*": ["packages/ui/src/*"],
+      "@cairn/desktop-bridge": ["packages/desktop_bridge/src"],
+      "@cairn/desktop-bridge/*": ["packages/desktop_bridge/src/*"],
+      "@cairn/shared-contracts": ["packages/shared_contracts/src"],
+      "@cairn/shared-contracts/*": ["packages/shared_contracts/src/*"],
+      "@cairn/observability": ["packages/observability/src"],
+      "@cairn/observability/*": ["packages/observability/src/*"]
+    }
+  },
+  "exclude": ["**/node_modules", "**/dist", "**/build", "**/.turbo", "**/coverage"]
+}

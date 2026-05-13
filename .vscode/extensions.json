@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "editorconfig.editorconfig",
+    "davidanson.vscode-markdownlint",
+    "yzhang.markdown-all-in-one",
+    "ms-playwright.playwright",
+    "vitest.explorer",
+    "drizzleteam.drizzle-vscode",
+    "redhat.vscode-yaml",
+    "tamasfe.even-better-toml",
+    "streetsidesoftware.code-spell-checker",
+    "github.vscode-pull-request-github",
+    "github.vscode-github-actions",
+    "mikestead.dotenv",
+    "gruntfuggly.todo-tree"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript-tslint-plugin"
+  ]
+}

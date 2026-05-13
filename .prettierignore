@@ -1,0 +1,37 @@
+# 不被 Prettier 处理的路径
+
+# 构建产物
+**/dist/
+**/build/
+**/out/
+**/.next/
+**/.turbo/
+**/coverage/
+**/.vite/
+
+# 依赖
+**/node_modules/
+**/.pnpm-store/
+
+# 锁文件
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# 二进制 / 生成产物
+**/*.log
+**/*.tsbuildinfo
+**/generated/
+
+# Electron 打包
+release/
+app-builds/
+
+# 数据
+**/*.sqlite
+**/*.sqlite-*
+data/
+
+# 自动生成的 OpenAPI / schema 输出
+**/openapi.generated.*
+**/schema.generated.*

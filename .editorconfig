@@ -1,0 +1,42 @@
+# EditorConfig — https://editorconfig.org
+# 跨编辑器统一基本格式约定。Prettier / ESLint 不覆盖的部分由本文件兜底。
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 100
+
+# Markdown：保留尾部空格（用于硬换行）
+[*.md]
+trim_trailing_whitespace = false
+max_line_length = off
+
+# Makefile：必须 tab 缩进
+[Makefile]
+indent_style = tab
+
+# YAML：2 空格
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON / JSONC
+[*.{json,jsonc}]
+indent_size = 2
+
+# 批处理 / Shell
+[*.{bat,cmd}]
+end_of_line = crlf
+
+[*.{sh,bash}]
+end_of_line = lf
+
+# Python（如有脚本）
+[*.py]
+indent_size = 4
+max_line_length = 100
