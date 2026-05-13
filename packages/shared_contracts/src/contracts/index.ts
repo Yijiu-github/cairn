@@ -5,9 +5,9 @@
 
 import { initContract } from '@ts-rest/core';
 
-import { workspaceContract } from './workspace.contract.js';
-import { runContract } from './run.contract.js';
 import { operatorContract } from './operator.contract.js';
+import { runContract } from './run.contract.js';
+import { workspaceContract } from './workspace.contract.js';
 
 export { ApiError, commonErrorResponses, API_V1 } from './_common.js';
 

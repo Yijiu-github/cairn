@@ -8,13 +8,10 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 
-import {
-  Workspace,
-  WorkspaceCreate,
-  WorkspaceUpdate,
-} from '../schemas/workspace.js';
-import { WorkspaceId } from '../schemas/ids.js';
 import { PaginationQuery, Paginated } from '../schemas/common.js';
+import { WorkspaceId } from '../schemas/ids.js';
+import { Workspace, WorkspaceCreate, WorkspaceUpdate } from '../schemas/workspace.js';
+
 import { commonErrorResponses } from './_common.js';
 
 const c = initContract();

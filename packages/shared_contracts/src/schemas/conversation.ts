@@ -7,8 +7,8 @@
 
 import { z } from 'zod';
 
-import { ConversationId, WorkspaceId, ArtifactId } from './ids.js';
 import { Iso8601 } from './common.js';
+import { ConversationId, WorkspaceId, ArtifactId } from './ids.js';
 
 export const ChannelType = z.enum(['default', 'task_focused', 'operator_review']);
 export type ChannelType = z.infer<typeof ChannelType>;

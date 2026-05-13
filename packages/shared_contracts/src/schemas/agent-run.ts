@@ -10,15 +10,8 @@
 
 import { z } from 'zod';
 
-import {
-  AgentRunId,
-  WorkspaceId,
-  TaskId,
-  OrchestrationRunId,
-  ArtifactId,
-  TraceId,
-} from './ids.js';
 import { Iso8601, StructuredError } from './common.js';
+import { AgentRunId, WorkspaceId, TaskId, OrchestrationRunId, ArtifactId, TraceId } from './ids.js';
 
 // ---------------------------------------------------------------------------
 // 枚举

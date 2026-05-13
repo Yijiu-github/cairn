@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
 
-import { WorkspaceId, TaskId, OrchestrationRunId, TraceId } from './ids.js';
 import { VALID_ULIDS, INVALID_ULIDS } from '../__fixtures__/valid-ulids.js';
+
+import { WorkspaceId, TaskId, OrchestrationRunId, TraceId } from './ids.js';
 
 describe('ULID-branded ID schemas', () => {
   describe('WorkspaceId', () => {

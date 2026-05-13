@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
 
-import { Task, TaskStatus, TaskKind, TASK_TERMINAL_STATUSES } from './task.js';
 import { VALID_ULIDS } from '../__fixtures__/valid-ulids.js';
+
+import { Task, TaskStatus, TaskKind, TASK_TERMINAL_STATUSES } from './task.js';
 
 const baseTask = {
   taskId: VALID_ULIDS.task,
@@ -44,9 +45,7 @@ describe('Task schema', () => {
 
   it('rejects title that is empty or too long', () => {
     expect(Task.safeParse({ ...baseTask, title: '' }).success).toBe(false);
-    expect(
-      Task.safeParse({ ...baseTask, title: 'x'.repeat(201) }).success,
-    ).toBe(false);
+    expect(Task.safeParse({ ...baseTask, title: 'x'.repeat(201) }).success).toBe(false);
   });
 
   it('accepts dependsOnTaskIds with valid ULIDs', () => {
@@ -81,21 +80,13 @@ describe('TaskStatus + TaskKind enums', () => {
     expect(TaskStatus.safeParse(s).success).toBe(true);
   });
 
-  it.each(['research', 'edit', 'review', 'synthesize', 'custom'])(
-    'accepts kind: %s',
-    (k) => {
-      expect(TaskKind.safeParse(k).success).toBe(true);
-    },
-  );
+  it.each(['research', 'edit', 'review', 'synthesize', 'custom'])('accepts kind: %s', (k) => {
+    expect(TaskKind.safeParse(k).success).toBe(true);
+  });
 });
 
 describe('TASK_TERMINAL_STATUSES', () => {
   it('matches expected list', () => {
-    expect(TASK_TERMINAL_STATUSES).toEqual([
-      'succeeded',
-      'failed',
-      'skipped',
-      'cancelled',
-    ]);
+    expect(TASK_TERMINAL_STATUSES).toEqual(['succeeded', 'failed', 'skipped', 'cancelled']);
   });
 });

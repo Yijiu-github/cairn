@@ -9,8 +9,8 @@
 
 import { z } from 'zod';
 
-import { WorkspaceId } from './ids.js';
 import { Iso8601 } from './common.js';
+import { WorkspaceId } from './ids.js';
 
 export const WorkspaceType = z.enum(['personal', 'shared']);
 export type WorkspaceType = z.infer<typeof WorkspaceType>;

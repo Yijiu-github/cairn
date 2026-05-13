@@ -16,9 +16,10 @@ const ulidString = () => z.string().regex(ULID_REGEX, 'Must be a valid ULID');
 
 /**
  * 通用 ID 构造器：派生带 brand 的字符串类型。
+ *
+ * 接收一个 phantom 参数 `_brand`，仅用于 TS 类型推断；运行时不使用。
  */
-const brandedId = <B extends string>(brand: B) =>
-  ulidString().brand<B>();
+const brandedId = <B extends string>(_brand: B) => ulidString().brand<B>();
 
 export const WorkspaceId = brandedId('WorkspaceId');
 export type WorkspaceId = z.infer<typeof WorkspaceId>;

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
 
+import { VALID_ULIDS } from '../__fixtures__/valid-ulids.js';
+
 import {
   OrchestrationRun,
   OrchestrationRunStatus,
   ExecutionMode,
   ORCHESTRATION_RUN_TERMINAL_STATUSES,
 } from './orchestration-run.js';
-import { VALID_ULIDS } from '../__fixtures__/valid-ulids.js';
 
 const fullRun = {
   orchestrationRunId: VALID_ULIDS.orchestrationRun,
@@ -94,14 +95,10 @@ describe('OrchestrationRun', () => {
   });
 
   it('rejects when status is not in enum', () => {
-    expect(
-      OrchestrationRun.safeParse({ ...fullRun, status: 'planet' }).success,
-    ).toBe(false);
+    expect(OrchestrationRun.safeParse({ ...fullRun, status: 'planet' }).success).toBe(false);
   });
 
   it('rejects an obviously malformed traceId', () => {
-    expect(
-      OrchestrationRun.safeParse({ ...fullRun, traceId: 'not-a-ulid' }).success,
-    ).toBe(false);
+    expect(OrchestrationRun.safeParse({ ...fullRun, traceId: 'not-a-ulid' }).success).toBe(false);
   });
 });

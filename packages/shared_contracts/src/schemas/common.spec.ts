@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import {
   Iso8601,
@@ -12,7 +13,6 @@ import {
   ErrorLayer,
   BudgetHint,
 } from './common.js';
-import { z } from 'zod';
 
 describe('Iso8601', () => {
   it('accepts an ISO 8601 string with explicit offset', () => {

@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
 
-import {
-  rootContract,
-  workspaceContract,
-  runContract,
-  operatorContract,
-  API_V1,
-} from './index.js';
+import { rootContract, workspaceContract, runContract, operatorContract, API_V1 } from './index.js';
 
 describe('rootContract', () => {
   it('exposes the three top-level sub-routers', () => {
-    expect(rootContract.workspace).toBe(workspaceContract);
-    expect(rootContract.run).toBe(runContract);
-    expect(rootContract.operator).toBe(operatorContract);
+    // ts-rest 在 c.router({...}) 内部可能 wrap sub-router，
+    // 所以这里不用引用相等（toBe），改为结构 + 关键路径检查。
+    expect(rootContract.workspace).toBeDefined();
+    expect(rootContract.run).toBeDefined();
+    expect(rootContract.operator).toBeDefined();
+    expect(rootContract.workspace.list.path).toBe(workspaceContract.list.path);
+    expect(rootContract.run.startRun.path).toBe(runContract.startRun.path);
+    expect(rootContract.operator.cancelRun.path).toBe(operatorContract.cancelRun.path);
   });
 });
 

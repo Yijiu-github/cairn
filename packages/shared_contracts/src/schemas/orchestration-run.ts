@@ -10,6 +10,7 @@
 
 import { z } from 'zod';
 
+import { Iso8601, ResultCompleteness, CompletionLevel, StructuredError } from './common.js';
 import {
   OrchestrationRunId,
   WorkspaceId,
@@ -18,12 +19,6 @@ import {
   ArtifactId,
   TraceId,
 } from './ids.js';
-import {
-  Iso8601,
-  ResultCompleteness,
-  CompletionLevel,
-  StructuredError,
-} from './common.js';
 
 // ---------------------------------------------------------------------------
 // 枚举
@@ -51,11 +46,7 @@ export type OrchestrationRunStatus = z.infer<typeof OrchestrationRunStatus>;
  * 首发执行模式（R1）。
  * 未来：deliberation / meeting / committee（不在 R1）。
  */
-export const ExecutionMode = z.enum([
-  'direct_answer',
-  'single_worker',
-  'multi_worker',
-]);
+export const ExecutionMode = z.enum(['direct_answer', 'single_worker', 'multi_worker']);
 export type ExecutionMode = z.infer<typeof ExecutionMode>;
 
 export const ORCHESTRATION_RUN_TERMINAL_STATUSES = [

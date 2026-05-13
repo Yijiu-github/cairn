@@ -15,13 +15,9 @@
 import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 
+import { OrchestrationRunId, TaskId, AgentRunId, EventId } from '../schemas/ids.js';
 import { OrchestrationRun } from '../schemas/orchestration-run.js';
-import {
-  OrchestrationRunId,
-  TaskId,
-  AgentRunId,
-  EventId,
-} from '../schemas/ids.js';
+
 import { commonErrorResponses } from './_common.js';
 
 const c = initContract();
@@ -87,7 +83,10 @@ export const operatorContract = c.router(
       pathParams: z.object({ taskId: TaskId }),
       body: ReasonBody,
       summary: 'Retry a failed task within the same run (attempt+1)',
-      responses: { 202: z.object({ taskId: TaskId, newAttempt: z.number().int() }), ...commonErrorResponses },
+      responses: {
+        202: z.object({ taskId: TaskId, newAttempt: z.number().int() }),
+        ...commonErrorResponses,
+      },
     },
 
     retryAgentRun: {

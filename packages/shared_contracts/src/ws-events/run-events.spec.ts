@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
 
-import { RunEvent, safeParseRunEvent } from './run-events.js';
 import { VALID_ULIDS } from '../__fixtures__/valid-ulids.js';
+
+import { RunEvent, safeParseRunEvent } from './run-events.js';
 
 const baseEnvelope = {
   runId: VALID_ULIDS.orchestrationRun,
@@ -118,16 +119,13 @@ describe('RunEvent discriminated union', () => {
   it.each(Object.entries(samples))('parses sample for %s', (_type, sample) => {
     const result = RunEvent.safeParse(sample);
     if (!result.success) {
-      // eslint-disable-next-line no-console
       console.error(result.error.format());
     }
     expect(result.success).toBe(true);
   });
 
   it('rejects unknown event types', () => {
-    expect(
-      RunEvent.safeParse({ ...baseEnvelope, type: 'run.exploded' }).success,
-    ).toBe(false);
+    expect(RunEvent.safeParse({ ...baseEnvelope, type: 'run.exploded' }).success).toBe(false);
   });
 
   it('rejects missing required envelope fields', () => {
@@ -159,8 +157,6 @@ describe('safeParseRunEvent helper', () => {
   });
 
   it('returns undefined for an unknown type but well-shaped envelope', () => {
-    expect(
-      safeParseRunEvent({ ...baseEnvelope, type: 'run.future_event' }),
-    ).toBeUndefined();
+    expect(safeParseRunEvent({ ...baseEnvelope, type: 'run.future_event' })).toBeUndefined();
   });
 });

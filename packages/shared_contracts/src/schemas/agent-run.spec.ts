@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
 
-import {
-  AgentRun,
-  AgentRunStatus,
-  AGENT_RUN_TERMINAL_STATUSES,
-} from './agent-run.js';
 import { VALID_ULIDS } from '../__fixtures__/valid-ulids.js';
+
+import { AgentRun, AgentRunStatus, AGENT_RUN_TERMINAL_STATUSES } from './agent-run.js';
 
 const baseAgentRun = {
   runId: VALID_ULIDS.agentRun,
@@ -47,9 +44,7 @@ describe('AgentRun schema', () => {
   });
 
   it('requires runtimeType to be non-empty', () => {
-    expect(
-      AgentRun.safeParse({ ...baseAgentRun, runtimeType: '' }).success,
-    ).toBe(false);
+    expect(AgentRun.safeParse({ ...baseAgentRun, runtimeType: '' }).success).toBe(false);
   });
 
   it('requires both retryable and cancelable as booleans', () => {

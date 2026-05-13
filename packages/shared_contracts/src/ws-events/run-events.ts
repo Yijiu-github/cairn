@@ -18,25 +18,16 @@
 
 import { z } from 'zod';
 
-import {
-  OrchestrationRunId,
-  TaskId,
-  AgentRunId,
-  ArtifactId,
-  TraceId,
-} from '../schemas/ids.js';
+import { AgentRunStatus } from '../schemas/agent-run.js';
 import {
   Iso8601,
   ResultCompleteness,
   CompletionLevel,
   StructuredError,
 } from '../schemas/common.js';
-import {
-  OrchestrationRunStatus,
-  ExecutionMode,
-} from '../schemas/orchestration-run.js';
+import { OrchestrationRunId, TaskId, AgentRunId, ArtifactId, TraceId } from '../schemas/ids.js';
+import { OrchestrationRunStatus, ExecutionMode } from '../schemas/orchestration-run.js';
 import { TaskStatus } from '../schemas/task.js';
-import { AgentRunStatus } from '../schemas/agent-run.js';
 
 // ---------------------------------------------------------------------------
 // 共享子 schema

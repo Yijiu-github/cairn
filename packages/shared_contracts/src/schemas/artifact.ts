@@ -9,14 +9,8 @@
 
 import { z } from 'zod';
 
-import {
-  ArtifactId,
-  WorkspaceId,
-  OrchestrationRunId,
-  TaskId,
-  AgentRunId,
-} from './ids.js';
 import { Iso8601, Visibility, ProducerType } from './common.js';
+import { ArtifactId, WorkspaceId, OrchestrationRunId, TaskId, AgentRunId } from './ids.js';
 
 // ---------------------------------------------------------------------------
 // 枚举
@@ -25,14 +19,7 @@ import { Iso8601, Visibility, ProducerType } from './common.js';
 export const ArtifactRole = z.enum(['input', 'intermediate', 'output', 'summary', 'trace']);
 export type ArtifactRole = z.infer<typeof ArtifactRole>;
 
-export const ArtifactKind = z.enum([
-  'text',
-  'patch',
-  'log',
-  'file_snapshot',
-  'json',
-  'binary',
-]);
+export const ArtifactKind = z.enum(['text', 'patch', 'log', 'file_snapshot', 'json', 'binary']);
 export type ArtifactKind = z.infer<typeof ArtifactKind>;
 
 // ---------------------------------------------------------------------------

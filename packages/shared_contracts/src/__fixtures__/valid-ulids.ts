@@ -8,16 +8,18 @@
  * 长度恒定 26 字符。
  */
 
+// 所有 fixture 形如：'01H' + 21 个 Z + 2 字符尾缀（共 26 字符）
+// 尾缀字符必须是合法 Crockford base32（不含 I/L/O/U）
 export const VALID_ULIDS = {
   workspace: '01HZZZZZZZZZZZZZZZZZZZZZW0',
   conversation: '01HZZZZZZZZZZZZZZZZZZZZZC0',
   event: '01HZZZZZZZZZZZZZZZZZZZZZE0',
   message: '01HZZZZZZZZZZZZZZZZZZZZZM0',
-  orchestrationRun: '01HZZZZZZZZZZZZZZZZZZZZOR0',
+  orchestrationRun: '01HZZZZZZZZZZZZZZZZZZZZZR0',
   task: '01HZZZZZZZZZZZZZZZZZZZZZT0',
   agentRun: '01HZZZZZZZZZZZZZZZZZZZZZA0',
   artifact: '01HZZZZZZZZZZZZZZZZZZZZZF0',
-  traceEvent: '01HZZZZZZZZZZZZZZZZZZZZTE0',
+  traceEvent: '01HZZZZZZZZZZZZZZZZZZZZZP0',
   traceId: '01HZZZZZZZZZZZZZZZZZZZZZX0',
 } as const;
 

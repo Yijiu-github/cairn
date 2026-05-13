@@ -13,6 +13,7 @@
 
 import { z } from 'zod';
 
+import { Iso8601 } from './common.js';
 import {
   TraceEventId,
   WorkspaceId,
@@ -22,7 +23,6 @@ import {
   TraceId,
   ArtifactId,
 } from './ids.js';
-import { Iso8601 } from './common.js';
 
 // ---------------------------------------------------------------------------
 // 等级
