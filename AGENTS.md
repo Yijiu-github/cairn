@@ -20,11 +20,11 @@
 
 ## 1. 当前项目状态（重要）
 
-> ⚠️ **应用尚未启动，但工程基线与核心包已经启动**。
+> ⚠️ **Desktop / Web / Workspace Core 应用尚未启动，但工程基线与核心包已经启动**。
 
 所以你在这个仓库里：
 
-- **可以**：读文档、维护工程配置、补充 `packages/shared_contracts` / `packages/domain` / `packages/storage` / `packages/runtime_gateway` 等已存在核心包、起草接口草案、写 ADR
+- **可以**：读文档、维护工程配置、补充 `packages/shared_contracts` / `packages/domain` / `packages/storage` / `packages/runtime_gateway` / `packages/application` 等已存在核心包、起草接口草案、写 ADR
 - **不要**：假装 Desktop / Web / Workspace Core 已经存在、引用不存在的目录如 `apps/desktop/src/`
 - **要谨慎**：任何"创建 `apps/` 或新增大包实际代码"的请求，先确认是否在做对应工程启动阶段
 
@@ -113,11 +113,12 @@ cairn-workspace/
 │  └─ domain/             ← 已创建：Drizzle SQLite-first schema / migrations
 │  └─ storage/            ← 已创建：SQLite connection / migration runner 基线
 │  └─ runtime_gateway/    ← 已创建：RuntimeAdapter contract / mock adapter / conformance test 基线
-│  application / ui / ... 尚未创建
+│  └─ application/        ← 已创建：orchestration service / ports / state progression tests 基线
+│  ui / ... 尚未创建
 └─ .github/
 ```
 
-代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前还没建立实际代码**。
+代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前尚未创建 `apps/*` 应用代码**。
 
 ---
 

@@ -177,7 +177,7 @@ export type AdapterErrorCode =
 
 ## 3. 生命周期与状态映射
 
-Adapter 内部状态 → Cairn 的 AgentRun 状态（在 Runtime Gateway 内做映射）：
+Adapter 事件 → Cairn 的 AgentRun 状态（由 application 编排服务在接收 Runtime Gateway 事件后落状态）：
 
 | AdapterStreamEvent | AgentRun.status 转移                         |
 | ------------------ | -------------------------------------------- |
