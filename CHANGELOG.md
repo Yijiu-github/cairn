@@ -27,6 +27,7 @@
 - License 拍板：**Apache-2.0**，仓库公开开源
 - NOTICE 文件
 - 首发 Runtime Adapter 形态确认：**OpenAI Codex CLI**（子进程 + PTY）
+- **`@cairn/domain`**：`packages/domain` 首版 Drizzle SQLite schema（`workspaces`、`orchestration_runs`、`tasks`、`agent_runs`、`artifacts`）及 `drizzle-kit` 初始迁移
 
 ### Changed
 
