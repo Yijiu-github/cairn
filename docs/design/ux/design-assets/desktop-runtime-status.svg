@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" role="img" aria-labelledby="title desc">
+  <title id="title">Cairn Runtime Status Wireframe</title>
+  <desc id="desc">Low fidelity runtime and local core status screen wireframe.</desc>
+  <rect width="1280" height="820" fill="#f6f7f9"/>
+  <rect x="0" y="0" width="1280" height="48" fill="#ffffff" stroke="#d9dde3"/>
+  <text x="24" y="30" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#171a1f">Cairn</text>
+  <text x="96" y="30" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#5c6573">Personal Workspace ▾</text>
+  <rect x="0" y="48" width="220" height="772" fill="#ffffff" stroke="#d9dde3"/>
+  <g font-family="Inter, system-ui, sans-serif" font-size="14" fill="#334155">
+    <text x="28" y="92">Inbox</text>
+    <text x="28" y="132">Runs</text>
+    <text x="28" y="172">Tasks</text>
+    <text x="28" y="212">Artifacts</text>
+    <text x="28" y="252" font-weight="700">Agents</text>
+    <text x="28" y="292">Activity</text>
+    <text x="28" y="332">Settings</text>
+  </g>
+  <text x="268" y="108" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="700" fill="#111827">Runtime &amp; Local Core</text>
+  <text x="268" y="138" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#64748b">Check whether Cairn can run local agent work safely.</text>
+
+  <rect x="268" y="176" width="840" height="190" rx="16" fill="#ffffff" stroke="#d9dde3"/>
+  <circle cx="304" cy="214" r="7" fill="#16a34a"/>
+  <text x="324" y="220" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#111827">Workspace Core</text>
+  <text x="324" y="248" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#16a34a">Healthy · heartbeat 8s ago · queue 0</text>
+  <text x="304" y="292" font-family="SFMono-Regular, Menlo, monospace" font-size="13" fill="#64748b">Endpoint: 127.0.0.1:••••</text>
+  <text x="304" y="320" font-family="SFMono-Regular, Menlo, monospace" font-size="13" fill="#64748b">DB: ~/Cairn/workspace.sqlite · Artifacts: ~/Cairn/artifacts</text>
+  <rect x="806" y="204" width="112" height="34" rx="8" fill="#ffffff" stroke="#cfd6df"/>
+  <text x="829" y="226" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#334155">Open logs</text>
+  <rect x="930" y="204" width="142" height="34" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+  <text x="957" y="226" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#9a3412">Restart core</text>
+
+  <rect x="268" y="394" width="840" height="174" rx="16" fill="#ffffff" stroke="#d9dde3"/>
+  <circle cx="304" cy="432" r="7" fill="#2563eb"/>
+  <text x="324" y="438" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#111827">Codex Runtime</text>
+  <text x="324" y="466" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#1d4ed8">Ready · version x.y.z · supports streaming and cancel</text>
+  <text x="304" y="510" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#64748b">Capabilities: text, patch, log, protected actions</text>
+  <rect x="806" y="424" width="144" height="34" rx="8" fill="#ffffff" stroke="#cfd6df"/>
+  <text x="830" y="446" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#334155">Configure path</text>
+  <rect x="962" y="424" width="110" height="34" rx="8" fill="#2563eb"/>
+  <text x="987" y="446" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="#ffffff">Health check</text>
+
+  <rect x="268" y="596" width="400" height="112" rx="14" fill="#f8fafc" stroke="#d9dde3"/>
+  <text x="292" y="630" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="700" fill="#111827">Recent diagnostics</text>
+  <text x="292" y="660" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#64748b">All checks passed · 2 minutes ago</text>
+  <text x="292" y="688" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#64748b">Copy redacted status for support</text>
+  <rect x="708" y="596" width="400" height="112" rx="14" fill="#f8fafc" stroke="#d9dde3"/>
+  <text x="732" y="630" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="700" fill="#111827">Logs</text>
+  <text x="732" y="660" font-family="SFMono-Regular, Menlo, monospace" font-size="13" fill="#64748b">desktop.log · core.log · runtime-adapter.log</text>
+  <text x="732" y="688" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#64748b">Export diagnostic bundle</text>
+</svg>

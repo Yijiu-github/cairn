@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" role="img" aria-labelledby="title desc">
+  <title id="title">Cairn Desktop Run Detail Wireframe</title>
+  <desc id="desc">Low fidelity run detail screen with task tree, active work surface, and inspector.</desc>
+  <rect width="1280" height="820" fill="#f6f7f9"/>
+  <rect x="0" y="0" width="1280" height="48" fill="#ffffff" stroke="#d9dde3"/>
+  <text x="24" y="30" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#171a1f">Cairn</text>
+  <text x="96" y="30" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#5c6573">Personal Workspace ▾</text>
+  <rect x="0" y="48" width="80" height="772" fill="#ffffff" stroke="#d9dde3"/>
+  <text x="24" y="96" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#334155">Runs</text>
+  <text x="24" y="136" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#94a3b8">Tasks</text>
+  <text x="24" y="176" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#94a3b8">Files</text>
+
+  <rect x="80" y="48" width="280" height="772" fill="#fbfcfe" stroke="#d9dde3"/>
+  <text x="108" y="92" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#111827">Task Tree</text>
+  <g font-family="Inter, system-ui, sans-serif" font-size="14">
+    <text x="108" y="132" fill="#111827">▼ Plan</text>
+    <text x="132" y="172" fill="#16a34a">✓ Read docs</text>
+    <text x="132" y="212" fill="#16a34a">✓ Inspect code</text>
+    <text x="132" y="252" fill="#2563eb">● Add scheduler port</text>
+    <text x="132" y="292" fill="#94a3b8">◌ Run tests</text>
+    <text x="132" y="332" fill="#94a3b8">◌ Update docs</text>
+  </g>
+
+  <rect x="360" y="48" width="600" height="772" fill="#ffffff"/>
+  <text x="392" y="92" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="700" fill="#111827">Refactor scheduler port</text>
+  <text x="392" y="120" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#64748b">Running · 18m · Codex · 4/9 tasks</text>
+  <rect x="724" y="74" width="76" height="32" rx="8" fill="#eff6ff" stroke="#93c5fd"/><text x="743" y="95" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#1d4ed8">Pause</text>
+  <rect x="812" y="74" width="78" height="32" rx="8" fill="#fff1f2" stroke="#fda4af"/><text x="830" y="95" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#be123c">Cancel</text>
+
+  <text x="392" y="174" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="700" fill="#111827">Selected task</text>
+  <rect x="392" y="198" width="520" height="230" rx="14" fill="#0f172a"/>
+  <text x="416" y="232" font-family="SFMono-Regular, Menlo, monospace" font-size="13" fill="#cbd5e1">$ pnpm test --filter scheduler</text>
+  <text x="416" y="262" font-family="SFMono-Regular, Menlo, monospace" font-size="13" fill="#93c5fd">running contract tests…</text>
+  <text x="416" y="292" font-family="SFMono-Regular, Menlo, monospace" font-size="13" fill="#94a3b8">stdout / tool calls / live notes</text>
+
+  <text x="392" y="480" font-family="Inter, system-ui, sans-serif" font-size="16" font-weight="700" fill="#111827">Intervention</text>
+  <rect x="392" y="504" width="520" height="120" rx="14" fill="#f8fafc" stroke="#d9dde3"/>
+  <text x="416" y="538" font-family="Inter, system-ui, sans-serif" font-size="14" fill="#94a3b8">Add instruction to this task…</text>
+  <rect x="784" y="572" width="104" height="32" rx="8" fill="#2563eb"/><text x="814" y="593" font-family="Inter, system-ui, sans-serif" font-size="13" font-weight="700" fill="#ffffff">Send</text>
+
+  <rect x="960" y="48" width="320" height="772" fill="#fbfcfe" stroke="#d9dde3"/>
+  <text x="988" y="92" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#111827">Inspector</text>
+  <text x="988" y="132" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="700" fill="#111827">Trace</text>
+  <g font-family="Inter, system-ui, sans-serif" font-size="13" fill="#64748b">
+    <text x="988" y="166">12:04 planned</text>
+    <text x="988" y="198">12:07 task started</text>
+    <text x="988" y="230">12:12 tool call</text>
+    <text x="988" y="262">12:15 artifact created</text>
+  </g>
+  <text x="988" y="330" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="700" fill="#111827">Artifacts</text>
+  <rect x="988" y="350" width="244" height="44" rx="10" fill="#ffffff" stroke="#d9dde3"/>
+  <text x="1008" y="378" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#334155">patch.diff</text>
+  <rect x="988" y="406" width="244" height="44" rx="10" fill="#ffffff" stroke="#d9dde3"/>
+  <text x="1008" y="434" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#334155">notes.md</text>
+</svg>

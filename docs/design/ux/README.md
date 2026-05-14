@@ -4,11 +4,14 @@
 
 ## 文件（计划）
 
-| 文件                          | 作用                                           | 状态    |
-| ----------------------------- | ---------------------------------------------- | ------- |
-| `information-architecture.md` | 导航结构、页面层级、URL/路由                   | ⚪ TODO |
-| `key-flows.md`                | 关键流程（新建 run、接管、回放、retry、rerun） | ⚪ TODO |
-| `screen-inventory.md`         | 屏幕清单 + 每屏责任 + 桌面/Web 差异            | ⚪ TODO |
+| 文件                          | 作用                                           | 状态     |
+| ----------------------------- | ---------------------------------------------- | -------- |
+| `information-architecture.md` | 导航结构、页面层级、URL/路由                   | 🟡 Draft |
+| `screen-inventory.md`         | 屏幕清单 + 每屏责任 + 桌面/Web 差异            | 🟡 Draft |
+| `key-flows.md`                | 关键流程（新建 run、接管、回放、retry、rerun） | 🟡 Draft |
+| `desktop-wireframes.md`       | 桌面端低保真线框稿                             | 🟡 Draft |
+| `design-system-notes.md`      | R1 设计系统基线、状态色、组件清单              | 🟡 Draft |
+| `component-mapping.md`         | UX 页面/组件到工程边界与契约草案               | 🟡 Draft |
 
 ## 与其他目录的关系
 
@@ -17,4 +20,8 @@
 
 ## 设计稿
 
-设计稿（Figma / Sketch）链接在各文件中引用。不要把大尺寸位图直接提交到仓库——使用外链或单独的 `design-assets/` 目录（待规划）。
+当前仓库内先落低保真文字线框稿：[`desktop-wireframes.md`](desktop-wireframes.md)。后续 Figma / Sketch 高保真稿应引用这些文档作为信息结构基线。
+
+可预览 SVG 放在 [`design-assets/`](design-assets/)：Home / Inbox、Run Detail、First Launch、Runtime Status。
+
+不要把大尺寸位图直接提交到仓库；如确需提交轻量 SVG / Mermaid / PNG，请放入 `design-assets/` 并在对应文档中说明来源与用途。

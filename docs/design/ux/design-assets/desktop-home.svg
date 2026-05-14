@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="820" viewBox="0 0 1280 820" role="img" aria-labelledby="title desc">
+  <title id="title">Cairn Desktop Home Wireframe</title>
+  <desc id="desc">Low fidelity desktop home and inbox screen wireframe.</desc>
+  <rect width="1280" height="820" fill="#f6f7f9"/>
+  <rect x="0" y="0" width="1280" height="48" fill="#ffffff" stroke="#d9dde3"/>
+  <text x="24" y="30" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#171a1f">Cairn</text>
+  <text x="96" y="30" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#5c6573">Personal Workspace ▾</text>
+  <rect x="470" y="10" width="340" height="28" rx="8" fill="#f1f3f6" stroke="#d9dde3"/>
+  <text x="492" y="29" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#7a8494">⌘K Search / Command</text>
+  <circle cx="1172" cy="24" r="6" fill="#1a9f64"/>
+  <text x="1186" y="29" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#334155">Core Healthy</text>
+
+  <rect x="0" y="48" width="220" height="772" fill="#ffffff" stroke="#d9dde3"/>
+  <g font-family="Inter, system-ui, sans-serif" font-size="14" fill="#334155">
+    <text x="28" y="92" font-weight="700">Inbox</text>
+    <text x="28" y="132">Runs</text>
+    <text x="28" y="172">Tasks</text>
+    <text x="28" y="212">Artifacts</text>
+    <text x="28" y="252">Agents</text>
+    <text x="28" y="292">Activity</text>
+    <text x="28" y="332">Settings</text>
+  </g>
+  <rect x="20" y="650" width="180" height="92" rx="12" fill="#f8fafc" stroke="#d9dde3"/>
+  <text x="36" y="680" font-family="Inter, system-ui, sans-serif" font-size="12" fill="#64748b">Local Core</text>
+  <text x="36" y="704" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#1a9f64">Healthy</text>
+  <text x="36" y="728" font-family="Inter, system-ui, sans-serif" font-size="12" fill="#64748b">Queue 0 · Codex Ready</text>
+
+  <text x="268" y="110" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="700" fill="#111827">Good evening. What should Cairn work on?</text>
+  <rect x="268" y="142" width="840" height="140" rx="16" fill="#ffffff" stroke="#cfd6df"/>
+  <text x="292" y="176" font-family="Inter, system-ui, sans-serif" font-size="15" fill="#94a3b8">Describe the engineering task…</text>
+  <g font-family="Inter, system-ui, sans-serif" font-size="13">
+    <rect x="268" y="302" width="116" height="32" rx="8" fill="#ffffff" stroke="#cfd6df"/><text x="286" y="323" fill="#475569">Working dir</text>
+    <rect x="396" y="302" width="108" height="32" rx="8" fill="#ffffff" stroke="#cfd6df"/><text x="414" y="323" fill="#475569">Attach files</text>
+    <rect x="516" y="302" width="154" height="32" rx="8" fill="#ffffff" stroke="#cfd6df"/><text x="534" y="323" fill="#475569">Acceptance criteria</text>
+    <rect x="964" y="298" width="144" height="40" rx="10" fill="#2563eb"/><text x="1000" y="323" fill="#ffffff" font-weight="700">Create Run</text>
+  </g>
+
+  <text x="268" y="390" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#111827">Needs attention</text>
+  <rect x="268" y="414" width="260" height="112" rx="14" fill="#fff7ed" stroke="#fdba74"/>
+  <text x="292" y="448" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="700" fill="#9a3412">Run blocked</text>
+  <text x="292" y="476" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#9a3412">Approve protected file write</text>
+  <rect x="548" y="414" width="260" height="112" rx="14" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="572" y="448" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="700" fill="#1d4ed8">Runtime warning</text>
+  <text x="572" y="476" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#1d4ed8">Codex auth expires soon</text>
+
+  <text x="268" y="586" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#111827">Recent runs</text>
+  <rect x="268" y="610" width="840" height="72" rx="14" fill="#ffffff" stroke="#d9dde3"/>
+  <circle cx="296" cy="646" r="6" fill="#2563eb"/><text x="316" y="642" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="700" fill="#111827">Refactor scheduler</text>
+  <text x="316" y="664" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#64748b">running · 4/9 tasks · 12m</text>
+  <rect x="268" y="698" width="840" height="72" rx="14" fill="#ffffff" stroke="#d9dde3"/>
+  <circle cx="296" cy="734" r="6" fill="#16a34a"/><text x="316" y="730" font-family="Inter, system-ui, sans-serif" font-size="15" font-weight="700" fill="#111827">Add contract tests</text>
+  <text x="316" y="752" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#64748b">completed · 7 artifacts</text>
+</svg>
