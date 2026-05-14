@@ -10,34 +10,34 @@
 
 ## 总览
 
-| 术语 | 一句话 | 类别 |
-|---|---|---|
-| [Cairn](#cairn) | 本产品的名字 | 品牌 |
-| [Workspace Core](#workspace-core) | 唯一的服务核心 | 系统 |
-| [Desktop Shell](#desktop-shell) | 桌面端外壳 | 系统 |
-| [Web Shell](#web-shell) | Web 端外壳 | 系统 |
-| [Local Workspace](#local-workspace) | 本地工作区运行模式 | 系统 |
-| [Remote Workspace](#remote-workspace) | 远程工作区运行模式 | 系统 |
-| [Workspace](#workspace) | 一等领域对象，所有数据的一级边界 | 领域 |
-| [Conversation](#conversation) | 对话单位 | 领域 |
-| [Event](#event) | 一次外部输入 | 领域 |
-| [Message](#message) | 一条消息 | 领域 |
-| [OrchestrationRun](#orchestrationrun) | 一次完整编排执行 | 领域 |
-| [Task](#task) | 编排中的一个子任务 | 领域 |
-| [AgentRun](#agentrun) | 一次具体的 agent 执行 | 领域 |
-| [Artifact](#artifact) | 执行产物 | 领域 |
-| [TraceEvent](#traceevent) | 一条可观察事件 | 领域 |
-| [Supervisor](#supervisor) | 主 agent，统筹编排 | 角色 |
-| [Worker](#worker) | 子任务执行 agent | 角色 |
-| [Operator](#operator) | 接管系统的人类 | 角色 |
-| [Runtime Gateway](#runtime-gateway) | 执行总线 | 系统 |
-| [Runtime Adapter](#runtime-adapter) | 接入具体 runtime 的适配层 | 系统 |
-| [Execution Mode](#execution-mode) | 编排执行模式 | 概念 |
-| [Retry / Rerun / Replan](#retry--rerun--replan) | 三种不同的"重做"语义 | 概念 |
-| [Capability Profile](#capability-profile) | runtime 能力档案 | 概念 |
-| [Heartbeat / Lease](#heartbeat--lease) | 崩溃恢复机制 | 机制 |
-| [Replay](#replay) | 回放（见专文） | 概念 |
-| [Trace ID](#trace-id) | 贯穿一次执行的关联 ID | 机制 |
+| 术语                                            | 一句话                           | 类别 |
+| ----------------------------------------------- | -------------------------------- | ---- |
+| [Cairn](#cairn)                                 | 本产品的名字                     | 品牌 |
+| [Workspace Core](#workspace-core)               | 唯一的服务核心                   | 系统 |
+| [Desktop Shell](#desktop-shell)                 | 桌面端外壳                       | 系统 |
+| [Web Shell](#web-shell)                         | Web 端外壳                       | 系统 |
+| [Local Workspace](#local-workspace)             | 本地工作区运行模式               | 系统 |
+| [Remote Workspace](#remote-workspace)           | 远程工作区运行模式               | 系统 |
+| [Workspace](#workspace)                         | 一等领域对象，所有数据的一级边界 | 领域 |
+| [Conversation](#conversation)                   | 对话单位                         | 领域 |
+| [Event](#event)                                 | 一次外部输入                     | 领域 |
+| [Message](#message)                             | 一条消息                         | 领域 |
+| [OrchestrationRun](#orchestrationrun)           | 一次完整编排执行                 | 领域 |
+| [Task](#task)                                   | 编排中的一个子任务               | 领域 |
+| [AgentRun](#agentrun)                           | 一次具体的 agent 执行            | 领域 |
+| [Artifact](#artifact)                           | 执行产物                         | 领域 |
+| [TraceEvent](#traceevent)                       | 一条可观察事件                   | 领域 |
+| [Supervisor](#supervisor)                       | 主 agent，统筹编排               | 角色 |
+| [Worker](#worker)                               | 子任务执行 agent                 | 角色 |
+| [Operator](#operator)                           | 接管系统的人类                   | 角色 |
+| [Runtime Gateway](#runtime-gateway)             | 执行总线                         | 系统 |
+| [Runtime Adapter](#runtime-adapter)             | 接入具体 runtime 的适配层        | 系统 |
+| [Execution Mode](#execution-mode)               | 编排执行模式                     | 概念 |
+| [Retry / Rerun / Replan](#retry--rerun--replan) | 三种不同的"重做"语义             | 概念 |
+| [Capability Profile](#capability-profile)       | runtime 能力档案                 | 概念 |
+| [Heartbeat / Lease](#heartbeat--lease)          | 崩溃恢复机制                     | 机制 |
+| [Replay](#replay)                               | 回放（见专文）                   | 概念 |
+| [Trace ID](#trace-id)                           | 贯穿一次执行的关联 ID            | 机制 |
 
 ---
 
@@ -163,7 +163,7 @@ OrchestrationRun 内部的一个**子任务**。Task 之间可以有依赖关系
 
 **接管系统的人类**。可以执行：观察 / 暂停 / 取消 / 重试 / 重开 / 注入补充说明 / approve-reject。
 
-详见 [`../design/unified-design-v0.4.md#13-人类接管模型`](../design/unified-design-v0.4.md)。
+详见 [`../design/设计文档V0.1.0.md#13-人类接管模型`](../design/设计文档V0.1.0.md)。
 
 ---
 
@@ -185,23 +185,23 @@ OrchestrationRun 内部的一个**子任务**。Task 之间可以有依赖关系
 
 OrchestrationRun 的执行模式：
 
-| 模式 | 含义 | 首发 |
-|---|---|---|
-| `direct_answer` | 不拆分，直接回答 | ✅ |
-| `single_worker` | 单 worker 完成 | ✅ |
-| `multi_worker` | 多 worker 并行 | ✅ |
-| `deliberation` | 多 agent 讨论收敛 | ❌ 未来 |
-| `meeting` | 会议形态 | ❌ 未来 |
-| `committee` | 投票 / 仲裁 | ❌ 未来 |
+| 模式            | 含义              | 首发    |
+| --------------- | ----------------- | ------- |
+| `direct_answer` | 不拆分，直接回答  | ✅      |
+| `single_worker` | 单 worker 完成    | ✅      |
+| `multi_worker`  | 多 worker 并行    | ✅      |
+| `deliberation`  | 多 agent 讨论收敛 | ❌ 未来 |
+| `meeting`       | 会议形态          | ❌ 未来 |
+| `committee`     | 投票 / 仲裁       | ❌ 未来 |
 
 ### Retry / Rerun / Replan
 
 **三种不同的"重做"语义，不可混用**：
 
-| 术语 | 含义 | 范围 |
-|---|---|---|
-| **retry** | 在同一 OrchestrationRun 内，重试失败的节点 | run 内 |
-| **rerun** | 基于同一原始请求，**新建**一轮 OrchestrationRun | 新 run |
+| 术语       | 含义                                                            | 范围   |
+| ---------- | --------------------------------------------------------------- | ------ |
+| **retry**  | 在同一 OrchestrationRun 内，重试失败的节点                      | run 内 |
+| **rerun**  | 基于同一原始请求，**新建**一轮 OrchestrationRun                 | 新 run |
 | **replan** | 在新一轮 run 中**重做规划**，不在当前 run 内中途强改 task graph | 新 run |
 
 详见 [`../design/state-machines.md`](../design/state-machines.md)。
@@ -257,6 +257,6 @@ OrchestrationRun 在分配 Task 给 Worker 时会参考 Capability Profile。
 
 ## 变更记录
 
-| 日期 | 变更 |
-|---|---|
-| 2026-05-14 | 术语表初版，对齐统一设计 v0.4 |
+| 日期       | 变更                            |
+| ---------- | ------------------------------- |
+| 2026-05-14 | 术语表初版，对齐设计文档 V0.1.0 |

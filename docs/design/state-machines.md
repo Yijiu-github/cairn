@@ -1,8 +1,8 @@
 # 状态机 / State Machines
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-14  
-> 来源：[`unified-design-v0.4.md §11`](unified-design-v0.4.md) 抽出并扩展  
+> 状态：🟡 Draft
+> 最后更新：2026-05-14
+> 来源：[`设计文档V0.1.0.md §11`](设计文档V0.1.0.md) 抽出并扩展
 > 上游术语：见 [`../reference/glossary.md`](../reference/glossary.md)
 
 ---
@@ -18,17 +18,17 @@
 
 ### 1.1 状态枚举
 
-| 状态 | 含义 |
-|---|---|
-| `queued` | 已入队，等待规划 |
-| `planning` | Supervisor 在做 Mode Decision + Task Planning |
-| `running` | Task 正在执行（有至少一个 AgentRun 在跑） |
-| `synthesizing` | 所有 Task 已完结，Supervisor 在做结果综合 |
-| `paused` | 被 operator 暂停（可恢复） |
-| `succeeded` | ✅ 终态：成功 |
-| `failed` | ❌ 终态：失败（含 partial failure 视情况） |
-| `cancelled` | ❌ 终态：被取消 |
-| `timeout` | ❌ 终态：超时 |
+| 状态           | 含义                                          |
+| -------------- | --------------------------------------------- |
+| `queued`       | 已入队，等待规划                              |
+| `planning`     | Supervisor 在做 Mode Decision + Task Planning |
+| `running`      | Task 正在执行（有至少一个 AgentRun 在跑）     |
+| `synthesizing` | 所有 Task 已完结，Supervisor 在做结果综合     |
+| `paused`       | 被 operator 暂停（可恢复）                    |
+| `succeeded`    | ✅ 终态：成功                                 |
+| `failed`       | ❌ 终态：失败（含 partial failure 视情况）    |
+| `cancelled`    | ❌ 终态：被取消                               |
+| `timeout`      | ❌ 终态：超时                                 |
 
 ### 1.2 转移图
 
@@ -55,16 +55,16 @@ cancelled   failed     paused◄──►running  failed
 
 ### 2.1 状态枚举
 
-| 状态 | 含义 |
-|---|---|
-| `pending` | 已规划，依赖未满足 |
-| `ready` | 依赖满足，等待 dispatch |
-| `dispatched` | 已分配给 Worker / AgentRun |
-| `running` | 至少一个 AgentRun 在跑 |
-| `succeeded` | ✅ 终态 |
-| `failed` | ❌ 终态 |
-| `skipped` | ❌ 终态：被跳过（如上游失败传播） |
-| `cancelled` | ❌ 终态 |
+| 状态         | 含义                              |
+| ------------ | --------------------------------- |
+| `pending`    | 已规划，依赖未满足                |
+| `ready`      | 依赖满足，等待 dispatch           |
+| `dispatched` | 已分配给 Worker / AgentRun        |
+| `running`    | 至少一个 AgentRun 在跑            |
+| `succeeded`  | ✅ 终态                           |
+| `failed`     | ❌ 终态                           |
+| `skipped`    | ❌ 终态：被跳过（如上游失败传播） |
+| `cancelled`  | ❌ 终态                           |
 
 ### 2.2 转移图
 
@@ -87,16 +87,16 @@ pending ──► ready ──► dispatched ──► running ──► succeed
 
 ### 3.1 状态枚举
 
-| 状态 | 含义 |
-|---|---|
-| `submitted` | 已提交到 Runtime Gateway |
-| `queued` | Runtime 已接受，等待执行 |
-| `running` | 实际执行中（持有 lease） |
-| `succeeded` | ✅ 终态 |
-| `failed` | ❌ 终态 |
-| `cancelled` | ❌ 终态 |
-| `timeout` | ❌ 终态 |
-| `lost` | ❌ 终态：lease 超时未续约，视为丢失 |
+| 状态        | 含义                                |
+| ----------- | ----------------------------------- |
+| `submitted` | 已提交到 Runtime Gateway            |
+| `queued`    | Runtime 已接受，等待执行            |
+| `running`   | 实际执行中（持有 lease）            |
+| `succeeded` | ✅ 终态                             |
+| `failed`    | ❌ 终态                             |
+| `cancelled` | ❌ 终态                             |
+| `timeout`   | ❌ 终态                             |
+| `lost`      | ❌ 终态：lease 超时未续约，视为丢失 |
 
 ### 3.2 转移图
 
@@ -123,11 +123,11 @@ cancelled   cancelled  cancelled/timeout │
 
 ## 4. retry / rerun / replan 语义（极其重要，不可混用）
 
-| 操作 | 作用对象 | 行为 | 是否新对象 |
-|---|---|---|---|
-| **retry** | 单个 Task / AgentRun | 同一 OrchestrationRun 内，重试失败节点；Task `attempt + 1`，新建 AgentRun | 仅新建 AgentRun |
-| **rerun** | OrchestrationRun | 基于同一原始 Event，**新建一轮** OrchestrationRun；可以复用 planner 结果或重新规划 | 新建 OrchestrationRun |
-| **replan** | OrchestrationRun | 在新一轮 run 中**重做规划**，不允许中途强改 task graph | 新建 OrchestrationRun |
+| 操作       | 作用对象             | 行为                                                                               | 是否新对象            |
+| ---------- | -------------------- | ---------------------------------------------------------------------------------- | --------------------- |
+| **retry**  | 单个 Task / AgentRun | 同一 OrchestrationRun 内，重试失败节点；Task `attempt + 1`，新建 AgentRun          | 仅新建 AgentRun       |
+| **rerun**  | OrchestrationRun     | 基于同一原始 Event，**新建一轮** OrchestrationRun；可以复用 planner 结果或重新规划 | 新建 OrchestrationRun |
+| **replan** | OrchestrationRun     | 在新一轮 run 中**重做规划**，不允许中途强改 task graph                             | 新建 OrchestrationRun |
 
 ### 设计约束
 
@@ -140,16 +140,16 @@ cancelled   cancelled  cancelled/timeout │
 
 ## 5. operator 接管动作矩阵
 
-| 动作 | 触发 | 允许的源状态 | 结果状态 |
-|---|---|---|---|
-| **观察** | 任何时候 | 任意 | 不变 |
-| **暂停 run** | operator 主动 | `running` | `paused` |
-| **恢复 run** | operator 主动 | `paused` | `running` |
-| **取消 run** | operator 主动 | `queued` / `planning` / `running` / `synthesizing` / `paused` | `cancelled` |
-| **retry task** | operator 或自动 | task `failed` | task → `ready`（attempt+1） |
-| **rerun** | operator 主动 | 任何终态 | 新建 OrchestrationRun |
-| **注入 operator note** | operator 主动 | run 任意状态 | 不变（写 message + trace） |
-| **approve / reject** | operator 在受保护步骤 | task 处于"等待审批" | task → `running` / `failed` |
+| 动作                   | 触发                  | 允许的源状态                                                  | 结果状态                    |
+| ---------------------- | --------------------- | ------------------------------------------------------------- | --------------------------- |
+| **观察**               | 任何时候              | 任意                                                          | 不变                        |
+| **暂停 run**           | operator 主动         | `running`                                                     | `paused`                    |
+| **恢复 run**           | operator 主动         | `paused`                                                      | `running`                   |
+| **取消 run**           | operator 主动         | `queued` / `planning` / `running` / `synthesizing` / `paused` | `cancelled`                 |
+| **retry task**         | operator 或自动       | task `failed`                                                 | task → `ready`（attempt+1） |
+| **rerun**              | operator 主动         | 任何终态                                                      | 新建 OrchestrationRun       |
+| **注入 operator note** | operator 主动         | run 任意状态                                                  | 不变（写 message + trace）  |
+| **approve / reject**   | operator 在受保护步骤 | task 处于"等待审批"                                           | task → `running` / `failed` |
 
 ---
 
@@ -157,12 +157,12 @@ cancelled   cancelled  cancelled/timeout │
 
 为了支持 Operator 排错，错误必须能分层归因：
 
-| 层 | 字段 | 来源 |
-|---|---|---|
-| 编排层 | `OrchestrationRun.error_code/message` | planner / synthesizer 失败 |
-| 任务层 | `Task.failure_reason` | 依赖失败 / 任务级超时 |
-| 执行层 | `AgentRun.error_code/message` | runtime 失败 / heartbeat 丢失 |
-| 产物层 | `Artifact` 缺失 / 校验失败 | 检验阶段 |
+| 层     | 字段                                  | 来源                          |
+| ------ | ------------------------------------- | ----------------------------- |
+| 编排层 | `OrchestrationRun.error_code/message` | planner / synthesizer 失败    |
+| 任务层 | `Task.failure_reason`                 | 依赖失败 / 任务级超时         |
+| 执行层 | `AgentRun.error_code/message`         | runtime 失败 / heartbeat 丢失 |
+| 产物层 | `Artifact` 缺失 / 校验失败            | 检验阶段                      |
 
 每一层错误都应触发对应 TraceEvent。
 
@@ -226,6 +226,6 @@ while (running) {
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
-| 2026-05-14 | 初版，从 v0.4 §11 抽出并补充 lease/heartbeat 与不变量 |
+| 日期       | 变更                                                    |
+| ---------- | ------------------------------------------------------- |
+| 2026-05-14 | 初版，从 V0.1.0 §11 抽出并补充 lease/heartbeat 与不变量 |

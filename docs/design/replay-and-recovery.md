@@ -8,7 +8,7 @@
 
 ## 1. 为什么单独一篇
 
-v0.4 中"回放"被反复提到，但**没有明确定义**。本文先把语义钉死，再展开。
+V0.1.0 中"回放"被反复提到，但**没有明确定义**。本文先把语义钉死，再展开。
 
 桌面端常见崩溃来源（系统重启、电源中断、进程被强杀、sidecar OOM），必须有**确定的恢复行为**，否则 OrchestrationRun 会停留在"看起来在跑但其实没动"的不可见状态。
 
@@ -48,20 +48,20 @@ Replay = 不接流，从 DB 读历史 TraceEvent 渲染
 
 ### 3.1 我们要恢复什么
 
-| 对象 | 恢复目标 |
-|---|---|
-| `OrchestrationRun` 处于运行中状态 | 重新启动 scheduler tick，按状态机推进 |
-| `Task` 处于 `dispatched` / `running` | 检查关联 AgentRun 是否仍在跑 |
-| `AgentRun` 处于 `running` | 通过 heartbeat / lease 判断是否丢失 |
-| Artifact 写入未完成 | 通过 `format_version` + 元数据校验 |
+| 对象                                 | 恢复目标                              |
+| ------------------------------------ | ------------------------------------- |
+| `OrchestrationRun` 处于运行中状态    | 重新启动 scheduler tick，按状态机推进 |
+| `Task` 处于 `dispatched` / `running` | 检查关联 AgentRun 是否仍在跑          |
+| `AgentRun` 处于 `running`            | 通过 heartbeat / lease 判断是否丢失   |
+| Artifact 写入未完成                  | 通过 `format_version` + 元数据校验    |
 
 ### 3.2 Heartbeat / Lease 机制
 
-| 字段 | 用途 | 默认值 |
-|---|---|---|
-| `heartbeat_at` | AgentRun 最近一次心跳 | 每 15s 更新 |
-| `lease_owner` | 当前持有者（进程 id / 节点 id） | 启动时分配 |
-| `lease_expires_at` | lease 超时时间 | `heartbeat_at + 60s` |
+| 字段               | 用途                            | 默认值               |
+| ------------------ | ------------------------------- | -------------------- |
+| `heartbeat_at`     | AgentRun 最近一次心跳           | 每 15s 更新          |
+| `lease_owner`      | 当前持有者（进程 id / 节点 id） | 启动时分配           |
+| `lease_expires_at` | lease 超时时间                  | `heartbeat_at + 60s` |
 
 ### 3.3 恢复流程
 
@@ -137,6 +137,6 @@ DB-driven scheduler（ADR-0006）下，所有状态转移必须在**单个事务
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更                                     |
+| ---------- | ---------------------------------------- |
 | 2026-05-14 | 初版，明确 replay 语义并补充崩溃恢复机制 |

@@ -14,7 +14,7 @@
 - 桌面端基于 Electron + Node sidecar
 - 主语言：TypeScript / Node.js
 
-详细背景在 `docs/design/unified-design-v0.4.md`。
+详细背景在 `docs/design/设计文档V0.1.0.md`。
 
 ---
 
@@ -37,7 +37,7 @@
 1. `README.md`（项目门面）
 2. `docs/product/positioning-and-boundaries.md`（产品边界——避免做错方向）
 3. `docs/reference/glossary.md`（术语统一——避免误用 Agent / Task / Run 等概念）
-4. `docs/design/unified-design-v0.4.md`（**主稿**，唯一权威设计）
+4. `docs/design/设计文档V0.1.0.md`（**主稿**，唯一权威设计）
 5. 任务相关的具体文档（见 `docs/README.md` 的"我想……去看"路由表）
 6. 相关 ADR（`docs/adr/`）
 
@@ -150,7 +150,7 @@ cairn-workspace/
 ## 7. 提交 / PR 规范
 
 - 分支：`feat/* | fix/* | docs/* | chore/*`，不允许直接 push 到 `main`
-- Commit：Conventional Commits — `feat(scope): subject`
+- Commit：Conventional Commits，标题格式为 `feat(scope): 中文摘要 / English summary`（中文在前，英文在后）
 - PR：使用 `.github/PULL_REQUEST_TEMPLATE.md`
 - 涉及设计决策必须配套 ADR
 - 涉及 schema 必须附迁移说明

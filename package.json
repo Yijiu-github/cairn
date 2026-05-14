@@ -55,7 +55,7 @@
     "deps:knip": "knip",
     "deps:notices": "license-checker-rseidelsohn --production --csv --excludePrivatePackages > docs/legal/third-party-notices.csv",
     "//—— Git Hooks ——": "",
-    "prepare": "husky"
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@commitlint/cli": "catalog:",

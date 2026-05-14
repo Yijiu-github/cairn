@@ -12,6 +12,7 @@
 
 - 上游：`packages/runtime_gateway`
 - 下游：具体 runtime（CLI 子进程 / HTTP API / 本地 SDK）
+- 定位：**通用运行时接入层**。它负责把不同 runtime 统一成同一套执行契约，而不是为某个单独的第三方桥接项目编写专属产品逻辑。
 
 Runtime Adapter **只负责执行**，不负责：
 
@@ -28,7 +29,7 @@ Runtime Adapter **只负责执行**，不负责：
  */
 export interface RuntimeAdapter {
   /** Adapter 静态信息 */
-  readonly id: string;                 // e.g. "codex", "claude", "ollama"
+  readonly id: string; // e.g. "codex", "claude", "ollama"
   readonly displayName: string;
   readonly capabilities: CapabilityProfile;
 
@@ -178,15 +179,15 @@ export type AdapterErrorCode =
 
 Adapter 内部状态 → Cairn 的 AgentRun 状态（在 Runtime Gateway 内做映射）：
 
-| AdapterStreamEvent | AgentRun.status 转移 |
-|---|---|
-| `queued` | `submitted → queued` |
-| `started` | `queued → running` |
-| `heartbeat` | 更新 `heartbeat_at` |
-| `succeeded` | `running → succeeded` |
-| `failed` | `* → failed`（依 error code 决定 retryable） |
-| `cancelled` | `* → cancelled` |
-| `timeout` | `* → timeout` |
+| AdapterStreamEvent | AgentRun.status 转移                         |
+| ------------------ | -------------------------------------------- |
+| `queued`           | `submitted → queued`                         |
+| `started`          | `queued → running`                           |
+| `heartbeat`        | 更新 `heartbeat_at`                          |
+| `succeeded`        | `running → succeeded`                        |
+| `failed`           | `* → failed`（依 error code 决定 retryable） |
+| `cancelled`        | `* → cancelled`                              |
+| `timeout`          | `* → timeout`                                |
 
 **adapter 应每 ≤ 15s 发送一次 `heartbeat` 或其他事件**，否则 Gateway 视为可能丢失。
 
@@ -233,7 +234,7 @@ Adapter 内部状态 → Cairn 的 AgentRun 状态（在 Runtime Gateway 内做�
 
 包位置：
 
-```
+```text
 packages/runtime_gateway/src/adapters/codex/
 ├─ codex-adapter.ts
 ├─ codex-process.ts
@@ -260,11 +261,11 @@ packages/runtime_gateway/src/adapters/codex/
 
 **官方立场**：
 
-| 行为 | 立场 |
-|---|---|
-| 用户填任意符合 OpenAI 协议的 base URL | ✅ 支持 |
+| 行为                                                                                    | 立场    |
+| --------------------------------------------------------------------------------------- | ------- |
+| 用户填任意符合 OpenAI 协议的 base URL                                                   | ✅ 支持 |
 | 内置 / 推荐 / 教学任何具体"订阅转 API"项目（如 sub2api / chat2api / gpt4free / cpa 等） | ❌ 不做 |
-| UI 配置自定义 endpoint 时显示警告 | ✅ 强制 |
+| UI 配置自定义 endpoint 时显示警告                                                       | ✅ 强制 |
 
 理由与免责见 [`../legal/data-locality.md` §"用户自配 endpoint 的责任边界"](../legal/data-locality.md)。
 
@@ -308,6 +309,6 @@ packages/runtime_gateway/src/adapters/codex/
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更                     |
+| ---------- | ------------------------ |
 | 2026-05-14 | 初版 TypeScript 接口草案 |

@@ -12,14 +12,14 @@
 
 请按以下方式协作：
 
-| 你想…… | 推荐渠道 |
-|---|---|
-| 提 bug | ✅ **GitHub Issues**（使用 bug 模板） |
-| 提功能建议 | ✅ **GitHub Issues**（使用 feature 模板） |
-| 讨论设计 / 提问 | ✅ **GitHub Discussions** |
-| 报告安全问题 | ✅ **GitHub Security Advisory**（见 [`SECURITY.md`](SECURITY.md)） |
-| 修小 typo / 显然错误 | ⚠️ 可提 PR，但 review 节奏不定 |
-| 改架构 / 重写模块 / 新功能 | ❌ 暂不接受外部 PR，请先开 Issue 讨论 |
+| 你想……                     | 推荐渠道                                                           |
+| -------------------------- | ------------------------------------------------------------------ |
+| 提 bug                     | ✅ **GitHub Issues**（使用 bug 模板）                              |
+| 提功能建议                 | ✅ **GitHub Issues**（使用 feature 模板）                          |
+| 讨论设计 / 提问            | ✅ **GitHub Discussions**                                          |
+| 报告安全问题               | ✅ **GitHub Security Advisory**（见 [`SECURITY.md`](SECURITY.md)） |
+| 修小 typo / 显然错误       | ⚠️ 可提 PR，但 review 节奏不定                                     |
+| 改架构 / 重写模块 / 新功能 | ❌ 暂不接受外部 PR，请先开 Issue 讨论                              |
 
 理由：
 
@@ -35,7 +35,7 @@
 
 ## 在动手之前
 
-1. **读完愿景与边界**：[`docs/product/positioning-and-boundaries.md`](docs/product/positioning-and-boundaries.md) 与 [`docs/design/unified-design-v0.4.md`](docs/design/unified-design-v0.4.md)
+1. **读完愿景与边界**：[`docs/product/positioning-and-boundaries.md`](docs/product/positioning-and-boundaries.md) 与 [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)
 2. **认领或开启 issue**：避免重复劳动；较大改动请先开 Discussion 或 Issue 对齐方向
 3. **新设计决策必须先提 ADR**：见 [`docs/adr/0000-template.md`](docs/adr/0000-template.md)
 
@@ -53,19 +53,25 @@
 
 ### Commit Message
 
-使用 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/) 规范：
+使用 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/) 规范；**提交标题必须使用中英双语，且中文在前、英文在后**：
 
-```
-<type>(<scope>): <subject>
+```text
+<type>(<scope>): 中文摘要 / English summary
 
 <body>
 
 <footer>
 ```
 
-`type` 取值：`feat` / `fix` / `docs` / `refactor` / `test` / `chore` / `perf` / `build` / `ci` / `revert`。
+示例：
 
-详见 [`docs/engineering/commit-convention.md`](docs/engineering/commit-convention.md)（待写）。
+```text
+docs(contributing): 补充双语提交规范 / add bilingual commit convention
+```
+
+`type` 取值：`feat` / `fix` / `docs` / `refactor` / `test` / `chore` / `perf` / `build` / `ci` / `revert` / `style`。
+
+详见 [`docs/engineering/commit-convention.md`](docs/engineering/commit-convention.md)。
 
 ### Pull Request
 

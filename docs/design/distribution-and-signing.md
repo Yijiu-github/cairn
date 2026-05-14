@@ -1,8 +1,8 @@
 # 分发、签名与更新 / Distribution, Signing & Updates
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-14  
-> 来源：[`unified-design-v0.4.md §15`](unified-design-v0.4.md) 扩展  
+> 状态：🟡 Draft
+> 最后更新：2026-05-14
+> 来源：[`设计文档V0.1.0.md §15`](设计文档V0.1.0.md) 扩展
 > 关联：ADR-0003、`engineering/ci-cd.md`、`engineering/release-playbook.md`
 
 ---
@@ -138,24 +138,24 @@ Manifest 示例：
 
 采用 Semantic Versioning：`MAJOR.MINOR.PATCH[-prerelease][+build]`
 
-| 场景 | 示例 |
-|---|---|
-| 首发 | `0.1.0` |
-| Bug 修复 | `0.1.1` |
-| 新功能（向后兼容） | `0.2.0` |
-| 破坏性变更 | `1.0.0` / `2.0.0` |
-| Beta 测试 | `0.2.0-beta.1` |
+| 场景               | 示例              |
+| ------------------ | ----------------- |
+| 首发               | `0.1.0`           |
+| Bug 修复           | `0.1.1`           |
+| 新功能（向后兼容） | `0.2.0`           |
+| 破坏性变更         | `1.0.0` / `2.0.0` |
+| Beta 测试          | `0.2.0-beta.1`    |
 
 ## 6. 渠道分发
 
-| 渠道 | Release 1 | Release 2 |
-|---|---|---|
-| 官网下载 | ✅ | ✅ |
-| GitHub Releases | ✅ | ✅ |
-| Homebrew Cask（macOS） | ⚪ 计划 | ✅ |
-| winget / Chocolatey | ⚪ 计划 | ✅ |
-| Mac App Store | ❌ 暂不（sandbox 限制） | 重新评估 |
-| Microsoft Store | ❌ 暂不 | 重新评估 |
+| 渠道                   | Release 1               | Release 2 |
+| ---------------------- | ----------------------- | --------- |
+| 官网下载               | ✅                      | ✅        |
+| GitHub Releases        | ✅                      | ✅        |
+| Homebrew Cask（macOS） | ⚪ 计划                 | ✅        |
+| winget / Chocolatey    | ⚪ 计划                 | ✅        |
+| Mac App Store          | ❌ 暂不（sandbox 限制） | 重新评估  |
+| Microsoft Store        | ❌ 暂不                 | 重新评估  |
 
 ## 7. 回滚
 
@@ -173,6 +173,6 @@ Manifest 示例：
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
-| 2026-05-14 | 初版，从 v0.4 §15 扩展，补充云签名建议与 manifest 格式 |
+| 日期       | 变更                                                     |
+| ---------- | -------------------------------------------------------- |
+| 2026-05-14 | 初版，从 V0.1.0 §15 扩展，补充云签名建议与 manifest 格式 |

@@ -11,7 +11,7 @@
 
 桌面端的进程拓扑（ADR-0003）：
 
-```
+```text
 Electron Renderer → Electron Main → Workspace Core (sidecar, Node)
 ```
 
@@ -30,7 +30,7 @@ Renderer 与 Workspace Core 之间需要一种**统一通信协议**，同时满
 - D. gRPC over loopback
 - E. stdio JSON-RPC
 
-详细对比见 `docs/design/unified-design-v0.4.md` 决策讨论附录。
+详细对比见 `docs/design/设计文档V0.1.0.md` 决策讨论附录。
 
 ## 决策
 
@@ -123,7 +123,7 @@ fastify.addHook('onRequest', async (req, reply) => {
 
 - 复用同一套 Fastify route 与 WS handler
 - 鉴权中间件从"token 比对"切换为 "OIDC verify" 或 "API key verify"
-- 详见 `../design/unified-design-v0.4.md §6.3-B`
+- 详见 `../design/设计文档V0.1.0.md §6.3-B`
 
 ## 后续
 
@@ -134,6 +134,6 @@ fastify.addHook('onRequest', async (req, reply) => {
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |

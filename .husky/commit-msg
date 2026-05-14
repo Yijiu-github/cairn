@@ -1,5 +1,9 @@
+#!/usr/bin/env sh
 if command -v pnpm >/dev/null 2>&1; then
   pnpm exec commitlint --edit "$1"
-else
+elif command -v corepack >/dev/null 2>&1; then
   corepack pnpm exec commitlint --edit "$1"
+else
+  echo "pnpm/corepack not found; cannot run commitlint" >&2
+  exit 1
 fi

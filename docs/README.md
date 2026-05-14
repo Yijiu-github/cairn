@@ -4,7 +4,7 @@
 
 ## 文档分层
 
-```
+```text
 docs/
 ├─ product/      ← 1. 为什么做 / 给谁做 / 做到什么程度
 ├─ design/       ← 2. 系统怎么设计（领域模型、状态机、安全、分发、回放）
@@ -18,16 +18,16 @@ docs/
 
 ## 怎么用
 
-| 我的角色 | 先读这里 |
-|---|---|
-| **新协作者** | `product/positioning-and-boundaries.md` → `design/unified-design-v0.4.md` → `engineering/repo-layout.md` |
-| **产品 / 设计** | `product/` 全部 + `design/ux/` |
-| **后端 / 架构** | `design/` + `adr/` + `contracts/` |
-| **要做 runtime 接入** | `contracts/runtime-adapter.md` |
-| **要发布版本** | `engineering/release-playbook.md` |
-| **新用户** | `ops/install-guide.md` |
-| **安全研究者** | 仓库根目录 `SECURITY.md` + `design/security-model.md` |
-| **想看为什么选某个方案** | `adr/` |
+| 我的角色                 | 先读这里                                                                                            |
+| ------------------------ | --------------------------------------------------------------------------------------------------- |
+| **新协作者**             | `product/positioning-and-boundaries.md` → `design/设计文档V0.1.0.md` → `engineering/repo-layout.md` |
+| **产品 / 设计**          | `product/` 全部 + `design/ux/`                                                                      |
+| **后端 / 架构**          | `design/` + `adr/` + `contracts/`                                                                   |
+| **要做 runtime 接入**    | `contracts/runtime-adapter.md`                                                                      |
+| **要发布版本**           | `engineering/release-playbook.md`                                                                   |
+| **新用户**               | `ops/install-guide.md`                                                                              |
+| **安全研究者**           | 仓库根目录 `SECURITY.md` + `design/security-model.md`                                               |
+| **想看为什么选某个方案** | `adr/`                                                                                              |
 
 ## 文档约定
 

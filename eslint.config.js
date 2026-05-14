@@ -111,19 +111,9 @@ export default tseslint.config(
       'import/order': [
         'error',
         {
-          'groups': [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-            'type',
-          ],
+          'groups': ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'type'],
           'newlines-between': 'always',
-          'pathGroups': [
-            { pattern: '@cairn/**', group: 'internal', position: 'after' },
-          ],
+          'pathGroups': [{ pattern: '@cairn/**', group: 'internal', position: 'after' }],
           'pathGroupsExcludedImportTypes': ['type'],
           'alphabetize': { order: 'asc', caseInsensitive: true },
         },
@@ -157,8 +147,10 @@ export default tseslint.config(
 
   // 6. 配置文件（CJS / 脚本）
   {
+    ...tseslint.configs.disableTypeChecked,
     files: ['**/*.{js,cjs,mjs}', '**/*.config.{ts,js,mjs}'],
     rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
       '@typescript-eslint/no-var-requires': 'off',
       '@typescript-eslint/no-require-imports': 'off',
       'import/no-default-export': 'off',

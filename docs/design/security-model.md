@@ -1,8 +1,8 @@
 # 安全模型 / Security Model
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-14  
-> 来源：[`unified-design-v0.4.md §14`](unified-design-v0.4.md) 扩展  
+> 状态：🟡 Draft
+> 最后更新：2026-05-14
+> 来源：[`设计文档V0.1.0.md §14`](设计文档V0.1.0.md) 扩展
 > 关联：ADR-0003（Electron）、`SECURITY.md`
 
 ---
@@ -61,17 +61,17 @@ new BrowserWindow({
 
 ## 4. 桌面能力暴露规则
 
-| 能力 | 默认 | 说明 |
-|---|---|---|
-| 打开本地产物目录 | ✅ 允许 | 仅产物目录，路径校验 |
-| 打开日志目录 | ✅ 允许 | 仅日志目录 |
-| 系统通知 | ✅ 允许 |  |
-| 自动启动（开机启动） | ✅ 允许（用户开关） |  |
-| 选择文件 / 文件夹 | ✅ 允许 | 标准 dialog |
-| **任意路径读写** | ❌ 默认禁止 | 仅在用户显式选择路径后允许该次操作 |
-| **shell / process / pty** | ⚠️ 受控 | 需要 capability flag + 用户确认 |
-| **系统命令执行** | ⚠️ 受控 | runtime adapter 内部使用，需 allowlist |
-| **凭据查看 / 导出** | ❌ 默认禁止 | 只读访问通过 secret store API |
+| 能力                      | 默认                | 说明                                   |
+| ------------------------- | ------------------- | -------------------------------------- |
+| 打开本地产物目录          | ✅ 允许             | 仅产物目录，路径校验                   |
+| 打开日志目录              | ✅ 允许             | 仅日志目录                             |
+| 系统通知                  | ✅ 允许             |                                        |
+| 自动启动（开机启动）      | ✅ 允许（用户开关） |                                        |
+| 选择文件 / 文件夹         | ✅ 允许             | 标准 dialog                            |
+| **任意路径读写**          | ❌ 默认禁止         | 仅在用户显式选择路径后允许该次操作     |
+| **shell / process / pty** | ⚠️ 受控             | 需要 capability flag + 用户确认        |
+| **系统命令执行**          | ⚠️ 受控             | runtime adapter 内部使用，需 allowlist |
+| **凭据查看 / 导出**       | ❌ 默认禁止         | 只读访问通过 secret store API          |
 
 **原则：不是不能给，而是必须经过显式能力层与白名单约束。**
 
@@ -91,11 +91,11 @@ Workspace Core 监听 `127.0.0.1:<port>`，必须满足：
 
 ### 6.1 存储
 
-| 平台 | 方案 |
-|---|---|
-| Windows | DPAPI（通过 Electron `safeStorage`） |
-| macOS | Keychain（通过 Electron `safeStorage`） |
-| Linux | libsecret（如适用） |
+| 平台    | 方案                                    |
+| ------- | --------------------------------------- |
+| Windows | DPAPI（通过 Electron `safeStorage`）    |
+| macOS   | Keychain（通过 Electron `safeStorage`） |
+| Linux   | libsecret（如适用）                     |
 
 provider key / token 不允许：
 
@@ -114,13 +114,13 @@ Renderer 永远拿不到原始 secret，只能：
 
 ## 7. 数据目录分层
 
-| 目录 | 用途 | 加密 |
-|---|---|---|
-| `<userData>/workspaces/<id>/` | 业务数据库 | ❌（信任 OS 文件权限） |
-| `<userData>/artifacts/<id>/` | artifact 文件 | ❌ |
-| `<userData>/logs/` | 运行日志 | ❌（必须脱敏） |
-| `<userData>/secrets-meta/` | secret 索引（非内容） | ❌ |
-| 系统 Keychain / DPAPI | secret 内容 | ✅ OS 级 |
+| 目录                          | 用途                  | 加密                   |
+| ----------------------------- | --------------------- | ---------------------- |
+| `<userData>/workspaces/<id>/` | 业务数据库            | ❌（信任 OS 文件权限） |
+| `<userData>/artifacts/<id>/`  | artifact 文件         | ❌                     |
+| `<userData>/logs/`            | 运行日志              | ❌（必须脱敏）         |
+| `<userData>/secrets-meta/`    | secret 索引（非内容） | ❌                     |
+| 系统 Keychain / DPAPI         | secret 内容           | ✅ OS 级               |
 
 - Windows：`%APPDATA%\Cairn\`
 - macOS：`~/Library/Application Support/Cairn/`
@@ -151,15 +151,15 @@ Renderer 永远拿不到原始 secret，只能：
 
 ## 11. 威胁模型简表
 
-| 威胁 | 缓解 |
-|---|---|
-| 同机恶意进程读取 sidecar | loopback + token |
-| Renderer 被注入恶意脚本 | contextIsolation + CSP + preload allowlist |
-| secret 落盘明文 | safeStorage / OS keychain |
-| 升级包被替换 | 代码签名 + manifest 校验 |
-| 第三方依赖供应链 | 锁版本 + audit + PR review |
-| log 中泄露 secret | 统一脱敏中间件 |
-| 任意路径读写 | dialog only + 路径白名单 |
+| 威胁                     | 缓解                                       |
+| ------------------------ | ------------------------------------------ |
+| 同机恶意进程读取 sidecar | loopback + token                           |
+| Renderer 被注入恶意脚本  | contextIsolation + CSP + preload allowlist |
+| secret 落盘明文          | safeStorage / OS keychain                  |
+| 升级包被替换             | 代码签名 + manifest 校验                   |
+| 第三方依赖供应链         | 锁版本 + audit + PR review                 |
+| log 中泄露 secret        | 统一脱敏中间件                             |
+| 任意路径读写             | dialog only + 路径白名单                   |
 
 ## 12. 待办
 
@@ -170,6 +170,6 @@ Renderer 永远拿不到原始 secret，只能：
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
-| 2026-05-14 | 初版，从 v0.4 §14 扩展 |
+| 日期       | 变更                     |
+| ---------- | ------------------------ |
+| 2026-05-14 | 初版，从 V0.1.0 §14 扩展 |

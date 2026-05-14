@@ -28,7 +28,7 @@ Cairn 不是又一个聊天 bot，也不是一个 IDE 内的补全 copilot。它
 
 > **Pre-Release / 设计与基线建设阶段**
 
-- ✅ 统一设计 v0.4 已定稿（见 [`docs/design/unified-design-v0.4.md`](docs/design/unified-design-v0.4.md)）
+- ✅ 设计文档 V0.1.0 已定稿（见 [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)）
 - 🚧 代码尚未启动；当前正在沉淀工程基线与决策文档
 - 🗓 Release 1 目标：Personal Desktop Edition（Windows + macOS Apple Silicon）
 
@@ -38,17 +38,17 @@ Cairn 不是又一个聊天 bot，也不是一个 IDE 内的补全 copilot。它
 
 ## 文档地图
 
-| 我想…… | 去看 |
-|---|---|
-| 了解产品愿景与定位 | [`docs/product/`](docs/product/) |
-| 看完整的统一设计主稿 | [`docs/design/unified-design-v0.4.md`](docs/design/unified-design-v0.4.md) |
-| 看领域模型 / 状态机 / 安全模型等设计细节 | [`docs/design/`](docs/design/) |
-| 了解为什么选 Electron / Node / SQLite 等 | [`docs/adr/`](docs/adr/) |
-| 接入新的 runtime adapter | [`docs/contracts/runtime-adapter.md`](docs/contracts/runtime-adapter.md) |
-| 了解仓库结构、代码风格、测试策略 | [`docs/engineering/`](docs/engineering/) |
-| 安装与使用 | [`docs/ops/`](docs/ops/) |
-| 隐私与数据本地化承诺 | [`docs/legal/`](docs/legal/) |
-| 看术语定义 | [`docs/reference/glossary.md`](docs/reference/glossary.md) |
+| 我想……                                   | 去看                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| 了解产品愿景与定位                       | [`docs/product/`](docs/product/)                                         |
+| 看完整的设计主稿                         | [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)         |
+| 看领域模型 / 状态机 / 安全模型等设计细节 | [`docs/design/`](docs/design/)                                           |
+| 了解为什么选 Electron / Node / SQLite 等 | [`docs/adr/`](docs/adr/)                                                 |
+| 接入新的 runtime adapter                 | [`docs/contracts/runtime-adapter.md`](docs/contracts/runtime-adapter.md) |
+| 了解仓库结构、代码风格、测试策略         | [`docs/engineering/`](docs/engineering/)                                 |
+| 安装与使用                               | [`docs/ops/`](docs/ops/)                                                 |
+| 隐私与数据本地化承诺                     | [`docs/legal/`](docs/legal/)                                             |
+| 看术语定义                               | [`docs/reference/glossary.md`](docs/reference/glossary.md)               |
 
 ---
 
@@ -68,16 +68,16 @@ pnpm dev
 
 ## 技术栈一览
 
-| 层 | 选型 |
-|---|---|
-| 主语言 | TypeScript / Node.js |
-| 桌面壳 | Electron（默认） / Tauri（备选） |
-| Web 壳 | React + Vite |
-| Workspace Core | Fastify |
-| 编排底座 | LangGraph JS（产品状态模型自持） |
-| 存储 | SQLite first / PostgreSQL ready，Drizzle ORM |
-| 调度 | DB-driven scheduler（首发不引入 Redis/Temporal） |
-| 观测 | structured logging（Pino） + OpenTelemetry 兼容 |
+| 层             | 选型                                             |
+| -------------- | ------------------------------------------------ |
+| 主语言         | TypeScript / Node.js                             |
+| 桌面壳         | Electron（默认） / Tauri（备选）                 |
+| Web 壳         | React + Vite                                     |
+| Workspace Core | Fastify                                          |
+| 编排底座       | LangGraph JS（产品状态模型自持）                 |
+| 存储           | SQLite first / PostgreSQL ready，Drizzle ORM     |
+| 调度           | DB-driven scheduler（首发不引入 Redis/Temporal） |
+| 观测           | structured logging（Pino） + OpenTelemetry 兼容  |
 
 详细原因见 [`docs/adr/`](docs/adr/)。
 
@@ -97,7 +97,7 @@ pnpm dev
 
 决策记录见 [ADR-0016](docs/adr/0016-license-apache-2.md)。
 
-```
+```text
 Copyright 2026 Cairn Authors
 
 Licensed under the Apache License, Version 2.0 (the "License");

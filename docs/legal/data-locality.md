@@ -11,16 +11,16 @@
 
 ## 2. 数据流向矩阵
 
-| 数据类别 | Local Workspace 模式 | Remote Workspace 模式 | 上报到我们 |
-|---|---|---|---|
-| Workspace 配置 | ✅ 本机 | ✅ 你的 server | ❌ |
-| Conversation / Message 内容 | ✅ 本机 | ✅ 你的 server | ❌ |
-| OrchestrationRun / Task / AgentRun | ✅ 本机 | ✅ 你的 server | ❌ |
-| Artifact 内容 | ✅ 本机 / S3（你配置） | ✅ 你的 server / S3 | ❌ |
-| TraceEvent | ✅ 本机 | ✅ 你的 server | ❌ |
-| Provider API key / token | ✅ OS 安全存储 | ✅ 你的 server | ❌ |
-| 匿名启动 / 崩溃 / 使用计数 | ⚠️ 默认上报，可关闭 | ⚠️ 默认上报（桌面端），可关闭 | ⚠️ 是 |
-| Provider 调用内容 | 直达你配置的第三方 provider | 直达你配置的第三方 provider | ❌ 不经过我们 |
+| 数据类别                           | Local Workspace 模式        | Remote Workspace 模式         | 上报到我们    |
+| ---------------------------------- | --------------------------- | ----------------------------- | ------------- |
+| Workspace 配置                     | ✅ 本机                     | ✅ 你的 server                | ❌            |
+| Conversation / Message 内容        | ✅ 本机                     | ✅ 你的 server                | ❌            |
+| OrchestrationRun / Task / AgentRun | ✅ 本机                     | ✅ 你的 server                | ❌            |
+| Artifact 内容                      | ✅ 本机 / S3（你配置）      | ✅ 你的 server / S3           | ❌            |
+| TraceEvent                         | ✅ 本机                     | ✅ 你的 server                | ❌            |
+| Provider API key / token           | ✅ OS 安全存储              | ✅ 你的 server                | ❌            |
+| 匿名启动 / 崩溃 / 使用计数         | ⚠️ 默认上报，可关闭         | ⚠️ 默认上报（桌面端），可关闭 | ⚠️ 是         |
+| Provider 调用内容                  | 直达你配置的第三方 provider | 直达你配置的第三方 provider   | ❌ 不经过我们 |
 
 ## 3. 默认存储位置
 
@@ -52,22 +52,22 @@ Cairn 调用你**主动配置**的第三方 AI provider（如 OpenAI、Anthropic
 
 ### 4.1 用户自配 Endpoint 的责任边界（重要）
 
-Cairn 从 R2 起将提供 **Generic OpenAI-Compatible Adapter**，允许你填写**任意符合 OpenAI `chat/completions` 协议**的 base URL 与 API key。这覆盖：
+Cairn 从 R2 起将提供 **Generic OpenAI-Compatible Adapter**，允许你填写**任意符合 OpenAI `chat/completions` 协议**的 base URL 与 API key。这一层的定位是：**作为通用 OpenAI-compatible 接入层，覆盖官方兼容接口、本地推理引擎与用户自配 endpoint；而不是为某个具体第三方转发项目做专属适配。** 这覆盖：
 
-- ✅ 官方 OpenAI / Anthropic API
-- ✅ 本地推理引擎：Ollama、LM Studio、llama.cpp、vLLM
-- ✅ 自建网关：LiteLLM、自建反代
+- ✅ OpenAI 兼容的官方或标准化 endpoint
+- ✅ 本地推理引擎：Ollama、LM Studio、llama.cpp、vLLM、SGLang
+- ✅ 自建网关 / 兼容层：LiteLLM、用户自建兼容网关、自配反代
 - ⚠️ 任意第三方反代 / 转发服务（**风险由你自担**）
 
 #### 你需要明白的事
 
-| 维度 | 说明 |
-|---|---|
-| **路径** | 请求从你的本机 / 自控 server 直发到你配置的 base URL，**不经过 Cairn 任何服务** |
-| **隐私** | base URL 背后的运营者可能记录你的输入；Cairn 无法、也不打算审计这一点 |
-| **稳定性** | 第三方反代服务的可用性、限流策略、协议变更，Cairn 不做保证 |
-| **合规** | 部分反代服务可能违反原始供应商（OpenAI / Anthropic / 等）的服务条款，由此产生的账号封禁、法律责任由你承担 |
-| **安全** | API key 通过 OS 安全存储（见 [ADR-0010](../adr/0010-secret-storage.md)）保护；但你仍要为提交给第三方的内容负责 |
+| 维度       | 说明                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------------------------- |
+| **路径**   | 请求从你的本机 / 自控 server 直发到你配置的 base URL，**不经过 Cairn 任何服务**                                |
+| **隐私**   | base URL 背后的运营者可能记录你的输入；Cairn 无法、也不打算审计这一点                                          |
+| **稳定性** | 第三方反代服务的可用性、限流策略、协议变更，Cairn 不做保证                                                     |
+| **合规**   | 部分反代服务可能违反原始供应商（OpenAI / Anthropic / 等）的服务条款，由此产生的账号封禁、法律责任由你承担      |
+| **安全**   | API key 通过 OS 安全存储（见 [ADR-0010](../adr/0010-secret-storage.md)）保护；但你仍要为提交给第三方的内容负责 |
 
 #### Cairn 的官方立场
 
@@ -82,6 +82,7 @@ Cairn 从 R2 起将提供 **Generic OpenAI-Compatible Adapter**，允许你填�
 > ⚠️ **你正在配置一个非官方 endpoint。**
 > Cairn 将通过这个 URL 调用 AI 服务。
 > 请确保你信任这个 endpoint 的运营者，并理解：
+>
 > - 你的输入可能被该 endpoint 的运营者记录
 > - 该 endpoint 可能违反原始 AI 供应商的服务条款
 > - 该 endpoint 的稳定性 / 隐私 / 合规由你自行评估
@@ -178,6 +179,6 @@ Cairn 从 R2 起将提供 **Generic OpenAI-Compatible Adapter**，允许你填�
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |

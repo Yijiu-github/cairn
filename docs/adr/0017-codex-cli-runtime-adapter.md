@@ -9,7 +9,7 @@
 
 ## 背景
 
-`docs/product/roadmap.md` 把"Codex runtime 首发接入"列为 R1 必交付项，但 v0.4 主稿与 R1 范围里"Codex"的实际形态一直没敲定。
+`docs/product/roadmap.md` 把"Codex runtime 首发接入"列为 R1 必交付项，但 V0.1.0 主稿与 R1 范围里"Codex"的实际形态一直没敲定。
 
 候选含义：
 
@@ -39,7 +39,7 @@
 
 ### 包位置
 
-```
+```text
 packages/runtime_gateway/src/adapters/codex/
 ├─ codex-adapter.ts          # implements RuntimeAdapter
 ├─ codex-process.ts          # PTY 子进程封装
@@ -55,9 +55,9 @@ packages/runtime_gateway/src/adapters/codex/
 export const codexCapabilities: CapabilityProfile = {
   streaming: true,
   cancellable: true,
-  toolCalling: true,          // Codex CLI 内置工具调用
-  midStreamInjection: false,  // 暂不支持（待验证）
-  idempotent: false,          // CLI 不保证幂等，由 Gateway 在本地做去重
+  toolCalling: true, // Codex CLI 内置工具调用
+  midStreamInjection: false, // 暂不支持（待验证）
+  idempotent: false, // CLI 不保证幂等，由 Gateway 在本地做去重
   maxContextTokens: undefined, // 由具体模型决定
   maxOutputTokens: undefined,
   supportedArtifactKinds: ['text', 'patch', 'log'],
@@ -72,35 +72,40 @@ export const codexCapabilities: CapabilityProfile = {
 ```ts
 import * as pty from 'node-pty';
 
-const child = pty.spawn('codex', [
-  '--json',              // 待确认的真实 flag
-  '--no-interactive',
-  '--cwd', sandboxDir,
-], {
-  name: 'xterm-color',
-  cols: 200,
-  rows: 50,
-  cwd: sandboxDir,
-  env: {
-    HOME: process.env.HOME,
-    PATH: process.env.PATH,
-    OPENAI_API_KEY: await secrets.get(`workspace:${wsId}:provider:openai`),
-    NO_COLOR: '1',
+const child = pty.spawn(
+  'codex',
+  [
+    '--json', // 待确认的真实 flag
+    '--no-interactive',
+    '--cwd',
+    sandboxDir,
+  ],
+  {
+    name: 'xterm-color',
+    cols: 200,
+    rows: 50,
+    cwd: sandboxDir,
+    env: {
+      HOME: process.env.HOME,
+      PATH: process.env.PATH,
+      OPENAI_API_KEY: await secrets.get(`workspace:${wsId}:provider:openai`),
+      NO_COLOR: '1',
+    },
   },
-});
+);
 ```
 
 ### 错误归一化
 
-| Codex CLI 退出码 / 输出特征 | AdapterErrorCode |
-|---|---|
+| Codex CLI 退出码 / 输出特征  | AdapterErrorCode                      |
+| ---------------------------- | ------------------------------------- |
 | `command not found` / ENOENT | `MODEL_UNAVAILABLE`（adapter 未就绪） |
-| 401 / `Unauthorized` | `AUTH_INVALID` |
-| 429 / `Rate limit` | `AUTH_RATE_LIMITED` |
-| Context 超限 | `CONTEXT_OVERFLOW` |
-| 用户取消 / SIGTERM | `CANCELLED_BY_USER` |
-| 超时 | `TIMEOUT` |
-| 未知非零退出 | `INTERNAL_ERROR` |
+| 401 / `Unauthorized`         | `AUTH_INVALID`                        |
+| 429 / `Rate limit`           | `AUTH_RATE_LIMITED`                   |
+| Context 超限                 | `CONTEXT_OVERFLOW`                    |
+| 用户取消 / SIGTERM           | `CANCELLED_BY_USER`                   |
+| 超时                         | `TIMEOUT`                             |
+| 未知非零退出                 | `INTERNAL_ERROR`                      |
 
 ### 安全约束（强制）
 
@@ -160,6 +165,7 @@ const child = pty.spawn('codex', [
 **官方立场**（写入实施文档）：
 
 - ✅ 支持任意符合 OpenAI 协议的 endpoint
+- ✅ R2 的目标是做**通用 OpenAI-compatible Adapter**，而不是针对某个第三方桥接项目单独做专属 adapter
 - ❌ 不内置、不集成、不教学任何具体的第三方"订阅转 API"项目（如 sub2api / chat2api / gpt4free / cpa 等）——这些项目可能违反原服务 ToS、稳定性差、合规风险由用户自担
 - ⚠️ UI 在配置自定义 endpoint 时**强制显示警告**：信任 / 隐私 / 合规由用户负责
 
@@ -223,6 +229,6 @@ const child = pty.spawn('codex', [
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更                                               |
+| ---------- | -------------------------------------------------- |
 | 2026-05-14 | 初版，首发 adapter 形态确认为 Codex CLI 子进程方式 |

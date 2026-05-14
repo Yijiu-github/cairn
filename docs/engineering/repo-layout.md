@@ -2,7 +2,7 @@
 
 > 状态：🟡 Draft  
 > 最后更新：2026-05-14  
-> 关联：[`../design/unified-design-v0.4.md §10`](../design/unified-design-v0.4.md)
+> 关联：[`../design/设计文档V0.1.0.md §10`](../design/设计文档V0.1.0.md)
 
 ---
 
@@ -70,16 +70,16 @@ Browser Web Shell。
 
 ## 4. packages/
 
-| 包 | 职责 | 依赖 |
-|---|---|---|
-| `domain/` | 领域对象、不变量、状态枚举 | 无（除 `shared_contracts`） |
-| `application/` | OrchestrationRun / Task / AgentRun 推进、operator 接管、综合 | `domain`、`storage` 端口、`runtime_gateway` 端口 |
-| `runtime_gateway/` | adapter 总线、run 生命周期、能力 profile | `shared_contracts` |
-| `storage/` | SQLite / Postgres 实现、artifact store、迁移 | `domain` |
-| `ui/` | 共享 React 组件、业务状态层 | `shared_contracts` |
-| `desktop_bridge/` | 桌面专属能力（仅由 `apps/desktop` 引用） | 桌面 API |
-| `shared_contracts/` | Zod schema、TS 类型、OpenAPI、事件协议 | 无 |
-| `observability/` | structured logger、trace_id、OTLP 兼容 | 无 |
+| 包                  | 职责                                                         | 依赖                                             |
+| ------------------- | ------------------------------------------------------------ | ------------------------------------------------ |
+| `domain/`           | 领域对象、不变量、状态枚举                                   | 无（除 `shared_contracts`）                      |
+| `application/`      | OrchestrationRun / Task / AgentRun 推进、operator 接管、综合 | `domain`、`storage` 端口、`runtime_gateway` 端口 |
+| `runtime_gateway/`  | adapter 总线、run 生命周期、能力 profile                     | `shared_contracts`                               |
+| `storage/`          | SQLite / Postgres 实现、artifact store、迁移                 | `domain`                                         |
+| `ui/`               | 共享 React 组件、业务状态层                                  | `shared_contracts`                               |
+| `desktop_bridge/`   | 桌面专属能力（仅由 `apps/desktop` 引用）                     | 桌面 API                                         |
+| `shared_contracts/` | Zod schema、TS 类型、OpenAPI、事件协议                       | 无                                               |
+| `observability/`    | structured logger、trace_id、OTLP 兼容                       | 无                                               |
 
 ## 5. 依赖方向（不可违反）
 
@@ -102,7 +102,7 @@ Browser Web Shell。
             ┌──────┐     ┌──────────┐
             │storage│    │ adapters │
             └──────┘     └──────────┘
-            
+
 基础设施横切：shared_contracts / observability / ui
 ```
 
@@ -135,9 +135,9 @@ Browser Web Shell。
       "@cairn/ui": ["packages/ui/src"],
       "@cairn/desktop-bridge": ["packages/desktop_bridge/src"],
       "@cairn/shared-contracts": ["packages/shared_contracts/src"],
-      "@cairn/observability": ["packages/observability/src"]
-    }
-  }
+      "@cairn/observability": ["packages/observability/src"],
+    },
+  },
 }
 ```
 
@@ -158,6 +158,6 @@ Browser Web Shell。
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |

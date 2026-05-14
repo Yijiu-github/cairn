@@ -8,14 +8,14 @@
 
 ## 1. 前置依赖
 
-| 工具 | 版本 | 说明 |
-|---|---|---|
-| **Node.js** | 20 LTS | 通过 [Volta](https://volta.sh/) 或 [fnm](https://github.com/Schniz/fnm) 管理 |
-| **pnpm** | ≥ 9.x | `npm i -g pnpm` |
-| **Git** | ≥ 2.40 |  |
-| **Python**（仅 macOS 编译原生模块时） | 3.11+ |  |
-| **Xcode Command Line Tools**（macOS） | 最新 | `xcode-select --install` |
-| **Visual Studio Build Tools**（Windows） | 最新 | 包含 C++ 桌面开发 |
+| 工具                                     | 版本   | 说明                                                                         |
+| ---------------------------------------- | ------ | ---------------------------------------------------------------------------- |
+| **Node.js**                              | 20 LTS | 通过 [Volta](https://volta.sh/) 或 [fnm](https://github.com/Schniz/fnm) 管理 |
+| **pnpm**                                 | ≥ 9.x  | `npm i -g pnpm`                                                              |
+| **Git**                                  | ≥ 2.40 |                                                                              |
+| **Python**（仅 macOS 编译原生模块时）    | 3.11+  |                                                                              |
+| **Xcode Command Line Tools**（macOS）    | 最新   | `xcode-select --install`                                                     |
+| **Visual Studio Build Tools**（Windows） | 最新   | 包含 C++ 桌面开发                                                            |
 
 ## 2. 第一次拉代码
 
@@ -51,7 +51,7 @@ pnpm --filter @cairn/desktop dev
 
 零配置。数据库文件位于：
 
-```
+```text
 <userData>/Cairn-dev/workspaces/<id>/workspace.sqlite
 ```
 
@@ -103,15 +103,15 @@ pnpm typecheck          # tsc --noEmit
 
 ## 7. 常用脚本
 
-| 命令 | 作用 |
-|---|---|
-| `pnpm dev` | 启动完整开发态 |
-| `pnpm build` | 构建所有包 |
-| `pnpm build:desktop` | 仅构建桌面端 |
-| `pnpm build:web` | 仅构建 Web |
-| `pnpm clean` | 清理 dist / cache |
-| `pnpm db:studio` | 启动 Drizzle Studio（DB GUI） |
-| `pnpm docs:check` | 校验文档链接 |
+| 命令                 | 作用                          |
+| -------------------- | ----------------------------- |
+| `pnpm dev`           | 启动完整开发态                |
+| `pnpm build`         | 构建所有包                    |
+| `pnpm build:desktop` | 仅构建桌面端                  |
+| `pnpm build:web`     | 仅构建 Web                    |
+| `pnpm clean`         | 清理 dist / cache             |
+| `pnpm db:studio`     | 启动 Drizzle Studio（DB GUI） |
+| `pnpm docs:check`    | 校验文档链接                  |
 
 ## 8. IDE 推荐
 
@@ -151,17 +151,17 @@ DevTools 自动打开 Renderer；Main 进程附加 `--inspect=9229`。
 
 > 详细问题清单见 [`../ops/troubleshooting.md`](../ops/troubleshooting.md)（面向用户）。
 
-| 问题 | 解决 |
-|---|---|
-| `pnpm install` 卡在原生模块编译 | 装好 Xcode CLI / VS Build Tools，或使用预编译版本 |
-| Electron 启动报 "App is damaged"（macOS） | dev 态请用 `xattr -cr` 清除隔离属性 |
-| Sidecar 启动后立刻退出 | 检查端口冲突，或查看 sidecar 日志 |
-| Drizzle 迁移失败 | 删除本地 SQLite 文件重跑 `pnpm db:reset` |
+| 问题                                      | 解决                                              |
+| ----------------------------------------- | ------------------------------------------------- |
+| `pnpm install` 卡在原生模块编译           | 装好 Xcode CLI / VS Build Tools，或使用预编译版本 |
+| Electron 启动报 "App is damaged"（macOS） | dev 态请用 `xattr -cr` 清除隔离属性               |
+| Sidecar 启动后立刻退出                    | 检查端口冲突，或查看 sidecar 日志                 |
+| Drizzle 迁移失败                          | 删除本地 SQLite 文件重跑 `pnpm db:reset`          |
 
 ## 11. 团队协作
 
 - 分支策略：见 `git-workflow.md`（待写）
-- Commit：见 `commit-convention.md`（待写）
+- Commit：见 `commit-convention.md`（标题需中文在前、英文在后）
 - PR 规范：见 `../../CONTRIBUTING.md`
 
 ## 12. 待办
@@ -172,6 +172,6 @@ DevTools 自动打开 Renderer；Main 进程附加 `--inspect=9229`。
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更                         |
+| ---------- | ---------------------------- |
 | 2026-05-14 | 初版（占位，代码启动后填充） |

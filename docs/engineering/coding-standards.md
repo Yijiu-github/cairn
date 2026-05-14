@@ -31,8 +31,8 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
-  }
+    "resolveJsonModule": true,
+  },
 }
 ```
 
@@ -52,14 +52,14 @@
 
 ## 4. 命名约定
 
-| 类型 | 规则 | 示例 |
-|---|---|---|
-| 文件 | kebab-case | `orchestration-run.ts` |
-| 类型 / 接口 | PascalCase | `OrchestrationRun`, `RuntimeAdapter` |
-| 变量 / 函数 | camelCase | `dispatchTask` |
-| 常量 | UPPER_SNAKE | `MAX_RETRIES` |
-| 枚举值 | snake_case（与 DB 一致） | `running`, `single_worker` |
-| 包 | scoped + kebab | `@cairn/domain` |
+| 类型        | 规则                     | 示例                                 |
+| ----------- | ------------------------ | ------------------------------------ |
+| 文件        | kebab-case               | `orchestration-run.ts`               |
+| 类型 / 接口 | PascalCase               | `OrchestrationRun`, `RuntimeAdapter` |
+| 变量 / 函数 | camelCase                | `dispatchTask`                       |
+| 常量        | UPPER_SNAKE              | `MAX_RETRIES`                        |
+| 枚举值      | snake_case（与 DB 一致） | `running`, `single_worker`           |
+| 包          | scoped + kebab           | `@cairn/domain`                      |
 
 详细见 [`../reference/naming-conventions.md`](../reference/naming-conventions.md)（待写）。
 
@@ -84,7 +84,7 @@
 - 不允许日志中出现 secret / 凭据 / 完整 prompt 内容（脱敏中间件）
 
 ```ts
-logger.info({ traceId, runId, status: "started" }, "AgentRun started");
+logger.info({ traceId, runId, status: 'started' }, 'AgentRun started');
 ```
 
 ## 8. 注释与文档
@@ -116,7 +116,7 @@ logger.info({ traceId, runId, status: "started" }, "AgentRun started");
 
 ## 12. 提交相关
 
-- **Conventional Commits**：见 `commit-convention.md`（待写）
+- **Conventional Commits**：标题必须写成 `feat(scope): 中文摘要 / English summary`，中文在前、英文在后；详见 `commit-convention.md`
 - **PR 要求**：见 `../../CONTRIBUTING.md`
 - **PR 大小**：建议 ≤ 400 行 diff；超出需拆分或在描述中说明
 
@@ -125,10 +125,9 @@ logger.info({ traceId, runId, status: "started" }, "AgentRun started");
 - [ ] 提交 `.eslintrc.json` / `.prettierrc.json` / `tsconfig.base.json` 模板
 - [ ] 提交 Husky + lint-staged 配置
 - [ ] 提交 `naming-conventions.md`
-- [ ] 提交 `commit-convention.md`
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |
