@@ -40,28 +40,40 @@ export interface ParseCodexJsonlResult {
   threadId?: string;
 }
 
+export interface CodexJsonlParser {
+  readonly threadId: string | undefined;
+  push(chunk: string): AdapterStreamEvent[];
+  flush(): AdapterStreamEvent[];
+}
+
 export const parseCodexJsonl = (
   jsonl: string,
   options: ParseCodexJsonlOptions,
 ): ParseCodexJsonlResult => {
+  const parser = createCodexJsonlParser(options);
+  const events = [...parser.push(jsonl), ...parser.flush()];
+
+  return parser.threadId === undefined ? { events } : { events, threadId: parser.threadId };
+};
+
+export const createCodexJsonlParser = (options: ParseCodexJsonlOptions): CodexJsonlParser => {
   const now = options.now ?? Date.now;
-  const events: AdapterStreamEvent[] = [];
   let threadId: string | undefined;
+  let buffer = '';
 
-  for (const line of jsonl.split(/\r?\n/)) {
+  const parseLine = (line: string): AdapterStreamEvent[] => {
+    const events: AdapterStreamEvent[] = [];
+
     const trimmed = line.trim();
-    if (trimmed.length === 0) {
-      continue;
-    }
-
     const codexEvent = parseCodexJsonLine(trimmed);
     if (codexEvent === undefined) {
-      events.push({
-        type: 'failed',
-        at: now(),
-        error: createAdapterError('INTERNAL_ERROR', 'Codex CLI emitted invalid JSONL', false),
-      });
-      continue;
+      return [
+        {
+          type: 'failed',
+          at: now(),
+          error: createAdapterError('INTERNAL_ERROR', 'Codex CLI emitted invalid JSONL', false),
+        },
+      ];
     }
 
     switch (codexEvent.type) {
@@ -102,9 +114,40 @@ export const parseCodexJsonl = (
         });
       }
     }
-  }
 
-  return threadId === undefined ? { events } : { events, threadId };
+    return events;
+  };
+
+  return {
+    get threadId() {
+      return threadId;
+    },
+    push(chunk: string) {
+      const events: AdapterStreamEvent[] = [];
+      buffer += chunk;
+
+      const lines = buffer.split(/\r?\n/);
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (line.trim().length > 0) {
+          events.push(...parseLine(line));
+        }
+      }
+
+      return events;
+    },
+    flush() {
+      if (buffer.trim().length === 0) {
+        buffer = '';
+        return [];
+      }
+
+      const line = buffer;
+      buffer = '';
+      return parseLine(line);
+    },
+  };
 };
 
 const parseCodexJsonLine = (line: string): CodexJsonEvent | undefined => {

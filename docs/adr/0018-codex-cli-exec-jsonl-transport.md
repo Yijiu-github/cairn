@@ -74,7 +74,7 @@ codex exec --json --color never --sandbox read-only --ephemeral --skip-git-repo-
 - stdout：按行解析 JSONL，映射为 `AdapterStreamEvent`
 - stderr：写入 debug/log artifact，不进入 JSONL parser
 - 退出码非 0：结合 stderr 映射为 `AdapterErrorCode`
-- 取消：先发 `SIGTERM`，超时后升级 kill；Windows 行为需单测 / 集成测试确认
+- 取消：先发 `SIGTERM`，超时后升级 kill；已用 fake process 单测锁定封装语义，Windows 真实子进程行为仍需集成验证
 - 环境变量：仍按 ADR-0017 白名单传递，不展开继承 `process.env`
 
 ## 后续
@@ -82,7 +82,7 @@ codex exec --json --color never --sandbox read-only --ephemeral --skip-git-repo-
 - [ ] 用真实长任务验证取消行为
 - [ ] 验证 Windows 下 `child_process.spawn` 与 stdout JSONL 的流式粒度
 - [ ] 若 pipe 路线稳定，把 ADR-0017 标记为被本 ADR 细化；若不稳定，再回退 PTY
-- [ ] 实现 `packages/runtime_gateway/src/adapters/codex/codex-process.ts`
+- [x] 实现 `packages/runtime_gateway/src/adapters/codex/codex-process.ts`
 
 ## 变更历史
 

@@ -201,6 +201,8 @@ pnpm build
 - ADR 一旦 Accepted 不修改，只能 Supersede
 - 术语变更必须同步 `glossary.md`
 - 重大变更必须更新 `CHANGELOG.md` 的 `[Unreleased]`
+- 重大功能、架构决策、状态机语义、adapter 能力、数据 schema、运行/部署方式有变化时，必须同步更新对应文档（设计文档 / ADR / contracts / ops / README 等），不能只改代码
+- 若一次实现推翻或细化既有 Accepted ADR，新建 ADR 记录 Supersede / refinement，不直接改旧 ADR
 
 ### 9.3 当你不确定时
 

@@ -33,6 +33,7 @@
 - **`@cairn/storage`**：新增 SQLite-first 存储包基线，包含 `better-sqlite3` + Drizzle 连接封装、PRAGMA 初始化、domain 迁移执行入口与包级测试
 - **`@cairn/runtime-gateway`**：新增 RuntimeAdapter 契约、错误归一化、mock adapter 与 adapter conformance 测试基线
 - **`@cairn/runtime-gateway`**：新增 Codex CLI `exec --json` JSONL 协议解析、基础错误映射与 S5 spike 记录
+- **`@cairn/runtime-gateway`**：新增 Codex CLI 子进程封装，支持 stdout JSONL 流式解析、stderr 收集、非零退出映射与取消升级 kill
 
 ### Changed
 

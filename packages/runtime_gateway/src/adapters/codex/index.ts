@@ -2,4 +2,5 @@
 
 export * from './codex-capabilities.js';
 export * from './codex-errors.js';
+export * from './codex-process.js';
 export * from './codex-protocol.js';

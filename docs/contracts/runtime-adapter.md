@@ -305,6 +305,7 @@ packages/runtime_gateway/src/adapters/codex/
 - [x] 澄清 Codex Adapter 的实际形态（CLI / API / 自研抽象）
 - [ ] 起草 `packages/runtime_gateway/contracts/` 内的 Zod schema 草案
 - [x] 起草 mock adapter（仅用于测试）
+- [x] 起草 Codex CLI `exec --json` 进程封装与 JSONL parser
 - [ ] 起草 adapter 的"开发者手册"，供第三方 / 未来接入者参考
 
 ## 变更历史
