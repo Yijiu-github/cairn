@@ -42,12 +42,13 @@ ADR 是**架构决策的不可变快照**。一旦 `Accepted`，**永远不修�
 | [0014](0014-orchestration-scheduler-port.md)             | OrchestrationScheduler 端口 + LangGraph JS 退路            | 🟢 Accepted |
 | [0015](0015-frontend-core-libs.md)                       | 前端核心库（TanStack Router + Query / Zustand / Pino）     | 🟢 Accepted |
 
-### License 与首发 Adapter（0016–0017）
+### License 与首发 Adapter（0016–0018）
 
-| 编号                                      | 标题                                                       | 状态        |
-| ----------------------------------------- | ---------------------------------------------------------- | ----------- |
-| [0016](0016-license-apache-2.md)          | License 采用 Apache-2.0 + 完全开源（暂不积极接外部 PR）    | 🟢 Accepted |
-| [0017](0017-codex-cli-runtime-adapter.md) | 首发 Runtime Adapter 采用 OpenAI Codex CLI（子进程 + PTY） | 🟢 Accepted |
+| 编号                                           | 标题                                                          | 状态        |
+| ---------------------------------------------- | ------------------------------------------------------------- | ----------- |
+| [0016](0016-license-apache-2.md)               | License 采用 Apache-2.0 + 完全开源（暂不积极接外部 PR）       | 🟢 Accepted |
+| [0017](0017-codex-cli-runtime-adapter.md)      | 首发 Runtime Adapter 采用 OpenAI Codex CLI（子进程 + PTY）    | 🟢 Accepted |
+| [0018](0018-codex-cli-exec-jsonl-transport.md) | Codex CLI Adapter 首发传输优先采用 `exec --json` stdout JSONL | 🟡 Proposed |
 
 ## 状态约定
 

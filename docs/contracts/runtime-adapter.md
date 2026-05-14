@@ -225,7 +225,7 @@ Adapter 内部状态 → Cairn 的 AgentRun 状态（在 Runtime Gateway 内做�
 要点：
 
 - 接入方式：**PTY 子进程**（`node-pty`）
-- 运行模式：Codex CLI 的非交互 / 机器可读模式（具体 flag 在 spike S5 中确认）
+- 运行模式：S5 在 Windows 11 验证 `codex exec --json` 可输出 stdout JSONL；首发实现优先采用 `child_process.spawn` + stdout pipe，PTY 作为 fallback（见 [ADR-0018](../adr/0018-codex-cli-exec-jsonl-transport.md)）
 - 凭据：用户 OS 安全存储（ADR-0010），Adapter 不接触原始凭据
 - 沙箱：限定 cwd 到 `<userData>/Cairn/workspaces/<id>/runs/<run_id>/`，环境变量白名单
 - 取消：`SIGTERM` → 5s 后 `SIGKILL`
@@ -302,9 +302,9 @@ packages/runtime_gateway/src/adapters/codex/
 
 ## 6. 待办
 
-- [ ] 澄清 Codex Adapter 的实际形态（CLI / API / 自研抽象）
+- [x] 澄清 Codex Adapter 的实际形态（CLI / API / 自研抽象）
 - [ ] 起草 `packages/runtime_gateway/contracts/` 内的 Zod schema 草案
-- [ ] 起草 mock adapter（仅用于测试）
+- [x] 起草 mock adapter（仅用于测试）
 - [ ] 起草 adapter 的"开发者手册"，供第三方 / 未来接入者参考
 
 ## 变更历史

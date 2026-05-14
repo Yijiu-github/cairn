@@ -31,6 +31,8 @@
 - **`@cairn/domain`**：补齐协作闭环持久化表（`conversations`、`events`、`messages`、`trace_events`），并为 `orchestration_runs` 补充 `origin_event_id` / `conversation_id` 外键
 - **`@cairn/shared-contracts`**：新增 `Event` / `Message` schema，并补充 `Conversation`、`Event`、`Message` schema 测试
 - **`@cairn/storage`**：新增 SQLite-first 存储包基线，包含 `better-sqlite3` + Drizzle 连接封装、PRAGMA 初始化、domain 迁移执行入口与包级测试
+- **`@cairn/runtime-gateway`**：新增 RuntimeAdapter 契约、错误归一化、mock adapter 与 adapter conformance 测试基线
+- **`@cairn/runtime-gateway`**：新增 Codex CLI `exec --json` JSONL 协议解析、基础错误映射与 S5 spike 记录
 
 ### Changed
 

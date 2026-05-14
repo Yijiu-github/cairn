@@ -140,13 +140,14 @@
 
 详细形态见 [ADR-0017](../adr/0017-codex-cli-runtime-adapter.md)。常见原因：
 
-| 现象                    | 解决                                                                 |
-| ----------------------- | -------------------------------------------------------------------- |
-| 提示「未检测到 codex」  | 安装 OpenAI Codex CLI；确认其在 PATH 中                              |
-| 提示 `AUTH_INVALID`     | 在 Cairn 设置中重新填入凭据；或在 codex CLI 中重新登录               |
-| 提示 `RATE_LIMITED`     | 等待几分钟；或在 OpenAI 控制台检查计费状态                           |
-| 子进程立刻退出          | 检查 `<userData>/Cairn/logs/runtime.log`；常见是 PATH / 环境变量缺失 |
-| Windows 下 PTY 输出乱码 | 确认 ConPTY 已启用；尝试更新 Windows 终端组件                        |
+| 现象                    | 解决                                                                    |
+| ----------------------- | ----------------------------------------------------------------------- |
+| 提示「未检测到 codex」  | 安装 OpenAI Codex CLI；确认其在 PATH 中                                 |
+| 提示 `AUTH_INVALID`     | 在 Cairn 设置中重新填入凭据；或在 codex CLI 中重新登录                  |
+| 提示 `RATE_LIMITED`     | 等待几分钟；或在 OpenAI 控制台检查计费状态                              |
+| 子进程立刻退出          | 检查 `<userData>/Cairn/logs/runtime.log`；常见是 PATH / 环境变量缺失    |
+| JSONL 解析失败          | 检查 `codex exec --json` 输出是否混入非 JSON 行；stderr 不应进入解析    |
+| Windows 下 PTY 输出乱码 | 首发优先使用 stdout pipe；若启用 PTY fallback，再检查 ConPTY / 终端组件 |
 
 ### 3.4 「自定义 OpenAI 兼容 endpoint」相关（R2 起）
 

@@ -178,6 +178,24 @@ importers:
         specifier: 'catalog:'
         version: 2.1.9(@types/node@22.19.19)
 
+  packages/runtime_gateway:
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      '@vitest/coverage-v8':
+        specifier: 'catalog:'
+        version: 2.1.9(vitest@2.1.9(@types/node@22.19.19))
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.1.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 2.1.9(@types/node@22.19.19)
+
   packages/shared_contracts:
     dependencies:
       '@ts-rest/core':
