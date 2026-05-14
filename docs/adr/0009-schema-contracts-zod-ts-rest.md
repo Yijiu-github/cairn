@@ -103,7 +103,10 @@ export const runContract = c.router({
     method: 'GET',
     path: '/workspaces/:wsId/runs',
     pathParams: z.object({ wsId: z.string() }),
-    query: z.object({ status: z.string().optional(), limit: z.number().int().min(1).max(100).default(50) }),
+    query: z.object({
+      status: z.string().optional(),
+      limit: z.number().int().min(1).max(100).default(50),
+    }),
     responses: { 200: z.array(OrchestrationRunSelect) },
   },
   cancel: {
@@ -153,6 +156,6 @@ pnpm contracts:openapi  # 内部跑 zod-to-openapi → 输出 openapi.generated.
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |

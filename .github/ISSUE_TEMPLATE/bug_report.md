@@ -1,8 +1,8 @@
 ---
 name: Bug Report
 about: 报告产品行为不符合预期的问题
-title: "[Bug] "
-labels: ["bug", "triage"]
+title: '[Bug] '
+labels: ['bug', 'triage']
 assignees: []
 ---
 
@@ -23,8 +23,8 @@ assignees: []
 ## 环境
 
 - Cairn 版本：
-- 部署模式：[ ] Local Desktop  [ ] Remote Workspace
-- 操作系统：[ ] Windows 11  [ ] macOS (Apple Silicon)  [ ] macOS (Intel)  [ ] Linux
+- 部署模式：[ ] Local Desktop [ ] Remote Workspace
+- 操作系统：[ ] Windows 11 [ ] macOS (Apple Silicon) [ ] macOS (Intel) [ ] Linux
 - 浏览器（如适用）：
 - Runtime / Provider：
 

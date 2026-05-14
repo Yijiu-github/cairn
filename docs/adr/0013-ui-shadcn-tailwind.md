@@ -99,15 +99,15 @@ packages/ui/src/
 
 ```css
 /* packages/ui/src/theme/tokens.css */
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-brand-50: oklch(0.97 0.02 250);
   --color-brand-500: oklch(0.55 0.16 250);
-  --color-brand-900: oklch(0.25 0.10 250);
+  --color-brand-900: oklch(0.25 0.1 250);
 
-  --font-display: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   --radius-sm: 0.25rem;
   --radius-md: 0.5rem;
@@ -149,6 +149,6 @@ packages/ui/src/
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |

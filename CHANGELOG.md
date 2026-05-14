@@ -38,6 +38,11 @@
 
 - 废止 v0.3 中所有以 Web-only / Desktop 后置 / MVP 收缩优先 为前提的约束
 
+### Fixed
+
+- `.npmrc`：默认 `node-linker` 改为 `hoisted`，避免 Windows 上 `pnpm install` 出现 `ERR_PNPM_ENOENT`（`@ts-rest/core` 依赖链内嵌套 `@types/node` 重命名失败）
+- `pnpm run check`：全仓 Prettier 对齐，并修正少量 markdownlint（代码围栏语言、裸 URL、围栏前后空行）
+
 ---
 
 ## 版本规划

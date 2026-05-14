@@ -53,6 +53,7 @@
 1. 确认从官网 / GitHub Releases 下载
 2. 重新下载（可能是网络问题导致文件损坏）
 3. 如确认下载完整，临时清除隔离属性：
+
    ```bash
    xattr -cr /Applications/Cairn.app
    ```
@@ -139,28 +140,28 @@
 
 详细形态见 [ADR-0017](../adr/0017-codex-cli-runtime-adapter.md)。常见原因：
 
-| 现象 | 解决 |
-|---|---|
-| 提示「未检测到 codex」 | 安装 OpenAI Codex CLI；确认其在 PATH 中 |
-| 提示 `AUTH_INVALID` | 在 Cairn 设置中重新填入凭据；或在 codex CLI 中重新登录 |
-| 提示 `RATE_LIMITED` | 等待几分钟；或在 OpenAI 控制台检查计费状态 |
-| 子进程立刻退出 | 检查 `<userData>/Cairn/logs/runtime.log`；常见是 PATH / 环境变量缺失 |
-| Windows 下 PTY 输出乱码 | 确认 ConPTY 已启用；尝试更新 Windows 终端组件 |
+| 现象                    | 解决                                                                 |
+| ----------------------- | -------------------------------------------------------------------- |
+| 提示「未检测到 codex」  | 安装 OpenAI Codex CLI；确认其在 PATH 中                              |
+| 提示 `AUTH_INVALID`     | 在 Cairn 设置中重新填入凭据；或在 codex CLI 中重新登录               |
+| 提示 `RATE_LIMITED`     | 等待几分钟；或在 OpenAI 控制台检查计费状态                           |
+| 子进程立刻退出          | 检查 `<userData>/Cairn/logs/runtime.log`；常见是 PATH / 环境变量缺失 |
+| Windows 下 PTY 输出乱码 | 确认 ConPTY 已启用；尝试更新 Windows 终端组件                        |
 
 ### 3.4 「自定义 OpenAI 兼容 endpoint」相关（R2 起）
 
 > 注意：Cairn 支持你填任意符合 OpenAI 协议的 endpoint，但**不对第三方反代服务的稳定性、隐私、合规做任何保证**。
 > 详细责任边界见 [`../legal/data-locality.md` §4.1](../legal/data-locality.md)。
 
-| 现象 | 通用排查方向（不针对具体项目） |
-|---|---|
-| 连不上 base URL | 浏览器 / `curl` 测试该 URL 是否可达；检查代理与防火墙；确认 URL 含 `/v1`（如适用） |
-| 401 / 403 | 检查 API key 是否过期；确认 key 与该 endpoint 匹配（不要混用不同服务的 key） |
-| 404 on `/chat/completions` | 该 endpoint 可能不完全兼容 OpenAI 协议；确认对方文档 |
-| 流式返回中断 | 部分反代不支持 SSE keep-alive；切换到非流式模式（如可配置）或更换 endpoint |
-| 模型不存在 | model 名称与该 endpoint 实际支持的不一致；查阅对方支持的模型清单 |
-| 频繁超时 / 不稳定 | **正常**——非官方反代服务通常不保证 SLA；考虑使用官方 endpoint 或本地推理（Ollama / LM Studio） |
-| 隐私 / 合规担忧 | 切换到本地推理（Ollama / LM Studio / llama.cpp）或官方 API |
+| 现象                       | 通用排查方向（不针对具体项目）                                                                 |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| 连不上 base URL            | 浏览器 / `curl` 测试该 URL 是否可达；检查代理与防火墙；确认 URL 含 `/v1`（如适用）             |
+| 401 / 403                  | 检查 API key 是否过期；确认 key 与该 endpoint 匹配（不要混用不同服务的 key）                   |
+| 404 on `/chat/completions` | 该 endpoint 可能不完全兼容 OpenAI 协议；确认对方文档                                           |
+| 流式返回中断               | 部分反代不支持 SSE keep-alive；切换到非流式模式（如可配置）或更换 endpoint                     |
+| 模型不存在                 | model 名称与该 endpoint 实际支持的不一致；查阅对方支持的模型清单                               |
+| 频繁超时 / 不稳定          | **正常**——非官方反代服务通常不保证 SLA；考虑使用官方 endpoint 或本地推理（Ollama / LM Studio） |
+| 隐私 / 合规担忧            | 切换到本地推理（Ollama / LM Studio / llama.cpp）或官方 API                                     |
 
 **Cairn 不会**：
 
@@ -275,6 +276,6 @@
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更                     |
+| ---------- | ------------------------ |
 | 2026-05-14 | 初版（占位，按版本补充） |

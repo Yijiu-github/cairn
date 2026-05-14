@@ -82,24 +82,24 @@ packages:
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**"],
-      "inputs": ["src/**", "package.json", "tsconfig*.json"]
+      "inputs": ["src/**", "package.json", "tsconfig*.json"],
     },
     "typecheck": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "outputs": [],
     },
     "lint": {
-      "outputs": []
+      "outputs": [],
     },
     "test": {
       "dependsOn": ["^build"],
-      "outputs": ["coverage/**"]
+      "outputs": ["coverage/**"],
     },
     "dev": {
       "cache": false,
-      "persistent": true
-    }
-  }
+      "persistent": true,
+    },
+  },
 }
 ```
 
@@ -116,8 +116,8 @@ packages:
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
-    "test": "turbo run test"
-  }
+    "test": "turbo run test",
+  },
 }
 ```
 
@@ -140,6 +140,6 @@ node-linker=isolated
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |

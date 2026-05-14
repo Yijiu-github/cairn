@@ -35,8 +35,8 @@ Cairn 当前仍在开发中，**尚未发布稳定版本**。本指南为发布�
 
 > ⚠️ 占位：Release 1 后填写实际下载链接
 
-- **官网**：https://cairn.example/download （待定）
-- **GitHub Releases**：https://github.com/OWNER/REPO/releases （待定）
+- **官网**：[下载页](https://cairn.example/download)（待定）
+- **GitHub Releases**：[Releases](https://github.com/OWNER/REPO/releases)（待定）
 
 请校验下载文件的 SHA-256（在 Release 页面提供）。
 
@@ -104,12 +104,12 @@ xattr -cr /Applications/Cairn.app
 
 进入设置 → Providers，添加你的 AI provider：
 
-| Provider | 需要的内容 |
-|---|---|
-| Codex（待澄清） | 待定 |
-| OpenAI（R2 起） | API key |
-| Anthropic（R2 起） | API key |
-| Ollama（R2 起） | Base URL（如 `http://localhost:11434`） |
+| Provider           | 需要的内容                              |
+| ------------------ | --------------------------------------- |
+| Codex（待澄清）    | 待定                                    |
+| OpenAI（R2 起）    | API key                                 |
+| Anthropic（R2 起） | API key                                 |
+| Ollama（R2 起）    | Base URL（如 `http://localhost:11434`） |
 
 API key 通过系统安全存储（Keychain / DPAPI）保存，不会明文落盘。
 
@@ -174,12 +174,12 @@ API key 通过系统安全存储（Keychain / DPAPI）保存，不会明文落�
 
 > 详细排错见 [`troubleshooting.md`](troubleshooting.md)。
 
-| 问题 | 解决 |
-|---|---|
-| SmartScreen / Gatekeeper 警告 | 见 §3.1 / §4.2 |
-| 启动后白屏 | 检查防火墙是否阻止 loopback；查看日志 |
-| sidecar 启动失败 | 检查端口冲突；查看 `<userData>/Cairn/logs/sidecar.log` |
-| API key 不生效 | 检查是否在系统 Keychain 中正确保存 |
+| 问题                          | 解决                                                   |
+| ----------------------------- | ------------------------------------------------------ |
+| SmartScreen / Gatekeeper 警告 | 见 §3.1 / §4.2                                         |
+| 启动后白屏                    | 检查防火墙是否阻止 loopback；查看日志                  |
+| sidecar 启动失败              | 检查端口冲突；查看 `<userData>/Cairn/logs/sidecar.log` |
+| API key 不生效                | 检查是否在系统 Keychain 中正确保存                     |
 
 ---
 
@@ -191,6 +191,6 @@ API key 通过系统安全存储（Keychain / DPAPI）保存，不会明文落�
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更                           |
+| ---------- | ------------------------------ |
 | 2026-05-14 | 初版（占位，Release 1 前更新） |
