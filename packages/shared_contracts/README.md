@@ -18,7 +18,7 @@
 
 ## 依赖方向
 
-```
+```text
 apps/* / packages/* ───► @cairn/shared-contracts
                               │
                               └─ zod / @ts-rest/core
@@ -30,13 +30,15 @@ apps/* / packages/* ───► @cairn/shared-contracts
 
 ## 结构
 
-```
+```text
 src/
 ├─ schemas/                 ← 领域对象 Zod schema
 │  ├─ ids.ts
 │  ├─ common.ts
 │  ├─ workspace.ts
-│  ├─ conversation.ts       (TODO)
+│  ├─ conversation.ts
+│  ├─ event.ts
+│  ├─ message.ts
 │  ├─ orchestration-run.ts
 │  ├─ task.ts
 │  ├─ agent-run.ts

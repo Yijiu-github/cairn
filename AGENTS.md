@@ -20,13 +20,13 @@
 
 ## 1. 当前项目状态（重要）
 
-> ⚠️ **代码尚未启动**。本仓库当前只有文档与工程基线规范。
+> ⚠️ **应用尚未启动，但工程基线与核心包已经启动**。
 
 所以你在这个仓库里：
 
-- **可以**：读文档、起草文档、起草配置文件、起草接口草案、写 ADR
-- **不要**：假装代码已经存在、引用不存在的目录如 `apps/desktop/src/`、生成完整应用骨架
-- **要谨慎**：任何"创建 apps/ 或 packages/ 实际代码"的请求，先确认是否在做工程启动阶段
+- **可以**：读文档、维护工程配置、补充 `packages/shared_contracts` / `packages/domain` 等已存在核心包、起草接口草案、写 ADR
+- **不要**：假装 Desktop / Web / Workspace Core 已经存在、引用不存在的目录如 `apps/desktop/src/`
+- **要谨慎**：任何"创建 `apps/` 或新增大包实际代码"的请求，先确认是否在做对应工程启动阶段
 
 ---
 
@@ -108,7 +108,10 @@ cairn-workspace/
 │  ├─ legal/              ← 隐私 / 数据本地化
 │  └─ reference/          ← 术语 / 命名 / 复盘
 ├─ apps/                  ← (尚未创建) desktop / web / workspace-core
-├─ packages/              ← (尚未创建) domain / application / runtime_gateway / ...
+├─ packages/
+│  ├─ shared_contracts/   ← 已创建：Zod schema / ts-rest contracts / WS events
+│  └─ domain/             ← 已创建：Drizzle SQLite-first schema / migrations
+│  application / runtime_gateway / storage / ui / ... 尚未创建
 └─ .github/
 ```
 

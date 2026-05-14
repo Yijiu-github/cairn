@@ -6,6 +6,8 @@
  */
 import { index, sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
+import { conversations } from './conversations';
+import { events } from './events';
 import { workspaces } from './workspaces';
 
 /** 与 StructuredError Zod 对象同构，避免 domain → shared_contracts 依赖。 */
@@ -23,8 +25,13 @@ export const orchestrationRuns = sqliteTable(
     workspaceId: text('workspace_id')
       .notNull()
       .references(() => workspaces.workspaceId, { onDelete: 'cascade', onUpdate: 'cascade' }),
-    conversationId: text('conversation_id'),
-    originEventId: text('origin_event_id').notNull(),
+    conversationId: text('conversation_id').references(() => conversations.conversationId, {
+      onDelete: 'set null',
+      onUpdate: 'cascade',
+    }),
+    originEventId: text('origin_event_id')
+      .notNull()
+      .references(() => events.eventId, { onDelete: 'restrict', onUpdate: 'cascade' }),
     status: text('status').notNull(),
     executionMode: text('execution_mode').notNull(),
     plannerOutputRef: text('planner_output_ref'),

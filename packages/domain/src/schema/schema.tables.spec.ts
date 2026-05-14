@@ -6,22 +6,26 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 
 describe('SQLite persistence schema', () => {
-  test('generated migration defines five core tables', () => {
+  test('generated migrations define the core collaboration tables', () => {
     const here = path.dirname(fileURLToPath(import.meta.url));
     const drizzleDir = path.join(here, '../../drizzle');
-    const sqlFiles = readdirSync(drizzleDir).filter((f) => f.endsWith('.sql'));
+    const sqlFiles = readdirSync(drizzleDir)
+      .filter((f) => f.endsWith('.sql'))
+      .sort((a, b) => a.localeCompare(b));
     expect(sqlFiles.length).toBeGreaterThan(0);
-    const firstSql = sqlFiles[0];
-    if (firstSql === undefined) {
-      throw new Error('expected migration .sql under drizzle/');
-    }
-    const sql = readFileSync(path.join(drizzleDir, firstSql), 'utf8');
-    expect(sql).toContain('PRAGMA foreign_keys = OFF');
-    expect(sql).toContain('PRAGMA foreign_keys = ON');
+    const sql = sqlFiles
+      .map((file) => readFileSync(path.join(drizzleDir, file), 'utf8'))
+      .join('\n');
+    expect(sql).toMatch(/PRAGMA foreign_keys\s*=\s*OFF/i);
+    expect(sql).toMatch(/PRAGMA foreign_keys\s*=\s*ON/i);
     expect(sql).toContain('CREATE TABLE `workspaces`');
+    expect(sql).toContain('CREATE TABLE `conversations`');
+    expect(sql).toContain('CREATE TABLE `events`');
+    expect(sql).toContain('CREATE TABLE `messages`');
     expect(sql).toContain('CREATE TABLE `orchestration_runs`');
     expect(sql).toContain('CREATE TABLE `tasks`');
     expect(sql).toContain('CREATE TABLE `agent_runs`');
     expect(sql).toContain('CREATE TABLE `artifacts`');
+    expect(sql).toContain('CREATE TABLE `trace_events`');
   });
 });

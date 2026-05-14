@@ -7,6 +7,8 @@ export * from './ids.js';
 export * from './common.js';
 export * from './workspace.js';
 export * from './conversation.js';
+export * from './event.js';
+export * from './message.js';
 export * from './orchestration-run.js';
 export * from './task.js';
 export * from './agent-run.js';

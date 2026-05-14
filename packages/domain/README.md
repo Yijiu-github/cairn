@@ -7,15 +7,19 @@
 - 字段与枚举：`@cairn/shared-contracts` 中 Zod 对象（概念对齐，**不**反向依赖该包，避免与后续 `drizzle-zod` 派生产生环依赖）。
 - 表结构：`docs/design/domain-model.md`、`docs/adr/0008-orm-drizzle.md`。
 
-## 当前表（5）
+## 当前表（9）
 
 | Drizzle 导出        | SQL 表名             |
 | ------------------- | -------------------- |
 | `workspaces`        | `workspaces`         |
+| `conversations`     | `conversations`      |
+| `events`            | `events`             |
+| `messages`          | `messages`           |
 | `orchestrationRuns` | `orchestration_runs` |
 | `tasks`             | `tasks`              |
 | `agentRuns`         | `agent_runs`         |
 | `artifacts`         | `artifacts`          |
+| `traceEvents`       | `trace_events`       |
 
 ## 本包内相对导入无 `.js` 后缀
 
@@ -23,11 +27,11 @@
 
 ## 脚本
 
-| 命令             | 说明                                    |
-| ---------------- | --------------------------------------- |
-| `pnpm typecheck` | `tsc --noEmit`                          |
-| `pnpm test`      | Vitest（校验初始迁移 SQL 含五张核心表） |
+| 命令             | 说明                                |
+| ---------------- | ----------------------------------- |
+| `pnpm typecheck` | `tsc --noEmit`                      |
+| `pnpm test`      | Vitest（校验迁移 SQL 含核心协作表） |
 
 迁移 SQL 位于 `drizzle/`；运行时执行迁移由未来的 `packages/storage` 封装（`migrate()` + 连接参数）。
 
-首版迁移在文件**首尾**增加了 `PRAGMA foreign_keys = OFF` / `ON`：drizzle-kit 生成的 `CREATE TABLE` 顺序在 SQLite 下会先于被引用表创建子表，关闭外键检查可避免首次执行迁移失败；执行完毕后重新开启外键。
+首版迁移在文件**首尾**增加了 `PRAGMA foreign_keys = OFF` / `ON`：drizzle-kit 生成的 `CREATE TABLE` 顺序在 SQLite 下会先于被引用表创建子表，关闭外键检查可避免首次执行迁移失败；执行完毕后重新开启外键。后续迁移由 drizzle-kit 继续生成，`packages/storage` 落地后统一封装执行顺序与连接参数。
