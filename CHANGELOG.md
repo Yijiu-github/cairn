@@ -30,6 +30,7 @@
 - **`@cairn/domain`**：`packages/domain` 首版 Drizzle SQLite schema（`workspaces`、`orchestration_runs`、`tasks`、`agent_runs`、`artifacts`）及 `drizzle-kit` 初始迁移
 - **`@cairn/domain`**：补齐协作闭环持久化表（`conversations`、`events`、`messages`、`trace_events`），并为 `orchestration_runs` 补充 `origin_event_id` / `conversation_id` 外键
 - **`@cairn/shared-contracts`**：新增 `Event` / `Message` schema，并补充 `Conversation`、`Event`、`Message` schema 测试
+- **`@cairn/storage`**：新增 SQLite-first 存储包基线，包含 `better-sqlite3` + Drizzle 连接封装、PRAGMA 初始化、domain 迁移执行入口与包级测试
 
 ### Changed
 

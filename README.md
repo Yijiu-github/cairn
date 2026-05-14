@@ -29,8 +29,8 @@ Cairn 不是又一个聊天 bot，也不是一个 IDE 内的补全 copilot。它
 > **Pre-Release / 工程基线建设阶段**
 
 - ✅ 设计文档 V0.1.0 已定稿（见 [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)）
-- ✅ Monorepo 工程基线、共享契约与领域持久化 schema 已启动
-- 🚧 Desktop / Web / Workspace Core 应用代码尚未启动；当前主线是补齐 R1 的 core/storage/runtime 基础
+- ✅ Monorepo 工程基线、共享契约、领域持久化 schema 与 SQLite storage 基线已启动
+- 🚧 Desktop / Web / Workspace Core 应用代码尚未启动；当前主线是补齐 R1 的 core/runtime 基础
 - 🗓 Release 1 目标：Personal Desktop Edition（Windows + macOS Apple Silicon）
 
 详情见 [`docs/product/roadmap.md`](docs/product/roadmap.md)。
