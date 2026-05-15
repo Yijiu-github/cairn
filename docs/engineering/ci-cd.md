@@ -21,34 +21,38 @@
 | `audit.yml`   | 每周 cron                                     | 依赖审计、license 检查、license-checker 输出     |
 | `docs.yml`    | docs/\*\* 变更                                | 校验链接、构建静态站点（如启用）                 |
 
-## 3. ci.yml 草案
+## 3. ci.yml 基线
 
 普通开发分支必须先 PR 到 `dev` / `develop`；`main` 只接受发布晋级或 hotfix PR。CI 可以监听 `main` push/tag，但不应鼓励功能分支直接进入 `main`。
+
+当前 `.github/workflows/ci.yml` 是最小质量门禁基线：先覆盖安装、类型、lint、文档、格式、测试与构建；E2E、发布签名、依赖审计留给后续独立 workflow。
 
 ```yaml
 name: ci
 on:
   pull_request:
+    branches: [develop, dev, main]
   push:
     branches: [develop, dev, main]
 
 jobs:
-  ci:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
-        with: { version: 9 }
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'pnpm'
+          node-version-file: .node-version
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test:unit
-      - run: pnpm test:contract
-      - run: pnpm test:integration
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm run docs:lint
+      - run: pnpm run format:check
+      - run: pnpm run test
+      - run: pnpm run build
 ```
 
 ## 4. e2e.yml 草案
@@ -175,7 +179,7 @@ jobs:
 
 ## 11. 待办
 
-- [ ] 提交 `.github/workflows/ci.yml` 模板
+- [x] 提交 `.github/workflows/ci.yml` 最小质量门禁模板（2026-05-15）
 - [ ] 提交 `.github/workflows/release.yml` 模板（含签名步骤占位）
 - [ ] 起草 `scripts/sign-macos.sh` / `scripts/sign-windows.ps1`
 - [ ] 评估 Turborepo remote cache 是否启用
