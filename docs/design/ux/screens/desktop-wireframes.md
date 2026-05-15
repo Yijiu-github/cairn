@@ -335,7 +335,7 @@ Settings
 
 ## 12. 组件清单
 
-R1 需要的核心 UI 组件（工程映射见 [`component-mapping.md`](component-mapping.md)）：
+R1 需要的核心 UI 组件（工程映射见 [`component-mapping.md`](../components/component-mapping.md)）：
 
 - AppShell
 - SidebarNav
@@ -358,10 +358,10 @@ R1 需要的核心 UI 组件（工程映射见 [`component-mapping.md`](componen
 
 当前随文档提交 4 张可预览 SVG 低保真图：
 
-- [Home / Inbox](design-assets/desktop-home.svg)
-- [Run Detail](design-assets/desktop-run-detail.svg)
-- [First Launch Wizard](design-assets/desktop-first-launch.svg)
-- [Runtime Status](design-assets/desktop-runtime-status.svg)
+- [Home / Inbox](../assets/wireframes/desktop-home.svg)
+- [Run Detail](../assets/wireframes/desktop-run-detail.svg)
+- [First Launch Wizard](../assets/wireframes/desktop-first-launch.svg)
+- [Runtime Status](../assets/wireframes/desktop-runtime-status.svg)
 
 这些图不是最终视觉稿，而是给工程实现和后续高保真设计使用的信息结构基线。
 

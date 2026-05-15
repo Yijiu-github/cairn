@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" role="img" aria-labelledby="title desc">
+  <title id="title">Cairn UI Visual Reference V1 - 设置</title>
+  <desc id="desc">Cairn 设置 中文主界面视觉参考。</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="55%" stop-color="#eef4ff"/>
+      <stop offset="100%" stop-color="#f7f3ff"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <style>
+      .ui { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      .mono { font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .title { font-weight: 760; fill: #0f172a; }
+      .muted { fill: #64748b; }
+      .soft { fill: #94a3b8; }
+      .panel { fill: rgba(255,255,255,0.88); stroke: #dbe3ef; }
+      .card { fill: #ffffff; stroke: #dbe3ef; }
+      .hair { stroke: #e2e8f0; stroke-width: 1; }
+      .blue { fill: #2563eb; }
+      .green { fill: #16a34a; }
+      .amber { fill: #d97706; }
+      .red { fill: #dc2626; }
+      .purple { fill: #7c3aed; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="960" fill="url(#bg)"/>
+  <rect x="60" y="54" width="1320" height="852" rx="32" class="panel" filter="url(#shadow)"/>
+  <rect x="60" y="54" width="1320" height="64" rx="32" fill="#ffffff"/>
+  <rect x="60" y="86" width="1320" height="32" fill="#ffffff"/>
+  <text x="96" y="94" class="ui title" font-size="22">Cairn</text>
+  <text x="174" y="94" class="ui muted" font-size="14">设置</text>
+  <rect x="60" y="118" width="236" height="788" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="108" y="177" class="ui muted" font-size="15">待处理</text><text x="108" y="225" class="ui muted" font-size="15">运行</text><text x="108" y="273" class="ui muted" font-size="15">任务</text><text x="108" y="321" class="ui muted" font-size="15">产物</text><text x="108" y="369" class="ui muted" font-size="15">运行时</text><text x="108" y="417" class="ui muted" font-size="15">活动</text><rect x="84" y="440" width="188" height="40" rx="12" fill="#eff6ff"/><text x="108" y="465" class="ui blue" font-size="15" font-weight="700">设置</text>
+  
+  <text x="344" y="168" class="ui title" font-size="34">设置</text>
+  <text x="346" y="204" class="ui muted" font-size="15">管理语言、运行时、本地路径、权限和隐私。</text>
+  <rect x="344" y="248" width="260" height="560" rx="24" class="card"/>
+  <text x="378" y="298" class="ui blue" font-size="15" font-weight="760">偏好设置</text>
+  <text x="378" y="344" class="ui muted" font-size="15">运行时</text><text x="378" y="390" class="ui muted" font-size="15">工作区路径</text><text x="378" y="436" class="ui muted" font-size="15">安全与权限</text><text x="378" y="482" class="ui muted" font-size="15">隐私与数据</text><text x="378" y="528" class="ui muted" font-size="15">更新</text>
+  <rect x="632" y="248" width="648" height="560" rx="24" class="card"/>
+  <text x="672" y="302" class="ui title" font-size="22">偏好设置</text>
+  <line x1="672" y1="334" x2="1240" y2="334" class="hair"/>
+  <text x="672" y="386" class="ui title" font-size="15">界面语言</text>
+  <text x="672" y="412" class="ui muted" font-size="13">中文为主，英文可切换。切换后立即生效。</text>
+  <rect x="1032" y="372" width="92" height="36" rx="12" fill="#eff6ff"/><text x="1050" y="395" class="ui blue" font-size="13" font-weight="760">简体中文</text>
+  <rect x="1134" y="372" width="72" height="36" rx="12" fill="#f8fafc" stroke="#dbe3ef"/><text x="1152" y="395" class="ui muted" font-size="13">English</text>
+  <line x1="672" y1="456" x2="1240" y2="456" class="hair"/>
+  <text x="672" y="506" class="ui title" font-size="15">鼠标悬停效果</text>
+  <text x="672" y="532" class="ui muted" font-size="13">可点击控件 hover 时轻微阴影和 1px 上浮；键盘焦点使用 focus ring。</text>
+  <rect x="1112" y="492" width="94" height="36" rx="18" fill="#2563eb"/><circle cx="1188" cy="510" r="14" fill="#ffffff"/>
+  <line x1="672" y1="578" x2="1240" y2="578" class="hair"/>
+  <text x="672" y="628" class="ui title" font-size="15">诊断导出</text>
+  <text x="672" y="654" class="ui muted" font-size="13">默认复制脱敏状态；导出诊断包前提示本地路径可能包含个人信息。</text>
+  <rect x="1050" y="616" width="156" height="38" rx="13" fill="#f8fafc" stroke="#dbe3ef"/><text x="1082" y="640" class="ui muted" font-size="13">复制脱敏状态</text>
+  <rect x="672" y="710" width="534" height="54" rx="18" fill="#fef2f2" stroke="#fecaca"/><text x="700" y="743" class="ui red" font-size="13" font-weight="760">危险区：重置工作区、清理产物、暴露 token 等动作必须二次确认。</text>
+</svg>

@@ -1,7 +1,7 @@
 # UI 视觉参考 V1 / Visual Reference V1
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-15  
+> 状态：🟡 Draft
+> 最后更新：2026-05-15
 > 来源：手写 SVG，未使用 image2。
 > 语言策略：中文为主，英文可切换；现有英文图作为英文 locale 参考。
 
@@ -30,9 +30,9 @@
 
 ### 3.1 Home / Inbox
 
-![Home / Inbox 中文主界面参考](design-assets/ui-v1-home-inbox-zh.svg)
+![Home / Inbox 中文主界面参考](../assets/visual-v1/ui-v1-home-inbox-zh.svg)
 
-英文 locale 参考：[`ui-v1-home-inbox.svg`](design-assets/ui-v1-home-inbox.svg)
+英文 locale 参考：[`ui-v1-home-inbox.svg`](../assets/visual-v1/ui-v1-home-inbox.svg)
 
 重点：
 
@@ -42,7 +42,7 @@
 
 ### 3.2 Run Detail
 
-![Run Detail](design-assets/ui-v1-run-detail.svg)
+![Run Detail](../assets/visual-v1/ui-v1-run-detail.svg)
 
 重点：
 
@@ -52,7 +52,7 @@
 
 ### 3.3 Artifact Detail
 
-![Artifact Detail](design-assets/ui-v1-artifact-detail.svg)
+![Artifact Detail](../assets/visual-v1/ui-v1-artifact-detail.svg)
 
 重点：
 
@@ -62,7 +62,7 @@
 
 ### 3.4 First Launch
 
-![First Launch](design-assets/ui-v1-first-launch.svg)
+![First Launch](../assets/visual-v1/ui-v1-first-launch.svg)
 
 重点：
 
@@ -72,13 +72,69 @@
 
 ### 3.5 Runtime Status
 
-![Runtime Status](design-assets/ui-v1-runtime-status.svg)
+![Runtime Status](../assets/visual-v1/ui-v1-runtime-status.svg)
 
 重点：
 
 - Workspace Core 与 Codex CLI Runtime 分成两个健康面，避免“系统挂了”时无法定位。
 - Queue & failures 把运行中/阻塞状态和最近失败直接暴露。
 - Diagnostics 操作默认强调 redacted status 与 diagnostic bundle，符合本地优先的信任边界。
+
+### 3.6 Run List
+
+![Run List](../assets/visual-v1/ui-v1-run-list-zh.svg)
+
+重点：阻塞/失败优先，筛选清楚，行 hover 显示轻阴影与主操作。
+
+### 3.7 Activity Timeline
+
+![Activity Timeline](../assets/visual-v1/ui-v1-activity-timeline-zh.svg)
+
+重点：跨运行事件复盘、审计与来源跳转，不替代 Run Detail。
+
+### 3.8 Task Explorer
+
+![Task Explorer](../assets/visual-v1/ui-v1-task-explorer-zh.svg)
+
+重点：跨 run 查任务、看依赖与 attempt，快速回到来源 run。
+
+### 3.9 Replay View
+
+![Replay View](../assets/visual-v1/ui-v1-replay-view-zh.svg)
+
+重点：按时间重播 run 的关键事件和产物快照，只观察，不修改历史。
+
+### 3.10 Settings
+
+![Settings](../assets/visual-v1/ui-v1-settings-zh.svg)
+
+重点：语言、hover/focus、诊断脱敏和危险区都明确可见。
+
+### 3.11 Component States
+
+![Component States](../assets/components/ui-v1-component-states-zh.svg)
+
+重点：把 hover、focus-visible、loading、empty、error 与 danger confirmation 做成统一状态语言。
+
+### 3.12 Detail Themes
+
+![Command Menu](../assets/detail-themes/ui-v1-command-menu-zh.svg)
+
+![Protected Action](../assets/detail-themes/ui-v1-protected-action-zh.svg)
+
+![Diagnostic Export](../assets/detail-themes/ui-v1-diagnostic-export-zh.svg)
+
+![Appearance and Language](../assets/detail-themes/ui-v1-appearance-language-zh.svg)
+
+![Empty and Error Detail](../assets/detail-themes/ui-v1-empty-error-detail-zh.svg)
+
+重点：补齐命令入口、危险确认、诊断导出、外观语言、空错态这些非页面但高频出现的细节主题。
+
+### 3.13 Common Components
+
+![Common Components](../assets/components/ui-v1-common-components-zh.svg)
+
+重点：统一 Button、Input、Badge、Card、Dialog、Toast、Tooltip、Table、Progress、Skeleton 等常用组件，避免页面设计发散。
 
 ## 4. 初版视觉规则
 
@@ -101,6 +157,6 @@
 
 ## 6. 变更历史
 
-| 日期       | 变更                                                                                   |
-| ---------- | -------------------------------------------------------------------------------------- |
-| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 五张视觉参考 SVG |
+| 日期       | 变更                                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十七张视觉参考 SVG |

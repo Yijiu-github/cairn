@@ -1,7 +1,7 @@
 # 设计调研与优化说明 / Research & Optimization Notes
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-15  
+> 状态：🟡 Draft
+> 最后更新：2026-05-15
 > 范围：Release 1 Personal Desktop Edition 的 UX 设计补强。本文不是视觉稿来源记录；当前 SVG 仍是手写低保真线框，不是 image2 生成图。
 
 ---

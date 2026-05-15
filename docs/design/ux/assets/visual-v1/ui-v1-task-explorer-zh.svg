@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" role="img" aria-labelledby="title desc">
+  <title id="title">Cairn UI Visual Reference V1 - 任务探索器</title>
+  <desc id="desc">Cairn 任务探索器 中文主界面视觉参考。</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="55%" stop-color="#eef4ff"/>
+      <stop offset="100%" stop-color="#f7f3ff"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <style>
+      .ui { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      .mono { font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .title { font-weight: 760; fill: #0f172a; }
+      .muted { fill: #64748b; }
+      .soft { fill: #94a3b8; }
+      .panel { fill: rgba(255,255,255,0.88); stroke: #dbe3ef; }
+      .card { fill: #ffffff; stroke: #dbe3ef; }
+      .hair { stroke: #e2e8f0; stroke-width: 1; }
+      .blue { fill: #2563eb; }
+      .green { fill: #16a34a; }
+      .amber { fill: #d97706; }
+      .red { fill: #dc2626; }
+      .purple { fill: #7c3aed; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="960" fill="url(#bg)"/>
+  <rect x="60" y="54" width="1320" height="852" rx="32" class="panel" filter="url(#shadow)"/>
+  <rect x="60" y="54" width="1320" height="64" rx="32" fill="#ffffff"/>
+  <rect x="60" y="86" width="1320" height="32" fill="#ffffff"/>
+  <text x="96" y="94" class="ui title" font-size="22">Cairn</text>
+  <text x="174" y="94" class="ui muted" font-size="14">任务探索器</text>
+  <rect x="60" y="118" width="236" height="788" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="108" y="177" class="ui muted" font-size="15">待处理</text><text x="108" y="225" class="ui muted" font-size="15">运行</text><rect x="84" y="248" width="188" height="40" rx="12" fill="#eff6ff"/><text x="108" y="273" class="ui blue" font-size="15" font-weight="700">任务</text><text x="108" y="321" class="ui muted" font-size="15">产物</text><text x="108" y="369" class="ui muted" font-size="15">运行时</text><text x="108" y="417" class="ui muted" font-size="15">活动</text><text x="108" y="465" class="ui muted" font-size="15">设置</text>
+  
+  <text x="344" y="168" class="ui title" font-size="34">任务探索器</text>
+  <text x="346" y="204" class="ui muted" font-size="15">跨运行检索 Task，适合回看“上次那个失败的迁移任务”。</text>
+  <rect x="344" y="236" width="936" height="48" rx="16" class="card"/>
+  <text x="374" y="266" class="ui soft" font-size="13">搜索任务标题、状态、artifact、trace id…</text>
+  
+  <rect x="344" y="294" width="444" height="112" rx="22" class="card"/>
+  <text x="374" y="328" class="ui title" font-size="16">迁移 scheduler 状态枚举</text>
+  <text x="374" y="356" class="ui muted" font-size="13">等待接管 · run_01 · attempt 2</text>
+  <text x="690" y="328" class="ui" font-size="13" fill="#d97706" font-weight="760">已阻塞</text>
+  <text x="374" y="386" class="ui blue" font-size="13">打开任务 →</text>
+  <rect x="344" y="426" width="444" height="112" rx="22" class="card"/>
+  <text x="374" y="460" class="ui title" font-size="16">补全 i18n key 规范</text>
+  <text x="374" y="488" class="ui muted" font-size="13">已产出文档 · run_02 · attempt 1</text>
+  <text x="690" y="460" class="ui" font-size="13" fill="#16a34a" font-weight="760">已完成</text>
+  <text x="374" y="518" class="ui blue" font-size="13">打开任务 →</text>
+  <rect x="344" y="558" width="444" height="112" rx="22" class="card"/>
+  <text x="374" y="592" class="ui title" font-size="16">验证 artifact registry</text>
+  <text x="374" y="620" class="ui muted" font-size="13">正在运行测试 · run_03 · attempt 1</text>
+  <text x="690" y="592" class="ui" font-size="13" fill="#2563eb" font-weight="760">运行中</text>
+  <text x="374" y="650" class="ui blue" font-size="13">打开任务 →</text>
+  <rect x="344" y="690" width="444" height="112" rx="22" class="card"/>
+  <text x="374" y="724" class="ui title" font-size="16">整理安装错误文案</text>
+  <text x="374" y="752" class="ui muted" font-size="13">依赖前置任务 · run_04 · attempt 1</text>
+  <text x="690" y="724" class="ui" font-size="13" fill="#64748b" font-weight="760">排队中</text>
+  <text x="374" y="782" class="ui blue" font-size="13">打开任务 →</text>
+  <rect x="838" y="294" width="442" height="508" rx="24" class="card"/>
+  <text x="872" y="338" class="ui title" font-size="18">任务预览</text>
+  <text x="872" y="374" class="ui muted" font-size="13">选中任务后显示上下文、依赖、attempt、最近 trace 和产物。</text>
+  <line x1="872" y1="410" x2="1244" y2="410" class="hair"/>
+  <text x="872" y="450" class="ui title" font-size="14">依赖</text><text x="872" y="478" class="ui muted" font-size="13">Read docs → Inspect contracts → Implement</text>
+  <text x="872" y="528" class="ui title" font-size="14">最近事件</text><text x="872" y="556" class="mono muted" font-size="12">protected_write_request</text>
+  <text x="872" y="606" class="ui title" font-size="14">交互</text><text x="872" y="634" class="ui muted" font-size="12">单击选中，Enter 打开详情；可从这里 Retry task 或 Add instruction。</text>
+</svg>

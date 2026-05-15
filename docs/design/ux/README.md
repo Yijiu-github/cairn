@@ -1,29 +1,44 @@
 # UX Design
 
-存放与界面、信息架构、关键流程相关的设计文档。
+> 状态：🟡 Draft
+> 最后更新：2026-05-15
+> 范围：Cairn Desktop/Web 共享 UX、视觉方向、组件规格与设计资产。
 
-## 文件（计划）
+---
 
-| 文件                                 | 作用                                           | 状态     |
-| ------------------------------------ | ---------------------------------------------- | -------- |
-| `information-architecture.md`        | 导航结构、页面层级、URL/路由                   | 🟡 Draft |
-| `screen-inventory.md`                | 屏幕清单 + 每屏责任 + 桌面/Web 差异            | 🟡 Draft |
-| `key-flows.md`                       | 关键流程（新建 run、接管、回放、retry、rerun） | 🟡 Draft |
-| `desktop-wireframes.md`              | 桌面端低保真线框稿                             | 🟡 Draft |
-| `design-system-notes.md`             | R1 设计系统基线、状态色、组件清单              | 🟡 Draft |
-| `component-mapping.md`               | UX 页面/组件到工程边界与契约草案               | 🟡 Draft |
-| `research-and-optimization-notes.md` | 竞品/实践调研、设计优化方向与回填清单          | 🟡 Draft |
-| `visual-reference-v1.md`             | UI 第一版视觉参考图与视觉规则                  | 🟡 Draft |
+## 目录结构
 
-## 与其他目录的关系
+| 目录                           | 作用                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------- |
+| [`foundations/`](foundations/) | 设计原则、信息架构、tokens、i18n、调研笔记                                |
+| [`screens/`](screens/)         | 页面清单、线框图、V1 视觉参考                                             |
+| [`flows/`](flows/)             | 关键流程、页面交互、细节主题                                              |
+| [`components/`](components/)   | 常用组件、组件状态、空错态、实现映射                                      |
+| [`assets/`](assets/)           | SVG 设计资产，按 wireframes / visual-v1 / components / detail-themes 分类 |
 
-- 输入：`../../product/target-users-and-scenarios.md`、`../设计文档V0.1.0.md`
-- 输出：影响 `packages/ui/` 的组件层和 `apps/desktop` / `apps/web` 的页面结构
+## 推荐阅读顺序
 
-## 设计稿
+1. [`foundations/research-and-optimization-notes.md`](foundations/research-and-optimization-notes.md)
+2. [`foundations/information-architecture.md`](foundations/information-architecture.md)
+3. [`screens/screen-inventory.md`](screens/screen-inventory.md)
+4. [`screens/visual-reference-v1.md`](screens/visual-reference-v1.md)
+5. [`components/common-components-v1.md`](components/common-components-v1.md)
+6. [`components/component-state-specs-v1.md`](components/component-state-specs-v1.md)
+7. [`flows/detail-themes-v1.md`](flows/detail-themes-v1.md)
+8. [`foundations/layout-grid.md`](foundations/layout-grid.md)
+9. [`foundations/motion.md`](foundations/motion.md)
+10. [`foundations/accessibility.md`](foundations/accessibility.md)
 
-当前仓库内先落低保真文字线框稿：[`desktop-wireframes.md`](desktop-wireframes.md)。后续 Figma / Sketch 高保真稿应引用这些文档作为信息结构基线。
+## 设计原则摘要
 
-可预览 SVG 放在 [`design-assets/`](design-assets/)：Home / Inbox、Run Detail、First Launch、Runtime Status。
+- Cairn 是本地优先的工程任务控制台，不是聊天工具。
+- 默认语言为 `zh-CN`，支持 `en-US` 切换。
+- 用户可见文案必须走 i18n key。
+- 状态不能只靠颜色表达，必须有 icon + label。
+- Hover 和 keyboard focus 分离：hover 可轻微阴影/上浮，focus 必须有 focus ring。
+- 危险动作必须明确影响范围，并使用二次确认。
+- SVG 是仓库内版本化设计资产；PNG 仅用于预览，不提交。
 
-不要把大尺寸位图直接提交到仓库；如确需提交轻量 SVG / Mermaid / PNG，请放入 `design-assets/` 并在对应文档中说明来源与用途。
+## 资产来源
+
+详见 [`assets/README.md`](assets/README.md)。当前 V1 视觉参考均为手写 SVG，未使用 image2。

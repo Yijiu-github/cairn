@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" role="img" aria-labelledby="title desc">
+  <title id="title">Cairn UI Visual Reference V1 - 回放视图</title>
+  <desc id="desc">Cairn 回放视图 中文主界面视觉参考。</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="55%" stop-color="#eef4ff"/>
+      <stop offset="100%" stop-color="#f7f3ff"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <style>
+      .ui { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      .mono { font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .title { font-weight: 760; fill: #0f172a; }
+      .muted { fill: #64748b; }
+      .soft { fill: #94a3b8; }
+      .panel { fill: rgba(255,255,255,0.88); stroke: #dbe3ef; }
+      .card { fill: #ffffff; stroke: #dbe3ef; }
+      .hair { stroke: #e2e8f0; stroke-width: 1; }
+      .blue { fill: #2563eb; }
+      .green { fill: #16a34a; }
+      .amber { fill: #d97706; }
+      .red { fill: #dc2626; }
+      .purple { fill: #7c3aed; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="960" fill="url(#bg)"/>
+  <rect x="60" y="54" width="1320" height="852" rx="32" class="panel" filter="url(#shadow)"/>
+  <rect x="60" y="54" width="1320" height="64" rx="32" fill="#ffffff"/>
+  <rect x="60" y="86" width="1320" height="32" fill="#ffffff"/>
+  <text x="96" y="94" class="ui title" font-size="22">Cairn</text>
+  <text x="174" y="94" class="ui muted" font-size="14">回放视图</text>
+  <rect x="60" y="118" width="236" height="788" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="108" y="177" class="ui muted" font-size="15">待处理</text><text x="108" y="225" class="ui muted" font-size="15">运行</text><text x="108" y="273" class="ui muted" font-size="15">任务</text><text x="108" y="321" class="ui muted" font-size="15">产物</text><text x="108" y="369" class="ui muted" font-size="15">运行时</text><rect x="84" y="392" width="188" height="40" rx="12" fill="#eff6ff"/><text x="108" y="417" class="ui blue" font-size="15" font-weight="700">活动</text><text x="108" y="465" class="ui muted" font-size="15">设置</text>
+  
+  <text x="344" y="168" class="ui title" font-size="34">回放视图</text>
+  <text x="346" y="204" class="ui muted" font-size="15">按时间重播 run 的关键事件、产物快照和接管决策。</text>
+  <rect x="344" y="248" width="936" height="410" rx="28" fill="#0f172a"/>
+  <text x="384" y="302" class="ui" font-size="18" font-weight="760" fill="#ffffff">09:36 · 任务进入阻塞状态</text>
+  <text x="384" y="338" class="ui" font-size="14" fill="#cbd5e1">Agent 请求写入受保护路径，需要人类批准。</text>
+  <rect x="384" y="384" width="390" height="174" rx="20" fill="#172033" stroke="#334155"/>
+  <text x="414" y="424" class="mono" font-size="13" fill="#fde68a">protected_write_request</text>
+  <text x="414" y="456" class="mono" font-size="12" fill="#cbd5e1">target: packages/shared_contracts/...</text>
+  <text x="414" y="486" class="mono" font-size="12" fill="#cbd5e1">effect: waiting_for_operator</text>
+  <rect x="822" y="384" width="390" height="174" rx="20" fill="#172033" stroke="#334155"/>
+  <text x="852" y="424" class="ui" font-size="14" font-weight="760" fill="#ffffff">同一时刻的证据</text>
+  <text x="852" y="456" class="ui" font-size="13" fill="#cbd5e1">patch.diff 已生成，但尚未审阅。</text>
+  <rect x="344" y="700" width="936" height="88" rx="24" class="card"/>
+  <text x="374" y="734" class="ui title" font-size="14">播放控制</text>
+  <text x="374" y="762" class="ui muted" font-size="13">Space 播放/暂停；左右键跳转事件；拖动时间轴预览事件；点击产物快照进入 Artifact Detail。</text>
+  <rect x="374" y="810" width="874" height="8" rx="4" fill="#e2e8f0"/><rect x="374" y="810" width="340" height="8" rx="4" fill="url(#brand)"/><circle cx="714" cy="814" r="12" fill="#2563eb"/>
+</svg>
