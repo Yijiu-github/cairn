@@ -116,6 +116,20 @@
 
 重点：把 hover、focus-visible、loading、empty、error 与 danger confirmation 做成统一状态语言。
 
+### 3.12 Detail Themes
+
+![Command Menu](design-assets/ui-v1-command-menu-zh.svg)
+
+![Protected Action](design-assets/ui-v1-protected-action-zh.svg)
+
+![Diagnostic Export](design-assets/ui-v1-diagnostic-export-zh.svg)
+
+![Appearance and Language](design-assets/ui-v1-appearance-language-zh.svg)
+
+![Empty and Error Detail](design-assets/ui-v1-empty-error-detail-zh.svg)
+
+重点：补齐命令入口、危险确认、诊断导出、外观语言、空错态这些非页面但高频出现的细节主题。
+
 ## 4. 初版视觉规则
 
 | 项       | V1 规则                                       |
@@ -139,4 +153,4 @@
 
 | 日期       | 变更                                                                                     |
 | ---------- | ---------------------------------------------------------------------------------------- |
-| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十一张视觉参考 SVG |
+| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十六张视觉参考 SVG |
