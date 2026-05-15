@@ -115,8 +115,20 @@ docs(readme): add commit rules / 补充提交规则
 
 当前**自动强校验主要覆盖标题**。正文中的 `CN:` / `EN:` 双语块属于团队规范，当前阶段以人工 review 为主。
 
-## 8. 关联文档
+## 8. 分支与 PR 规则
+
+提交前必须确认当前分支和 PR 目标符合仓库 Git 工作流：
+
+- 禁止直接提交到 `main`。
+- 普通功能、修复、文档、设计分支不得直接 PR 到 `main`。
+- 所有非发布/非紧急修复分支必须先 PR 到 `dev` / `develop`。
+- 当前远端已有 `origin/develop`；如果后续统一为 `dev`，以 [`git-workflow.md`](./git-workflow.md) 更新为准。
+
+如果 PR base 误选为 `main`，应在 review 前改回 `dev` / `develop`。
+
+## 9. 关联文档
 
 - 仓库贡献入口：[`../../CONTRIBUTING.md`](../../CONTRIBUTING.md)
+- Git 工作流：[`./git-workflow.md`](./git-workflow.md)
 - 工程规范：[`./coding-standards.md`](./coding-standards.md)
 - 本地开发：[`./local-dev-setup.md`](./local-dev-setup.md)
