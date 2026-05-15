@@ -16,6 +16,8 @@ export type CairnArtifactKind =
   | 'log'
   | 'diagnostic'
   | 'other';
+export type CairnArtifactPathDisplayMode = 'hidden' | 'relative' | 'full';
+export type CairnArtifactSensitivity = 'none' | 'local_path' | 'secret_risk';
 
 export interface CairnComponentAction {
   readonly disabled?: boolean;

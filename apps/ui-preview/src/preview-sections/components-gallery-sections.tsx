@@ -137,7 +137,9 @@ export function GalleryProductComponentsSection() {
           artifactId={componentsGalleryViewModel.product.artifact.artifactId}
           kind="document"
           path={componentsGalleryViewModel.product.artifact.path}
+          pathDisplayMode="relative"
           reviewState="pending_review"
+          sensitivity="none"
           summary={componentsGalleryViewModel.product.artifact.summary}
           title={componentsGalleryViewModel.product.artifact.title}
           verification={componentsGalleryViewModel.product.artifact.verification}

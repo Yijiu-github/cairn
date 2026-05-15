@@ -102,7 +102,9 @@ export function RunArtifactsSection() {
             key={artifact.artifactId}
             kind={artifact.kind}
             path={artifact.path}
+            pathDisplayMode="relative"
             reviewState={artifact.reviewState}
+            sensitivity={artifact.sensitivity}
             summary={artifact.summary}
             title={artifact.title}
             verification={artifact.verification}

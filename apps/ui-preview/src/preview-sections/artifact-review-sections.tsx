@@ -64,12 +64,8 @@ export function ArtifactOverviewSection() {
         <Button variant="secondary">打开源文件</Button>
       </div>
       <div className="grid two">
-        {artifactReviewViewModel.relatedArtifacts.map((artifact) => {
-          const sensitiveProps =
-            artifact.sensitivity === 'none' ? {} : { sensitive: true };
-
-          return (
-            <ArtifactCard
+        {artifactReviewViewModel.relatedArtifacts.map((artifact) => (
+          <ArtifactCard
               key={artifact.artifactId}
               actions={[
                 { label: '查看', tone: 'primary' },
@@ -80,14 +76,15 @@ export function ArtifactOverviewSection() {
               artifactId={artifact.artifactId}
               kind={artifact.kind}
               path={artifact.path}
+              pathDisplayMode="relative"
+              redactionLabel="本地路径已隐藏"
               reviewState={artifact.reviewState}
+              sensitivity={artifact.sensitivity}
               summary={artifact.summary}
               title={artifact.title}
               verification={artifact.verification}
-              {...sensitiveProps}
             />
-          );
-        })}
+        ))}
       </div>
     </section>
   );
