@@ -113,10 +113,11 @@ Cairn 的桌面端应像“工程任务控制台”，而不是传统聊天应�
 │ Activity     │ Context: [Working dir] [Attach files] [Acceptance criteria]│
 │ Settings     │ Runtime: Codex default                       [Create Run] │
 │              │                                                             │
-│              │ Needs attention                                             │
+│              │ Handoff queue                                              │
 │              │ ┌──────────────────────┐ ┌──────────────────────┐          │
-│              │ │ Run blocked          │ │ Runtime warning      │          │
-│              │ │ Approve file write   │ │ Codex auth expires   │          │
+│              │ │ Approve file write   │ │ Review patch         │          │
+│              │ │ Run blocked · 8m     │ │ 3 checks passed      │          │
+│              │ │ [Approve once]       │ │ [Accept] [Changes]   │          │
 │              │ └──────────────────────┘ └──────────────────────┘          │
 │              │                                                             │
 │              │ Recent runs                                                 │
@@ -136,6 +137,17 @@ Cairn 的桌面端应像“工程任务控制台”，而不是传统聊天应�
 3. Context attachments
 4. Acceptance criteria
 5. Runtime / risk level
+6. Expected evidence：tests、diff、screenshot、summary 等期望产物
+
+### 4.2 Handoff Queue 卡片
+
+每张卡片至少显示：
+
+- 来源 run / task / artifact
+- 阻塞或待审阅原因
+- 等待时长
+- 推荐主操作
+- 次操作：Open run、View trace、Dismiss（仅非阻塞提醒）
 
 ## 5. Run List
 
@@ -172,8 +184,12 @@ Cairn 的桌面端应像“工程任务控制台”，而不是传统聊天应�
 │        │                    │ │ npm test …                │ │ patch.diff    │
 │        │                    │ └──────────────────────────┘ │ notes.md      │
 │        │                    │                              │               │
-│        │                    │ Intervention                 │ Metadata      │
-│        │                    │ ┌──────────────────────────┐ │ run_01…       │
+│        │                    │ Evidence                      │ Metadata      │
+│        │                    │ tests.log · patch.diff      │ run_01…       │
+│        │                    │                              │               │
+│        │                    │ Intervention                 │               │
+│        │                    │ ┌──────────────────────────┐ │               │
+│        │                    │ │ Effect: applies next      │ │               │
 │        │                    │ │ Add instruction…          │ │               │
 │        │                    │ └──────────────────────────┘ │               │
 └────────┴────────────────────┴──────────────────────────────┴───────────────┘
@@ -201,6 +217,14 @@ Cairn 的桌面端应像“工程任务控制台”，而不是传统聊天应�
 ◌ queued task
 ↻ retrying / attempt > 1
 ```
+
+### 6.3 Intervention Composer 的 Effect 标识
+
+| Effect       | 含义                               | 示例                            |
+| ------------ | ---------------------------------- | ------------------------------- |
+| Applies now  | 提交后立即影响调度                 | approve once、cancel、retry now |
+| Applies next | 进入下一次 planning / retry 上下文 | add instruction then retry      |
+| Records only | 仅记录 decision/note               | 备注观察结果                    |
 
 ## 7. Artifact Detail
 

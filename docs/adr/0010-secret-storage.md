@@ -41,11 +41,11 @@
 
 ### 平台映射
 
-| 平台 | safeStorage 底层 |
-|---|---|
-| macOS | Keychain |
-| Windows | DPAPI（保护 per-user） |
-| Linux | libsecret（如可用），否则降级为"基本"模式（仍加密但无 OS 保护） |
+| 平台    | safeStorage 底层                                                |
+| ------- | --------------------------------------------------------------- |
+| macOS   | Keychain                                                        |
+| Windows | DPAPI（保护 per-user）                                          |
+| Linux   | libsecret（如可用），否则降级为"基本"模式（仍加密但无 OS 保护） |
 
 ### 命名空间
 
@@ -53,7 +53,7 @@ OS 凭据存储中的条目统一前缀 **`cairn:`**，便于卸载时手动清�
 
 例：
 
-```
+```text
 cairn:workspace:<workspace_id>:provider:openai
 cairn:workspace:<workspace_id>:remote-auth
 ```
@@ -114,12 +114,14 @@ secrets: {
 ### 脱敏中间件
 
 `@cairn/observability` 提供的 logger 必须默认脱敏以下字段名：
+
 - `apiKey`, `api_key`, `token`, `authorization`, `password`, `secret`, `key`
 - 任何 `cairn:*` 命名空间下的值
 
 ### 卸载用户提示（在 install-guide.md / uninstall 引导）
 
 > 卸载 Cairn 不会自动从系统钥匙串删除你的 provider API key。如需完全清理：
+>
 > - macOS：打开「钥匙串访问」，搜索 `cairn:`，删除条目
 > - Windows：打开「凭据管理器」，找到 `cairn:` 开头的条目并删除
 
@@ -133,6 +135,6 @@ secrets: {
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |

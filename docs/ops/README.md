@@ -4,13 +4,13 @@
 
 ## 文件
 
-| 文件 | 作用 | 状态 |
-|---|---|---|
-| `install-guide.md` | Windows / macOS 安装步骤、首次启动权限说明 | 🟡 Draft |
-| `user-guide.md` | 概念入门 + 端到端教程 | ⚪ TODO |
-| `troubleshooting.md` | 常见问题排错（sidecar 启动失败 / 签名警告 / 代理 / API key） | 🟡 Draft |
-| `faq.md` | 高频问题快速答 | ⚪ TODO |
-| `support-channels.md` | 反馈渠道（GitHub Issues / Discussions / 邮件） | ⚪ TODO |
+| 文件                  | 作用                                                         | 状态     |
+| --------------------- | ------------------------------------------------------------ | -------- |
+| `install-guide.md`    | Windows / macOS 安装步骤、首次启动权限说明                   | 🟡 Draft |
+| `user-guide.md`       | 概念入门 + 端到端教程                                        | ⚪ TODO  |
+| `troubleshooting.md`  | 常见问题排错（sidecar 启动失败 / 签名警告 / 代理 / API key） | 🟡 Draft |
+| `faq.md`              | 高频问题快速答                                               | ⚪ TODO  |
+| `support-channels.md` | 反馈渠道（GitHub Issues / Discussions / 邮件）               | ⚪ TODO  |
 
 ## 写作原则
 

@@ -4,12 +4,12 @@
 
 ## 文件
 
-| 文件 | 作用 | 状态 |
-|---|---|---|
-| `runtime-adapter.md` | RuntimeAdapter 接口契约：submit / cancel / stream / capabilities / error 规范化 | 🟡 Draft |
-| `workspace-core-api.md` | Workspace Core 的 HTTP API（OpenAPI 派生） | ⚪ TODO |
-| `websocket-events.md` | run / task / trace 流式事件协议 | ⚪ TODO |
-| `shared-types.md` | `packages/shared_contracts` 内 Zod schema 总览 | ⚪ TODO |
+| 文件                    | 作用                                                                            | 状态     |
+| ----------------------- | ------------------------------------------------------------------------------- | -------- |
+| `runtime-adapter.md`    | RuntimeAdapter 接口契约：submit / cancel / stream / capabilities / error 规范化 | 🟡 Draft |
+| `workspace-core-api.md` | Workspace Core 的 HTTP API（OpenAPI 派生）                                      | ⚪ TODO  |
+| `websocket-events.md`   | run / task / trace 流式事件协议                                                 | ⚪ TODO  |
+| `shared-types.md`       | `packages/shared_contracts` 内 Zod schema 总览                                  | ⚪ TODO  |
 
 ## 契约 vs 实现
 

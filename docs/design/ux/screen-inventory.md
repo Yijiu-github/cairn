@@ -167,13 +167,13 @@
 
 **桌面特有状态**：
 
-| 状态 | 用户看到 | 主操作 |
-| ---- | -------- | ------ |
-| Core starting | 正在启动本地 core，显示启动阶段 | 等待 / Open logs |
-| Core unhealthy | 最近错误 + 日志入口 | Restart core / diagnostics |
-| Runtime not found | Codex CLI 未找到 | Browse path / setup guide |
-| Runtime auth required | Codex 需要登录 | Open terminal guide |
-| Queue stuck | 队列有任务但无推进 | Open Activity / diagnostics |
+| 状态                  | 用户看到                        | 主操作                      |
+| --------------------- | ------------------------------- | --------------------------- |
+| Core starting         | 正在启动本地 core，显示启动阶段 | 等待 / Open logs            |
+| Core unhealthy        | 最近错误 + 日志入口             | Restart core / diagnostics  |
+| Runtime not found     | Codex CLI 未找到                | Browse path / setup guide   |
+| Runtime auth required | Codex 需要登录                  | Open terminal guide         |
+| Queue stuck           | 队列有任务但无推进              | Open Activity / diagnostics |
 
 ## 3. P1 屏幕简述
 
@@ -205,14 +205,14 @@
 
 ## 5. P0 验收检查清单
 
-| 屏幕 | R1 设计验收点 |
-| ---- | ------------- |
-| First Launch | 用户能看懂本地目录、core、runtime 三件事分别是什么 |
-| Home / Inbox | 新建 run、待接管事项、runtime 健康三者同屏可见 |
-| Run List | blocked / failed run 在列表中比 completed 更突出 |
-| Run Detail | 不看 Activity 全局页也能完成观察、接管、重试、查看 artifact |
-| Artifact Detail | 每个 artifact 都能追溯到 run / task / agent run / trace |
-| Runtime Status | 用户能复制脱敏状态给维护者，不泄露 token / 完整敏感路径 |
+| 屏幕            | R1 设计验收点                                               |
+| --------------- | ----------------------------------------------------------- |
+| First Launch    | 用户能看懂本地目录、core、runtime 三件事分别是什么          |
+| Home / Inbox    | 新建 run、待接管事项、runtime 健康三者同屏可见              |
+| Run List        | blocked / failed run 在列表中比 completed 更突出            |
+| Run Detail      | 不看 Activity 全局页也能完成观察、接管、重试、查看 artifact |
+| Artifact Detail | 每个 artifact 都能追溯到 run / task / agent run / trace     |
+| Runtime Status  | 用户能复制脱敏状态给维护者，不泄露 token / 完整敏感路径     |
 
 ## 6. 桌面/Web 差异清单
 

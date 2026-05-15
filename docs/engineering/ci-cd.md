@@ -13,13 +13,13 @@
 
 ## 2. Workflow 总览
 
-| Workflow | 触发 | 目的 |
-|---|---|---|
-| `ci.yml` | PR / push to `main` | lint + typecheck + unit + contract + integration |
-| `e2e.yml` | PR / 定时（每日） | Playwright + Electron / Web E2E |
-| `release.yml` | git tag `v*` | 构建 + 签名 + 公证 + 发布到 GitHub Releases |
-| `audit.yml` | 每周 cron | 依赖审计、license 检查、license-checker 输出 |
-| `docs.yml` | docs/** 变更 | 校验链接、构建静态站点（如启用） |
+| Workflow      | 触发                | 目的                                             |
+| ------------- | ------------------- | ------------------------------------------------ |
+| `ci.yml`      | PR / push to `main` | lint + typecheck + unit + contract + integration |
+| `e2e.yml`     | PR / 定时（每日）   | Playwright + Electron / Web E2E                  |
+| `release.yml` | git tag `v*`        | 构建 + 签名 + 公证 + 发布到 GitHub Releases      |
+| `audit.yml`   | 每周 cron           | 依赖审计、license 检查、license-checker 输出     |
+| `docs.yml`    | docs/\*\* 变更      | 校验链接、构建静态站点（如启用）                 |
 
 ## 3. ci.yml 草案
 
@@ -130,12 +130,12 @@ jobs:
 
 ## 6. Secrets
 
-| Secret | 用途 |
-|---|---|
-| `MACOS_CERT_P12` / `MACOS_CERT_PASSWORD` | macOS Developer ID 证书 |
-| `APPLE_ID` / `APPLE_APP_PASSWORD` / `APPLE_TEAM_ID` | notarytool |
-| `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` | Windows 云签名 |
-| `RELEASE_GITHUB_TOKEN` | 发布到 GitHub Releases（必要时） |
+| Secret                                                        | 用途                             |
+| ------------------------------------------------------------- | -------------------------------- |
+| `MACOS_CERT_P12` / `MACOS_CERT_PASSWORD`                      | macOS Developer ID 证书          |
+| `APPLE_ID` / `APPLE_APP_PASSWORD` / `APPLE_TEAM_ID`           | notarytool                       |
+| `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` | Windows 云签名                   |
+| `RELEASE_GITHUB_TOKEN`                                        | 发布到 GitHub Releases（必要时） |
 
 **绝不**：
 
@@ -150,12 +150,12 @@ jobs:
 
 ## 8. 构建产物
 
-| 平台 | 产物 |
-|---|---|
-| macOS | `Cairn-<version>-arm64.dmg` + `.zip`（备用） |
-| Windows | `Cairn-Setup-<version>.exe` + `.msi`（备用） |
-| Linux（远程模式 server） | `cairn-workspace-core-<version>.tar.gz` |
-| 更新 manifest | `manifest.json` |
+| 平台                     | 产物                                         |
+| ------------------------ | -------------------------------------------- |
+| macOS                    | `Cairn-<version>-arm64.dmg` + `.zip`（备用） |
+| Windows                  | `Cairn-Setup-<version>.exe` + `.msi`（备用） |
+| Linux（远程模式 server） | `cairn-workspace-core-<version>.tar.gz`      |
+| 更新 manifest            | `manifest.json`                              |
 
 ## 9. 版本与 tag 流程
 
@@ -180,6 +180,6 @@ jobs:
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |

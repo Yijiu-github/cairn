@@ -35,13 +35,13 @@ Open App
 
 ### First Launch 失败降级
 
-| 失败点 | UI 反馈 | 可继续吗 | 主操作 |
-| ------ | ------- | -------- | ------ |
-| 目录不可写 | 标出路径与权限原因 | 否 | Choose another folder |
-| Core 启动失败 | 显示最近 20 行 core log | 否 | Open logs / retry |
-| Codex 未安装 | Runtime card 显示 Not found | 是 | Browse / install later |
-| Codex 未登录 | 显示 Auth required | 是，只读/草稿模式 | Open setup guide |
-| 健康检查超时 | 标为 Degraded | 是 | Run diagnostics again |
+| 失败点        | UI 反馈                     | 可继续吗          | 主操作                 |
+| ------------- | --------------------------- | ----------------- | ---------------------- |
+| 目录不可写    | 标出路径与权限原因          | 否                | Choose another folder  |
+| Core 启动失败 | 显示最近 20 行 core log     | 否                | Open logs / retry      |
+| Codex 未安装  | Runtime card 显示 Not found | 是                | Browse / install later |
+| Codex 未登录  | 显示 Auth required          | 是，只读/草稿模式 | Open setup guide       |
+| 健康检查超时  | 标为 Degraded               | 是                | Run diagnostics again  |
 
 ## 2. 新建 Run 流程
 
@@ -116,12 +116,12 @@ Run Detail
 
 Intervention Composer 根据目标对象变化，但保持同一套提交语义：
 
-| 目标对象 | 默认标题 | 必填内容 | 立即影响 | 记录 |
-| -------- | -------- | -------- | -------- | ---- |
-| Run | Add note to run | note body | 不改变调度；下一轮 summary 可读取 | `OperatorNote` + `TraceEvent` |
-| Task | Add instruction to task | instruction body | 追加到 task context；可选择 retry | `OperatorAction` + `TraceEvent` |
-| AgentRun | Stop / retry agent run | reason 或 instruction | best-effort cancel 或新 attempt | `OperatorAction` + `TraceEvent` |
-| Protected step | Approve / reject protected action | approve/reject + optional reason | 放行或阻断该 step | `OperatorAction` + `TraceEvent` |
+| 目标对象       | 默认标题                          | 必填内容                         | 立即影响                          | 记录                            |
+| -------------- | --------------------------------- | -------------------------------- | --------------------------------- | ------------------------------- |
+| Run            | Add note to run                   | note body                        | 不改变调度；下一轮 summary 可读取 | `OperatorNote` + `TraceEvent`   |
+| Task           | Add instruction to task           | instruction body                 | 追加到 task context；可选择 retry | `OperatorAction` + `TraceEvent` |
+| AgentRun       | Stop / retry agent run            | reason 或 instruction            | best-effort cancel 或新 attempt   | `OperatorAction` + `TraceEvent` |
+| Protected step | Approve / reject protected action | approve/reject + optional reason | 放行或阻断该 step                 | `OperatorAction` + `TraceEvent` |
 
 表单必须显示目标对象、当前状态、风险说明和提交后会发生什么；不能让用户误以为 note 一定会立刻中断正在执行的子进程。
 
@@ -216,7 +216,43 @@ Settings / Updates
 
 R1 不做自动后台更新，避免签名、权限、失败恢复复杂度过早膨胀。
 
-## 9. 变更历史
+## 9. Artifact 审阅与变更请求流程
+
+```text
+Artifact created
+  → Artifact appears in Run Detail Evidence rail
+  → User opens Artifact Detail
+  → Inspect preview + provenance + verification refs
+  → Accept / Reject / Request changes
+  → Core records review decision
+  → Optional: create follow-up task or rerun with selected artifacts
+```
+
+### 审阅状态
+
+| 状态       | 含义                         | 可用操作                          |
+| ---------- | ---------------------------- | --------------------------------- |
+| unreviewed | agent 已生成，但人类尚未看过 | Accept / Reject / Request changes |
+| accepted   | 人类认可，可作为后续上下文   | Reuse / Export                    |
+| rejected   | 不应作为可信输出使用         | Request changes / Rerun           |
+| superseded | 被更新版本替代               | Open newer artifact               |
+
+## 10. On-the-loop 策略调整流程
+
+```text
+User notices repeated failure / drift
+  → Open Run Detail / Settings Runtime Policy
+  → Adjust acceptance criteria, risk level, retry policy, runtime profile or task template
+  → Save as applies-next decision
+  → Future retry / rerun reads updated policy
+```
+
+### 与 In-the-loop 的区别
+
+- In-the-loop：批准、拒绝或审阅某个具体步骤。
+- On-the-loop：调整系统下一轮如何计划、验证或接管。
+
+## 11. 变更历史
 
 | 日期       | 变更 |
 | ---------- | ---- |

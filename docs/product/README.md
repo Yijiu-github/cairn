@@ -4,14 +4,14 @@
 
 ## 文件
 
-| 文件 | 作用 | 状态 |
-|---|---|---|
-| `vision.md` | 3–5 年愿景与"成功长什么样" | 🟡 Draft |
-| `positioning-and-boundaries.md` | 是什么 / 不是什么、第一原则、不做清单 | 🟡 Draft |
-| `target-users-and-scenarios.md` | 3 类核心用户画像 + 高价值场景 | 🟡 Draft |
-| `competitive-landscape.md` | 对比竞品、差异化定位 | ⚪ TODO |
-| `business-model.md` | 开源策略 / 商业化方式 / telemetry 策略 | 🟡 Draft |
-| `roadmap.md` | Release 1/2/3 时间盒与功能切片 | 🟡 Draft |
+| 文件                            | 作用                                   | 状态     |
+| ------------------------------- | -------------------------------------- | -------- |
+| `vision.md`                     | 3–5 年愿景与"成功长什么样"             | 🟡 Draft |
+| `positioning-and-boundaries.md` | 是什么 / 不是什么、第一原则、不做清单  | 🟡 Draft |
+| `target-users-and-scenarios.md` | 3 类核心用户画像 + 高价值场景          | 🟡 Draft |
+| `competitive-landscape.md`      | 对比竞品、差异化定位                   | ⚪ TODO  |
+| `business-model.md`             | 开源策略 / 商业化方式 / telemetry 策略 | 🟡 Draft |
+| `roadmap.md`                    | Release 1/2/3 时间盒与功能切片         | 🟡 Draft |
 
 ## 阅读顺序
 

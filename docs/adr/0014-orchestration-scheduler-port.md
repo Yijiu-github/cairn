@@ -49,12 +49,7 @@ ADR-0004 已经决定采用 LangGraph JS 作为编排底座，并明确"产品�
 ```ts
 // packages/application/orchestration/scheduler-port.ts
 
-import type {
-  OrchestrationRunId,
-  OrchestrationRun,
-  TaskId,
-  AgentRunId,
-} from '@cairn/domain';
+import type { OrchestrationRunId, OrchestrationRun, TaskId, AgentRunId } from '@cairn/domain';
 
 /**
  * 编排调度端口。
@@ -107,15 +102,15 @@ export interface OrchestrationScheduler {
 
 `tests/contract/scheduler-conformance.spec.ts` 必须覆盖：
 
-| 场景 | 期望 |
-|---|---|
-| `enqueue` → 短任务跑完 | run → succeeded，artifacts 与 trace 写入 |
-| `cancel` 运行中 run | 在 ≤ 2s 内停止，状态 → cancelled，子 AgentRun 触发 cancel |
-| `pause` 运行中 → `resume` | 状态正确转移 |
-| `retryTask` 失败 task | attempt+1，新 AgentRun 启动 |
-| sidecar 崩溃后重启 | running 状态的 AgentRun 中 lease 过期者 → lost；run 不卡死 |
-| 部分失败 run | run → succeeded，`has_partial_failures=true`，`result_completeness=partial` |
-| 长 run（≥ 30 min mock）中断恢复 | 状态正确恢复，trace 完整 |
+| 场景                            | 期望                                                                        |
+| ------------------------------- | --------------------------------------------------------------------------- |
+| `enqueue` → 短任务跑完          | run → succeeded，artifacts 与 trace 写入                                    |
+| `cancel` 运行中 run             | 在 ≤ 2s 内停止，状态 → cancelled，子 AgentRun 触发 cancel                   |
+| `pause` 运行中 → `resume`       | 状态正确转移                                                                |
+| `retryTask` 失败 task           | attempt+1，新 AgentRun 启动                                                 |
+| sidecar 崩溃后重启              | running 状态的 AgentRun 中 lease 过期者 → lost；run 不卡死                  |
+| 部分失败 run                    | run → succeeded，`has_partial_failures=true`，`result_completeness=partial` |
+| 长 run（≥ 30 min mock）中断恢复 | 状态正确恢复，trace 完整                                                    |
 
 **两个实现必须都通过同一套测试**。任意一个挂掉都不发版。
 
@@ -193,6 +188,6 @@ export const schedulerImpl = (process.env.CAIRN_SCHEDULER_IMPL ?? 'langgraph_js'
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更                                                 |
+| ---------- | ---------------------------------------------------- |
 | 2026-05-14 | 初版，扩展 ADR-0004 提出的"保留替换可能"为可执行接口 |

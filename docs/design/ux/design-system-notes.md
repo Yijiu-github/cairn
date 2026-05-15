@@ -87,7 +87,19 @@
 
 中文界面后续本地化时，也保持直接、克制、可操作。
 
-## 9. 变更历史
+## 9. Evidence / Review 语义
+
+| Token             | 用途                                       | 备注                              |
+| ----------------- | ------------------------------------------ | --------------------------------- |
+| `evidence`        | 测试日志、截图、diff、summary 等证明性产物 | 不等同于成功，需配合 review state |
+| `review-pending`  | 待人类审阅                                 | 可用 warning 但文案必须明确       |
+| `review-accepted` | 已接受                                     | 可作为后续上下文                  |
+| `review-rejected` | 已拒绝                                     | 不应默认复用                      |
+| `sensitive`       | 敏感路径、token、secret 摘要               | 复制/导出需要提示或脱敏           |
+
+Cost / latency badge 应保持克制，仅在 Run Detail Inspector、Run List 展开状态或 diagnostics 中显示，避免首页制造焦虑。
+
+## 10. 变更历史
 
 | 日期       | 变更 |
 | ---------- | ---- |

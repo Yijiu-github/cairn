@@ -12,20 +12,20 @@
 
 ## 1. 发版前检查（Release Blocking）
 
-| 检查项 | 必须 |
-|---|---|
-| `main` 分支 CI 全绿 | ✅ |
-| E2E 全平台跑过 | ✅ |
-| CHANGELOG 已更新（含本次变更） | ✅ |
-| 版本号已在 `package.json` 中 bump | ✅ |
-| 涉及 schema 变更已写迁移并双方言测试 | ✅ |
-| 涉及破坏性变更已在 CHANGELOG 标记 `BREAKING CHANGE` | ✅ |
-| 第三方依赖审计无 critical 漏洞 | ✅ |
-| `docs/legal/third-party-notices.md` 已更新 | ✅ |
-| 签名证书未过期 | ✅ |
-| Apple Developer 账号会籍有效 | ✅ |
-| 升级 manifest 服务可访问 | ✅ |
-| 备份当前生产环境（如适用） | ⚠️ Release 2+ |
+| 检查项                                              | 必须          |
+| --------------------------------------------------- | ------------- |
+| `main` 分支 CI 全绿                                 | ✅            |
+| E2E 全平台跑过                                      | ✅            |
+| CHANGELOG 已更新（含本次变更）                      | ✅            |
+| 版本号已在 `package.json` 中 bump                   | ✅            |
+| 涉及 schema 变更已写迁移并双方言测试                | ✅            |
+| 涉及破坏性变更已在 CHANGELOG 标记 `BREAKING CHANGE` | ✅            |
+| 第三方依赖审计无 critical 漏洞                      | ✅            |
+| `docs/legal/third-party-notices.md` 已更新          | ✅            |
+| 签名证书未过期                                      | ✅            |
+| Apple Developer 账号会籍有效                        | ✅            |
+| 升级 manifest 服务可访问                            | ✅            |
+| 备份当前生产环境（如适用）                          | ⚠️ Release 2+ |
 
 ## 2. 发版步骤
 
@@ -127,21 +127,21 @@ GitHub Releases 自动暴露下载 URL。
 
 ## 5. 签名材料管理
 
-| 材料 | 位置 | 续期 |
-|---|---|---|
-| Apple Developer 账号 | 个人 Apple ID | 每年 |
-| Developer ID Application 证书 | macOS Keychain + GitHub Secrets | 每 5 年 |
-| Windows 云签名订阅 | Azure / DigiCert 控制台 | 按订阅周期 |
+| 材料                          | 位置                            | 续期       |
+| ----------------------------- | ------------------------------- | ---------- |
+| Apple Developer 账号          | 个人 Apple ID                   | 每年       |
+| Developer ID Application 证书 | macOS Keychain + GitHub Secrets | 每 5 年    |
+| Windows 云签名订阅            | Azure / DigiCert 控制台         | 按订阅周期 |
 
 **至少在到期 30 天前提醒续期**。在团队日历 / GitHub Issue 设置提醒。
 
 ## 6. 发版节奏建议
 
-| 类型 | 节奏 |
-|---|---|
+| 类型                     | 节奏           |
+| ------------------------ | -------------- |
 | Patch（0.X.Y → 0.X.Y+1） | 按需，1–2 周内 |
-| Minor（0.X → 0.X+1） | 4–6 周 |
-| Major（0.X → 1.0） | 重大里程碑 |
+| Minor（0.X → 0.X+1）     | 4–6 周         |
+| Major（0.X → 1.0）       | 重大里程碑     |
 
 避免：
 
@@ -157,6 +157,6 @@ GitHub Releases 自动暴露下载 URL。
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |

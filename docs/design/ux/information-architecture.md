@@ -134,9 +134,11 @@ Task tree 是 run 的结构骨架。每个节点至少显示：
 Inspector 永远用于解释“为什么现在是这样”：
 
 - Trace timeline
-- 关联 artifact
-- 失败层级
-- operator notes
+- 关联 artifact / evidence
+- 失败层级与 first failure
+- 因果链：artifact / failure 的上游 task、agent run、tool call
+- 成本与延迟：task / agent run / tool call 粒度的耗时、token、retry 次数
+- operator notes / decisions
 - raw metadata（默认折叠）
 
 ## 5. 桌面端特有页面/状态
@@ -164,6 +166,18 @@ Inspector 永远用于解释“为什么现在是这样”：
 
 Runtime Status 页面不替代 Run Detail；它解释“系统能不能跑”，Run Detail 解释“这个 run 为什么这样”。
 
+### 5.4 Handoff Queue
+
+Home / Inbox 与 Run Header 都要暴露待处理交接队列，避免用户在多个页面里找“我现在该做什么”。
+
+| 队列项           | 来源对象         | 主操作                   | 说明                            |
+| ---------------- | ---------------- | ------------------------ | ------------------------------- |
+| Protected action | Run / AgentRun   | Approve once / Reject    | 只对当前步骤放行                |
+| Failed task      | Task / AgentRun  | Retry / Add instruction  | 显示失败层级与 attempt          |
+| Review artifact  | Artifact         | Accept / Request changes | 显示 provenance 与 verification |
+| Runtime issue    | Runtime / Core   | Configure / Diagnostics  | 链接 Runtime Status             |
+| Ambiguous plan   | OrchestrationRun | Choose option            | planner 需要用户确认范围        |
+
 ### 5.3 Native Integration
 
 桌面端设置增加：
@@ -188,14 +202,14 @@ R2 Web Shell 不新增协作语义，只改变运行环境：
 
 ## 7. 文档一致性检查
 
-| 设计对象 | 信息架构位置 | 屏幕清单 | 关键流程 | 线框稿 |
-| -------- | ------------ | -------- | -------- | ------ |
-| First Launch | §5.1 | §2.1 | §1 | `desktop-first-launch.svg` |
-| Home / Inbox | `/` | §2.2 | §2 | `desktop-home.svg` |
-| Run Detail | `/runs/:runId` | §2.4 | §3–§5 | `desktop-run-detail.svg` |
-| Runtime Status | `/agents` | §2.6 | §1 / diagnostics | `desktop-runtime-status.svg` |
-| Artifact Detail | `/artifacts/:artifactId` | §2.5 | §6 | 文字线框待高保真补充 |
-| Replay | `/runs/:runId/replay` | §3.3 | §7 | 文字线框待高保真补充 |
+| 设计对象        | 信息架构位置             | 屏幕清单 | 关键流程         | 线框稿                       |
+| --------------- | ------------------------ | -------- | ---------------- | ---------------------------- |
+| First Launch    | §5.1                     | §2.1     | §1               | `desktop-first-launch.svg`   |
+| Home / Inbox    | `/`                      | §2.2     | §2               | `desktop-home.svg`           |
+| Run Detail      | `/runs/:runId`           | §2.4     | §3–§5            | `desktop-run-detail.svg`     |
+| Runtime Status  | `/agents`                | §2.6     | §1 / diagnostics | `desktop-runtime-status.svg` |
+| Artifact Detail | `/artifacts/:artifactId` | §2.5     | §6               | 文字线框待高保真补充         |
+| Replay          | `/runs/:runId/replay`    | §3.3     | §7               | 文字线框待高保真补充         |
 
 ## 8. 导航优先级
 

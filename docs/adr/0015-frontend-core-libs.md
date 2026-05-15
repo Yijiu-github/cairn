@@ -131,7 +131,15 @@ export const logger = pino({
             : undefined,
       }),
   redact: {
-    paths: ['*.apiKey', '*.api_key', '*.token', '*.authorization', '*.password', '*.secret', 'token'],
+    paths: [
+      '*.apiKey',
+      '*.api_key',
+      '*.token',
+      '*.authorization',
+      '*.password',
+      '*.secret',
+      'token',
+    ],
     censor: '[REDACTED]',
   },
 });
@@ -162,6 +170,6 @@ export const logger = pino({
 
 ## 变更历史
 
-| 日期 | 变更 |
-|---|---|
+| 日期       | 变更 |
+| ---------- | ---- |
 | 2026-05-14 | 初版 |
