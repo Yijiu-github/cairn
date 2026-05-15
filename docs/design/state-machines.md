@@ -51,6 +51,17 @@ cancelled   failed     paused◄──►running  failed
 - `synthesizing → succeeded | failed`
 - 终态（`succeeded` / `failed` / `cancelled` / `timeout`）**不可再转出**
 
+### 1.3 Planning 可观察性
+
+`planning` 阶段必须产出可观察事件与 planning artifact：
+
+- 进入 planning 时写 `run.planning_started` TraceEvent。
+- 生成 Goal Planner 输出后写 `run.planning_completed` TraceEvent，并将 artifact id 写入 `OrchestrationRun.planner_output_ref`。
+- 如果无法规划，写 `run.planning_blocked` 或 `run.planning_failed` TraceEvent，并在 planning artifact 中记录 `blockedReason`。
+- 因 stale context、前置条件缺失、runtime 失败或 operator 请求触发新一轮规划时，必须新建 OrchestrationRun，并在新 run 的 planning artifact 中记录 `replanReason`。
+
+Planning 输出只解释 action tree、preconditions、blocked reason 与 replan reason；实际执行仍由 Task 状态机推进。
+
 ## 2. Task 状态机
 
 ### 2.1 状态枚举
@@ -135,6 +146,7 @@ cancelled   cancelled  cancelled/timeout │
 - replan 必须走"新 run"路径
 - retry 受 Task 的 `retryable` 字段限制
 - retry / rerun / replan 都必须写 TraceEvent，便于事后回看
+- replan 必须在新 run 的 planning artifact 中写明 `replanReason`，并可引用上一轮 run / failed task / stale ContextPack 作为证据。
 
 ---
 
@@ -226,6 +238,7 @@ while (running) {
 
 ## 变更历史
 
-| 日期       | 变更                                                    |
-| ---------- | ------------------------------------------------------- |
-| 2026-05-14 | 初版，从 V0.1.0 §11 抽出并补充 lease/heartbeat 与不变量 |
+| 日期       | 变更                                                             |
+| ---------- | ---------------------------------------------------------------- |
+| 2026-05-15 | 补充 planning artifact、blocked reason 与 replan reason 可观察性 |
+| 2026-05-14 | 初版，从 V0.1.0 §11 抽出并补充 lease/heartbeat 与不变量          |

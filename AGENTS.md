@@ -35,12 +35,13 @@
 当用户向你提出任务时，按以下顺序补充上下文：
 
 1. `README.md`（项目门面）
-2. `docs/product/positioning-and-boundaries.md`（产品边界——避免做错方向）
-3. `docs/reference/glossary.md`（术语统一——避免误用 Agent / Task / Run 等概念）
-4. `docs/design/设计文档V0.1.0.md`（**主稿**，唯一权威设计）
-5. 任务相关的具体文档（见 `docs/README.md` 的"我想……去看"路由表）
-6. 相关 ADR（`docs/adr/`）
-7. 需要 AI 协作、上下文整理、接口设计、文档/ADR 或 review gate 时，读 `docs/engineering/agent-collaboration.md`
+2. `docs/STATUS.md`（当前可用能力、测试基线、R1 已完成 / 未完成范围）
+3. `docs/product/positioning-and-boundaries.md`（产品边界——避免做错方向）
+4. `docs/reference/glossary.md`（术语统一——避免误用 Agent / Task / Run 等概念）
+5. `docs/design/设计文档V0.1.0.md`（**主稿**，唯一权威设计）
+6. 任务相关的具体文档（见 `docs/README.md` 的"我想……去看"路由表）
+7. 相关 ADR（`docs/adr/`）
+8. 需要 AI 协作、上下文整理、接口设计、文档/ADR 或 review gate 时，读 `docs/engineering/agent-collaboration.md`
 
 不要跳过 §2-3，否则极易踩"产品边界"。
 

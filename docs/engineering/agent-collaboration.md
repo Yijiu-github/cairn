@@ -102,7 +102,50 @@ ADR 规则：
 
 Review 输出优先列问题，再给总结。没有发现问题时，也要说明剩余风险或未覆盖测试。
 
-## 7. Frontend Gate
+## 7. Review Risk Gate
+
+每次提交前先给 diff 做风险分类。这个 gate 未来可以成为海棠 QA 的固定检查入口。
+
+### 7.1 风险分级
+
+| 等级    | 典型 diff                                                       | 最低验证要求                                       |
+| ------- | --------------------------------------------------------------- | -------------------------------------------------- |
+| Low     | 文档、注释、非行为性测试说明、README 索引                       | `pnpm run docs:lint`、`git diff --check`           |
+| Medium  | 单包内部逻辑、局部 API 调用、UI 非关键路径                      | 相关包 `typecheck` / `lint` / `test` + diff check  |
+| High    | schema、API、迁移、状态机、runtime、storage、安全边界、跨包流程 | `pnpm run check` + 相关包测试 + 设计/ADR/CHANGELOG |
+| Release | 签名、安装器、更新、数据迁移、隐私/遥测、远程部署               | High 要求 + release playbook / 手动回滚说明        |
+
+风险取最高项，不按文件数量平均。例如只改一行 migration 也属于 High。
+
+### 7.2 变更提示清单
+
+出现以下任一项时，review 必须显式说明：
+
+- **Schema / DB**：新增字段、枚举、索引、迁移、默认值、兼容旧数据策略。
+- **API / Contract**：请求/响应字段、错误码、状态码、WS event、runtime adapter 接口变化。
+- **State Machine**：状态、转移、终态不变量、retry/rerun/replan 语义变化。
+- **Security / Privacy**：secret、token、文件系统访问、loopback auth、诊断导出、遥测 payload。
+- **Artifact / Trace**：大 payload、源码片段、路径、日志、保留/导出策略。
+- **Docs / ADR**：产品范围、设计、契约、安装、排错、发布、CHANGELOG 是否同步。
+- **UI / Desktop Bridge**：是否绕过 Workspace Core，是否引入桌面专属业务语义。
+- **Dependency / Tooling**：新依赖、原生模块、Node 版本、CI 命令、构建缓存变化。
+
+### 7.3 Review 输出模板
+
+```text
+Risk: Low | Medium | High | Release
+Changed surfaces: schema/API/storage/runtime/security/docs/UI/...
+Required verification run:
+- ...
+Docs updated:
+- ...
+Residual risk:
+- ...
+```
+
+如果 review 发现问题，按严重程度列 findings；如果没有发现问题，也要保留 `Residual risk`。
+
+## 8. Frontend Gate
 
 Desktop / Web UI 主线稳定前，本节作为占位；一旦 UI 进入可运行状态，UI PR 至少满足：
 
@@ -113,7 +156,7 @@ Desktop / Web UI 主线稳定前，本节作为占位；一旦 UI 进入可运�
 - 可访问性基础：键盘可达、语义标签、焦点状态、颜色对比。
 - 不把桌面桥接能力当业务捷径；所有协作语义仍走 Workspace Core。
 
-## 8. 外部 Skill 参考边界
+## 9. 外部 Skill 参考边界
 
 外部 skill 仓库可以用于调研和启发，但落地时遵守：
 
@@ -121,9 +164,12 @@ Desktop / Web UI 主线稳定前，本节作为占位；一旦 UI 进入可运�
 - 不引入外部仓库代码或文本作为产品依赖；如需 vendoring，必须确认许可证并保留声明。
 - 只把适合 Cairn 的 checklist 改写进项目文档。
 - 对涉及 OpenAI、Electron、Fastify、Drizzle、SQLite、React 等会变化的信息，优先查官方文档。
+- 后续参考项目统一记录在 [`../reference/external-project-radar.md`](../reference/external-project-radar.md)，进入对应阶段时再复查。
 
-## 9. 变更历史
+## 10. 变更历史
 
-| 日期       | 变更                                                        |
-| ---------- | ----------------------------------------------------------- |
-| 2026-05-15 | 初版：整理 context、contract、docs、review 与 frontend gate |
+| 日期       | 变更                                                         |
+| ---------- | ------------------------------------------------------------ |
+| 2026-05-15 | 新增 review risk gate：diff 风险分级、变更提示清单与 QA 模板 |
+| 2026-05-15 | 补充外部项目参考雷达入口                                     |
+| 2026-05-15 | 初版：整理 context、contract、docs、review 与 frontend gate  |

@@ -16,6 +16,7 @@ Cairn 会自研一个**轻量代码上下文索引**，用于把用户选择的�
 1. 帮助 Supervisor 在规划 Task 时找到相关文件、符号与依赖线索。
 2. 帮助 Worker 收到更小、更准的 `ContextPack`，避免把整个仓库粗暴塞进 prompt。
 3. 帮助 UI 和 Operator 解释“为什么这个 run 看了这些文件”。
+4. 帮助 Goal Planner 把 action tree、preconditions、blocked reason、replan reason 绑定到可追溯的文件、符号、依赖边与 ContextPack 证据。
 
 边界也很明确：
 
@@ -106,7 +107,27 @@ Storage
 
 ---
 
-## 5. R1 范围
+## 5. Goal Planner 集成
+
+Code Context 不直接决定 OrchestrationRun 的执行计划，但它必须为 planning 输出提供证据。
+
+Goal Planner 使用 ContextPack 时，应记录：
+
+- action tree 中每个 action / Task 主要依赖哪些 `ContextPackItem`。
+- preconditions 由哪些文件、符号、依赖边、用户说明或上轮 TraceEvent 支撑。
+- blocked reason 是否来自缺失代码上下文、索引 stale、文件 digest 变化、权限不足或 SourceRoot 不可达。
+- replan reason 是否来自 stale ContextPack、失败 task、operator note 或 runtime failure。
+
+R1 落地边界：
+
+- 只在 planning artifact 中保存引用和理由，不把源码内容复制进 planner JSON。
+- `ContextPackItem.reason` 与 `confidence` 是 Goal Planner 可解释性的最低要求。
+- stale context 先作为 `blockedReason.code = "stale_context"` 或 `replanReason.trigger = "stale_context"` 表达，不引入复杂自动重规划循环。
+- 不做可视化 workflow builder；UI 只展示 planning 解释、阻塞原因和可选 operator action。
+
+---
+
+## 6. R1 范围
 
 R1 先做“够用且稳定”的本地索引：
 
@@ -150,7 +171,7 @@ R1b-a 已完成：
 
 ---
 
-## 6. 索引策略
+## 7. 索引策略
 
 ### 扫描规则
 
@@ -176,7 +197,7 @@ R1 可以先用手动 reindex + run 前 freshness check。
 
 ---
 
-## 7. ContextPack 结构草案
+## 8. ContextPack 结构草案
 
 ```ts
 interface ContextPackManifest {
@@ -216,7 +237,7 @@ interface ContextPackItem {
 
 ---
 
-## 8. API 草案
+## 9. API 草案
 
 这些 endpoint 只是设计方向，最终以 shared contracts 为准：
 
@@ -232,7 +253,7 @@ interface ContextPackItem {
 
 ---
 
-## 9. 隐私与安全
+## 10. 隐私与安全
 
 - 代码内容默认只留在本机或用户自控的远程 Workspace Core。
 - 不做任何默认云端上传。
@@ -243,7 +264,7 @@ interface ContextPackItem {
 
 ---
 
-## 10. 发布节奏
+## 11. 发布节奏
 
 | 阶段 | 范围                                                                                 | 触发条件                      |
 | ---- | ------------------------------------------------------------------------------------ | ----------------------------- |
@@ -254,7 +275,7 @@ interface ContextPackItem {
 
 ---
 
-## 11. 待决问题
+## 12. 待决问题
 
 - R1 文本索引是否直接依赖 SQLite FTS5，还是先封装 search port 后按环境选择实现？
 - TypeScript / JavaScript outline 使用 TypeScript compiler API 还是 Tree-sitter？
@@ -263,10 +284,11 @@ interface ContextPackItem {
 
 ---
 
-## 12. 变更历史
+## 13. 变更历史
 
 | 日期       | 变更                                                      |
 | ---------- | --------------------------------------------------------- |
+| 2026-05-15 | 补充 Goal Planner 与 ContextPack 证据集成                 |
 | 2026-05-15 | R1b-a 补充 from-code-search 的片段范围与 token 估算语义   |
 | 2026-05-15 | R1b-a 接入基于 code-search 的最小 ContextPack 生成接口    |
 | 2026-05-15 | R1b-a 接入最小 code-search 文件清单搜索接口               |

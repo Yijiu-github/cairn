@@ -35,6 +35,7 @@
 | [SourceRoot](#sourceroot)                       | 用户授权给 Workspace 使用的代码根目录  | 系统 |
 | [CodeContextIndex](#codecontextindex)           | SourceRoot 的派生代码上下文索引        | 系统 |
 | [ContextPack](#contextpack)                     | 给 run / task / runtime 使用的上下文包 | 机制 |
+| [Goal Planner](#goal-planner)                   | 生成 planning artifact 的规划器语义    | 机制 |
 | [Execution Mode](#execution-mode)               | 编排执行模式                           | 概念 |
 | [Retry / Rerun / Replan](#retry--rerun--replan) | 三种不同的"重做"语义                   | 概念 |
 | [Capability Profile](#capability-profile)       | runtime 能力档案                       | 概念 |
@@ -198,6 +199,12 @@ SourceRoot 的派生代码上下文索引，包含文件清单、文本搜索、
 
 给 Planner / Worker / Runtime Adapter 使用的上下文包。它通常包含文件片段、符号 outline、依赖边和用户说明，并作为 Artifact 被 Task 的 `context_refs` 引用。
 
+### Goal Planner
+
+Supervisor 在 `planning` 阶段使用的规划器语义。它输出可回放的 planning artifact，说明本轮 run 的 action tree、preconditions、blocked reason 与 replan reason。
+
+Goal Planner 不是 workflow builder，也不是独立执行状态机；实际执行仍以 OrchestrationRun / Task / AgentRun 状态机为准。
+
 ### Execution Mode
 
 OrchestrationRun 的执行模式：
@@ -276,5 +283,6 @@ OrchestrationRun 在分配 Task 给 Worker 时会参考 Capability Profile。
 
 | 日期       | 变更                                                  |
 | ---------- | ----------------------------------------------------- |
+| 2026-05-15 | 新增 Goal Planner 术语                                |
 | 2026-05-15 | 新增 SourceRoot / CodeContextIndex / ContextPack 术语 |
 | 2026-05-14 | 术语表初版，对齐设计文档 V0.1.0                       |
