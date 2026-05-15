@@ -115,11 +115,12 @@ cairn-workspace/
 │  └─ storage/            ← 已创建：SQLite connection / migration runner 基线
 │  └─ runtime_gateway/    ← 已创建：RuntimeAdapter contract / mock adapter / conformance test 基线
 │  └─ application/        ← 已创建：orchestration service / ports / state progression tests 基线
-│  ui / ... 尚未创建
+│  └─ ui/                 ← 已创建：共享 UI primitives / Cairn product components 基线
+│  ...                    ← 其他包尚未创建
 └─ .github/
 ```
 
-代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前仅创建 `apps/workspace-core`；`apps/desktop` 与 `apps/web` 尚未创建**。
+代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前仅创建 `apps/workspace-core` 与 `packages/ui`；`apps/desktop` 与 `apps/web` 尚未创建**。
 
 ---
 
