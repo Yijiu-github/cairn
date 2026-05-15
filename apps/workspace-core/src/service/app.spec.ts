@@ -258,6 +258,39 @@ describe('workspace-core app', () => {
         sourceRootIds: [sourceRoot.sourceRootId],
         query: 'Find persistence code.',
       });
+
+      const searchContextPackResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/context-packs/from-code-search`,
+        payload: {
+          createdFor: {
+            type: 'task',
+            taskId: task.taskId,
+          },
+          query: 'Find application code.',
+          search: {
+            pathContains: 'application',
+            language: 'typescript',
+            limit: 10,
+          },
+        },
+      });
+
+      expect(searchContextPackResponse.statusCode).toBe(201);
+      expect(searchContextPackResponse.json()).toMatchObject({
+        workspaceId: ids.workspace,
+        sourceRootIds: [sourceRoot.sourceRootId],
+        query: 'Find application code.',
+        items: [
+          {
+            kind: 'file_excerpt',
+            sourceRootId: sourceRoot.sourceRootId,
+            path: 'packages/application/src/index.ts',
+            digest: 'sha256:index',
+            confidence: 'extracted',
+          },
+        ],
+      });
     } finally {
       await app.close();
     }

@@ -7,6 +7,7 @@ import { StartRunBody } from '@cairn/shared-contracts/contracts';
 import {
   CodeSearchQuery,
   ContextPackCreate,
+  ContextPackFromCodeSearchCreate,
   OrchestrationRunId,
   SourceRootCreate,
   SourceRootId,
@@ -235,6 +236,40 @@ export const createWorkspaceCoreApp = async (
     });
 
     return reply.code(201).send(manifest);
+  });
+
+  app.post('/v1/workspaces/:workspaceId/context-packs/from-code-search', async (request, reply) => {
+    const params = WorkspaceId.safeParse(
+      (request.params as Record<string, unknown>)['workspaceId'],
+    );
+    const body = ContextPackFromCodeSearchCreate.safeParse(request.body);
+
+    if (!params.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid workspace id.', params.error.issues));
+    }
+
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid context pack body.', body.error.issues));
+    }
+
+    try {
+      const manifest = await options.container.codeContext.createContextPackFromCodeSearch({
+        workspaceId: params.data,
+        contextPack: body.data,
+      });
+
+      return await reply.code(201).send(manifest);
+    } catch (error) {
+      if (isApplicationError(error) && error.code === 'SOURCE_ROOT_NOT_FOUND') {
+        return reply.code(404).send(toApiError('NOT_FOUND', error.message));
+      }
+
+      throw error;
+    }
   });
 
   app.get('/v1/runs/:runId', async (request, reply) => {

@@ -14,6 +14,7 @@ import {
   CodeSearchQuery,
   CodeSearchResult,
   ContextPackCreate,
+  ContextPackFromCodeSearchCreate,
   ContextPackManifest,
   SourceRoot,
   SourceRootCreate,
@@ -89,6 +90,18 @@ export const contextContract = c.router(
       pathParams: z.object({ workspaceId: WorkspaceId }),
       body: ContextPackCreate,
       summary: 'Create a context pack manifest',
+      responses: {
+        201: ContextPackManifest,
+        ...commonErrorResponses,
+      },
+    },
+
+    createContextPackFromCodeSearch: {
+      method: 'POST',
+      path: '/workspaces/:workspaceId/context-packs/from-code-search',
+      pathParams: z.object({ workspaceId: WorkspaceId }),
+      body: ContextPackFromCodeSearchCreate,
+      summary: 'Create a context pack manifest from lightweight code search results',
       responses: {
         201: ContextPackManifest,
         ...commonErrorResponses,

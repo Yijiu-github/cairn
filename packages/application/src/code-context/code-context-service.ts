@@ -14,6 +14,8 @@ import type {
   CodeSearchQuery,
   CodeSearchResult,
   ContextPackCreate,
+  ContextPackFromCodeSearchCreate,
+  ContextPackItem,
   ContextPackId,
   ContextPackManifest,
   SourceRoot,
@@ -65,6 +67,11 @@ export interface ListSourceRootsInput {
 export interface CreateContextPackInput {
   workspaceId: WorkspaceId;
   contextPack: ContextPackCreate;
+}
+
+export interface CreateContextPackFromCodeSearchInput {
+  workspaceId: WorkspaceId;
+  contextPack: ContextPackFromCodeSearchCreate;
 }
 
 export interface ReindexSourceRootInput {
@@ -248,6 +255,39 @@ export class CodeContextService {
     return manifest;
   }
 
+  async createContextPackFromCodeSearch(
+    input: CreateContextPackFromCodeSearchInput,
+  ): Promise<ContextPackManifest> {
+    if (input.contextPack.search.sourceRootId !== undefined) {
+      await this.assertSourceRootsBelongToWorkspace(input.workspaceId, [
+        input.contextPack.search.sourceRootId,
+      ]);
+    }
+    await this.assertTargetExists(input.contextPack.createdFor);
+
+    const files = await this.repository.searchCodeIndexFiles({
+      workspaceId: input.workspaceId,
+      ...input.contextPack.search,
+    });
+    const sourceRootIds = uniqueSourceRootIds(files);
+    const items = files.map((file): ContextPackItem => toFileContextPackItem(file));
+    const manifest: ContextPackManifest = {
+      contextPackId: this.ids.contextPackId(),
+      workspaceId: input.workspaceId,
+      sourceRootIds,
+      createdFor: input.contextPack.createdFor,
+      query: input.contextPack.query,
+      items,
+      createdAt: toIso(this.clock.now()),
+      ...(input.contextPack.tokenEstimate === undefined
+        ? {}
+        : { tokenEstimate: input.contextPack.tokenEstimate }),
+    };
+
+    await this.repository.createContextPack(manifest);
+    return manifest;
+  }
+
   private async assertSourceRootsBelongToWorkspace(
     workspaceId: WorkspaceId,
     sourceRootIds: SourceRootId[],
@@ -305,3 +345,16 @@ const snapshotStatusRank = (status: CodeIndexSnapshot['status']): number => {
       return 0;
   }
 };
+
+const uniqueSourceRootIds = (files: CodeIndexFile[]): SourceRootId[] => [
+  ...new Set(files.map((file) => file.sourceRootId)),
+];
+
+const toFileContextPackItem = (file: CodeIndexFile): ContextPackItem => ({
+  kind: 'file_excerpt',
+  sourceRootId: file.sourceRootId,
+  path: file.path,
+  digest: file.digest,
+  reason: `Matched indexed file metadata: ${file.path}`,
+  confidence: 'extracted',
+});

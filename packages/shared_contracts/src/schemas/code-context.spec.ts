@@ -7,6 +7,7 @@ import {
   CodeSearchQuery,
   CodeSearchResult,
   ContextPackCreate,
+  ContextPackFromCodeSearchCreate,
   ContextPackManifest,
   SourceRoot,
   SourceRootCreate,
@@ -206,6 +207,23 @@ describe('code context schemas', () => {
     ).toMatchObject({
       sourceRootIds: [],
       items: [],
+    });
+  });
+
+  it('defaults ContextPackFromCodeSearchCreate search options', () => {
+    expect(
+      ContextPackFromCodeSearchCreate.parse({
+        createdFor: {
+          type: 'task',
+          taskId: ids.task,
+        },
+        query: 'Find application code.',
+      }),
+    ).toMatchObject({
+      query: 'Find application code.',
+      search: {
+        limit: 50,
+      },
     });
   });
 });

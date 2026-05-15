@@ -119,12 +119,16 @@ export const CodeIndexSnapshotDetail = z.object({
 });
 export type CodeIndexSnapshotDetail = z.infer<typeof CodeIndexSnapshotDetail>;
 
-export const CodeSearchQuery = z.object({
-  workspaceId: WorkspaceId,
+export const CodeSearchFilters = z.object({
   sourceRootId: SourceRootId.optional(),
   pathContains: z.string().min(1).max(300).optional(),
   language: z.string().min(1).max(64).optional(),
   limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+export type CodeSearchFilters = z.infer<typeof CodeSearchFilters>;
+
+export const CodeSearchQuery = CodeSearchFilters.extend({
+  workspaceId: WorkspaceId,
 });
 export type CodeSearchQuery = z.infer<typeof CodeSearchQuery>;
 
@@ -166,3 +170,11 @@ export const ContextPackCreate = z.object({
   tokenEstimate: z.number().int().nonnegative().optional(),
 });
 export type ContextPackCreate = z.infer<typeof ContextPackCreate>;
+
+export const ContextPackFromCodeSearchCreate = z.object({
+  createdFor: ContextPackTarget,
+  query: z.string().min(1),
+  search: CodeSearchFilters.default({}),
+  tokenEstimate: z.number().int().nonnegative().optional(),
+});
+export type ContextPackFromCodeSearchCreate = z.infer<typeof ContextPackFromCodeSearchCreate>;

@@ -43,6 +43,9 @@ describe('contextContract', () => {
     expect(contextContract.createContextPack.path).toBe(
       '/v1/workspaces/:workspaceId/context-packs',
     );
+    expect(contextContract.createContextPackFromCodeSearch.path).toBe(
+      '/v1/workspaces/:workspaceId/context-packs/from-code-search',
+    );
   });
 });
 

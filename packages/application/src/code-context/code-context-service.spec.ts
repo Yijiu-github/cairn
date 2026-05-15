@@ -321,6 +321,60 @@ describe('CodeContextService', () => {
     });
   });
 
+  it('creates a ContextPack manifest from code search metadata', async () => {
+    const { repository, service } = createHarness();
+    await seedTask(repository);
+    await service.registerSourceRoot({
+      workspaceId: ids.workspace,
+      sourceRoot: {
+        kind: 'local_directory',
+        displayName: 'Cairn',
+        uri: 'file:///G:/Code/cairn',
+        includeGlobs: [],
+        excludeGlobs: [],
+      },
+    });
+    await service.reindexSourceRoot({ sourceRootId: ids.sourceRoot });
+
+    const manifest = await service.createContextPackFromCodeSearch({
+      workspaceId: ids.workspace,
+      contextPack: {
+        createdFor: {
+          type: 'task',
+          taskId: ids.task,
+        },
+        query: 'Find application code.',
+        search: {
+          pathContains: 'application',
+          language: 'typescript',
+          limit: 10,
+        },
+      },
+    });
+
+    expect(manifest).toMatchObject({
+      contextPackId: ids.contextPack,
+      sourceRootIds: [ids.sourceRoot],
+      query: 'Find application code.',
+      items: [
+        {
+          kind: 'file_excerpt',
+          sourceRootId: ids.sourceRoot,
+          path: 'packages/application/src/index.ts',
+          digest: 'sha256:index',
+          confidence: 'extracted',
+        },
+      ],
+    });
+    await expect(repository.getContextPack(ids.contextPack)).resolves.toMatchObject({
+      items: [
+        {
+          path: 'packages/application/src/index.ts',
+        },
+      ],
+    });
+  });
+
   it('rejects ContextPacks that reference SourceRoots outside the workspace', async () => {
     const { service } = createHarness();
 
