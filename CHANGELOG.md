@@ -44,13 +44,12 @@
 - **Code Context R1b-a**：新增 `GET /v1/code-search` 最小文件清单搜索接口，支持按 workspace、SourceRoot、路径片段、语言与 limit 查询最新 ready 快照元数据
 - **Code Context R1b-a**：新增 `POST /v1/workspaces/:workspaceId/context-packs/from-code-search`，可把文件清单搜索结果转换为不含源码内容的 ContextPack manifest 条目
 - **Code Context R1b-a**：`from-code-search` 支持显式 excerpt 行号范围，并在未传 `tokenEstimate` 时基于索引文件大小生成保守 token 估算
-- 新增 AI 协作工程手册 `docs/engineering/agent-collaboration.md`，沉淀上下文工程、契约设计、文档/ADR 与 review gate 清单
+- 新增 AI 协作工程手册 `docs/engineering/agent-collaboration.md`，沉淀上下文工程、契约设计、文档/ADR 路由，并指向 review gate 文档
 - 新增外部项目参考雷达 `docs/reference/external-project-radar.md`，记录 GitNexus、Graphify、Ruflo、agent-skills、Superpowers、OpenAI Skills 等后续阶段性参考入口
 - 新增项目状态页 `docs/STATUS.md`，记录当前可用能力、测试基线、R1 已完成 / 未完成能力与近期主线
 - 新增分支管理设计文档，明确 `main` / `develop` / agent 专项分支 / release / hotfix 的治理边界
 - Orchestration / Code Context 设计补充 Goal Planner 参考：action tree、preconditions、blocked reason 与 replan reason
-- AI 协作工程手册新增 review risk gate，覆盖 diff 风险分级、schema/API/迁移/安全/文档变更提示与 QA 输出模板
-- 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线
+- 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
 
 ### Changed
 

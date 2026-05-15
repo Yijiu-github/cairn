@@ -28,8 +28,13 @@
 1. `repo-layout.md` — 仓库怎么组织
 2. `local-dev-setup.md` — 怎么把代码跑起来
 3. `coding-standards.md` — 怎么写代码不被退回
-4. `git-workflow.md` + `commit-convention.md` — 怎么提 PR
-5. `testing-strategy.md` — 怎么证明你写的是对的
+4. `module-boundaries.md` — 怎么守住包职责与 public/internal API 边界
+5. `git-workflow.md` + `commit-convention.md` — 怎么提 PR
+6. `testing-strategy.md` + `review-gates.md` — 怎么证明你写的是对的、怎么输出 review
+
+维护规范自动化时：
+
+- `standards-automation.md`
 
 发布前：
 
