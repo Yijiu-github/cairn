@@ -28,3 +28,22 @@ export interface CairnMetric {
   readonly label: string;
   readonly value: ReactNode;
 }
+
+export type CairnTaskStatus = 'todo' | 'running' | 'blocked' | 'completed' | 'failed' | 'cancelled';
+export type CairnEvidenceTone = 'info' | 'success' | 'warning' | 'danger' | 'neutral';
+export type CairnAgentStatus =
+  | 'idle'
+  | 'thinking'
+  | 'running'
+  | 'waiting'
+  | 'blocked'
+  | 'failed'
+  | 'done';
+export type CairnProtectedActionKind =
+  | 'file_write'
+  | 'shell'
+  | 'network'
+  | 'token_access'
+  | 'workspace_reset'
+  | 'artifact_delete'
+  | 'other';
