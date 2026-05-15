@@ -12,14 +12,21 @@ import { z } from 'zod';
 
 import { AgentRun, AgentRunStatus } from '../schemas/agent-run.js';
 import { Artifact } from '../schemas/artifact.js';
-import { PaginationQuery, Paginated } from '../schemas/common.js';
-import { WorkspaceId, OrchestrationRunId, TaskId, AgentRunId, ArtifactId } from '../schemas/ids.js';
+import { BudgetHint, PaginationQuery, Paginated } from '../schemas/common.js';
+import {
+  WorkspaceId,
+  OrchestrationRunId,
+  TaskId,
+  AgentRunId,
+  ArtifactId,
+  EventId,
+} from '../schemas/ids.js';
 import {
   OrchestrationRun,
   OrchestrationRunStatus,
   ExecutionMode,
 } from '../schemas/orchestration-run.js';
-import { Task, TaskStatus } from '../schemas/task.js';
+import { Task, TaskKind, TaskStatus } from '../schemas/task.js';
 import { TraceEvent } from '../schemas/trace-event.js';
 
 import { commonErrorResponses } from './_common.js';
@@ -36,14 +43,27 @@ const ListRunsQuery = PaginationQuery.extend({
   conversationId: z.string().optional(),
 });
 
-const StartRunBody = z.object({
+const StartRunTaskBody = z.object({
+  taskKind: TaskKind.default('custom'),
+  title: z.string().min(1).max(200),
+  brief: z.string().min(1),
+  executionProfile: z.string().optional(),
+  priority: z.number().int().min(0).max(100).optional(),
+  contextRefs: z.array(ArtifactId).optional(),
+  budgetHint: BudgetHint.optional(),
+});
+
+export const StartRunBody = z.object({
   /** 触发该 run 的 event id（必须是已写入 DB 的 Event） */
-  originEventId: z.string(),
+  originEventId: EventId,
   /** 可选：限定要使用的 runtime profile / model 偏好 */
   executionProfile: z.string().optional(),
   /** 可选：调用方提示的执行模式（最终由 supervisor 决定） */
   preferredMode: ExecutionMode.optional(),
+  /** R1 workspace-core 骨架先以 single-worker task 作为最小闭环。 */
+  task: StartRunTaskBody.optional(),
 });
+export type StartRunBody = z.infer<typeof StartRunBody>;
 
 const ListTraceEventsQuery = PaginationQuery.extend({
   level: z.enum(['debug', 'info', 'warn', 'error']).optional(),

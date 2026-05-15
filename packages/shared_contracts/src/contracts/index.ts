@@ -12,7 +12,8 @@ import { workspaceContract } from './workspace.contract.js';
 export { ApiError, commonErrorResponses, API_V1 } from './_common.js';
 
 export { workspaceContract } from './workspace.contract.js';
-export { runContract } from './run.contract.js';
+export { runContract, StartRunBody } from './run.contract.js';
+export type { StartRunBody as StartRunBodyType } from './run.contract.js';
 export { operatorContract } from './operator.contract.js';
 
 const c = initContract();

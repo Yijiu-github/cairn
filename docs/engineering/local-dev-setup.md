@@ -1,7 +1,7 @@
 # 本地开发环境 / Local Dev Setup
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-14  
+> 状态：🟡 Draft
+> 最后更新：2026-05-15
 > 目标读者：新协作者、第一次拉代码的人
 
 ---
@@ -10,7 +10,7 @@
 
 | 工具                                     | 版本   | 说明                                                                         |
 | ---------------------------------------- | ------ | ---------------------------------------------------------------------------- |
-| **Node.js**                              | 20 LTS | 通过 [Volta](https://volta.sh/) 或 [fnm](https://github.com/Schniz/fnm) 管理 |
+| **Node.js**                              | ≥ 22   | 通过 [Volta](https://volta.sh/) 或 [fnm](https://github.com/Schniz/fnm) 管理 |
 | **pnpm**                                 | ≥ 9.x  | `npm i -g pnpm`                                                              |
 | **Git**                                  | ≥ 2.40 |                                                                              |
 | **Python**（仅 macOS 编译原生模块时）    | 3.11+  |                                                                              |
@@ -34,16 +34,16 @@ cp .env.example .env
 ## 3. 启动
 
 ```bash
-# 一键启动：desktop + workspace-core + web（开发态）
-pnpm dev
-
-# 或者分别启动
+# 当前已启动的是 workspace-core 最小服务
 pnpm --filter @cairn/workspace-core dev
-pnpm --filter @cairn/web dev
-pnpm --filter @cairn/desktop dev
+
+# Desktop / Web 应用创建后再补齐：
+# pnpm dev
+# pnpm --filter @cairn/web dev
+# pnpm --filter @cairn/desktop dev
 ```
 
-> ⚠️ 桌面端在开发态下 Electron 直接启动，并连接本地 workspace-core sidecar。详见 `apps/desktop/README.md`（代码启动后补）。
+> ⚠️ 目前 `apps/desktop` 与 `apps/web` 尚未创建。桌面端在开发态下会由 Electron 连接本地 workspace-core sidecar，具体命令将在对应应用启动后补齐。
 
 ## 4. 数据库
 
@@ -103,15 +103,16 @@ pnpm typecheck          # tsc --noEmit
 
 ## 7. 常用脚本
 
-| 命令                 | 作用                          |
-| -------------------- | ----------------------------- |
-| `pnpm dev`           | 启动完整开发态                |
-| `pnpm build`         | 构建所有包                    |
-| `pnpm build:desktop` | 仅构建桌面端                  |
-| `pnpm build:web`     | 仅构建 Web                    |
-| `pnpm clean`         | 清理 dist / cache             |
-| `pnpm db:studio`     | 启动 Drizzle Studio（DB GUI） |
-| `pnpm docs:check`    | 校验文档链接                  |
+| 命令                 | 作用                                     |
+| -------------------- | ---------------------------------------- |
+| `pnpm dev`           | 启动完整开发态（Desktop/Web 创建后补齐） |
+| `pnpm dev:core`      | 启动 Workspace Core 开发服务             |
+| `pnpm build`         | 构建所有包                               |
+| `pnpm build:desktop` | 仅构建桌面端                             |
+| `pnpm build:web`     | 仅构建 Web                               |
+| `pnpm clean`         | 清理 dist / cache                        |
+| `pnpm db:studio`     | 启动 Drizzle Studio（DB GUI）            |
+| `pnpm docs:check`    | 校验文档链接                             |
 
 ## 8. IDE 推荐
 
@@ -172,6 +173,7 @@ DevTools 自动打开 Renderer；Main 进程附加 `--inspect=9229`。
 
 ## 变更历史
 
-| 日期       | 变更                         |
-| ---------- | ---------------------------- |
-| 2026-05-14 | 初版（占位，代码启动后填充） |
+| 日期       | 变更                                 |
+| ---------- | ------------------------------------ |
+| 2026-05-15 | 更新 Workspace Core 最小服务启动方式 |
+| 2026-05-14 | 初版（占位，代码启动后填充）         |

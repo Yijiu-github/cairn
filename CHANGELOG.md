@@ -35,6 +35,7 @@
 - **`@cairn/runtime-gateway`**：新增 Codex CLI `exec --json` JSONL 协议解析、基础错误映射与 S5 spike 记录
 - **`@cairn/runtime-gateway`**：新增 Codex CLI 子进程封装，支持 stdout JSONL 流式解析、stderr 收集、非零退出映射与取消升级 kill
 - **`@cairn/application`**：新增应用层编排基线，包含 run/task/agentRun repository 端口、Runtime Gateway 提交端口、single-worker run 创建、adapter event 状态推进与终态不变量测试
+- **`@cairn/workspace-core`**：新增 Fastify 最小服务骨架，包含 `/health`、R1 run/task/agent-run HTTP 闭环、in-memory application ports 与 mock runtime 验证
 
 ### Changed
 
