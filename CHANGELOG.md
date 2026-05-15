@@ -47,12 +47,14 @@
 - 新增 AI 协作工程手册 `docs/engineering/agent-collaboration.md`，沉淀上下文工程、契约设计、文档/ADR 与 review gate 清单
 - 新增外部项目参考雷达 `docs/reference/external-project-radar.md`，记录 GitNexus、Graphify、Ruflo、agent-skills、Superpowers、OpenAI Skills 等后续阶段性参考入口
 - 新增项目状态页 `docs/STATUS.md`，记录当前可用能力、测试基线、R1 已完成 / 未完成能力与近期主线
+- 新增分支管理设计文档，明确 `main` / `develop` / agent 专项分支 / release / hotfix 的治理边界
 - Orchestration / Code Context 设计补充 Goal Planner 参考：action tree、preconditions、blocked reason 与 replan reason
 - AI 协作工程手册新增 review risk gate，覆盖 diff 风险分级、schema/API/迁移/安全/文档变更提示与 QA 输出模板
 
 ### Changed
 
 - Git 提交规范调整为 **中英双语标题，中文在前、英文在后**，并补充 `commit-msg` + `commitlint` 校验
+- Git 工作流统一 `develop` 为日常集成分支，并补充远程短分支清理、agent 分支、release / hotfix 回灌规则
 - 设计主线从「Web 优先」升级为「共享核心 + 双外壳 + 可本地运行 + 可远程扩展」
 - `package.json` 的 `license` 字段从 `SEE LICENSE IN LICENSE` 改为 `Apache-2.0`
 - **`@cairn/storage`**：升级 `better-sqlite3` catalog 至 `^12.10.0`，本机 Node 24.14.0 下可安装 native binding 并执行 SQLite 测试

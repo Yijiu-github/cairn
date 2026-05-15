@@ -9,7 +9,7 @@
 | `repo-layout.md`         | apps / packages 责任 + 依赖方向                        | 🟡 Draft |
 | `coding-standards.md`    | TS 风格、命名、目录、ESLint/Prettier                   | 🟡 Draft |
 | `agent-collaboration.md` | AI 协作、上下文工程、契约设计、文档/ADR 与 review gate | 🟡 Draft |
-| `git-workflow.md`        | 分支策略、PR 流程                                      | 🟡 Draft |
+| `git-workflow.md`        | 分支管理、远程分支生命周期、PR / release / hotfix 流程 | 🟡 Draft |
 | `commit-convention.md`   | Conventional Commits + 中英双语提交规则 + commitlint   | 🟡 Draft |
 | `testing-strategy.md`    | Unit / Contract / Integration / E2E 金字塔             | 🟡 Draft |
 | `ci-cd.md`               | GitHub Actions 矩阵、签名公证、artifact 发布           | 🟡 Draft |
