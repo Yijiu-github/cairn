@@ -135,7 +135,7 @@ export const cairnCssVariables = {
 --cairn-elevation-nav-item: 0 10px 24px rgb(15 23 42 / 14%);
 ```
 
-2. 将 `--preview-*` 变量改为 alias 到 `--cairn-*`，保留现有 selector 代码可读性：
+1. 将 `--preview-*` 变量改为 alias 到 `--cairn-*`，保留现有 selector 代码可读性：
 
 ```css
 --preview-surface: var(--cairn-color-surface-panel);
@@ -143,7 +143,7 @@ export const cairnCssVariables = {
 --preview-text: var(--cairn-color-text-primary);
 ```
 
-3. 将 hard-coded repeated values 替换为 semantic variables：
+1. 将 hard-coded repeated values 替换为 semantic variables：
 
 - `#0f172a` → `var(--preview-text)` 或 `var(--cairn-color-code-background)`，视语义而定。
 - `#dbeafe` → `var(--preview-blue-soft)` 或 `var(--cairn-color-code-foreground)`，视语义而定。
@@ -151,7 +151,7 @@ export const cairnCssVariables = {
 - `#1d4ed8` → `var(--cairn-color-accent-blue-strong)`。
 - nav item shadow → `var(--cairn-elevation-nav-item)`。
 
-4. 保留 preview-only variables：
+1. 保留 preview-only variables：
 
 - `--preview-radius-lg/md/sm`
 - `--preview-gap`
