@@ -84,7 +84,7 @@ const queueItems = [
 export function HomeInboxPreviewPage() {
   return (
     <div className="prototype-page">
-      <section className="home-command-bar" aria-label="工作区概览">
+      <section className="home-command-bar page-hero" aria-label="工作区概览">
         <div>
           <div className="section-kicker">Workspace</div>
           <h2>local_demo_workspace</h2>

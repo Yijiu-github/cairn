@@ -117,7 +117,7 @@ export function RunDetailPreviewPage() {
 
   return (
     <div className="prototype-page">
-      <section className="run-detail-header" aria-label="运行详情摘要">
+      <section className="run-detail-header page-hero" aria-label="运行详情摘要">
         <div className="run-title-block">
           <div className="section-kicker">Run Detail</div>
           <div className="run-title-row">

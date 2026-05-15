@@ -7,7 +7,7 @@ import { RunDetailPreviewPage } from './pages/run-detail-preview-page';
 
 export function UiPreviewApp() {
   const [page, setPage] = useState<'artifact-review' | 'components' | 'home-inbox' | 'run-detail'>(
-    'artifact-review',
+    'home-inbox',
   );
 
   return (
@@ -15,10 +15,10 @@ export function UiPreviewApp() {
       <header className="hero">
         <div>
           <p className="eyebrow">Cairn UI Preview</p>
-          <h1>本地优先的多 Agent 协作工作台原型</h1>
+          <h1>Cairn UI 工作台原型</h1>
           <p className="hero-copy">
-            集中检查组件状态、页面信息架构、证据链表达和人工接管入口。不接 backend，只使用静态 demo
-            数据。
+            覆盖 Home、Run Detail、Artifact Review
+            与组件图库；用于统一信息架构、审阅路径和人工接管体验。
           </p>
         </div>
         <nav aria-label="预览页面" className="preview-nav">

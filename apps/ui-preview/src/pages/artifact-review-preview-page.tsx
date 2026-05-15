@@ -96,7 +96,7 @@ export function ArtifactReviewPreviewPage() {
 
   return (
     <div className="prototype-page">
-      <section className="artifact-review-hero" aria-label="产物审阅摘要">
+      <section className="artifact-review-hero page-hero" aria-label="产物审阅摘要">
         <div className="run-title-block">
           <div className="section-kicker">Artifact Review</div>
           <div className="run-title-row">
