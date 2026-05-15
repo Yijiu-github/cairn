@@ -129,3 +129,122 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
+
+.preview-nav {
+  align-items: center;
+  background: rgb(255 255 255 / 70%);
+  border: 1px solid #dbe5f0;
+  border-radius: 999px;
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+}
+
+.preview-nav-item {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: #475569;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+.preview-nav-item:hover {
+  color: #0f172a;
+}
+
+.preview-nav-item:focus-visible,
+.filter-pill:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.preview-nav-item[aria-pressed='true'] {
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 14%);
+}
+
+.prototype-page,
+.home-main-column,
+.home-side-column {
+  display: grid;
+  gap: 18px;
+}
+
+.home-command-bar {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #dbe5f0;
+  border-radius: 24px;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 22px;
+}
+
+.home-command-bar p {
+  color: #64748b;
+  margin-top: 6px;
+}
+
+.home-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 360px;
+}
+
+.section-kicker {
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.split-heading {
+  align-items: end;
+  display: flex;
+  justify-content: space-between;
+}
+
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.filter-pill {
+  background: #f8fafc;
+  border: 1px solid #dbe5f0;
+  border-radius: 999px;
+  color: #475569;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 11px;
+}
+
+.filter-pill:hover {
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.filter-pill.active {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+@media (max-width: 1080px) {
+  .home-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .home-side-column {
+    order: -1;
+  }
+}
