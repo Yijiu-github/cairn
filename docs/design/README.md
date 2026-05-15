@@ -4,17 +4,18 @@
 
 ## 文件
 
-| 文件                          | 作用                                                                             | 状态        |
-| ----------------------------- | -------------------------------------------------------------------------------- | ----------- |
-| `设计文档V0.1.0.md`           | **设计主稿**（当前唯一权威设计文档）                                             | ✅ Accepted |
-| `domain-model.md`             | 核心领域对象的字段、关系、ER 图                                                  | 🟡 Draft    |
-| `state-machines.md`           | OrchestrationRun / Task / AgentRun 状态机 + retry/rerun/replan/cancel/pause 语义 | 🟡 Draft    |
-| `security-model.md`           | Electron 安全基线、sidecar 鉴权、secret 管理、桌面能力 allowlist                 | 🟡 Draft    |
-| `distribution-and-signing.md` | macOS notarization / Windows code signing / 更新通道                             | 🟡 Draft    |
-| `telemetry-and-privacy.md`    | 上报什么、不上报什么、用户开关、匿名化策略                                       | 🟡 Draft    |
-| `replay-and-recovery.md`      | "回放"的明确定义 + 桌面崩溃恢复机制 + heartbeat/lease 字段                       | 🟡 Draft    |
-| `code-context-index.md`       | 本地优先的轻量代码上下文索引、ContextPack 与索引隐私边界                         | 🟡 Draft    |
-| `ux/`                         | 信息架构、关键流程、屏幕清单                                                     | ⚪ TODO     |
+| 文件                             | 作用                                                                             | 状态        |
+| -------------------------------- | -------------------------------------------------------------------------------- | ----------- |
+| `设计文档V0.1.0.md`              | **设计主稿**（当前唯一权威设计文档）                                             | ✅ Accepted |
+| `domain-model.md`                | 核心领域对象的字段、关系、ER 图                                                  | 🟡 Draft    |
+| `state-machines.md`              | OrchestrationRun / Task / AgentRun 状态机 + retry/rerun/replan/cancel/pause 语义 | 🟡 Draft    |
+| `security-model.md`              | Electron 安全基线、sidecar 鉴权、secret 管理、桌面能力 allowlist                 | 🟡 Draft    |
+| `distribution-and-signing.md`    | macOS notarization / Windows code signing / 更新通道                             | 🟡 Draft    |
+| `telemetry-and-privacy.md`       | 上报什么、不上报什么、用户开关、匿名化策略                                       | 🟡 Draft    |
+| `replay-and-recovery.md`         | "回放"的明确定义 + 桌面崩溃恢复机制 + heartbeat/lease 字段                       | 🟡 Draft    |
+| `code-context-index.md`          | 本地优先的轻量代码上下文索引、ContextPack 与索引隐私边界                         | 🟡 Draft    |
+| `r1-codex-e2e-artifact-trace.md` | R1 Codex E2E + Artifact / Trace 最小闭环设计                                     | 🟡 Draft    |
+| `ux/`                            | 信息架构、关键流程、屏幕清单                                                     | ⚪ TODO     |
 
 ## 与主稿（V0.1.0）的关系
 

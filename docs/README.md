@@ -27,7 +27,7 @@ docs/
 | **后端 / 架构**              | `design/` + `adr/` + `contracts/`                                                                   |
 | **AI 编码协作 / review**     | `engineering/agent-collaboration.md`                                                                |
 | **要确认当前项目状态**       | `STATUS.md`                                                                                         |
-| **要做 runtime 接入**        | `contracts/runtime-adapter.md`                                                                      |
+| **要做 runtime 接入**        | `contracts/runtime-adapter.md`，R1 Codex 闭环见 `design/r1-codex-e2e-artifact-trace.md`             |
 | **要做代码上下文索引**       | `design/code-context-index.md`                                                                      |
 | **要发布版本**               | `engineering/release-playbook.md`                                                                   |
 | **新用户**                   | `ops/install-guide.md`                                                                              |
