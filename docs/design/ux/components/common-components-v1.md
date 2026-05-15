@@ -1,7 +1,7 @@
 # Common Components V1
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-15  
+> 状态：🟡 Draft
+> 最后更新：2026-05-15
 > 范围：Cairn R1 常用基础组件统一设计；中文为主，英文可切换。
 
 ---
@@ -10,7 +10,7 @@
 
 统一 Cairn 的常用组件，避免页面级设计各自发散。本文面向 `packages/ui` 的第一批 primitives 与 Cairn product components。
 
-图片总览：[`design-assets/ui-v1-common-components-zh.svg`](design-assets/ui-v1-common-components-zh.svg)
+图片总览：[`../assets/components/ui-v1-common-components-zh.svg`](../assets/components/ui-v1-common-components-zh.svg)
 
 ## 2. 组件分层
 
@@ -94,7 +94,7 @@
 
 ### 4.4 EmptyState / ErrorState
 
-详见 [`empty-error-states-v1.md`](./empty-error-states-v1.md)。
+详见 [`empty-error-states-v1.md`](empty-error-states-v1.md)。
 
 ## 5. Data display
 
@@ -166,7 +166,7 @@
 
 ### 7.1 RunCard
 
-详见 [`component-state-specs-v1.md`](./component-state-specs-v1.md)。
+详见 [`component-state-specs-v1.md`](component-state-specs-v1.md)。
 
 ### 7.2 HandoffQueueItem
 

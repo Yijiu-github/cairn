@@ -1,7 +1,7 @@
 # Design Tokens V1
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-15  
+> 状态：🟡 Draft
+> 最后更新：2026-05-15
 > 来源：从 `visual-reference-v1.md` 与 `design-assets/ui-v1-*.svg` 抽取；未使用 image2。
 
 ---

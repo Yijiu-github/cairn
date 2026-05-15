@@ -1,7 +1,7 @@
 # Interaction Design V1
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-15  
+> 状态：🟡 Draft
+> 最后更新：2026-05-15
 > 范围：Cairn R1 桌面端主要页面交互；中文为主，英文可切换。
 
 ---
@@ -69,13 +69,13 @@
 
 本轮新增以下中文主界面 SVG 示例：
 
-| 页面              | 示例                                                                                           |
-| ----------------- | ---------------------------------------------------------------------------------------------- |
-| Run List          | [`design-assets/ui-v1-run-list-zh.svg`](design-assets/ui-v1-run-list-zh.svg)                   |
-| Activity Timeline | [`design-assets/ui-v1-activity-timeline-zh.svg`](design-assets/ui-v1-activity-timeline-zh.svg) |
-| Task Explorer     | [`design-assets/ui-v1-task-explorer-zh.svg`](design-assets/ui-v1-task-explorer-zh.svg)         |
-| Replay View       | [`design-assets/ui-v1-replay-view-zh.svg`](design-assets/ui-v1-replay-view-zh.svg)             |
-| Settings          | [`design-assets/ui-v1-settings-zh.svg`](design-assets/ui-v1-settings-zh.svg)                   |
+| 页面              | 示例                                                                                                       |
+| ----------------- | ---------------------------------------------------------------------------------------------------------- |
+| Run List          | [`../assets/visual-v1/ui-v1-run-list-zh.svg`](../assets/visual-v1/ui-v1-run-list-zh.svg)                   |
+| Activity Timeline | [`../assets/visual-v1/ui-v1-activity-timeline-zh.svg`](../assets/visual-v1/ui-v1-activity-timeline-zh.svg) |
+| Task Explorer     | [`../assets/visual-v1/ui-v1-task-explorer-zh.svg`](../assets/visual-v1/ui-v1-task-explorer-zh.svg)         |
+| Replay View       | [`../assets/visual-v1/ui-v1-replay-view-zh.svg`](../assets/visual-v1/ui-v1-replay-view-zh.svg)             |
+| Settings          | [`../assets/visual-v1/ui-v1-settings-zh.svg`](../assets/visual-v1/ui-v1-settings-zh.svg)                   |
 
 ## 5. 变更历史
 

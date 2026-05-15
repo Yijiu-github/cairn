@@ -1,7 +1,7 @@
 # Detail Themes V1
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-15  
+> 状态：🟡 Draft
+> 最后更新：2026-05-15
 > 范围：补齐 V1 中尚未画细的主题级交互与图片示例。
 
 ---
@@ -12,13 +12,13 @@
 
 ## 2. 图片示例
 
-| 主题           | 示例                                                                                               | 关键点                                             |
-| -------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| 命令菜单       | [`design-assets/ui-v1-command-menu-zh.svg`](design-assets/ui-v1-command-menu-zh.svg)               | `⌘K` / `Ctrl+K` 搜索与命令入口，危险命令不直接执行 |
-| 受保护动作确认 | [`design-assets/ui-v1-protected-action-zh.svg`](design-assets/ui-v1-protected-action-zh.svg)       | 明确目标、影响、仅本次批准、trace 记录             |
-| 诊断导出       | [`design-assets/ui-v1-diagnostic-export-zh.svg`](design-assets/ui-v1-diagnostic-export-zh.svg)     | 展示包含内容，默认脱敏，提示本地路径风险           |
-| 外观与语言     | [`design-assets/ui-v1-appearance-language-zh.svg`](design-assets/ui-v1-appearance-language-zh.svg) | 中文主界面、英文切换、浅色默认、深色预留           |
-| 空错态细节     | [`design-assets/ui-v1-empty-error-detail-zh.svg`](design-assets/ui-v1-empty-error-detail-zh.svg)   | 空状态给下一步，错误状态给层级和恢复动作           |
+| 主题           | 示例                                                                                                                   | 关键点                                             |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 命令菜单       | [`../assets/detail-themes/ui-v1-command-menu-zh.svg`](../assets/detail-themes/ui-v1-command-menu-zh.svg)               | `⌘K` / `Ctrl+K` 搜索与命令入口，危险命令不直接执行 |
+| 受保护动作确认 | [`../assets/detail-themes/ui-v1-protected-action-zh.svg`](../assets/detail-themes/ui-v1-protected-action-zh.svg)       | 明确目标、影响、仅本次批准、trace 记录             |
+| 诊断导出       | [`../assets/detail-themes/ui-v1-diagnostic-export-zh.svg`](../assets/detail-themes/ui-v1-diagnostic-export-zh.svg)     | 展示包含内容，默认脱敏，提示本地路径风险           |
+| 外观与语言     | [`../assets/detail-themes/ui-v1-appearance-language-zh.svg`](../assets/detail-themes/ui-v1-appearance-language-zh.svg) | 中文主界面、英文切换、浅色默认、深色预留           |
+| 空错态细节     | [`../assets/detail-themes/ui-v1-empty-error-detail-zh.svg`](../assets/detail-themes/ui-v1-empty-error-detail-zh.svg)   | 空状态给下一步，错误状态给层级和恢复动作           |
 
 ## 3. 设计规则
 
