@@ -23,6 +23,7 @@
 | `ui-v1-settings-zh.svg`          | 视觉参考 V1 | 手写 SVG，未使用 image2 | Settings 中文主界面参考           |
 | `ui-v1-component-states-zh.svg`  | 视觉参考 V1 | 手写 SVG，未使用 image2 | 组件状态、空错态与危险确认参考    |
 | `ui-v1-command-menu-zh.svg`      | 视觉参考 V1 | 手写 SVG，未使用 image2 | 命令菜单细节参考                  |     | `ui-v1-protected-action-zh.svg` | 视觉参考 V1 | 手写 SVG，未使用 image2 | 受保护动作确认参考 |     | `ui-v1-diagnostic-export-zh.svg` | 视觉参考 V1 | 手写 SVG，未使用 image2 | 诊断导出细节参考 |     | `ui-v1-appearance-language-zh.svg` | 视觉参考 V1 | 手写 SVG，未使用 image2 | 外观与语言主题参考 |     | `ui-v1-empty-error-detail-zh.svg` | 视觉参考 V1 | 手写 SVG，未使用 image2 | 空错态细节参考 |
+| `ui-v1-common-components-zh.svg` | 视觉参考 V1 | 手写 SVG，未使用 image2 | 常用组件统一设计总览              |
 
 ## 约定
 

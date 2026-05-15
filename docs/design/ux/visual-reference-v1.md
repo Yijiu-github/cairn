@@ -130,6 +130,12 @@
 
 重点：补齐命令入口、危险确认、诊断导出、外观语言、空错态这些非页面但高频出现的细节主题。
 
+### 3.13 Common Components
+
+![Common Components](design-assets/ui-v1-common-components-zh.svg)
+
+重点：统一 Button、Input、Badge、Card、Dialog、Toast、Tooltip、Table、Progress、Skeleton 等常用组件，避免页面设计发散。
+
 ## 4. 初版视觉规则
 
 | 项       | V1 规则                                       |
@@ -153,4 +159,4 @@
 
 | 日期       | 变更                                                                                     |
 | ---------- | ---------------------------------------------------------------------------------------- |
-| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十六张视觉参考 SVG |
+| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十七张视觉参考 SVG |
