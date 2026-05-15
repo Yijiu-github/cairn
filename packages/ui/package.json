@@ -25,6 +25,10 @@
     "./data-display": {
       "types": "./src/data-display/index.ts",
       "import": "./src/data-display/index.ts"
+    },
+    "./cairn": {
+      "types": "./src/cairn/index.ts",
+      "import": "./src/cairn/index.ts"
     }
   },
   "files": [
