@@ -40,7 +40,7 @@
   <text x="174" y="94" class="ui muted" font-size="14">运行列表</text>
   <rect x="60" y="118" width="236" height="788" fill="#ffffff" stroke="#e2e8f0"/>
   <text x="108" y="177" class="ui muted" font-size="15">待处理</text><rect x="84" y="200" width="188" height="40" rx="12" fill="#eff6ff"/><text x="108" y="225" class="ui blue" font-size="15" font-weight="700">运行</text><text x="108" y="273" class="ui muted" font-size="15">任务</text><text x="108" y="321" class="ui muted" font-size="15">产物</text><text x="108" y="369" class="ui muted" font-size="15">运行时</text><text x="108" y="417" class="ui muted" font-size="15">活动</text><text x="108" y="465" class="ui muted" font-size="15">设置</text>
-  
+
   <text x="344" y="168" class="ui title" font-size="34">运行列表</text>
   <text x="346" y="204" class="ui muted" font-size="15">按状态、时间、运行时和是否需要接管来筛选所有 Run。</text>
   <rect x="344" y="246" width="936" height="74" rx="22" class="card"/>
@@ -48,7 +48,7 @@
   <rect x="626" y="268" width="88" height="34" rx="11" fill="#eff6ff"/><text x="652" y="290" class="ui blue" font-size="13" font-weight="700">全部</text>
   <text x="742" y="290" class="ui muted" font-size="13">已阻塞</text><text x="820" y="290" class="ui muted" font-size="13">失败</text><text x="884" y="290" class="ui muted" font-size="13">运行中</text><text x="964" y="290" class="ui muted" font-size="13">已完成</text>
   <rect x="1130" y="266" width="118" height="38" rx="13" fill="url(#brand)"/><text x="1162" y="290" class="ui" font-size="13" fill="#fff" font-weight="760">新建运行</text>
-  
+
   <rect x="344" y="352" width="936" height="82" rx="18" class="card"/>
   <text x="374" y="384" class="ui title" font-size="15">审阅 scheduler port 修改</text>
   <text x="374" y="410" class="ui muted" font-size="13">等待仅本次批准</text>

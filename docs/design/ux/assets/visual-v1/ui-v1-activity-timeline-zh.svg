@@ -40,12 +40,12 @@
   <text x="174" y="94" class="ui muted" font-size="14">活动时间线</text>
   <rect x="60" y="118" width="236" height="788" fill="#ffffff" stroke="#e2e8f0"/>
   <text x="108" y="177" class="ui muted" font-size="15">待处理</text><text x="108" y="225" class="ui muted" font-size="15">运行</text><text x="108" y="273" class="ui muted" font-size="15">任务</text><text x="108" y="321" class="ui muted" font-size="15">产物</text><text x="108" y="369" class="ui muted" font-size="15">运行时</text><rect x="84" y="392" width="188" height="40" rx="12" fill="#eff6ff"/><text x="108" y="417" class="ui blue" font-size="15" font-weight="700">活动</text><text x="108" y="465" class="ui muted" font-size="15">设置</text>
-  
+
   <text x="344" y="168" class="ui title" font-size="34">活动时间线</text>
   <text x="346" y="204" class="ui muted" font-size="15">跨运行查看关键事件，用于复盘、审计和定位系统级问题。</text>
   <rect x="344" y="236" width="936" height="52" rx="18" class="card"/>
   <text x="374" y="268" class="ui blue" font-size="13" font-weight="760">全部事件</text><text x="462" y="268" class="ui muted" font-size="13">接管</text><text x="524" y="268" class="ui muted" font-size="13">产物</text><text x="586" y="268" class="ui muted" font-size="13">运行时</text><text x="660" y="268" class="ui muted" font-size="13">错误</text>
-  
+
   <text x="374" y="298" class="mono soft" font-size="12">09:42</text>
   <circle cx="456" cy="292" r="8" fill="#d97706"/>
   <line x1="456" y1="304" x2="456" y2="360" stroke="#e2e8f0" stroke-width="2"/>
