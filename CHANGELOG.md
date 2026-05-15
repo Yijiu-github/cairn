@@ -43,6 +43,7 @@
 - **Code Context R1b-a**：新增手动 reindex 与本地文件清单快照，持久化 `code_index_files` 派生元数据并通过 workspace-core 查询最新索引
 - **Code Context R1b-a**：新增 `GET /v1/code-search` 最小文件清单搜索接口，支持按 workspace、SourceRoot、路径片段、语言与 limit 查询最新 ready 快照元数据
 - **Code Context R1b-a**：新增 `POST /v1/workspaces/:workspaceId/context-packs/from-code-search`，可把文件清单搜索结果转换为不含源码内容的 ContextPack manifest 条目
+- **Code Context R1b-a**：`from-code-search` 支持显式 excerpt 行号范围，并在未传 `tokenEstimate` 时基于索引文件大小生成保守 token 估算
 
 ### Changed
 

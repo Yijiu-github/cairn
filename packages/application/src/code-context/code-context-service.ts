@@ -18,6 +18,7 @@ import type {
   ContextPackItem,
   ContextPackId,
   ContextPackManifest,
+  ContextPackExcerptRange,
   SourceRoot,
   SourceRootCreate,
   SourceRootId,
@@ -86,6 +87,7 @@ export type SearchCodeIndexInput = CodeSearchQuery;
 
 const INDEX_VERSION_R1A = 'r1a-manifest-only';
 const INDEX_VERSION_R1B_FILE_MANIFEST = 'r1b-file-manifest';
+const APPROX_BYTES_PER_TOKEN = 4;
 
 const toIso = (date: Date): string => date.toISOString();
 
@@ -270,7 +272,11 @@ export class CodeContextService {
       ...input.contextPack.search,
     });
     const sourceRootIds = uniqueSourceRootIds(files);
-    const items = files.map((file): ContextPackItem => toFileContextPackItem(file));
+    const items = files.map(
+      (file): ContextPackItem => toFileContextPackItem(file, input.contextPack.excerpt),
+    );
+    const tokenEstimate =
+      input.contextPack.tokenEstimate ?? estimateTokenBudgetFromIndexedFiles(files);
     const manifest: ContextPackManifest = {
       contextPackId: this.ids.contextPackId(),
       workspaceId: input.workspaceId,
@@ -279,9 +285,7 @@ export class CodeContextService {
       query: input.contextPack.query,
       items,
       createdAt: toIso(this.clock.now()),
-      ...(input.contextPack.tokenEstimate === undefined
-        ? {}
-        : { tokenEstimate: input.contextPack.tokenEstimate }),
+      tokenEstimate,
     };
 
     await this.repository.createContextPack(manifest);
@@ -350,11 +354,23 @@ const uniqueSourceRootIds = (files: CodeIndexFile[]): SourceRootId[] => [
   ...new Set(files.map((file) => file.sourceRootId)),
 ];
 
-const toFileContextPackItem = (file: CodeIndexFile): ContextPackItem => ({
+const toFileContextPackItem = (
+  file: CodeIndexFile,
+  excerpt: ContextPackExcerptRange | undefined,
+): ContextPackItem => ({
   kind: 'file_excerpt',
   sourceRootId: file.sourceRootId,
   path: file.path,
+  ...(excerpt === undefined
+    ? {}
+    : {
+        startLine: excerpt.startLine,
+        endLine: excerpt.endLine,
+      }),
   digest: file.digest,
   reason: `Matched indexed file metadata: ${file.path}`,
   confidence: 'extracted',
 });
+
+const estimateTokenBudgetFromIndexedFiles = (files: CodeIndexFile[]): number =>
+  files.reduce((total, file) => total + Math.ceil(file.sizeBytes / APPROX_BYTES_PER_TOKEN), 0);

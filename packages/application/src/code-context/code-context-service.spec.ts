@@ -349,6 +349,10 @@ describe('CodeContextService', () => {
           language: 'typescript',
           limit: 10,
         },
+        excerpt: {
+          startLine: 1,
+          endLine: 80,
+        },
       },
     });
 
@@ -356,11 +360,14 @@ describe('CodeContextService', () => {
       contextPackId: ids.contextPack,
       sourceRootIds: [ids.sourceRoot],
       query: 'Find application code.',
+      tokenEstimate: 32,
       items: [
         {
           kind: 'file_excerpt',
           sourceRootId: ids.sourceRoot,
           path: 'packages/application/src/index.ts',
+          startLine: 1,
+          endLine: 80,
           digest: 'sha256:index',
           confidence: 'extracted',
         },

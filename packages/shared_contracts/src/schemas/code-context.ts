@@ -171,10 +171,22 @@ export const ContextPackCreate = z.object({
 });
 export type ContextPackCreate = z.infer<typeof ContextPackCreate>;
 
+export const ContextPackExcerptRange = z
+  .object({
+    startLine: z.number().int().positive(),
+    endLine: z.number().int().positive(),
+  })
+  .refine((range) => range.endLine >= range.startLine, {
+    message: 'endLine must be greater than or equal to startLine',
+    path: ['endLine'],
+  });
+export type ContextPackExcerptRange = z.infer<typeof ContextPackExcerptRange>;
+
 export const ContextPackFromCodeSearchCreate = z.object({
   createdFor: ContextPackTarget,
   query: z.string().min(1),
   search: CodeSearchFilters.default({}),
+  excerpt: ContextPackExcerptRange.optional(),
   tokenEstimate: z.number().int().nonnegative().optional(),
 });
 export type ContextPackFromCodeSearchCreate = z.infer<typeof ContextPackFromCodeSearchCreate>;

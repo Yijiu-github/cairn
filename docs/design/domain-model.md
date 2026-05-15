@@ -359,6 +359,10 @@ R1a 先落地轻量代码上下文索引的元数据基线，不扫描真实文�
 
 **索引**：`(workspace_id, created_at)`, `(orchestration_run_id)`, `(task_id)`
 
+`items` 中的 file excerpt 可保存 `path`、`startLine`、`endLine`、`digest`、`reason` 与
+`confidence`。R1b-a 阶段这些字段仍属于 manifest 元数据；源码片段内容后续通过
+`contentRef` 指向 Artifact store，不直接写入 `context_packs.items`。
+
 ---
 
 ## 13. 待办
@@ -373,6 +377,7 @@ R1a 先落地轻量代码上下文索引的元数据基线，不扫描真实文�
 
 | 日期       | 变更                                                |
 | ---------- | --------------------------------------------------- |
+| 2026-05-15 | 明确 ContextPack item 可保存片段行号与 token 估算   |
 | 2026-05-15 | 补充 CodeIndexFile 文件清单对象                     |
 | 2026-05-15 | 补充轻量代码上下文索引 R1a 领域对象                 |
 | 2026-05-14 | 初版，从 V0.1.0 §12 抽出并补充 heartbeat/lease 字段 |

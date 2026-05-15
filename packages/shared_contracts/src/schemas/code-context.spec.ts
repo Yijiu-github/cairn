@@ -226,4 +226,25 @@ describe('code context schemas', () => {
       },
     });
   });
+
+  it('accepts optional excerpt ranges for ContextPackFromCodeSearchCreate', () => {
+    expect(
+      ContextPackFromCodeSearchCreate.parse({
+        createdFor: {
+          type: 'task',
+          taskId: ids.task,
+        },
+        query: 'Find application code.',
+        excerpt: {
+          startLine: 1,
+          endLine: 80,
+        },
+      }),
+    ).toMatchObject({
+      excerpt: {
+        startLine: 1,
+        endLine: 80,
+      },
+    });
+  });
 });

@@ -127,6 +127,7 @@ R1b-a 已完成：
 - 本地 scanner 默认排除 `.git`、`node_modules`、`.env*`、密钥/证书、本地数据库、构建产物，并支持 SourceRoot include / exclude
 - 最小文件清单搜索：`GET /v1/code-search` 支持按 `workspaceId`、可选 `sourceRootId`、`pathContains`、`language` 与 `limit` 查询最新 ready 快照中的文件元数据，不读取或返回源码内容
 - 最小 ContextPack 生成：`POST /v1/workspaces/:workspaceId/context-packs/from-code-search` 将文件清单搜索结果转换为 `file_excerpt` manifest 条目，保留 `sourceRootId`、`path`、`digest`、`reason`、`confidence`，仍不读取或返回源码内容
+- manifest 级片段范围与预算：`from-code-search` 可接收显式 `excerpt.startLine/endLine` 并写入每个 `file_excerpt`；未传 `tokenEstimate` 时按索引文件大小使用保守近似估算 token，不读取源码
 
 后续 R1b/R1 继续补齐：
 
@@ -210,6 +211,8 @@ interface ContextPackItem {
 - `confidence` 用于标记关系来源：AST / import 明确解析为 `extracted`，二跳调用图或共现关系为 `inferred`，冲突或低置信结果为 `ambiguous`。
 - 大内容放 artifact store，manifest 只存引用和元数据。
 - `digest` 用于检测“上下文生成后文件被改过”的情况。
+- `startLine/endLine` 在 R1b-a 只表示调用方要求的目标片段范围；在未落地源码片段 artifact 前，不代表系统已经读取或保存该行范围内容。
+- 自动 `tokenEstimate` 是基于 `CodeIndexFile.sizeBytes` 的保守近似，用于调度与 UI 预算提示；后续真实内容打包时可由 artifact builder 或 runtime capability 重新校准。
 
 ---
 
@@ -264,6 +267,7 @@ interface ContextPackItem {
 
 | 日期       | 变更                                                      |
 | ---------- | --------------------------------------------------------- |
+| 2026-05-15 | R1b-a 补充 from-code-search 的片段范围与 token 估算语义   |
 | 2026-05-15 | R1b-a 接入基于 code-search 的最小 ContextPack 生成接口    |
 | 2026-05-15 | R1b-a 接入最小 code-search 文件清单搜索接口               |
 | 2026-05-15 | R1b-a 接入手动 reindex 与本地文件清单快照                 |

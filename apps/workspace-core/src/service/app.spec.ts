@@ -273,6 +273,10 @@ describe('workspace-core app', () => {
             language: 'typescript',
             limit: 10,
           },
+          excerpt: {
+            startLine: 1,
+            endLine: 80,
+          },
         },
       });
 
@@ -281,11 +285,14 @@ describe('workspace-core app', () => {
         workspaceId: ids.workspace,
         sourceRootIds: [sourceRoot.sourceRootId],
         query: 'Find application code.',
+        tokenEstimate: 32,
         items: [
           {
             kind: 'file_excerpt',
             sourceRootId: sourceRoot.sourceRootId,
             path: 'packages/application/src/index.ts',
+            startLine: 1,
+            endLine: 80,
             digest: 'sha256:index',
             confidence: 'extracted',
           },
