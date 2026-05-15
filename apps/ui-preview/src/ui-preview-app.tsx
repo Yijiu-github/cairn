@@ -1,11 +1,14 @@
 import { useState } from 'react';
 
+import { ArtifactReviewPreviewPage } from './pages/artifact-review-preview-page';
 import { ComponentsGalleryPage } from './pages/components-gallery-page';
 import { HomeInboxPreviewPage } from './pages/home-inbox-preview-page';
 import { RunDetailPreviewPage } from './pages/run-detail-preview-page';
 
 export function UiPreviewApp() {
-  const [page, setPage] = useState<'components' | 'home-inbox' | 'run-detail'>('run-detail');
+  const [page, setPage] = useState<'artifact-review' | 'components' | 'home-inbox' | 'run-detail'>(
+    'artifact-review',
+  );
 
   return (
     <main className="preview-shell">
@@ -40,6 +43,16 @@ export function UiPreviewApp() {
             Run Detail
           </button>
           <button
+            aria-pressed={page === 'artifact-review'}
+            className="preview-nav-item"
+            onClick={() => {
+              setPage('artifact-review');
+            }}
+            type="button"
+          >
+            Artifact Review
+          </button>
+          <button
             aria-pressed={page === 'components'}
             className="preview-nav-item"
             onClick={() => {
@@ -54,6 +67,7 @@ export function UiPreviewApp() {
 
       {page === 'home-inbox' ? <HomeInboxPreviewPage /> : undefined}
       {page === 'run-detail' ? <RunDetailPreviewPage /> : undefined}
+      {page === 'artifact-review' ? <ArtifactReviewPreviewPage /> : undefined}
       {page === 'components' ? <ComponentsGalleryPage /> : undefined}
     </main>
   );

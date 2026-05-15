@@ -329,3 +329,62 @@ h2 {
     justify-content: flex-start;
   }
 }
+
+.artifact-review-hero {
+  align-items: center;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 55%, #eef6ff 100%);
+  border: 1px solid #dbe5f0;
+  border-radius: 24px;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 22px;
+}
+
+.artifact-review-layout {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 390px;
+}
+
+.artifact-review-main,
+.artifact-review-side {
+  display: grid;
+  gap: 18px;
+}
+
+.artifact-code-block {
+  background: #0f172a;
+  border-radius: 18px;
+  color: #dbeafe;
+  overflow: auto;
+  padding: 18px;
+}
+
+.artifact-code-block pre {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0;
+  min-width: 520px;
+}
+
+@media (max-width: 1120px) {
+  .artifact-review-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .artifact-review-side {
+    order: -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .artifact-review-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
