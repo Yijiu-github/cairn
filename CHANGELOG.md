@@ -50,6 +50,7 @@
 - 新增分支管理设计文档，明确 `main` / `develop` / agent 专项分支 / release / hotfix 的治理边界
 - Orchestration / Code Context 设计补充 Goal Planner 参考：action tree、preconditions、blocked reason 与 replan reason
 - AI 协作工程手册新增 review risk gate，覆盖 diff 风险分级、schema/API/迁移/安全/文档变更提示与 QA 输出模板
+- 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线
 
 ### Changed
 
@@ -58,6 +59,7 @@
 - 设计主线从「Web 优先」升级为「共享核心 + 双外壳 + 可本地运行 + 可远程扩展」
 - `package.json` 的 `license` 字段从 `SEE LICENSE IN LICENSE` 改为 `Apache-2.0`
 - **`@cairn/storage`**：升级 `better-sqlite3` catalog 至 `^12.10.0`，本机 Node 24.14.0 下可安装 native binding 并执行 SQLite 测试
+- `coding-standards.md` 对齐当前 TypeScript、ESLint、Prettier、commitlint 与人工 review gate 状态
 
 ### Removed
 
