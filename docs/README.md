@@ -24,6 +24,7 @@ docs/
 | **产品 / 设计**          | `product/` 全部 + `design/ux/`                                                                      |
 | **后端 / 架构**          | `design/` + `adr/` + `contracts/`                                                                   |
 | **要做 runtime 接入**    | `contracts/runtime-adapter.md`                                                                      |
+| **要做代码上下文索引**   | `design/code-context-index.md`                                                                      |
 | **要发布版本**           | `engineering/release-playbook.md`                                                                   |
 | **新用户**               | `ops/install-guide.md`                                                                              |
 | **安全研究者**           | 仓库根目录 `SECURITY.md` + `design/security-model.md`                                               |

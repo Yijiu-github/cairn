@@ -10,34 +10,37 @@
 
 ## 总览
 
-| 术语                                            | 一句话                           | 类别 |
-| ----------------------------------------------- | -------------------------------- | ---- |
-| [Cairn](#cairn)                                 | 本产品的名字                     | 品牌 |
-| [Workspace Core](#workspace-core)               | 唯一的服务核心                   | 系统 |
-| [Desktop Shell](#desktop-shell)                 | 桌面端外壳                       | 系统 |
-| [Web Shell](#web-shell)                         | Web 端外壳                       | 系统 |
-| [Local Workspace](#local-workspace)             | 本地工作区运行模式               | 系统 |
-| [Remote Workspace](#remote-workspace)           | 远程工作区运行模式               | 系统 |
-| [Workspace](#workspace)                         | 一等领域对象，所有数据的一级边界 | 领域 |
-| [Conversation](#conversation)                   | 对话单位                         | 领域 |
-| [Event](#event)                                 | 一次外部输入                     | 领域 |
-| [Message](#message)                             | 一条消息                         | 领域 |
-| [OrchestrationRun](#orchestrationrun)           | 一次完整编排执行                 | 领域 |
-| [Task](#task)                                   | 编排中的一个子任务               | 领域 |
-| [AgentRun](#agentrun)                           | 一次具体的 agent 执行            | 领域 |
-| [Artifact](#artifact)                           | 执行产物                         | 领域 |
-| [TraceEvent](#traceevent)                       | 一条可观察事件                   | 领域 |
-| [Supervisor](#supervisor)                       | 主 agent，统筹编排               | 角色 |
-| [Worker](#worker)                               | 子任务执行 agent                 | 角色 |
-| [Operator](#operator)                           | 接管系统的人类                   | 角色 |
-| [Runtime Gateway](#runtime-gateway)             | 执行总线                         | 系统 |
-| [Runtime Adapter](#runtime-adapter)             | 接入具体 runtime 的适配层        | 系统 |
-| [Execution Mode](#execution-mode)               | 编排执行模式                     | 概念 |
-| [Retry / Rerun / Replan](#retry--rerun--replan) | 三种不同的"重做"语义             | 概念 |
-| [Capability Profile](#capability-profile)       | runtime 能力档案                 | 概念 |
-| [Heartbeat / Lease](#heartbeat--lease)          | 崩溃恢复机制                     | 机制 |
-| [Replay](#replay)                               | 回放（见专文）                   | 概念 |
-| [Trace ID](#trace-id)                           | 贯穿一次执行的关联 ID            | 机制 |
+| 术语                                            | 一句话                                 | 类别 |
+| ----------------------------------------------- | -------------------------------------- | ---- |
+| [Cairn](#cairn)                                 | 本产品的名字                           | 品牌 |
+| [Workspace Core](#workspace-core)               | 唯一的服务核心                         | 系统 |
+| [Desktop Shell](#desktop-shell)                 | 桌面端外壳                             | 系统 |
+| [Web Shell](#web-shell)                         | Web 端外壳                             | 系统 |
+| [Local Workspace](#local-workspace)             | 本地工作区运行模式                     | 系统 |
+| [Remote Workspace](#remote-workspace)           | 远程工作区运行模式                     | 系统 |
+| [Workspace](#workspace)                         | 一等领域对象，所有数据的一级边界       | 领域 |
+| [Conversation](#conversation)                   | 对话单位                               | 领域 |
+| [Event](#event)                                 | 一次外部输入                           | 领域 |
+| [Message](#message)                             | 一条消息                               | 领域 |
+| [OrchestrationRun](#orchestrationrun)           | 一次完整编排执行                       | 领域 |
+| [Task](#task)                                   | 编排中的一个子任务                     | 领域 |
+| [AgentRun](#agentrun)                           | 一次具体的 agent 执行                  | 领域 |
+| [Artifact](#artifact)                           | 执行产物                               | 领域 |
+| [TraceEvent](#traceevent)                       | 一条可观察事件                         | 领域 |
+| [Supervisor](#supervisor)                       | 主 agent，统筹编排                     | 角色 |
+| [Worker](#worker)                               | 子任务执行 agent                       | 角色 |
+| [Operator](#operator)                           | 接管系统的人类                         | 角色 |
+| [Runtime Gateway](#runtime-gateway)             | 执行总线                               | 系统 |
+| [Runtime Adapter](#runtime-adapter)             | 接入具体 runtime 的适配层              | 系统 |
+| [SourceRoot](#sourceroot)                       | 用户授权给 Workspace 使用的代码根目录  | 系统 |
+| [CodeContextIndex](#codecontextindex)           | SourceRoot 的派生代码上下文索引        | 系统 |
+| [ContextPack](#contextpack)                     | 给 run / task / runtime 使用的上下文包 | 机制 |
+| [Execution Mode](#execution-mode)               | 编排执行模式                           | 概念 |
+| [Retry / Rerun / Replan](#retry--rerun--replan) | 三种不同的"重做"语义                   | 概念 |
+| [Capability Profile](#capability-profile)       | runtime 能力档案                       | 概念 |
+| [Heartbeat / Lease](#heartbeat--lease)          | 崩溃恢复机制                           | 机制 |
+| [Replay](#replay)                               | 回放（见专文）                         | 概念 |
+| [Trace ID](#trace-id)                           | 贯穿一次执行的关联 ID                  | 机制 |
 
 ---
 
@@ -181,6 +184,20 @@ OrchestrationRun 内部的一个**子任务**。Task 之间可以有依赖关系
 
 接口规范见 [`../contracts/runtime-adapter.md`](../contracts/runtime-adapter.md)。
 
+### SourceRoot
+
+用户明确授权给某个 Workspace 使用的本地代码根目录。Workspace Core 可以对 SourceRoot 建立派生索引，但不能把它当成 Artifact 的权威副本。
+
+详见 [`../design/code-context-index.md`](../design/code-context-index.md)。
+
+### CodeContextIndex
+
+SourceRoot 的派生代码上下文索引，包含文件清单、文本搜索、符号 outline、依赖边和索引快照信息。它是可删除、可重建的派生数据。
+
+### ContextPack
+
+给 Planner / Worker / Runtime Adapter 使用的上下文包。它通常包含文件片段、符号 outline、依赖边和用户说明，并作为 Artifact 被 Task 的 `context_refs` 引用。
+
 ### Execution Mode
 
 OrchestrationRun 的执行模式：
@@ -257,6 +274,7 @@ OrchestrationRun 在分配 Task 给 Worker 时会参考 Capability Profile。
 
 ## 变更记录
 
-| 日期       | 变更                            |
-| ---------- | ------------------------------- |
-| 2026-05-14 | 术语表初版，对齐设计文档 V0.1.0 |
+| 日期       | 变更                                                  |
+| ---------- | ----------------------------------------------------- |
+| 2026-05-15 | 新增 SourceRoot / CodeContextIndex / ContextPack 术语 |
+| 2026-05-14 | 术语表初版，对齐设计文档 V0.1.0                       |

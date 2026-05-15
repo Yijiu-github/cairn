@@ -13,6 +13,7 @@
 | `distribution-and-signing.md` | macOS notarization / Windows code signing / 更新通道                             | 🟡 Draft    |
 | `telemetry-and-privacy.md`    | 上报什么、不上报什么、用户开关、匿名化策略                                       | 🟡 Draft    |
 | `replay-and-recovery.md`      | "回放"的明确定义 + 桌面崩溃恢复机制 + heartbeat/lease 字段                       | 🟡 Draft    |
+| `code-context-index.md`       | 本地优先的轻量代码上下文索引、ContextPack 与索引隐私边界                         | 🟡 Draft    |
 | `ux/`                         | 信息架构、关键流程、屏幕清单                                                     | ⚪ TODO     |
 
 ## 与主稿（V0.1.0）的关系
@@ -28,6 +29,7 @@
 | §8 总体架构        | `domain-model.md` + `state-machines.md`        |
 | §11 执行模型       | `state-machines.md` + `replay-and-recovery.md` |
 | §12 核心领域对象   | `domain-model.md`                              |
+| §12 / §14 扩展能力 | `code-context-index.md`                        |
 | §14 桌面安全与权限 | `security-model.md`                            |
 | §15 分发签名更新   | `distribution-and-signing.md`                  |
 | §16 发布路线       | `../product/roadmap.md`                        |

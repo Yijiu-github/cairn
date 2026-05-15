@@ -17,7 +17,7 @@ R2 Remote Workspace Edition 预留 PostgreSQL：storage 包会在相同 reposito
 
 ## 工程备注
 
-- 完整 SQLite 测试需要 `better-sqlite3` native binding。请优先使用项目钉住的 Node 22；Node 24 当前没有对应 prebuild，本地会要求 C++ 工具链。
+- 完整 SQLite 测试需要 `better-sqlite3` native binding。项目仍以 `.nvmrc` 的 Node 22 作为开发基线；当前 `better-sqlite3` catalog 版本已可在本机 Node 24.14.0 下安装并运行 native SQLite 测试。若安装后测试被 `skipIf(!isNativeSqliteAvailable())` 跳过，先执行 `pnpm install` 重新构建 native binding，再确认 `node_modules/better-sqlite3/build/Release/better_sqlite3.node` 是否存在。
 - 当前包通过根 `tsconfig.base.json` 的 path alias 解析 `@cairn/domain/schema`。由于 Windows + `node-linker=hoisted` 下 pnpm 对 workspace scoped symlink 有已知链接问题，暂未在 `package.json` 中声明 `@cairn/domain` 直接依赖；后续调整 pnpm 配置或发布形态时应恢复显式依赖。
 
 ## 入口
