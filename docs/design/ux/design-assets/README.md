@@ -7,15 +7,20 @@
 
 ## 资产来源
 
-| 文件                         | 类型        | 来源                    | 用途                              |
-| ---------------------------- | ----------- | ----------------------- | --------------------------------- |
-| `desktop-first-launch.svg`   | 低保真线框  | 手写 SVG                | First Launch 信息结构             |
-| `desktop-home.svg`           | 低保真线框  | 手写 SVG                | Home / Inbox 信息结构             |
-| `desktop-run-detail.svg`     | 低保真线框  | 手写 SVG                | Run Detail 信息结构               |
-| `desktop-runtime-status.svg` | 低保真线框  | 手写 SVG                | Runtime Status 信息结构           |
-| `ui-v1-home-inbox.svg`       | 视觉参考 V1 | 手写 SVG，未使用 image2 | Home / Inbox 视觉方向             |
-| `ui-v1-run-detail.svg`       | 视觉参考 V1 | 手写 SVG，未使用 image2 | Run Detail 控制台方向             |
-| `ui-v1-artifact-detail.svg`  | 视觉参考 V1 | 手写 SVG，未使用 image2 | Artifact review / provenance 方向 |
+| 文件                             | 类型        | 来源                    | 用途                              |
+| -------------------------------- | ----------- | ----------------------- | --------------------------------- |
+| `desktop-first-launch.svg`       | 低保真线框  | 手写 SVG                | First Launch 信息结构             |
+| `desktop-home.svg`               | 低保真线框  | 手写 SVG                | Home / Inbox 信息结构             |
+| `desktop-run-detail.svg`         | 低保真线框  | 手写 SVG                | Run Detail 信息结构               |
+| `desktop-runtime-status.svg`     | 低保真线框  | 手写 SVG                | Runtime Status 信息结构           |
+| `ui-v1-home-inbox.svg`           | 视觉参考 V1 | 手写 SVG，未使用 image2 | Home / Inbox 视觉方向             |
+| `ui-v1-run-detail.svg`           | 视觉参考 V1 | 手写 SVG，未使用 image2 | Run Detail 控制台方向             |
+| `ui-v1-artifact-detail.svg`      | 视觉参考 V1 | 手写 SVG，未使用 image2 | Artifact review / provenance 方向 |
+| `ui-v1-run-list-zh.svg`          | 视觉参考 V1 | 手写 SVG，未使用 image2 | Run List 中文主界面参考           |
+| `ui-v1-activity-timeline-zh.svg` | 视觉参考 V1 | 手写 SVG，未使用 image2 | Activity Timeline 中文主界面参考  |
+| `ui-v1-task-explorer-zh.svg`     | 视觉参考 V1 | 手写 SVG，未使用 image2 | Task Explorer 中文主界面参考      |
+| `ui-v1-replay-view-zh.svg`       | 视觉参考 V1 | 手写 SVG，未使用 image2 | Replay View 中文主界面参考        |
+| `ui-v1-settings-zh.svg`          | 视觉参考 V1 | 手写 SVG，未使用 image2 | Settings 中文主界面参考           |
 
 ## 约定
 

@@ -80,6 +80,36 @@
 - Queue & failures 把运行中/阻塞状态和最近失败直接暴露。
 - Diagnostics 操作默认强调 redacted status 与 diagnostic bundle，符合本地优先的信任边界。
 
+### 3.6 Run List
+
+![Run List](design-assets/ui-v1-run-list-zh.svg)
+
+重点：阻塞/失败优先，筛选清楚，行 hover 显示轻阴影与主操作。
+
+### 3.7 Activity Timeline
+
+![Activity Timeline](design-assets/ui-v1-activity-timeline-zh.svg)
+
+重点：跨运行事件复盘、审计与来源跳转，不替代 Run Detail。
+
+### 3.8 Task Explorer
+
+![Task Explorer](design-assets/ui-v1-task-explorer-zh.svg)
+
+重点：跨 run 查任务、看依赖与 attempt，快速回到来源 run。
+
+### 3.9 Replay View
+
+![Replay View](design-assets/ui-v1-replay-view-zh.svg)
+
+重点：按时间重播 run 的关键事件和产物快照，只观察，不修改历史。
+
+### 3.10 Settings
+
+![Settings](design-assets/ui-v1-settings-zh.svg)
+
+重点：语言、hover/focus、诊断脱敏和危险区都明确可见。
+
 ## 4. 初版视觉规则
 
 | 项       | V1 规则                                       |
@@ -103,4 +133,4 @@
 
 | 日期       | 变更                                                                                   |
 | ---------- | -------------------------------------------------------------------------------------- |
-| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 五张视觉参考 SVG |
+| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十张视觉参考 SVG |
