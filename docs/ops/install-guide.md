@@ -35,8 +35,8 @@ Cairn 当前仍在开发中，**尚未发布稳定版本**。本指南为发布�
 
 > ⚠️ 占位：Release 1 后填写实际下载链接
 
-- **官网**：[下载页](https://cairn.example/download)（待定）
-- **GitHub Releases**：[Releases](https://github.com/OWNER/REPO/releases)（待定）
+- **官网**：<https://cairn.example/download> （待定）
+- **GitHub Releases**：<https://github.com/OWNER/REPO/releases> （待定）
 
 请校验下载文件的 SHA-256（在 Release 页面提供）。
 

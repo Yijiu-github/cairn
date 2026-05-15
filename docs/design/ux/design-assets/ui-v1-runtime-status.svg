@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" role="img" aria-labelledby="title desc">
+  <title id="title">Cairn UI Visual Reference V1 - Runtime Status</title>
+  <desc id="desc">First visual reference for Cairn runtime and local core status screen.</desc>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="55%" stop-color="#eef4ff"/>
+      <stop offset="100%" stop-color="#f7f3ff"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <style>
+      .ui { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+      .mono { font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+      .title { font-weight: 760; fill: #0f172a; }
+      .muted { fill: #64748b; }
+      .soft { fill: #94a3b8; }
+      .panel { fill: rgba(255,255,255,0.88); stroke: #dbe3ef; }
+      .card { fill: #ffffff; stroke: #dbe3ef; }
+      .hair { stroke: #e2e8f0; stroke-width: 1; }
+      .blue { fill: #2563eb; }
+      .green { fill: #16a34a; }
+      .amber { fill: #d97706; }
+      .red { fill: #dc2626; }
+      .purple { fill: #7c3aed; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="960" fill="url(#bg)"/>
+  <rect x="60" y="54" width="1320" height="852" rx="32" class="panel" filter="url(#shadow)"/>
+  <rect x="60" y="54" width="1320" height="64" rx="32" fill="#ffffff"/>
+  <rect x="60" y="86" width="1320" height="32" fill="#ffffff"/>
+  <text x="96" y="94" class="ui title" font-size="22">Cairn</text>
+  <text x="174" y="94" class="ui muted" font-size="14">Runtime &amp; Local Core</text>
+  <rect x="60" y="118" width="236" height="788" fill="#ffffff" stroke="#e2e8f0"/>
+  <text x="108" y="176" class="ui muted" font-size="15">Inbox</text>
+  <text x="108" y="224" class="ui muted" font-size="15">Runs</text>
+  <text x="108" y="272" class="ui muted" font-size="15">Artifacts</text>
+  <rect x="84" y="300" width="188" height="40" rx="12" fill="#eff6ff"/>
+  <text x="108" y="325" class="ui blue" font-size="15" font-weight="700">Runtime</text>
+  <text x="108" y="374" class="ui muted" font-size="15">Activity</text>
+  <text x="108" y="422" class="ui muted" font-size="15">Settings</text>
+
+  <text x="344" y="168" class="ui title" font-size="34">Runtime &amp; Local Core</text>
+  <text x="346" y="204" class="ui muted" font-size="15">Separate health surfaces for the local workspace core and agent runtime.</text>
+  <rect x="344" y="248" width="456" height="214" rx="24" class="card"/>
+  <text x="378" y="296" class="ui title" font-size="19">Workspace Core</text>
+  <rect x="654" y="272" width="96" height="30" rx="10" fill="#dcfce7"/>
+  <text x="680" y="292" class="ui green" font-size="12" font-weight="760">Healthy</text>
+  <text x="378" y="334" class="ui muted" font-size="13">Endpoint: 127.0.0.1:4317 · Version 0.1.0</text>
+  <text x="378" y="368" class="ui title" font-size="14">Last heartbeat</text><text x="654" y="368" class="ui muted" font-size="13">12s ago</text>
+  <text x="378" y="402" class="ui title" font-size="14">Database</text><text x="654" y="402" class="ui green" font-size="13">OK</text>
+  <rect x="378" y="426" width="148" height="34" rx="11" fill="#f8fafc" stroke="#dbe3ef"/><text x="406" y="448" class="ui muted" font-size="13">Open logs</text>
+
+  <rect x="824" y="248" width="456" height="214" rx="24" class="card"/>
+  <text x="858" y="296" class="ui title" font-size="19">Codex CLI Runtime</text>
+  <rect x="1138" y="272" width="86" height="30" rx="10" fill="#dcfce7"/>
+  <text x="1164" y="292" class="ui green" font-size="12" font-weight="760">Ready</text>
+  <text x="858" y="334" class="ui muted" font-size="13">Path: /usr/local/bin/codex · Auth checked 4m ago</text>
+  <text x="858" y="368" class="ui title" font-size="14">Capabilities</text><text x="1034" y="368" class="ui muted" font-size="13">streaming · cancel · sandbox</text>
+  <text x="858" y="402" class="ui title" font-size="14">Active agent runs</text><text x="1138" y="402" class="ui muted" font-size="13">2</text>
+  <rect x="858" y="426" width="164" height="34" rx="11" fill="#f8fafc" stroke="#dbe3ef"/><text x="888" y="448" class="ui muted" font-size="13">Configure</text>
+
+  <text x="344" y="532" class="ui title" font-size="22">Queue &amp; failures</text>
+  <rect x="344" y="560" width="936" height="152" rx="24" class="card"/>
+  <text x="378" y="608" class="ui title" font-size="15">Queue depth</text><text x="540" y="608" class="ui muted" font-size="14">0 queued · 2 running · 1 blocked</text>
+  <line x1="378" y1="632" x2="1246" y2="632" class="hair"/>
+  <text x="378" y="674" class="ui title" font-size="15">Recent failure</text><text x="540" y="674" class="ui amber" font-size="14">protected_write_request waiting for approval</text>
+  <text x="1104" y="674" class="ui blue" font-size="13" font-weight="760">Open run →</text>
+
+  <text x="344" y="778" class="ui title" font-size="22">Diagnostics</text>
+  <rect x="344" y="806" width="296" height="54" rx="16" fill="#0f172a"/><text x="398" y="839" class="ui" font-size="14" font-weight="760" fill="#ffffff">Run health check</text>
+  <rect x="660" y="806" width="296" height="54" rx="16" fill="#ffffff" stroke="#dbe3ef"/><text x="716" y="839" class="ui muted" font-size="14">Copy redacted status</text>
+  <rect x="976" y="806" width="304" height="54" rx="16" fill="#ffffff" stroke="#dbe3ef"/><text x="1034" y="839" class="ui muted" font-size="14">Export diagnostic bundle</text>
+
+  <rect x="344" y="742" width="936" height="1" fill="#e2e8f0"/>
+  <text x="344" y="738" class="ui muted" font-size="13">Exports are redacted by default. Local paths may reveal personal information.</text>
+</svg>

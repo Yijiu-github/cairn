@@ -13,22 +13,24 @@
 
 ## 2. Workflow 总览
 
-| Workflow      | 触发                | 目的                                             |
-| ------------- | ------------------- | ------------------------------------------------ |
-| `ci.yml`      | PR / push to `main` | lint + typecheck + unit + contract + integration |
-| `e2e.yml`     | PR / 定时（每日）   | Playwright + Electron / Web E2E                  |
-| `release.yml` | git tag `v*`        | 构建 + 签名 + 公证 + 发布到 GitHub Releases      |
-| `audit.yml`   | 每周 cron           | 依赖审计、license 检查、license-checker 输出     |
-| `docs.yml`    | docs/\*\* 变更      | 校验链接、构建静态站点（如启用）                 |
+| Workflow      | 触发                                          | 目的                                             |
+| ------------- | --------------------------------------------- | ------------------------------------------------ |
+| `ci.yml`      | PR to `dev` / `develop`、release PR to `main` | lint + typecheck + unit + contract + integration |
+| `e2e.yml`     | PR / 定时（每日）                             | Playwright + Electron / Web E2E                  |
+| `release.yml` | git tag `v*`                                  | 构建 + 签名 + 公证 + 发布到 GitHub Releases      |
+| `audit.yml`   | 每周 cron                                     | 依赖审计、license 检查、license-checker 输出     |
+| `docs.yml`    | docs/\*\* 变更                                | 校验链接、构建静态站点（如启用）                 |
 
 ## 3. ci.yml 草案
+
+普通开发分支必须先 PR 到 `dev` / `develop`；`main` 只接受发布晋级或 hotfix PR。CI 可以监听 `main` push/tag，但不应鼓励功能分支直接进入 `main`。
 
 ```yaml
 name: ci
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [develop, dev, main]
 
 jobs:
   ci:
