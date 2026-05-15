@@ -20,11 +20,11 @@
 
 ## 1. 当前项目状态（重要）
 
-> ⚠️ **Workspace Core 与共享包最小工程骨架已启动；Desktop / Web 应用尚未启动**。
+> ⚠️ **Workspace Core、共享包最小工程骨架与静态 UI Preview 已启动；Desktop / Web Shell 尚未启动**。
 
 所以你在这个仓库里：
 
-- **可以**：读文档、维护工程配置、补充 `apps/workspace-core` 与 `packages/shared_contracts` / `packages/domain` / `packages/storage` / `packages/runtime_gateway` / `packages/application` 等已存在代码、起草接口草案、写 ADR
+- **可以**：读文档、维护工程配置、补充 `apps/workspace-core`、静态 `apps/ui-preview` 与 `packages/shared_contracts` / `packages/domain` / `packages/storage` / `packages/runtime_gateway` / `packages/application` / `packages/ui` 等已存在代码、起草接口草案、写 ADR
 - **不要**：假装 Desktop / Web 已经存在、引用不存在的目录如 `apps/desktop/src/`
 - **要谨慎**：任何"创建 Desktop / Web 应用"或"新增大包实际代码"的请求，先确认是否在做对应工程启动阶段
 
@@ -110,7 +110,8 @@ cairn-workspace/
 │  ├─ legal/              ← 隐私 / 数据本地化
 │  └─ reference/          ← 术语 / 命名 / 复盘
 ├─ apps/
-│  └─ workspace-core/     ← 已创建：Fastify 最小服务骨架 / in-memory application ports / mock runtime
+│  ├─ workspace-core/     ← 已创建：Fastify 最小服务骨架 / SQLite application repository / mock runtime
+│  └─ ui-preview/         ← 已创建：静态 UI 预览 playground，不是 Desktop/Web Shell
 ├─ packages/
 │  ├─ shared_contracts/   ← 已创建：Zod schema / ts-rest contracts / WS events
 │  └─ domain/             ← 已创建：Drizzle SQLite-first schema / migrations
@@ -122,7 +123,7 @@ cairn-workspace/
 └─ .github/
 ```
 
-代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前仅创建 `apps/workspace-core` 与 packages 下共享包；`apps/desktop` 与 `apps/web` 尚未创建**。
+代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前仅创建 `apps/workspace-core`、静态 `apps/ui-preview` 与 packages 下共享包；`apps/desktop` 与 `apps/web` 尚未创建**。
 
 ---
 
@@ -196,6 +197,7 @@ pnpm install
 
 # 开发
 pnpm --filter @cairn/workspace-core dev
+pnpm dev:ui-preview
 
 # 校验
 pnpm lint
