@@ -21,6 +21,7 @@
 | `ui-v1-task-explorer-zh.svg`     | 视觉参考 V1 | 手写 SVG，未使用 image2 | Task Explorer 中文主界面参考      |
 | `ui-v1-replay-view-zh.svg`       | 视觉参考 V1 | 手写 SVG，未使用 image2 | Replay View 中文主界面参考        |
 | `ui-v1-settings-zh.svg`          | 视觉参考 V1 | 手写 SVG，未使用 image2 | Settings 中文主界面参考           |
+| `ui-v1-component-states-zh.svg`  | 视觉参考 V1 | 手写 SVG，未使用 image2 | 组件状态、空错态与危险确认参考    |
 
 ## 约定
 

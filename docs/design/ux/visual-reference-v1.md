@@ -110,6 +110,12 @@
 
 重点：语言、hover/focus、诊断脱敏和危险区都明确可见。
 
+### 3.11 Component States
+
+![Component States](design-assets/ui-v1-component-states-zh.svg)
+
+重点：把 hover、focus-visible、loading、empty、error 与 danger confirmation 做成统一状态语言。
+
 ## 4. 初版视觉规则
 
 | 项       | V1 规则                                       |
@@ -131,6 +137,6 @@
 
 ## 6. 变更历史
 
-| 日期       | 变更                                                                                   |
-| ---------- | -------------------------------------------------------------------------------------- |
-| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十张视觉参考 SVG |
+| 日期       | 变更                                                                                     |
+| ---------- | ---------------------------------------------------------------------------------------- |
+| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十一张视觉参考 SVG |
