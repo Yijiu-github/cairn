@@ -1,9 +1,9 @@
 # Phase 5 Implementation Plan — Primitives Accessibility Hardening
 
-> 状态：🟡 Ready for implementation approval  
-> 日期：2026-05-15  
-> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`  
-> 前置阶段：Phase 1 commit `74aed20`，Phase 2 commit `8964484`，Phase 3 commit `2e4eff4`，Phase 4 commit `2359bdd`  
+> 状态：🟡 Ready for implementation approval
+> 日期：2026-05-15
+> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`
+> 前置阶段：Phase 1 commit `74aed20`，Phase 2 commit `8964484`，Phase 3 commit `2e4eff4`，Phase 4 commit `2359bdd`
 > 范围：`packages/ui/src/primitives/tabs.tsx`、`packages/ui/src/primitives/dialog.tsx` 及必要 preview 调用方验证
 
 ## 1. Objective

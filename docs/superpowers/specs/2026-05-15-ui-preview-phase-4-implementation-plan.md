@@ -1,9 +1,9 @@
 # Phase 4 Implementation Plan — Tokens and Theme Responsibility Cleanup
 
-> 状态：🟡 Ready for implementation approval  
-> 日期：2026-05-15  
-> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`  
-> 前置阶段：Phase 1 commit `74aed20`，Phase 2 commit `8964484`，Phase 3 commit `2e4eff4`  
+> 状态：🟡 Ready for implementation approval
+> 日期：2026-05-15
+> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`
+> 前置阶段：Phase 1 commit `74aed20`，Phase 2 commit `8964484`，Phase 3 commit `2e4eff4`
 > 范围：`packages/ui/src/tokens` 与 `apps/ui-preview/src/styles.css` 的职责边界整理
 
 ## 1. Objective

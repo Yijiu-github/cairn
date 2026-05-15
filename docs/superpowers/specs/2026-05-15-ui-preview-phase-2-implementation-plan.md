@@ -1,9 +1,9 @@
 # Phase 2 Implementation Plan — UI Preview ViewModel Boundary
 
-> 状态：🟡 Ready for implementation approval  
-> 日期：2026-05-15  
-> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`  
-> 前置阶段：Phase 1 已完成，commit `74aed20`  
+> 状态：🟡 Ready for implementation approval
+> 日期：2026-05-15
+> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`
+> 前置阶段：Phase 1 已完成，commit `74aed20`
 > 范围：仅 `apps/ui-preview/src` 的 preview-only ViewModel 整理；不修改 `@cairn/ui` public API
 
 ## 1. Objective

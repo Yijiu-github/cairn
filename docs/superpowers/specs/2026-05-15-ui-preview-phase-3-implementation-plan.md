@@ -1,9 +1,9 @@
 # Phase 3 Implementation Plan — Sensitive Path and Artifact Safety API
 
-> 状态：🟡 Ready for implementation approval  
-> 日期：2026-05-15  
-> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`  
-> 前置阶段：Phase 1 commit `74aed20`，Phase 2 commit `8964484`  
+> 状态：🟡 Ready for implementation approval
+> 日期：2026-05-15
+> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`
+> 前置阶段：Phase 1 commit `74aed20`，Phase 2 commit `8964484`
 > 范围：`packages/ui/src/cairn` 的 artifact/path safety API + `apps/ui-preview/src` 调用方迁移
 
 ## 1. Objective

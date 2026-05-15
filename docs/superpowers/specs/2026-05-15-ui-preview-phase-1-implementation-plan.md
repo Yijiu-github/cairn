@@ -1,8 +1,8 @@
 # Phase 1 Implementation Plan — UI Preview Structure Cleanup
 
-> 状态：🟡 Ready for implementation approval  
-> 日期：2026-05-15  
-> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`  
+> 状态：🟡 Ready for implementation approval
+> 日期：2026-05-15
+> Parent spec：`docs/superpowers/specs/2026-05-15-ui-preview-systemization-design.md`
 > 范围：仅 `apps/ui-preview/src` 的结构整理；不修改 `@cairn/ui` public API
 
 ## 1. Objective

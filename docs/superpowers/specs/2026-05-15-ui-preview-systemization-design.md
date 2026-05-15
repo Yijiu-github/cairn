@@ -1,8 +1,8 @@
 # UI Preview Systemization Design
 
-> 状态：🟡 Draft for user review  
-> 日期：2026-05-15  
-> 范围：Cairn UI preview 与共享 UI 组件的分阶段系统化整理  
+> 状态：🟡 Draft for user review
+> 日期：2026-05-15
+> 范围：Cairn UI preview 与共享 UI 组件的分阶段系统化整理
 > 分支上下文：`feat/ui-desktop-v0` → PR base `develop`
 
 ## 1. 背景
