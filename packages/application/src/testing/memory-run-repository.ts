@@ -2,9 +2,10 @@
 
 import type {
   ApplicationRepository,
+  CreateSourceRootRegistrationInput,
   CreateRunGraphInput,
   ReplaceCodeIndexSnapshotInput,
-  CreateSourceRootRegistrationInput,
+  SearchCodeIndexFilesInput,
 } from '../ports/run-repository.js';
 import type {
   AgentRun,
@@ -125,6 +126,54 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
     return Promise.resolve(
       [...this.codeIndexFiles.values()].filter((file) => file.snapshotId === snapshotId),
     );
+  }
+
+  searchCodeIndexFiles(input: SearchCodeIndexFilesInput): Promise<CodeIndexFile[]> {
+    const pathContains = input.pathContains?.toLowerCase();
+    const language = input.language?.toLowerCase();
+    const latestSnapshotIds = this.latestReadySnapshotIds(input);
+
+    if (latestSnapshotIds.size === 0) {
+      return Promise.resolve([]);
+    }
+
+    return Promise.resolve(
+      [...this.codeIndexFiles.values()]
+        .filter((file) => file.workspaceId === input.workspaceId)
+        .filter((file) => latestSnapshotIds.has(file.snapshotId))
+        .filter((file) =>
+          input.sourceRootId === undefined ? true : file.sourceRootId === input.sourceRootId,
+        )
+        .filter((file) =>
+          pathContains === undefined ? true : file.path.toLowerCase().includes(pathContains),
+        )
+        .filter((file) =>
+          language === undefined ? true : file.language?.toLowerCase() === language,
+        )
+        .sort((a, b) => a.path.localeCompare(b.path))
+        .slice(0, input.limit),
+    );
+  }
+
+  private latestReadySnapshotIds(input: SearchCodeIndexFilesInput): Set<CodeIndexSnapshotId> {
+    const latestBySourceRoot = new Map<SourceRootId, CodeIndexSnapshot>();
+
+    for (const snapshot of this.codeIndexSnapshots.values()) {
+      if (snapshot.workspaceId !== input.workspaceId || snapshot.status !== 'ready') {
+        continue;
+      }
+
+      if (input.sourceRootId !== undefined && snapshot.sourceRootId !== input.sourceRootId) {
+        continue;
+      }
+
+      const current = latestBySourceRoot.get(snapshot.sourceRootId);
+      if (current === undefined || snapshot.createdAt.localeCompare(current.createdAt) > 0) {
+        latestBySourceRoot.set(snapshot.sourceRootId, snapshot);
+      }
+    }
+
+    return new Set([...latestBySourceRoot.values()].map((snapshot) => snapshot.snapshotId));
   }
 
   replaceCodeIndexSnapshot(input: ReplaceCodeIndexSnapshotInput): Promise<void> {

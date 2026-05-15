@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { eq } from 'drizzle-orm';
+import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
 import {
   agentRuns,
@@ -30,6 +30,7 @@ import type {
   CreateRunGraphInput,
   CreateSourceRootRegistrationInput,
   ReplaceCodeIndexSnapshotInput,
+  SearchCodeIndexFilesInput,
 } from '@cairn/application';
 import type { BudgetHintRow } from '@cairn/domain/schema';
 import type {
@@ -43,6 +44,7 @@ import type {
   TraceEvent,
   WorkspaceId,
 } from '@cairn/shared-contracts/schemas';
+import type { SQL } from 'drizzle-orm';
 
 export interface BootstrapWorkspaceInput {
   workspaceId: WorkspaceId;
@@ -240,6 +242,57 @@ export class SqliteApplicationRepository implements ApplicationRepository {
       .select()
       .from(codeIndexFiles)
       .where(eq(codeIndexFiles.snapshotId, snapshotId))
+      .all();
+    return Promise.resolve(rows.map(fromCodeIndexFileRow));
+  }
+
+  searchCodeIndexFiles(input: SearchCodeIndexFilesInput): Promise<CodeIndexFile[]> {
+    const snapshotRows = this.db
+      .select()
+      .from(codeIndexSnapshots)
+      .where(
+        and(
+          eq(codeIndexSnapshots.workspaceId, input.workspaceId),
+          eq(codeIndexSnapshots.status, 'ready'),
+          ...(input.sourceRootId === undefined
+            ? []
+            : [eq(codeIndexSnapshots.sourceRootId, input.sourceRootId)]),
+        ),
+      )
+      .all();
+    const latestSnapshotIds = latestReadySnapshotIds(snapshotRows.map(fromCodeIndexSnapshotRow));
+
+    if (latestSnapshotIds.length === 0) {
+      return Promise.resolve([]);
+    }
+
+    const conditions: SQL[] = [
+      eq(codeIndexFiles.workspaceId, input.workspaceId),
+      inArray(codeIndexFiles.snapshotId, latestSnapshotIds),
+    ];
+
+    if (input.sourceRootId !== undefined) {
+      conditions.push(eq(codeIndexFiles.sourceRootId, input.sourceRootId));
+    }
+
+    if (input.pathContains !== undefined) {
+      conditions.push(
+        sql`lower(${codeIndexFiles.path}) like ${`%${escapeLikePattern(
+          input.pathContains.toLowerCase(),
+        )}%`} escape '\\'`,
+      );
+    }
+
+    if (input.language !== undefined) {
+      conditions.push(sql`lower(${codeIndexFiles.language}) = ${input.language.toLowerCase()}`);
+    }
+
+    const rows = this.db
+      .select()
+      .from(codeIndexFiles)
+      .where(and(...conditions))
+      .orderBy(asc(codeIndexFiles.path))
+      .limit(input.limit)
       .all();
     return Promise.resolve(rows.map(fromCodeIndexFileRow));
   }
@@ -491,6 +544,22 @@ const fromCodeIndexSnapshotRow = (row: typeof codeIndexSnapshots.$inferSelect): 
     createdAt: row.createdAt,
     ...(row.metadata === null ? {} : { metadata: row.metadata }),
   });
+
+const latestReadySnapshotIds = (snapshots: CodeIndexSnapshot[]): CodeIndexSnapshotId[] => {
+  const latestBySourceRoot = new Map<SourceRootId, CodeIndexSnapshot>();
+
+  for (const snapshot of snapshots) {
+    const current = latestBySourceRoot.get(snapshot.sourceRootId);
+    if (current === undefined || snapshot.createdAt.localeCompare(current.createdAt) > 0) {
+      latestBySourceRoot.set(snapshot.sourceRootId, snapshot);
+    }
+  }
+
+  return [...latestBySourceRoot.values()].map((snapshot) => snapshot.snapshotId);
+};
+
+const escapeLikePattern = (value: string): string =>
+  value.replaceAll('\\', '\\\\').replaceAll('%', '\\%').replaceAll('_', '\\_');
 
 const toCodeIndexFileRow = (file: CodeIndexFile): typeof codeIndexFiles.$inferInsert => ({
   fileId: file.fileId,

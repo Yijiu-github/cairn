@@ -40,6 +40,13 @@ const scanner: CodeContextScannerPort = {
         digest: 'sha256:index',
         language: 'typescript',
       },
+      {
+        path: 'README.md',
+        sizeBytes: 256,
+        mtimeMs: 1_768_000_000_001,
+        digest: 'sha256:readme',
+        language: 'markdown',
+      },
     ]),
 };
 
@@ -130,7 +137,7 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
       const reindexed = await first.container.codeContext.reindexSourceRoot({ sourceRootId });
       expect(reindexed.snapshot).toMatchObject({
         status: 'ready',
-        fileCount: 1,
+        fileCount: 2,
       });
 
       const manifest = await first.container.codeContext.createContextPack({
@@ -172,13 +179,29 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
         await second.container.repository.listCodeIndexSnapshotsBySourceRoot(sourceRootId);
       const latestSnapshot = snapshots.find((snapshot) => snapshot.status === 'ready');
       expect(latestSnapshot).toMatchObject({
-        fileCount: 1,
+        fileCount: 2,
       });
       if (latestSnapshot === undefined) {
         throw new Error('Expected ready snapshot');
       }
       await expect(
         second.container.repository.listCodeIndexFilesBySnapshot(latestSnapshot.snapshotId),
+      ).resolves.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            path: 'packages/application/src/index.ts',
+            language: 'typescript',
+          }),
+        ]),
+      );
+      await expect(
+        second.container.repository.searchCodeIndexFiles({
+          workspaceId: ids.workspace,
+          sourceRootId,
+          pathContains: 'application',
+          language: 'typescript',
+          limit: 10,
+        }),
       ).resolves.toMatchObject([
         {
           path: 'packages/application/src/index.ts',

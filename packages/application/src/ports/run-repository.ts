@@ -33,6 +33,14 @@ export interface ReplaceCodeIndexSnapshotInput {
   files: CodeIndexFile[];
 }
 
+export interface SearchCodeIndexFilesInput {
+  workspaceId: WorkspaceId;
+  sourceRootId?: SourceRootId | undefined;
+  pathContains?: string | undefined;
+  language?: string | undefined;
+  limit: number;
+}
+
 export interface ApplicationRepository {
   createRunGraph(input: CreateRunGraphInput): Promise<void>;
   getRun(orchestrationRunId: OrchestrationRunId): Promise<OrchestrationRun | undefined>;
@@ -53,6 +61,7 @@ export interface ApplicationRepository {
   listCodeIndexFilesBySnapshot(
     snapshotId: CodeIndexSnapshot['snapshotId'],
   ): Promise<CodeIndexFile[]>;
+  searchCodeIndexFiles(input: SearchCodeIndexFilesInput): Promise<CodeIndexFile[]>;
   replaceCodeIndexSnapshot(input: ReplaceCodeIndexSnapshotInput): Promise<void>;
   createContextPack(manifest: ContextPackManifest): Promise<void>;
   getContextPack(contextPackId: ContextPackId): Promise<ContextPackManifest | undefined>;

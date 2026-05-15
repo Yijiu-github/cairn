@@ -2,8 +2,9 @@
 /**
  * Lightweight code context indexing schemas.
  *
- * R1a only establishes the SourceRoot registry and ContextPack manifest baseline.
- * File scanning, FTS, symbol outlines, and dependency edges are added in later stages.
+ * R1 establishes the SourceRoot registry, file manifest snapshots, and
+ * metadata-only search baseline. FTS, symbol outlines, and dependency edges
+ * are added in later stages.
  *
  * See docs/design/code-context-index.md.
  */
@@ -117,6 +118,20 @@ export const CodeIndexSnapshotDetail = z.object({
   files: z.array(CodeIndexFile),
 });
 export type CodeIndexSnapshotDetail = z.infer<typeof CodeIndexSnapshotDetail>;
+
+export const CodeSearchQuery = z.object({
+  workspaceId: WorkspaceId,
+  sourceRootId: SourceRootId.optional(),
+  pathContains: z.string().min(1).max(300).optional(),
+  language: z.string().min(1).max(64).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+});
+export type CodeSearchQuery = z.infer<typeof CodeSearchQuery>;
+
+export const CodeSearchResult = z.object({
+  items: z.array(CodeIndexFile),
+});
+export type CodeSearchResult = z.infer<typeof CodeSearchResult>;
 
 export const ContextPackItem = z.object({
   kind: ContextPackItemKind,

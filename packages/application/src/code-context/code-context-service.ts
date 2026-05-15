@@ -11,6 +11,8 @@ import type {
   CodeIndexSnapshot,
   CodeIndexSnapshotId,
   CodeIndexSnapshotDetail,
+  CodeSearchQuery,
+  CodeSearchResult,
   ContextPackCreate,
   ContextPackId,
   ContextPackManifest,
@@ -72,6 +74,8 @@ export interface ReindexSourceRootInput {
 export interface GetSourceRootIndexInput {
   sourceRootId: SourceRootId;
 }
+
+export type SearchCodeIndexInput = CodeSearchQuery;
 
 const INDEX_VERSION_R1A = 'r1a-manifest-only';
 const INDEX_VERSION_R1B_FILE_MANIFEST = 'r1b-file-manifest';
@@ -209,6 +213,15 @@ export class CodeContextService {
 
     const files = await this.repository.listCodeIndexFilesBySnapshot(latestSnapshot.snapshotId);
     return { sourceRoot, latestSnapshot, files };
+  }
+
+  async searchCodeIndex(input: SearchCodeIndexInput): Promise<CodeSearchResult> {
+    if (input.sourceRootId !== undefined) {
+      await this.assertSourceRootsBelongToWorkspace(input.workspaceId, [input.sourceRootId]);
+    }
+
+    const items = await this.repository.searchCodeIndexFiles(input);
+    return { items };
   }
 
   async createContextPack(input: CreateContextPackInput): Promise<ContextPackManifest> {

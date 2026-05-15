@@ -5,6 +5,7 @@ import Fastify from 'fastify';
 
 import { StartRunBody } from '@cairn/shared-contracts/contracts';
 import {
+  CodeSearchQuery,
   ContextPackCreate,
   OrchestrationRunId,
   SourceRootCreate,
@@ -179,6 +180,27 @@ export const createWorkspaceCoreApp = async (
       const result = await options.container.codeContext.getSourceRootIndex({
         sourceRootId: params.data,
       });
+      return await reply.send(result);
+    } catch (error) {
+      if (isApplicationError(error) && error.code === 'SOURCE_ROOT_NOT_FOUND') {
+        return reply.code(404).send(toApiError('NOT_FOUND', error.message));
+      }
+
+      throw error;
+    }
+  });
+
+  app.get('/v1/code-search', async (request, reply) => {
+    const query = CodeSearchQuery.safeParse(request.query);
+
+    if (!query.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid code search query.', query.error.issues));
+    }
+
+    try {
+      const result = await options.container.codeContext.searchCodeIndex(query.data);
       return await reply.send(result);
     } catch (error) {
       if (isApplicationError(error) && error.code === 'SOURCE_ROOT_NOT_FOUND') {

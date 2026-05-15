@@ -11,6 +11,8 @@ import { z } from 'zod';
 import {
   CodeIndexReindexResult,
   CodeIndexSnapshotDetail,
+  CodeSearchQuery,
+  CodeSearchResult,
   ContextPackCreate,
   ContextPackManifest,
   SourceRoot,
@@ -66,6 +68,17 @@ export const contextContract = c.router(
       summary: 'Get the latest lightweight code index snapshot for a source root',
       responses: {
         200: CodeIndexSnapshotDetail,
+        ...commonErrorResponses,
+      },
+    },
+
+    searchCodeIndex: {
+      method: 'GET',
+      path: '/code-search',
+      query: CodeSearchQuery,
+      summary: 'Search the lightweight code index file manifest',
+      responses: {
+        200: CodeSearchResult,
         ...commonErrorResponses,
       },
     },

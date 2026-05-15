@@ -125,11 +125,12 @@ R1b-a 已完成：
 - 最新索引快照读取：`GET /v1/source-roots/:sourceRootId/index`
 - `code_index_files` 文件清单表：记录相对路径、大小、mtime、digest、语言猜测，不保存源码内容
 - 本地 scanner 默认排除 `.git`、`node_modules`、`.env*`、密钥/证书、本地数据库、构建产物，并支持 SourceRoot include / exclude
+- 最小文件清单搜索：`GET /v1/code-search` 支持按 `workspaceId`、可选 `sourceRootId`、`pathContains`、`language` 与 `limit` 查询最新 ready 快照中的文件元数据，不读取或返回源码内容
 
 后续 R1b/R1 继续补齐：
 
 - SourceRoot 注册与状态：`active` / `indexing` / `stale` / `error`。
-- 文本搜索：优先 SQLite FTS；不可用时降级为受控 `rg` 查询。
+- 文本搜索：优先 SQLite FTS；不可用时降级为受控 `rg` 查询。当前 `code-search` 只覆盖路径 / 语言级元数据过滤。
 - TypeScript / JavaScript 基础 symbol outline：函数、类、接口、导出符号、顶层常量。
 - import/export 文件依赖边。
 - 关系置信度标签：区分 `extracted` / `inferred` / `ambiguous`，避免把推断关系伪装成事实。
@@ -215,14 +216,14 @@ interface ContextPackItem {
 
 这些 endpoint 只是设计方向，最终以 shared contracts 为准：
 
-| Endpoint                                         | 用途                      |
-| ------------------------------------------------ | ------------------------- |
-| `POST /v1/workspaces/:workspaceId/source-roots`  | 注册 SourceRoot           |
-| `GET /v1/workspaces/:workspaceId/source-roots`   | 列出 SourceRoot 与状态    |
-| `POST /v1/source-roots/:sourceRootId/reindex`    | 触发文件清单重建          |
-| `GET /v1/source-roots/:sourceRootId/index`       | 查看最新快照与文件清单    |
-| `GET /v1/code-search`                            | 文件 / 符号 / 文本搜索    |
-| `POST /v1/workspaces/:workspaceId/context-packs` | 生成 ContextPack manifest |
+| Endpoint                                         | 用途                                  |
+| ------------------------------------------------ | ------------------------------------- |
+| `POST /v1/workspaces/:workspaceId/source-roots`  | 注册 SourceRoot                       |
+| `GET /v1/workspaces/:workspaceId/source-roots`   | 列出 SourceRoot 与状态                |
+| `POST /v1/source-roots/:sourceRootId/reindex`    | 触发文件清单重建                      |
+| `GET /v1/source-roots/:sourceRootId/index`       | 查看最新快照与文件清单                |
+| `GET /v1/code-search`                            | 文件清单搜索；后续扩展符号 / 文本搜索 |
+| `POST /v1/workspaces/:workspaceId/context-packs` | 生成 ContextPack manifest             |
 
 ---
 
@@ -261,6 +262,7 @@ interface ContextPackItem {
 
 | 日期       | 变更                                                      |
 | ---------- | --------------------------------------------------------- |
+| 2026-05-15 | R1b-a 接入最小 code-search 文件清单搜索接口               |
 | 2026-05-15 | R1b-a 接入手动 reindex 与本地文件清单快照                 |
 | 2026-05-15 | R1a 接入 SourceRoot registry 与 ContextPack manifest 基线 |
 | 2026-05-15 | 补充 Graphify 调研结论与置信度标签                        |

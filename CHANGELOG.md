@@ -41,6 +41,7 @@
 - 设计文档新增轻量代码上下文索引方案，明确 Cairn 自研 SourceRoot / CodeContextIndex / ContextPack 能力，不引入 GitNexus 依赖或许可证受限代码
 - **Code Context R1a**：新增 SourceRoot registry、最小 CodeIndexSnapshot 元数据、ContextPack manifest 契约、domain schema、application service 与 workspace-core API/SQLite 持久化基线
 - **Code Context R1b-a**：新增手动 reindex 与本地文件清单快照，持久化 `code_index_files` 派生元数据并通过 workspace-core 查询最新索引
+- **Code Context R1b-a**：新增 `GET /v1/code-search` 最小文件清单搜索接口，支持按 workspace、SourceRoot、路径片段、语言与 limit 查询最新 ready 快照元数据
 
 ### Changed
 

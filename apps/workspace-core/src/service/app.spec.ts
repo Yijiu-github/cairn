@@ -30,6 +30,13 @@ const createScanner = (): CodeContextScannerPort => ({
         digest: 'sha256:index',
         language: 'typescript',
       },
+      {
+        path: 'README.md',
+        sizeBytes: 256,
+        mtimeMs: 1_768_000_000_001,
+        digest: 'sha256:readme',
+        language: 'markdown',
+      },
     ]),
 });
 
@@ -163,14 +170,14 @@ describe('workspace-core app', () => {
         },
         snapshot: {
           status: 'ready',
-          fileCount: 1,
+          fileCount: 2,
         },
-        files: [
-          {
+        files: expect.arrayContaining([
+          expect.objectContaining({
             path: 'packages/application/src/index.ts',
             language: 'typescript',
-          },
-        ],
+          }),
+        ]) as unknown,
       });
 
       const indexResponse = await app.inject({
@@ -182,11 +189,27 @@ describe('workspace-core app', () => {
       expect(indexResponse.json()).toMatchObject({
         latestSnapshot: {
           status: 'ready',
-          fileCount: 1,
+          fileCount: 2,
         },
-        files: [
-          {
+        files: expect.arrayContaining([
+          expect.objectContaining({
             path: 'packages/application/src/index.ts',
+          }),
+        ]) as unknown,
+      });
+
+      const searchResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/code-search?workspaceId=${ids.workspace}&pathContains=application&language=typescript`,
+      });
+
+      expect(searchResponse.statusCode).toBe(200);
+      expect(searchResponse.json()).toMatchObject({
+        items: [
+          {
+            sourceRootId: sourceRoot.sourceRootId,
+            path: 'packages/application/src/index.ts',
+            language: 'typescript',
           },
         ],
       });

@@ -25,6 +25,7 @@ describe('rootContract', () => {
     expect(rootContract.context.reindexSourceRoot.path).toBe(
       contextContract.reindexSourceRoot.path,
     );
+    expect(rootContract.context.searchCodeIndex.path).toBe(contextContract.searchCodeIndex.path);
     expect(rootContract.run.startRun.path).toBe(runContract.startRun.path);
     expect(rootContract.operator.cancelRun.path).toBe(operatorContract.cancelRun.path);
   });
@@ -38,6 +39,7 @@ describe('contextContract', () => {
     expect(contextContract.listSourceRoots.method).toBe('GET');
     expect(contextContract.reindexSourceRoot.path).toBe('/v1/source-roots/:sourceRootId/reindex');
     expect(contextContract.getSourceRootIndex.path).toBe('/v1/source-roots/:sourceRootId/index');
+    expect(contextContract.searchCodeIndex.path).toBe('/v1/code-search');
     expect(contextContract.createContextPack.path).toBe(
       '/v1/workspaces/:workspaceId/context-packs',
     );

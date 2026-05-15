@@ -280,6 +280,47 @@ describe('CodeContextService', () => {
     });
   });
 
+  it('searches indexed file metadata within the workspace boundary', async () => {
+    const { service } = createHarness();
+    await service.registerSourceRoot({
+      workspaceId: ids.workspace,
+      sourceRoot: {
+        kind: 'local_directory',
+        displayName: 'Cairn',
+        uri: 'file:///G:/Code/cairn',
+        includeGlobs: [],
+        excludeGlobs: [],
+      },
+    });
+    await service.reindexSourceRoot({ sourceRootId: ids.sourceRoot });
+
+    await expect(
+      service.searchCodeIndex({
+        workspaceId: ids.workspace,
+        sourceRootId: ids.sourceRoot,
+        pathContains: 'application',
+        language: 'typescript',
+        limit: 10,
+      }),
+    ).resolves.toMatchObject({
+      items: [
+        {
+          path: 'packages/application/src/index.ts',
+          language: 'typescript',
+        },
+      ],
+    });
+    await expect(
+      service.searchCodeIndex({
+        workspaceId: ids.otherWorkspace,
+        sourceRootId: ids.sourceRoot,
+        limit: 10,
+      }),
+    ).rejects.toMatchObject({
+      code: 'SOURCE_ROOT_NOT_FOUND',
+    });
+  });
+
   it('rejects ContextPacks that reference SourceRoots outside the workspace', async () => {
     const { service } = createHarness();
 

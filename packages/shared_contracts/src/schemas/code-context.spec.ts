@@ -4,6 +4,8 @@ import { describe, expect, it } from 'vitest';
 import {
   CodeIndexFile,
   CodeIndexReindexResult,
+  CodeSearchQuery,
+  CodeSearchResult,
   ContextPackCreate,
   ContextPackManifest,
   SourceRoot,
@@ -120,6 +122,49 @@ describe('code context schemas', () => {
         status: 'ready',
         fileCount: 1,
       },
+    });
+  });
+
+  it('validates metadata-only code search query and result', () => {
+    expect(
+      CodeSearchQuery.parse({
+        workspaceId: ids.workspace,
+        sourceRootId: ids.sourceRoot,
+        pathContains: 'application',
+        language: 'typescript',
+        limit: '20',
+      }),
+    ).toEqual({
+      workspaceId: ids.workspace,
+      sourceRootId: ids.sourceRoot,
+      pathContains: 'application',
+      language: 'typescript',
+      limit: 20,
+    });
+
+    expect(
+      CodeSearchResult.parse({
+        items: [
+          {
+            fileId: ids.file,
+            snapshotId: ids.snapshot,
+            sourceRootId: ids.sourceRoot,
+            workspaceId: ids.workspace,
+            path: 'packages/application/src/index.ts',
+            sizeBytes: 128,
+            mtimeMs: 1_768_000_000_000,
+            digest: 'sha256:abc',
+            language: 'typescript',
+            createdAt: '2026-05-15T01:00:00.000Z',
+          },
+        ],
+      }),
+    ).toMatchObject({
+      items: [
+        {
+          path: 'packages/application/src/index.ts',
+        },
+      ],
     });
   });
 
