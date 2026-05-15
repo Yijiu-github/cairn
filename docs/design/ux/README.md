@@ -25,6 +25,9 @@
 5. [`components/common-components-v1.md`](components/common-components-v1.md)
 6. [`components/component-state-specs-v1.md`](components/component-state-specs-v1.md)
 7. [`flows/detail-themes-v1.md`](flows/detail-themes-v1.md)
+8. [`foundations/layout-grid.md`](foundations/layout-grid.md)
+9. [`foundations/motion.md`](foundations/motion.md)
+10. [`foundations/accessibility.md`](foundations/accessibility.md)
 
 ## 设计原则摘要
 
