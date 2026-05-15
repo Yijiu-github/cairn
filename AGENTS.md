@@ -20,7 +20,7 @@
 
 ## 1. 当前项目状态（重要）
 
-> ⚠️ **Workspace Core 最小应用骨架已启动；Desktop / Web 应用尚未启动**。
+> ⚠️ **Workspace Core 与共享包最小工程骨架已启动；Desktop / Web 应用尚未启动**。
 
 所以你在这个仓库里：
 
@@ -120,7 +120,7 @@ cairn-workspace/
 └─ .github/
 ```
 
-代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前仅创建 `apps/workspace-core` 与 `packages/ui`；`apps/desktop` 与 `apps/web` 尚未创建**。
+代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前仅创建 `apps/workspace-core` 与 packages 下共享包；`apps/desktop` 与 `apps/web` 尚未创建**。
 
 ---
 
