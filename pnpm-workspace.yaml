@@ -30,8 +30,8 @@ catalog:
   drizzle-orm: ^0.36.4
   drizzle-kit: ^0.28.1
   drizzle-zod: ^0.5.1
-  better-sqlite3: ^11.7.0
-  "@types/better-sqlite3": ^7.6.12
+  better-sqlite3: ^12.10.0
+  "@types/better-sqlite3": ^7.6.13
   pg: ^8.13.1
   "@types/pg": ^8.11.10
 

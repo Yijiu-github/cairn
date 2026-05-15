@@ -35,6 +35,19 @@ describe('SQLite migrations', () => {
       }
     },
   );
+
+  it.skipIf(!isNativeSqliteAvailable())('keeps domain migrations idempotent', () => {
+    const storage = openSqliteStorage({ databasePath: ':memory:' });
+
+    try {
+      runSqliteMigrations(storage.db);
+      expect(() => {
+        runSqliteMigrations(storage.db);
+      }).not.toThrow();
+    } finally {
+      storage.close();
+    }
+  });
 });
 
 function isNativeSqliteAvailable(): boolean {

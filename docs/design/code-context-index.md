@@ -2,7 +2,7 @@
 
 > 状态：🟡 Draft
 > 最后更新：2026-05-15
-> 来源：从 GitNexus 一类 repo graph / MCP context 工具借鉴方向，但由 Cairn 自研实现
+> 来源：从 GitNexus / Graphify 一类 repo graph / MCP context 工具借鉴方向，但由 Cairn 自研实现
 > 上游约束：[`../product/positioning-and-boundaries.md`](../product/positioning-and-boundaries.md)、[`security-model.md`](security-model.md)、[`telemetry-and-privacy.md`](telemetry-and-privacy.md)
 
 ---
@@ -19,7 +19,7 @@ Cairn 会自研一个**轻量代码上下文索引**，用于把用户选择的�
 
 边界也很明确：
 
-- 不引入 GitNexus 的代码、包或许可证受限依赖。
+- 不引入 GitNexus / Graphify 的代码、包或运行时依赖。
 - R1 不做完整 IDE 代码智能平台，不承诺全语言深度分析。
 - 索引是 Workspace 内的**派生数据**，可删除、可重建，不是用户源代码的权威副本。
 - 默认本地优先，不上传代码内容，不绕过 `.gitignore` 与 Cairn 的隐私排除规则。
@@ -43,7 +43,7 @@ Cairn 会自研一个**轻量代码上下文索引**，用于把用户选择的�
 
 当前不做：
 
-- 不做 GitNexus 的替代产品或兼容层。
+- 不做 GitNexus / Graphify 的替代产品或兼容层。
 - 不做通用企业代码智能平台。
 - 不做云端代码索引服务。
 - 不做 worker marketplace 或外部索引插件生态。
@@ -117,6 +117,7 @@ R1 先做“够用且稳定”的本地索引：
 - 文本搜索：优先 SQLite FTS；不可用时降级为受控 `rg` 查询。
 - TypeScript / JavaScript 基础 symbol outline：函数、类、接口、导出符号、顶层常量。
 - import/export 文件依赖边。
+- 关系置信度标签：区分 `extracted` / `inferred` / `ambiguous`，避免把推断关系伪装成事实。
 - ContextPack 生成：按 query、Task brief、用户选中文件、最近变更文件组装。
 - ContextPack artifact：记录来源文件、行号范围、digest、选择理由。
 
@@ -147,6 +148,7 @@ R1 先做“够用且稳定”的本地索引：
 - 索引数据可以删除并从 SourceRoot 重建。
 - ContextPack 是一次 run 的输入证据，应作为 Artifact 保留。
 - TraceEvent 记录索引开始、结束、失败和 ContextPack 生成，但不在 payload 中塞大段代码。
+- Graphify 的 `graph.json` / `GRAPH_REPORT.md` / MCP 查询体验可作为交互参考；Cairn 落地时应映射为 Workspace Core 查询 API、TraceEvent 与 Artifact，而不是提交第三方输出目录。
 
 ### 增量更新
 
@@ -180,6 +182,7 @@ interface ContextPackItem {
   endLine?: number;
   digest?: string;
   reason: string;
+  confidence?: 'extracted' | 'inferred' | 'ambiguous';
   contentRef?: string;
 }
 ```
@@ -187,6 +190,7 @@ interface ContextPackItem {
 设计要点：
 
 - `reason` 必须保留，方便 Operator 理解上下文选择。
+- `confidence` 用于标记关系来源：AST / import 明确解析为 `extracted`，二跳调用图或共现关系为 `inferred`，冲突或低置信结果为 `ambiguous`。
 - 大内容放 artifact store，manifest 只存引用和元数据。
 - `digest` 用于检测“上下文生成后文件被改过”的情况。
 
@@ -242,4 +246,5 @@ interface ContextPackItem {
 
 | 日期       | 变更                                 |
 | ---------- | ------------------------------------ |
+| 2026-05-15 | 补充 Graphify 调研结论与置信度标签   |
 | 2026-05-15 | 初版，明确自研轻量代码上下文索引方向 |

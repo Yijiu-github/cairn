@@ -44,6 +44,7 @@
 - Git 提交规范调整为 **中英双语标题，中文在前、英文在后**，并补充 `commit-msg` + `commitlint` 校验
 - 设计主线从「Web 优先」升级为「共享核心 + 双外壳 + 可本地运行 + 可远程扩展」
 - `package.json` 的 `license` 字段从 `SEE LICENSE IN LICENSE` 改为 `Apache-2.0`
+- **`@cairn/storage`**：升级 `better-sqlite3` catalog 至 `^12.10.0`，本机 Node 24.14.0 下可安装 native binding 并执行 SQLite 测试
 
 ### Removed
 
@@ -53,6 +54,7 @@
 
 - `.npmrc`：默认 `node-linker` 改为 `hoisted`，避免 Windows 上 `pnpm install` 出现 `ERR_PNPM_ENOENT`（`@ts-rest/core` 依赖链内嵌套 `@types/node` 重命名失败）
 - `pnpm run check`：全仓 Prettier 对齐，并修正少量 markdownlint（代码围栏语言、裸 URL、围栏前后空行）
+- **`@cairn/storage`**：修复 SQLite 迁移 runner 在 `better-sqlite3@12` 下把 `PRAGMA` 与 DDL 合并为多 statement 执行的问题，并保留 Drizzle migration journal 记录以避免重复迁移
 
 ---
 
