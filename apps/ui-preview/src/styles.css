@@ -1,18 +1,35 @@
 :root {
-  --preview-bg: #eef3f8;
-  --preview-surface: #ffffff;
-  --preview-surface-muted: #f8fafc;
-  --preview-border: #dbe5f0;
-  --preview-border-strong: #cbd5e1;
-  --preview-text: #0f172a;
-  --preview-muted: #64748b;
-  --preview-subtle: #475569;
-  --preview-blue: #2563eb;
-  --preview-blue-soft: #dbeafe;
+  --cairn-color-accent-blue: #2563eb;
+  --cairn-color-accent-blue-soft: #dbeafe;
+  --cairn-color-accent-blue-strong: #1d4ed8;
+  --cairn-color-border-strong: #cbd5e1;
+  --cairn-color-border-subtle: #dbe5f0;
+  --cairn-color-code-background: #0f172a;
+  --cairn-color-code-foreground: #dbeafe;
+  --cairn-color-surface-canvas: #eef3f8;
+  --cairn-color-surface-inverse: #0f172a;
+  --cairn-color-surface-muted: #f8fafc;
+  --cairn-color-surface-panel: #ffffff;
+  --cairn-color-text-inverse: #ffffff;
+  --cairn-color-text-muted: #64748b;
+  --cairn-color-text-primary: #0f172a;
+  --cairn-color-text-subtle: #475569;
+  --cairn-elevation-nav-item: 0 10px 24px rgb(15 23 42 / 14%);
+  --cairn-elevation-panel: 0 24px 70px rgb(15 23 42 / 8%);
+  --preview-bg: var(--cairn-color-surface-canvas);
+  --preview-surface: var(--cairn-color-surface-panel);
+  --preview-surface-muted: var(--cairn-color-surface-muted);
+  --preview-border: var(--cairn-color-border-subtle);
+  --preview-border-strong: var(--cairn-color-border-strong);
+  --preview-text: var(--cairn-color-text-primary);
+  --preview-muted: var(--cairn-color-text-muted);
+  --preview-subtle: var(--cairn-color-text-subtle);
+  --preview-blue: var(--cairn-color-accent-blue);
+  --preview-blue-soft: var(--cairn-color-accent-blue-soft);
   --preview-radius-lg: 28px;
   --preview-radius-md: 24px;
   --preview-radius-sm: 18px;
-  --preview-shadow: 0 24px 70px rgb(15 23 42 / 8%);
+  --preview-shadow: var(--cairn-elevation-panel);
   --preview-gap: 18px;
   color: var(--preview-text);
   background:
@@ -82,7 +99,7 @@ h2 {
 
 .hero {
   align-items: end;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fbff 55%, #e7f0ff 100%);
+  background: linear-gradient(135deg, var(--preview-surface) 0%, #f8fbff 55%, #e7f0ff 100%);
   border-radius: var(--preview-radius-lg);
   display: grid;
   gap: 24px;
@@ -169,8 +186,8 @@ h2 {
 
 .preview-nav-item[aria-pressed='true'] {
   background: var(--preview-text);
-  color: #ffffff;
-  box-shadow: 0 10px 24px rgb(15 23 42 / 14%);
+  color: var(--cairn-color-text-inverse);
+  box-shadow: var(--cairn-elevation-nav-item);
 }
 
 .prototype-page,
@@ -233,7 +250,7 @@ h2 {
 }
 
 .artifact-review-hero {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 55%, #eef6ff 100%);
+  background: linear-gradient(135deg, var(--preview-surface) 0%, #f8fafc 55%, #eef6ff 100%);
 }
 
 .home-command-bar p,
@@ -316,13 +333,13 @@ h2 {
 .filter-pill.active {
   background: var(--preview-blue-soft);
   border-color: #93c5fd;
-  color: #1d4ed8;
+  color: var(--cairn-color-accent-blue-strong);
 }
 
 .artifact-code-block {
-  background: #0f172a;
+  background: var(--cairn-color-code-background);
   border-radius: var(--preview-radius-sm);
-  color: #dbeafe;
+  color: var(--cairn-color-code-foreground);
   overflow: auto;
   padding: 18px;
 }
