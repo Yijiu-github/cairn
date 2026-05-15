@@ -10,7 +10,7 @@
 
 - 领域术语以 [`glossary.md`](./glossary.md) 为准。
 - 文件、目录和 route 优先使用 kebab-case。
-- DB 表、DB 字段、枚举值、事件 type、artifact type 使用 snake_case。
+- DB 表、DB 字段、枚举值、artifact type 使用 snake_case；WebSocket event type 见 §7。
 - TypeScript 类型使用 PascalCase。
 - 变量和函数使用 camelCase。
 - 公开名称宁可长一点，也不要缩写到失去语义。
