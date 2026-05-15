@@ -7,7 +7,12 @@ import {
   galleryRunMetrics,
 } from '../preview-data/components-gallery-data';
 
-import type { PreviewAgent, PreviewMetric, PreviewProtectedAction, PreviewRunSummary } from './preview-types';
+import type {
+  PreviewAgent,
+  PreviewMetric,
+  PreviewProtectedAction,
+  PreviewRunSummary,
+} from './preview-types';
 import type { InterventionEffect } from '@cairn/ui';
 
 export interface ComponentsGalleryViewModel {

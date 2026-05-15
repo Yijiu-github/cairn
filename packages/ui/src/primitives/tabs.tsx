@@ -197,7 +197,12 @@ export function TabsContent({
   }
 
   return (
-    <div id={id ?? panelId} aria-labelledby={ariaLabelledBy ?? triggerId} role="tabpanel" {...props}>
+    <div
+      id={id ?? panelId}
+      aria-labelledby={ariaLabelledBy ?? triggerId}
+      role="tabpanel"
+      {...props}
+    >
       {children}
     </div>
   );

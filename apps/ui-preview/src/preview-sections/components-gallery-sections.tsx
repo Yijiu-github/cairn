@@ -59,7 +59,12 @@ export function GalleryFoundationSection() {
             <CardTitle>Inputs</CardTitle>
           </CardHeader>
           <CardContent className="stack">
-            <Input aria-label="工作区名称" placeholder="工作区名称" value="local_demo_workspace" readOnly />
+            <Input
+              aria-label="工作区名称"
+              placeholder="工作区名称"
+              value="local_demo_workspace"
+              readOnly
+            />
             <Textarea aria-label="运行说明" value="请在本地工作区内生成 UI preview。" readOnly />
             <Select
               aria-label="运行模式"
@@ -271,7 +276,11 @@ export function GalleryFeedbackSection() {
           />
         </TabsContent>
         <TabsContent value="toast">
-          <Toast title="已保存审阅意见" description="operator action trace 已更新。" tone="success" />
+          <Toast
+            title="已保存审阅意见"
+            description="operator action trace 已更新。"
+            tone="success"
+          />
           <ToastViewport />
         </TabsContent>
       </Tabs>
@@ -284,7 +293,9 @@ export function GalleryHiddenDialog() {
     <Dialog open={false}>
       <DialogPanel>
         <DialogTitle>{componentsGalleryViewModel.feedback.dialogCopy.title}</DialogTitle>
-        <DialogDescription>{componentsGalleryViewModel.feedback.dialogCopy.description}</DialogDescription>
+        <DialogDescription>
+          {componentsGalleryViewModel.feedback.dialogCopy.description}
+        </DialogDescription>
         <DialogFooter>
           <DialogAction>确认</DialogAction>
           <DialogCancel>取消</DialogCancel>

@@ -16,10 +16,12 @@ import {
 import type { InterventionEffect } from '@cairn/ui';
 
 export function ComponentsGalleryPage() {
-  const [composerMessage, setComposerMessage] =
-    useState(componentsGalleryViewModel.protectedActions.initialMessage);
-  const [composerEffect, setComposerEffect] =
-    useState<InterventionEffect>(componentsGalleryViewModel.protectedActions.defaultEffect);
+  const [composerMessage, setComposerMessage] = useState(
+    componentsGalleryViewModel.protectedActions.initialMessage,
+  );
+  const [composerEffect, setComposerEffect] = useState<InterventionEffect>(
+    componentsGalleryViewModel.protectedActions.defaultEffect,
+  );
   const [protectedOpen, setProtectedOpen] = useState(false);
   const [includeLogs, setIncludeLogs] = useState(true);
   const [includePaths, setIncludePaths] = useState(false);

@@ -29,11 +29,13 @@ export interface ArtifactReviewViewModel {
   protectedAction: PreviewProtectedAction;
 }
 
-const relatedArtifacts: readonly PreviewArtifact[] = artifactReviewRelatedArtifacts.map((artifact) => ({
-  ...artifact,
-  actions: [],
-  sensitivity: artifact.sensitive ? 'local_path' : 'none',
-}));
+const relatedArtifacts: readonly PreviewArtifact[] = artifactReviewRelatedArtifacts.map(
+  (artifact) => ({
+    ...artifact,
+    actions: [],
+    sensitivity: artifact.sensitive ? 'local_path' : 'none',
+  }),
+);
 
 const primaryArtifact = relatedArtifacts[0];
 

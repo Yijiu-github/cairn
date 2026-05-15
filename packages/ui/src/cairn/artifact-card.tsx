@@ -102,7 +102,9 @@ export function ArtifactCard({
         {shouldDisplayHiddenPath ? (
           <div className="truncate font-mono text-xs text-slate-500">{redactionLabel}</div>
         ) : undefined}
-        {verification === undefined && !shouldDisplaySensitivity && !shouldWarnFullPath ? undefined : (
+        {verification === undefined &&
+        !shouldDisplaySensitivity &&
+        !shouldWarnFullPath ? undefined : (
           <div className="flex flex-wrap gap-2">
             {verification === undefined ? undefined : (
               <StatusBadge label={verification} tone="success" />

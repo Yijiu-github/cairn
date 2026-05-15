@@ -129,7 +129,11 @@ export function HomeRuntimeSidebar() {
         </CardHeader>
         <CardContent className="filter-pills">
           {homeInboxViewModel.filters.map((label, index) => (
-            <button className={index === 0 ? 'filter-pill active' : 'filter-pill'} key={label} type="button">
+            <button
+              className={index === 0 ? 'filter-pill active' : 'filter-pill'}
+              key={label}
+              type="button"
+            >
               {label}
             </button>
           ))}

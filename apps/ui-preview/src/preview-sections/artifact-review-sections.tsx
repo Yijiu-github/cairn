@@ -66,24 +66,24 @@ export function ArtifactOverviewSection() {
       <div className="grid two">
         {artifactReviewViewModel.relatedArtifacts.map((artifact) => (
           <ArtifactCard
-              key={artifact.artifactId}
-              actions={[
-                { label: '查看', tone: 'primary' },
-                artifact.reviewState === 'approved'
-                  ? { label: '复制引用', tone: 'secondary' }
-                  : { label: '审阅', tone: 'secondary' },
-              ]}
-              artifactId={artifact.artifactId}
-              kind={artifact.kind}
-              path={artifact.path}
-              pathDisplayMode="relative"
-              redactionLabel="本地路径已隐藏"
-              reviewState={artifact.reviewState}
-              sensitivity={artifact.sensitivity}
-              summary={artifact.summary}
-              title={artifact.title}
-              verification={artifact.verification}
-            />
+            key={artifact.artifactId}
+            actions={[
+              { label: '查看', tone: 'primary' },
+              artifact.reviewState === 'approved'
+                ? { label: '复制引用', tone: 'secondary' }
+                : { label: '审阅', tone: 'secondary' },
+            ]}
+            artifactId={artifact.artifactId}
+            kind={artifact.kind}
+            path={artifact.path}
+            pathDisplayMode="relative"
+            redactionLabel="本地路径已隐藏"
+            reviewState={artifact.reviewState}
+            sensitivity={artifact.sensitivity}
+            summary={artifact.summary}
+            title={artifact.title}
+            verification={artifact.verification}
+          />
         ))}
       </div>
     </section>
@@ -140,7 +140,9 @@ export function ArtifactReviewContextSection({
         <TabsContent value="risk">
           <Card>
             <CardContent className="stack">
-              <InlineAlert tone="warning">{artifactReviewViewModel.reviewContext.risk.alert}</InlineAlert>
+              <InlineAlert tone="warning">
+                {artifactReviewViewModel.reviewContext.risk.alert}
+              </InlineAlert>
               <MetadataList items={artifactReviewViewModel.reviewContext.risk.metrics} />
             </CardContent>
           </Card>
@@ -148,7 +150,9 @@ export function ArtifactReviewContextSection({
         <TabsContent value="decision">
           <Card>
             <CardContent className="stack">
-              <InlineAlert tone="info">{artifactReviewViewModel.reviewContext.decision.alert}</InlineAlert>
+              <InlineAlert tone="info">
+                {artifactReviewViewModel.reviewContext.decision.alert}
+              </InlineAlert>
               <MetadataList items={artifactReviewViewModel.reviewContext.decision.metrics} />
             </CardContent>
           </Card>
@@ -219,7 +223,9 @@ export function ArtifactReviewSidebar({
               },
               {
                 label: '日志',
-                value: includeLogs ? artifactReviewViewModel.diagnosticExport.includeLogsLabel : 'excluded',
+                value: includeLogs
+                  ? artifactReviewViewModel.diagnosticExport.includeLogsLabel
+                  : 'excluded',
               },
               ...artifactReviewViewModel.diagnosticExport.checklistBaseItems,
             ]}

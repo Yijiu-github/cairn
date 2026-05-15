@@ -1,12 +1,36 @@
 import type { EvidenceTimelineItem, TaskTreeItem } from '@cairn/ui';
 
-export type PreviewRunStatus = 'idle' | 'running' | 'blocked' | 'completed' | 'failed' | 'cancelled';
+export type PreviewRunStatus =
+  | 'idle'
+  | 'running'
+  | 'blocked'
+  | 'completed'
+  | 'failed'
+  | 'cancelled';
 export type PreviewTaskStatus = 'running' | 'completed' | 'blocked' | 'failed' | 'waiting' | 'todo';
-export type PreviewArtifactKind = 'patch' | 'document' | 'screenshot' | 'log' | 'diagnostic' | 'other';
-export type PreviewReviewState = 'draft' | 'pending_review' | 'approved' | 'changes_requested' | 'rejected';
+export type PreviewArtifactKind =
+  | 'patch'
+  | 'document'
+  | 'screenshot'
+  | 'log'
+  | 'diagnostic'
+  | 'other';
+export type PreviewReviewState =
+  | 'draft'
+  | 'pending_review'
+  | 'approved'
+  | 'changes_requested'
+  | 'rejected';
 export type PreviewArtifactSensitivity = 'none' | 'local_path' | 'secret_risk';
 export type PreviewHandoffKind = 'approval' | 'clarification' | 'review' | 'blocked' | 'diagnostic';
-export type PreviewAgentStatus = 'idle' | 'thinking' | 'running' | 'waiting' | 'blocked' | 'failed' | 'done';
+export type PreviewAgentStatus =
+  | 'idle'
+  | 'thinking'
+  | 'running'
+  | 'waiting'
+  | 'blocked'
+  | 'failed'
+  | 'done';
 export type PreviewBadgeTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
 export interface PreviewMetric {
@@ -72,7 +96,14 @@ export interface PreviewStatusBadge {
 }
 
 export interface PreviewProtectedAction {
-  actionKind: 'file_write' | 'shell' | 'network' | 'token_access' | 'workspace_reset' | 'artifact_delete' | 'other';
+  actionKind:
+    | 'file_write'
+    | 'shell'
+    | 'network'
+    | 'token_access'
+    | 'workspace_reset'
+    | 'artifact_delete'
+    | 'other';
   target: string;
   impact: string;
   triggerLabel?: string;
