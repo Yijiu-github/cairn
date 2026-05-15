@@ -40,6 +40,7 @@
 4. `docs/design/设计文档V0.1.0.md`（**主稿**，唯一权威设计）
 5. 任务相关的具体文档（见 `docs/README.md` 的"我想……去看"路由表）
 6. 相关 ADR（`docs/adr/`）
+7. 需要 AI 协作、上下文整理、接口设计、文档/ADR 或 review gate 时，读 `docs/engineering/agent-collaboration.md`
 
 不要跳过 §2-3，否则极易踩"产品边界"。
 
@@ -213,6 +214,7 @@ pnpm build
 ### 9.1 代码
 
 - 修改前先 grep / 读相邻文件，理解现有模式
+- 做上下文整理、接口设计、文档同步和合并前自查时，使用 `docs/engineering/agent-collaboration.md` 的 checklist
 - 跨包改动必须保持依赖方向（见 `docs/engineering/repo-layout.md §5`）
 - 状态机改动**先**更新 `docs/design/state-machines.md`，再改代码
 - 新的 adapter 必须实现 `docs/contracts/runtime-adapter.md` 完整接口 + capability profile

@@ -23,6 +23,7 @@ docs/
 | **新协作者**             | `product/positioning-and-boundaries.md` → `design/设计文档V0.1.0.md` → `engineering/repo-layout.md` |
 | **产品 / 设计**          | `product/` 全部 + `design/ux/`                                                                      |
 | **后端 / 架构**          | `design/` + `adr/` + `contracts/`                                                                   |
+| **AI 编码协作 / review** | `engineering/agent-collaboration.md`                                                                |
 | **要做 runtime 接入**    | `contracts/runtime-adapter.md`                                                                      |
 | **要做代码上下文索引**   | `design/code-context-index.md`                                                                      |
 | **要发布版本**           | `engineering/release-playbook.md`                                                                   |

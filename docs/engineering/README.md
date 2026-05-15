@@ -4,18 +4,19 @@
 
 ## 文件
 
-| 文件                   | 作用                                                 | 状态     |
-| ---------------------- | ---------------------------------------------------- | -------- |
-| `repo-layout.md`       | apps / packages 责任 + 依赖方向                      | 🟡 Draft |
-| `coding-standards.md`  | TS 风格、命名、目录、ESLint/Prettier                 | 🟡 Draft |
-| `git-workflow.md`      | 分支策略、PR 流程                                    | 🟡 Draft |
-| `commit-convention.md` | Conventional Commits + 中英双语提交规则 + commitlint | 🟡 Draft |
-| `testing-strategy.md`  | Unit / Contract / Integration / E2E 金字塔           | 🟡 Draft |
-| `ci-cd.md`             | GitHub Actions 矩阵、签名公证、artifact 发布         | 🟡 Draft |
-| `local-dev-setup.md`   | 本地一键起 desktop + workspace-core + web            | 🟡 Draft |
-| `release-playbook.md`  | 从 tag 到分发到回滚的逐步手册                        | 🟡 Draft |
-| `db-migrations.md`     | Drizzle 迁移流程、SQLite↔PG 差异                     | ⚪ TODO  |
-| `observability.md`     | 日志、trace_id、本地/远程 backend                    | ⚪ TODO  |
+| 文件                     | 作用                                                   | 状态     |
+| ------------------------ | ------------------------------------------------------ | -------- |
+| `repo-layout.md`         | apps / packages 责任 + 依赖方向                        | 🟡 Draft |
+| `coding-standards.md`    | TS 风格、命名、目录、ESLint/Prettier                   | 🟡 Draft |
+| `agent-collaboration.md` | AI 协作、上下文工程、契约设计、文档/ADR 与 review gate | 🟡 Draft |
+| `git-workflow.md`        | 分支策略、PR 流程                                      | 🟡 Draft |
+| `commit-convention.md`   | Conventional Commits + 中英双语提交规则 + commitlint   | 🟡 Draft |
+| `testing-strategy.md`    | Unit / Contract / Integration / E2E 金字塔             | 🟡 Draft |
+| `ci-cd.md`               | GitHub Actions 矩阵、签名公证、artifact 发布           | 🟡 Draft |
+| `local-dev-setup.md`     | 本地一键起 desktop + workspace-core + web              | 🟡 Draft |
+| `release-playbook.md`    | 从 tag 到分发到回滚的逐步手册                          | 🟡 Draft |
+| `db-migrations.md`       | Drizzle 迁移流程、SQLite↔PG 差异                       | ⚪ TODO  |
+| `observability.md`       | 日志、trace_id、本地/远程 backend                      | ⚪ TODO  |
 
 ## 阅读顺序
 
