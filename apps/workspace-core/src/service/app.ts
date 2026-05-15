@@ -8,12 +8,13 @@ import {
   ContextPackCreate,
   OrchestrationRunId,
   SourceRootCreate,
+  SourceRootId,
   TaskId,
   WorkspaceId,
 } from '@cairn/shared-contracts/schemas';
 
 import type { WorkspaceCoreContainer } from './container.js';
-import type { CreateSingleWorkerRunInput } from '@cairn/application';
+import type { ApplicationError, CreateSingleWorkerRunInput } from '@cairn/application';
 import type { FastifyInstance } from 'fastify';
 import type { ZodError } from 'zod';
 
@@ -39,6 +40,13 @@ const toApiError = (code: string, message: string, issues?: ZodError['issues']) 
         }),
   },
 });
+
+const isApplicationError = (error: unknown): error is ApplicationError =>
+  typeof error === 'object' &&
+  error !== null &&
+  'name' in error &&
+  'code' in error &&
+  (error as { name?: unknown }).name === 'ApplicationError';
 
 export const createWorkspaceCoreApp = async (
   options: CreateWorkspaceCoreAppOptions,
@@ -129,6 +137,56 @@ export const createWorkspaceCoreApp = async (
 
     const items = await options.container.codeContext.listSourceRoots({ workspaceId: params.data });
     return reply.send({ items });
+  });
+
+  app.post('/v1/source-roots/:sourceRootId/reindex', async (request, reply) => {
+    const params = SourceRootId.safeParse(
+      (request.params as Record<string, unknown>)['sourceRootId'],
+    );
+
+    if (!params.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid source root id.', params.error.issues));
+    }
+
+    try {
+      const result = await options.container.codeContext.reindexSourceRoot({
+        sourceRootId: params.data,
+      });
+      return await reply.code(202).send(result);
+    } catch (error) {
+      if (isApplicationError(error) && error.code === 'SOURCE_ROOT_NOT_FOUND') {
+        return reply.code(404).send(toApiError('NOT_FOUND', error.message));
+      }
+
+      throw error;
+    }
+  });
+
+  app.get('/v1/source-roots/:sourceRootId/index', async (request, reply) => {
+    const params = SourceRootId.safeParse(
+      (request.params as Record<string, unknown>)['sourceRootId'],
+    );
+
+    if (!params.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid source root id.', params.error.issues));
+    }
+
+    try {
+      const result = await options.container.codeContext.getSourceRootIndex({
+        sourceRootId: params.data,
+      });
+      return await reply.send(result);
+    } catch (error) {
+      if (isApplicationError(error) && error.code === 'SOURCE_ROOT_NOT_FOUND') {
+        return reply.code(404).send(toApiError('NOT_FOUND', error.message));
+      }
+
+      throw error;
+    }
   });
 
   app.post('/v1/workspaces/:workspaceId/context-packs', async (request, reply) => {

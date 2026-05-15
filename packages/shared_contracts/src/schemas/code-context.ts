@@ -12,6 +12,7 @@ import { z } from 'zod';
 
 import { Iso8601 } from './common.js';
 import {
+  CodeIndexFileId,
   CodeIndexSnapshotId,
   ContextPackId,
   OrchestrationRunId,
@@ -87,6 +88,35 @@ export const CodeIndexSnapshot = z.object({
   metadata: z.record(z.unknown()).optional(),
 });
 export type CodeIndexSnapshot = z.infer<typeof CodeIndexSnapshot>;
+
+export const CodeIndexFile = z.object({
+  fileId: CodeIndexFileId,
+  snapshotId: CodeIndexSnapshotId,
+  sourceRootId: SourceRootId,
+  workspaceId: WorkspaceId,
+  path: z.string().min(1),
+  sizeBytes: z.number().int().nonnegative(),
+  mtimeMs: z.number().int().nonnegative(),
+  digest: z.string().min(1),
+  language: z.string().min(1).optional(),
+  ignored: z.boolean().default(false),
+  createdAt: Iso8601,
+});
+export type CodeIndexFile = z.infer<typeof CodeIndexFile>;
+
+export const CodeIndexReindexResult = z.object({
+  sourceRoot: SourceRoot,
+  snapshot: CodeIndexSnapshot,
+  files: z.array(CodeIndexFile),
+});
+export type CodeIndexReindexResult = z.infer<typeof CodeIndexReindexResult>;
+
+export const CodeIndexSnapshotDetail = z.object({
+  sourceRoot: SourceRoot,
+  latestSnapshot: CodeIndexSnapshot.optional(),
+  files: z.array(CodeIndexFile),
+});
+export type CodeIndexSnapshotDetail = z.infer<typeof CodeIndexSnapshotDetail>;
 
 export const ContextPackItem = z.object({
   kind: ContextPackItemKind,

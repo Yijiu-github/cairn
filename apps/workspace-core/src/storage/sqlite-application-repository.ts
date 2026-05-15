@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 
 import {
   agentRuns,
+  codeIndexFiles,
   codeIndexSnapshots,
   contextPacks,
   events,
@@ -15,6 +16,7 @@ import {
 } from '@cairn/domain/schema';
 import {
   AgentRun,
+  CodeIndexFile,
   CodeIndexSnapshot,
   ContextPackManifest,
   OrchestrationRun,
@@ -27,10 +29,12 @@ import type {
   ApplicationRepository,
   CreateRunGraphInput,
   CreateSourceRootRegistrationInput,
+  ReplaceCodeIndexSnapshotInput,
 } from '@cairn/application';
 import type { BudgetHintRow } from '@cairn/domain/schema';
 import type {
   AgentRunId,
+  CodeIndexSnapshotId,
   ContextPackId,
   EventId,
   OrchestrationRunId,
@@ -195,6 +199,24 @@ export class SqliteApplicationRepository implements ApplicationRepository {
     return Promise.resolve();
   }
 
+  getSourceRoot(sourceRootId: SourceRootId): Promise<SourceRoot | undefined> {
+    const row = this.db
+      .select()
+      .from(sourceRoots)
+      .where(eq(sourceRoots.sourceRootId, sourceRootId))
+      .get();
+    return Promise.resolve(row === undefined ? undefined : fromSourceRootRow(row));
+  }
+
+  updateSourceRoot(sourceRoot: SourceRoot): Promise<void> {
+    this.db
+      .update(sourceRoots)
+      .set(toSourceRootRow(sourceRoot))
+      .where(eq(sourceRoots.sourceRootId, sourceRoot.sourceRootId))
+      .run();
+    return Promise.resolve();
+  }
+
   listSourceRootsByWorkspace(workspaceId: WorkspaceId): Promise<SourceRoot[]> {
     const rows = this.db
       .select()
@@ -211,6 +233,29 @@ export class SqliteApplicationRepository implements ApplicationRepository {
       .where(eq(codeIndexSnapshots.sourceRootId, sourceRootId))
       .all();
     return Promise.resolve(rows.map(fromCodeIndexSnapshotRow));
+  }
+
+  listCodeIndexFilesBySnapshot(snapshotId: CodeIndexSnapshotId): Promise<CodeIndexFile[]> {
+    const rows = this.db
+      .select()
+      .from(codeIndexFiles)
+      .where(eq(codeIndexFiles.snapshotId, snapshotId))
+      .all();
+    return Promise.resolve(rows.map(fromCodeIndexFileRow));
+  }
+
+  replaceCodeIndexSnapshot(input: ReplaceCodeIndexSnapshotInput): Promise<void> {
+    this.db.transaction((tx) => {
+      tx.update(sourceRoots)
+        .set(toSourceRootRow(input.sourceRoot))
+        .where(eq(sourceRoots.sourceRootId, input.sourceRoot.sourceRootId))
+        .run();
+      tx.insert(codeIndexSnapshots).values(toCodeIndexSnapshotRow(input.snapshot)).run();
+      for (const file of input.files) {
+        tx.insert(codeIndexFiles).values(toCodeIndexFileRow(file)).run();
+      }
+    });
+    return Promise.resolve();
   }
 
   createContextPack(manifest: ContextPackManifest): Promise<void> {
@@ -400,9 +445,9 @@ const toSourceRootRow = (sourceRoot: SourceRoot): typeof sourceRoots.$inferInser
   excludeGlobs: sourceRoot.excludeGlobs,
   createdAt: sourceRoot.createdAt,
   updatedAt: sourceRoot.updatedAt,
-  ...(sourceRoot.lastIndexedAt === undefined ? {} : { lastIndexedAt: sourceRoot.lastIndexedAt }),
-  ...(sourceRoot.error === undefined ? {} : { error: sourceRoot.error }),
-  ...(sourceRoot.metadata === undefined ? {} : { metadata: sourceRoot.metadata }),
+  lastIndexedAt: sourceRoot.lastIndexedAt ?? null,
+  error: sourceRoot.error ?? null,
+  metadata: sourceRoot.metadata ?? null,
 });
 
 const fromSourceRootRow = (row: typeof sourceRoots.$inferSelect): SourceRoot =>
@@ -445,6 +490,35 @@ const fromCodeIndexSnapshotRow = (row: typeof codeIndexSnapshots.$inferSelect): 
     fileCount: row.fileCount,
     createdAt: row.createdAt,
     ...(row.metadata === null ? {} : { metadata: row.metadata }),
+  });
+
+const toCodeIndexFileRow = (file: CodeIndexFile): typeof codeIndexFiles.$inferInsert => ({
+  fileId: file.fileId,
+  snapshotId: file.snapshotId,
+  sourceRootId: file.sourceRootId,
+  workspaceId: file.workspaceId,
+  path: file.path,
+  sizeBytes: file.sizeBytes,
+  mtimeMs: file.mtimeMs,
+  digest: file.digest,
+  ignored: file.ignored,
+  createdAt: file.createdAt,
+  ...(file.language === undefined ? {} : { language: file.language }),
+});
+
+const fromCodeIndexFileRow = (row: typeof codeIndexFiles.$inferSelect): CodeIndexFile =>
+  CodeIndexFile.parse({
+    fileId: row.fileId,
+    snapshotId: row.snapshotId,
+    sourceRootId: row.sourceRootId,
+    workspaceId: row.workspaceId,
+    path: row.path,
+    sizeBytes: row.sizeBytes,
+    mtimeMs: row.mtimeMs,
+    digest: row.digest,
+    ignored: row.ignored,
+    createdAt: row.createdAt,
+    ...(row.language === null ? {} : { language: row.language }),
   });
 
 const toContextPackRow = (manifest: ContextPackManifest): typeof contextPacks.$inferInsert => ({

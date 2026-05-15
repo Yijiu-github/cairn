@@ -7,6 +7,7 @@ import { InMemoryApplicationRepository } from '../testing/memory-run-repository.
 import { CodeContextService } from './code-context-service.js';
 
 import type {
+  CodeIndexFileId,
   CodeIndexSnapshotId,
   ContextPackId,
   EventId,
@@ -22,6 +23,8 @@ const ids = {
   otherWorkspace: '01HZZZZZZZZZZZZZZZZZZZZZW1' as WorkspaceId,
   sourceRoot: '01HZZZZZZZZZZZZZZZZZZZZZC0' as SourceRootId,
   otherSourceRoot: '01HZZZZZZZZZZZZZZZZZZZZZC1' as SourceRootId,
+  file: '01HZZZZZZZZZZZZZZZZZZZZZF0' as CodeIndexFileId,
+  otherFile: '01HZZZZZZZZZZZZZZZZZZZZZF1' as CodeIndexFileId,
   snapshot: '01HZZZZZZZZZZZZZZZZZZZZZS0' as CodeIndexSnapshotId,
   otherSnapshot: '01HZZZZZZZZZZZZZZZZZZZZZS1' as CodeIndexSnapshotId,
   contextPack: '01HZZZZZZZZZZZZZZZZZZZZZP0' as ContextPackId,
@@ -32,6 +35,7 @@ const ids = {
 };
 
 const createHarness = () => {
+  let fileIndex = 0;
   let sourceRootIndex = 0;
   let snapshotIndex = 0;
   const repository = new InMemoryApplicationRepository();
@@ -39,9 +43,22 @@ const createHarness = () => {
     repository,
     clock: { now: () => new Date('2026-05-15T01:00:00.000Z') },
     ids: {
+      codeIndexFileId: () => (fileIndex++ === 0 ? ids.file : ids.otherFile),
       sourceRootId: () => (sourceRootIndex++ === 0 ? ids.sourceRoot : ids.otherSourceRoot),
       codeIndexSnapshotId: () => (snapshotIndex++ === 0 ? ids.snapshot : ids.otherSnapshot),
       contextPackId: () => ids.contextPack,
+    },
+    scanner: {
+      scan: () =>
+        Promise.resolve([
+          {
+            path: 'packages/application/src/index.ts',
+            sizeBytes: 128,
+            mtimeMs: 1_768_000_000_000,
+            digest: 'sha256:index',
+            language: 'typescript',
+          },
+        ]),
     },
   });
   return { repository, service };
@@ -188,6 +205,78 @@ describe('CodeContextService', () => {
     });
     await expect(repository.getContextPack(ids.contextPack)).resolves.toMatchObject({
       query: 'Find persistence code.',
+    });
+  });
+
+  it('reindexes a SourceRoot into a ready snapshot with file manifest', async () => {
+    const { repository, service } = createHarness();
+    await service.registerSourceRoot({
+      workspaceId: ids.workspace,
+      sourceRoot: {
+        kind: 'local_directory',
+        displayName: 'Cairn',
+        uri: 'file:///G:/Code/cairn',
+        includeGlobs: [],
+        excludeGlobs: [],
+      },
+    });
+
+    const result = await service.reindexSourceRoot({ sourceRootId: ids.sourceRoot });
+
+    expect(result.sourceRoot).toMatchObject({
+      sourceRootId: ids.sourceRoot,
+      status: 'active',
+      lastIndexedAt: '2026-05-15T01:00:00.000Z',
+    });
+    expect(result.snapshot).toMatchObject({
+      snapshotId: ids.otherSnapshot,
+      status: 'ready',
+      fileCount: 1,
+      indexVersion: 'r1b-file-manifest',
+    });
+    expect(result.files).toMatchObject([
+      {
+        fileId: ids.file,
+        path: 'packages/application/src/index.ts',
+        digest: 'sha256:index',
+        language: 'typescript',
+      },
+    ]);
+
+    await expect(repository.getSourceRoot(ids.sourceRoot)).resolves.toMatchObject({
+      status: 'active',
+    });
+  });
+
+  it('returns the latest index snapshot detail', async () => {
+    const { service } = createHarness();
+    await service.registerSourceRoot({
+      workspaceId: ids.workspace,
+      sourceRoot: {
+        kind: 'local_directory',
+        displayName: 'Cairn',
+        uri: 'file:///G:/Code/cairn',
+        includeGlobs: [],
+        excludeGlobs: [],
+      },
+    });
+    await service.reindexSourceRoot({ sourceRootId: ids.sourceRoot });
+
+    await expect(
+      service.getSourceRootIndex({ sourceRootId: ids.sourceRoot }),
+    ).resolves.toMatchObject({
+      sourceRoot: {
+        sourceRootId: ids.sourceRoot,
+      },
+      latestSnapshot: {
+        snapshotId: ids.otherSnapshot,
+        status: 'ready',
+      },
+      files: [
+        {
+          path: 'packages/application/src/index.ts',
+        },
+      ],
     });
   });
 

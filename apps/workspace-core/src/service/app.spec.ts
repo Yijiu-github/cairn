@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 import { createWorkspaceCoreApp } from './app.js';
 import { createDefaultWorkspaceCoreContainer } from './container.js';
 
+import type { CodeContextScannerPort } from '@cairn/application';
+
 const ids = {
   workspace: '01HZZZZZZZZZZZZZZZZZZZZZW0',
   event: '01HZZZZZZZZZZZZZZZZZZZZZE0',
@@ -17,6 +19,19 @@ const first = <T>(items: T[]): T => {
   }
   return item;
 };
+
+const createScanner = (): CodeContextScannerPort => ({
+  scan: () =>
+    Promise.resolve([
+      {
+        path: 'packages/application/src/index.ts',
+        sizeBytes: 128,
+        mtimeMs: 1_768_000_000_000,
+        digest: 'sha256:index',
+        language: 'typescript',
+      },
+    ]),
+});
 
 describe('workspace-core app', () => {
   it('serves health status', async () => {
@@ -105,7 +120,7 @@ describe('workspace-core app', () => {
 
   it('registers SourceRoots and creates ContextPack manifests', async () => {
     const app = await createWorkspaceCoreApp({
-      container: createDefaultWorkspaceCoreContainer(),
+      container: createDefaultWorkspaceCoreContainer({ codeContextScanner: createScanner() }),
       logger: false,
     });
 
@@ -132,6 +147,48 @@ describe('workspace-core app', () => {
       expect(listResponse.statusCode).toBe(200);
       expect(listResponse.json()).toMatchObject({
         items: [{ sourceRootId: sourceRoot.sourceRootId, displayName: 'Cairn' }],
+      });
+
+      const reindexResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/source-roots/${sourceRoot.sourceRootId}/reindex`,
+        payload: {},
+      });
+
+      expect(reindexResponse.statusCode).toBe(202);
+      expect(reindexResponse.json()).toMatchObject({
+        sourceRoot: {
+          sourceRootId: sourceRoot.sourceRootId,
+          status: 'active',
+        },
+        snapshot: {
+          status: 'ready',
+          fileCount: 1,
+        },
+        files: [
+          {
+            path: 'packages/application/src/index.ts',
+            language: 'typescript',
+          },
+        ],
+      });
+
+      const indexResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/source-roots/${sourceRoot.sourceRootId}/index`,
+      });
+
+      expect(indexResponse.statusCode).toBe(200);
+      expect(indexResponse.json()).toMatchObject({
+        latestSnapshot: {
+          status: 'ready',
+          fileCount: 1,
+        },
+        files: [
+          {
+            path: 'packages/application/src/index.ts',
+          },
+        ],
       });
 
       const runResponse = await app.inject({

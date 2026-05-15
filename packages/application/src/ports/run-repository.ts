@@ -3,6 +3,7 @@
 import type {
   AgentRun,
   AgentRunId,
+  CodeIndexFile,
   CodeIndexSnapshot,
   ContextPackId,
   ContextPackManifest,
@@ -26,6 +27,12 @@ export interface CreateSourceRootRegistrationInput {
   initialSnapshot: CodeIndexSnapshot;
 }
 
+export interface ReplaceCodeIndexSnapshotInput {
+  sourceRoot: SourceRoot;
+  snapshot: CodeIndexSnapshot;
+  files: CodeIndexFile[];
+}
+
 export interface ApplicationRepository {
   createRunGraph(input: CreateRunGraphInput): Promise<void>;
   getRun(orchestrationRunId: OrchestrationRunId): Promise<OrchestrationRun | undefined>;
@@ -39,8 +46,14 @@ export interface ApplicationRepository {
   updateAgentRun(agentRun: AgentRun): Promise<void>;
   appendTraceEvent(event: TraceEvent): Promise<void>;
   createSourceRootRegistration(input: CreateSourceRootRegistrationInput): Promise<void>;
+  getSourceRoot(sourceRootId: SourceRootId): Promise<SourceRoot | undefined>;
+  updateSourceRoot(sourceRoot: SourceRoot): Promise<void>;
   listSourceRootsByWorkspace(workspaceId: WorkspaceId): Promise<SourceRoot[]>;
   listCodeIndexSnapshotsBySourceRoot(sourceRootId: SourceRootId): Promise<CodeIndexSnapshot[]>;
+  listCodeIndexFilesBySnapshot(
+    snapshotId: CodeIndexSnapshot['snapshotId'],
+  ): Promise<CodeIndexFile[]>;
+  replaceCodeIndexSnapshot(input: ReplaceCodeIndexSnapshotInput): Promise<void>;
   createContextPack(manifest: ContextPackManifest): Promise<void>;
   getContextPack(contextPackId: ContextPackId): Promise<ContextPackManifest | undefined>;
 }

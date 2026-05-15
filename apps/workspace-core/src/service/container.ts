@@ -7,6 +7,7 @@ import { InMemoryApplicationRepository } from '@cairn/application/testing';
 import { EventId, WorkspaceId } from '@cairn/shared-contracts/schemas';
 import { openSqliteStorage } from '@cairn/storage/sqlite';
 
+import { LocalCodeIndexScanner } from '../code-context/local-code-index-scanner.js';
 import { MockRuntimeGatewayPort } from '../runtime/mock-runtime-gateway-port.js';
 import { SqliteApplicationRepository } from '../storage/sqlite-application-repository.js';
 
@@ -14,10 +15,12 @@ import type {
   ApplicationIdFactory,
   ApplicationRepository,
   CodeContextIdFactory,
+  CodeContextScannerPort,
   RuntimeGatewayPort,
 } from '@cairn/application';
 import type {
   AgentRunId,
+  CodeIndexFileId,
   CodeIndexSnapshotId,
   ContextPackId,
   OrchestrationRunId,
@@ -39,10 +42,12 @@ export interface CreateDefaultWorkspaceCoreContainerOptions {
   databasePath?: string;
   bootstrapWorkspaceId?: string;
   bootstrapEventId?: string;
+  codeContextScanner?: CodeContextScannerPort;
 }
 
 const createUlidFactory = (): ApplicationIdFactory & CodeContextIdFactory => ({
   agentRunId: () => ulid() as AgentRunId,
+  codeIndexFileId: () => ulid() as CodeIndexFileId,
   codeIndexSnapshotId: () => ulid() as CodeIndexSnapshotId,
   contextPackId: () => ulid() as ContextPackId,
   orchestrationRunId: () => ulid() as OrchestrationRunId,
@@ -56,6 +61,7 @@ export const createWorkspaceCoreContainer = (
   repository: ApplicationRepository,
   runtimeGateway: RuntimeGatewayPort,
   close?: () => void,
+  scanner: CodeContextScannerPort = new LocalCodeIndexScanner(),
 ): WorkspaceCoreContainer => {
   const clock = { now: () => new Date() };
   const ids = createUlidFactory();
@@ -68,6 +74,7 @@ export const createWorkspaceCoreContainer = (
       clock,
       ids,
       repository,
+      scanner,
     }),
     orchestrationRuns: new OrchestrationRunService({
       clock,
@@ -81,11 +88,25 @@ export const createWorkspaceCoreContainer = (
 export const createInMemoryWorkspaceCoreContainer = (): WorkspaceCoreContainer =>
   createWorkspaceCoreContainer(new InMemoryApplicationRepository(), new MockRuntimeGatewayPort());
 
+export const createInMemoryWorkspaceCoreContainerWithScanner = (
+  scanner: CodeContextScannerPort,
+): WorkspaceCoreContainer =>
+  createWorkspaceCoreContainer(
+    new InMemoryApplicationRepository(),
+    new MockRuntimeGatewayPort(),
+    undefined,
+    scanner,
+  );
+
 export const createDefaultWorkspaceCoreContainer = (
   options: CreateDefaultWorkspaceCoreContainerOptions = {},
 ): WorkspaceCoreContainer => {
   if (options.databasePath === undefined) {
-    return createInMemoryWorkspaceCoreContainer();
+    if (options.codeContextScanner === undefined) {
+      return createInMemoryWorkspaceCoreContainer();
+    }
+
+    return createInMemoryWorkspaceCoreContainerWithScanner(options.codeContextScanner);
   }
 
   const storage = openSqliteStorage({ databasePath: options.databasePath });
@@ -96,7 +117,12 @@ export const createDefaultWorkspaceCoreContainer = (
     originEventId: EventId.parse(options.bootstrapEventId ?? '01J000000000000000000000E0'),
   });
 
-  return createWorkspaceCoreContainer(repository, new MockRuntimeGatewayPort(), () => {
-    storage.close();
-  });
+  return createWorkspaceCoreContainer(
+    repository,
+    new MockRuntimeGatewayPort(),
+    () => {
+      storage.close();
+    },
+    options.codeContextScanner,
+  );
 };

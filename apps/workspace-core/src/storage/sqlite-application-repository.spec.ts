@@ -14,6 +14,7 @@ import { createWorkspaceCoreContainer } from '../service/container.js';
 import { SqliteApplicationRepository } from './sqlite-application-repository.js';
 
 import type { WorkspaceCoreContainer } from '../service/container.js';
+import type { CodeContextScannerPort } from '@cairn/application';
 import type {
   ContextPackId,
   EventId,
@@ -28,6 +29,19 @@ const ids = {
 };
 
 const tempDirectories: string[] = [];
+
+const scanner: CodeContextScannerPort = {
+  scan: () =>
+    Promise.resolve([
+      {
+        path: 'packages/application/src/index.ts',
+        sizeBytes: 128,
+        mtimeMs: 1_768_000_000_000,
+        digest: 'sha256:index',
+        language: 'typescript',
+      },
+    ]),
+};
 
 afterEach(() => {
   for (const directory of tempDirectories.splice(0)) {
@@ -113,6 +127,11 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
         },
       });
       sourceRootId = registered.sourceRoot.sourceRootId;
+      const reindexed = await first.container.codeContext.reindexSourceRoot({ sourceRootId });
+      expect(reindexed.snapshot).toMatchObject({
+        status: 'ready',
+        fileCount: 1,
+      });
 
       const manifest = await first.container.codeContext.createContextPack({
         workspaceId: ids.workspace,
@@ -149,6 +168,24 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
         },
       ]);
 
+      const snapshots =
+        await second.container.repository.listCodeIndexSnapshotsBySourceRoot(sourceRootId);
+      const latestSnapshot = snapshots.find((snapshot) => snapshot.status === 'ready');
+      expect(latestSnapshot).toMatchObject({
+        fileCount: 1,
+      });
+      if (latestSnapshot === undefined) {
+        throw new Error('Expected ready snapshot');
+      }
+      await expect(
+        second.container.repository.listCodeIndexFilesBySnapshot(latestSnapshot.snapshotId),
+      ).resolves.toMatchObject([
+        {
+          path: 'packages/application/src/index.ts',
+          language: 'typescript',
+        },
+      ]);
+
       await expect(
         second.container.repository.getContextPack(contextPackId),
       ).resolves.toMatchObject({
@@ -175,7 +212,12 @@ function openRepository(databasePath: string): {
   });
 
   return {
-    container: createWorkspaceCoreContainer(repository, new MockRuntimeGatewayPort()),
+    container: createWorkspaceCoreContainer(
+      repository,
+      new MockRuntimeGatewayPort(),
+      undefined,
+      scanner,
+    ),
     close: () => {
       storage.close();
     },

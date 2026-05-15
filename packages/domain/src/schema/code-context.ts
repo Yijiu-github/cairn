@@ -84,6 +84,40 @@ export const codeIndexSnapshots = sqliteTable(
   }),
 );
 
+export const codeIndexFiles = sqliteTable(
+  'code_index_files',
+  {
+    fileId: text('file_id').primaryKey().notNull(),
+    snapshotId: text('snapshot_id')
+      .notNull()
+      .references(() => codeIndexSnapshots.snapshotId, {
+        onDelete: 'cascade',
+        onUpdate: 'cascade',
+      }),
+    sourceRootId: text('source_root_id')
+      .notNull()
+      .references(() => sourceRoots.sourceRootId, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => workspaces.workspaceId, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    path: text('path').notNull(),
+    sizeBytes: integer('size_bytes').notNull(),
+    mtimeMs: integer('mtime_ms').notNull(),
+    digest: text('digest').notNull(),
+    language: text('language'),
+    ignored: integer('ignored', { mode: 'boolean' }).notNull(),
+    createdAt: text('created_at').notNull(),
+  },
+  (t) => ({
+    snapshotPathIdx: index('idx_code_index_files_snapshot_path').on(t.snapshotId, t.path),
+    sourceRootPathIdx: index('idx_code_index_files_source_root_path').on(t.sourceRootId, t.path),
+    workspaceLanguageIdx: index('idx_code_index_files_workspace_language').on(
+      t.workspaceId,
+      t.language,
+    ),
+  }),
+);
+
 export const contextPacks = sqliteTable(
   'context_packs',
   {

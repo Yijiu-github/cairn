@@ -22,6 +22,9 @@ describe('rootContract', () => {
     expect(rootContract.context.registerSourceRoot.path).toBe(
       contextContract.registerSourceRoot.path,
     );
+    expect(rootContract.context.reindexSourceRoot.path).toBe(
+      contextContract.reindexSourceRoot.path,
+    );
     expect(rootContract.run.startRun.path).toBe(runContract.startRun.path);
     expect(rootContract.operator.cancelRun.path).toBe(operatorContract.cancelRun.path);
   });
@@ -33,6 +36,8 @@ describe('contextContract', () => {
       '/v1/workspaces/:workspaceId/source-roots',
     );
     expect(contextContract.listSourceRoots.method).toBe('GET');
+    expect(contextContract.reindexSourceRoot.path).toBe('/v1/source-roots/:sourceRootId/reindex');
+    expect(contextContract.getSourceRootIndex.path).toBe('/v1/source-roots/:sourceRootId/index');
     expect(contextContract.createContextPack.path).toBe(
       '/v1/workspaces/:workspaceId/context-packs',
     );

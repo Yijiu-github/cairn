@@ -9,12 +9,14 @@ import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 
 import {
+  CodeIndexReindexResult,
+  CodeIndexSnapshotDetail,
   ContextPackCreate,
   ContextPackManifest,
   SourceRoot,
   SourceRootCreate,
 } from '../schemas/code-context.js';
-import { WorkspaceId } from '../schemas/ids.js';
+import { SourceRootId, WorkspaceId } from '../schemas/ids.js';
 
 import { commonErrorResponses } from './_common.js';
 
@@ -41,6 +43,29 @@ export const contextContract = c.router(
       summary: 'List source roots for a workspace',
       responses: {
         200: z.object({ items: z.array(SourceRoot) }),
+        ...commonErrorResponses,
+      },
+    },
+
+    reindexSourceRoot: {
+      method: 'POST',
+      path: '/source-roots/:sourceRootId/reindex',
+      pathParams: z.object({ sourceRootId: SourceRootId }),
+      body: z.object({}).optional(),
+      summary: 'Rebuild the lightweight file manifest for a source root',
+      responses: {
+        202: CodeIndexReindexResult,
+        ...commonErrorResponses,
+      },
+    },
+
+    getSourceRootIndex: {
+      method: 'GET',
+      path: '/source-roots/:sourceRootId/index',
+      pathParams: z.object({ sourceRootId: SourceRootId }),
+      summary: 'Get the latest lightweight code index snapshot for a source root',
+      responses: {
+        200: CodeIndexSnapshotDetail,
         ...commonErrorResponses,
       },
     },

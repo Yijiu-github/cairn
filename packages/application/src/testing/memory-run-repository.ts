@@ -3,11 +3,14 @@
 import type {
   ApplicationRepository,
   CreateRunGraphInput,
+  ReplaceCodeIndexSnapshotInput,
   CreateSourceRootRegistrationInput,
 } from '../ports/run-repository.js';
 import type {
   AgentRun,
   AgentRunId,
+  CodeIndexFile,
+  CodeIndexFileId,
   CodeIndexSnapshot,
   CodeIndexSnapshotId,
   ContextPackId,
@@ -24,6 +27,7 @@ import type {
 
 export class InMemoryApplicationRepository implements ApplicationRepository {
   private readonly agentRuns = new Map<AgentRunId, AgentRun>();
+  private readonly codeIndexFiles = new Map<CodeIndexFileId, CodeIndexFile>();
   private readonly codeIndexSnapshots = new Map<CodeIndexSnapshotId, CodeIndexSnapshot>();
   private readonly contextPacks = new Map<ContextPackId, ContextPackManifest>();
   private readonly runs = new Map<OrchestrationRunId, OrchestrationRun>();
@@ -94,6 +98,15 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
     return Promise.resolve();
   }
 
+  getSourceRoot(sourceRootId: SourceRootId): Promise<SourceRoot | undefined> {
+    return Promise.resolve(this.sourceRoots.get(sourceRootId));
+  }
+
+  updateSourceRoot(sourceRoot: SourceRoot): Promise<void> {
+    this.sourceRoots.set(sourceRoot.sourceRootId, sourceRoot);
+    return Promise.resolve();
+  }
+
   listSourceRootsByWorkspace(workspaceId: WorkspaceId): Promise<SourceRoot[]> {
     return Promise.resolve(
       [...this.sourceRoots.values()].filter((sourceRoot) => sourceRoot.workspaceId === workspaceId),
@@ -106,6 +119,21 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
         (snapshot) => snapshot.sourceRootId === sourceRootId,
       ),
     );
+  }
+
+  listCodeIndexFilesBySnapshot(snapshotId: CodeIndexSnapshotId): Promise<CodeIndexFile[]> {
+    return Promise.resolve(
+      [...this.codeIndexFiles.values()].filter((file) => file.snapshotId === snapshotId),
+    );
+  }
+
+  replaceCodeIndexSnapshot(input: ReplaceCodeIndexSnapshotInput): Promise<void> {
+    this.sourceRoots.set(input.sourceRoot.sourceRootId, input.sourceRoot);
+    this.codeIndexSnapshots.set(input.snapshot.snapshotId, input.snapshot);
+    for (const file of input.files) {
+      this.codeIndexFiles.set(file.fileId, file);
+    }
+    return Promise.resolve();
   }
 
   createContextPack(manifest: ContextPackManifest): Promise<void> {

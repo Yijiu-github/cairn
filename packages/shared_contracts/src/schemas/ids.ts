@@ -54,6 +54,9 @@ export type SourceRootId = z.infer<typeof SourceRootId>;
 export const CodeIndexSnapshotId = brandedId('CodeIndexSnapshotId');
 export type CodeIndexSnapshotId = z.infer<typeof CodeIndexSnapshotId>;
 
+export const CodeIndexFileId = brandedId('CodeIndexFileId');
+export type CodeIndexFileId = z.infer<typeof CodeIndexFileId>;
+
 export const ContextPackId = brandedId('ContextPackId');
 export type ContextPackId = z.infer<typeof ContextPackId>;
 

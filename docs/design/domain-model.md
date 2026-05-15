@@ -305,7 +305,7 @@ R1a 先落地轻量代码上下文索引的元数据基线，不扫描真实文�
 
 ### CodeIndexSnapshot
 
-一次稳定索引快照的元数据。R1a 注册 SourceRoot 时创建 `pending` 快照，表示尚未运行真实扫描。
+一次稳定索引快照的元数据。R1a 注册 SourceRoot 时创建 `pending` 快照；R1b-a 手动 reindex 后创建 `ready` 快照，并将文件清单写入 `code_index_files`。
 
 | 字段             | 类型                              | 必填 | 说明            |
 | ---------------- | --------------------------------- | ---- | --------------- |
@@ -319,6 +319,26 @@ R1a 先落地轻量代码上下文索引的元数据基线，不扫描真实文�
 | `metadata`       | `json`                            | ⛔   | 扩展位          |
 
 **索引**：`(source_root_id, created_at)`, `(workspace_id, created_at)`
+
+### CodeIndexFile
+
+某个 `CodeIndexSnapshot` 内的一条文件清单记录。它只保存元数据与 digest，不保存源码内容。
+
+| 字段             | 类型            | 必填 | 说明                  |
+| ---------------- | --------------- | ---- | --------------------- |
+| `file_id`        | `string (ulid)` | ✅   |                       |
+| `snapshot_id`    | `string`        | ✅   | 所属快照              |
+| `source_root_id` | `string`        | ✅   | 所属 SourceRoot       |
+| `workspace_id`   | `string`        | ✅   | 一级边界              |
+| `path`           | `text`          | ✅   | SourceRoot 内相对路径 |
+| `size_bytes`     | `int`           | ✅   | 文件大小              |
+| `mtime_ms`       | `int`           | ✅   | 文件修改时间          |
+| `digest`         | `text`          | ✅   | `sha256:<hex>`        |
+| `language`       | `string`        | ⛔   | 基于扩展名的猜测      |
+| `ignored`        | `bool`          | ✅   | 当前阶段恒为 false    |
+| `created_at`     | `timestamp`     | ✅   |                       |
+
+**索引**：`(snapshot_id, path)`, `(source_root_id, path)`, `(workspace_id, language)`
 
 ### ContextPack
 
@@ -353,5 +373,6 @@ R1a 先落地轻量代码上下文索引的元数据基线，不扫描真实文�
 
 | 日期       | 变更                                                |
 | ---------- | --------------------------------------------------- |
+| 2026-05-15 | 补充 CodeIndexFile 文件清单对象                     |
 | 2026-05-15 | 补充轻量代码上下文索引 R1a 领域对象                 |
 | 2026-05-14 | 初版，从 V0.1.0 §12 抽出并补充 heartbeat/lease 字段 |
