@@ -124,32 +124,11 @@ export function ArtifactReviewContextSection({
           <p>真正接入后这里可以放 diff、截图、日志摘录或渲染预览。</p>
         </div>
       </div>
-      <Tabs value={reviewTab}>
+      <Tabs onValueChange={onReviewTabChange} value={reviewTab}>
         <TabsList aria-label="审阅上下文">
-          <TabsTrigger
-            onClick={() => {
-              onReviewTabChange('diff');
-            }}
-            value="diff"
-          >
-            Diff 摘要
-          </TabsTrigger>
-          <TabsTrigger
-            onClick={() => {
-              onReviewTabChange('risk');
-            }}
-            value="risk"
-          >
-            风险
-          </TabsTrigger>
-          <TabsTrigger
-            onClick={() => {
-              onReviewTabChange('decision');
-            }}
-            value="decision"
-          >
-            决策
-          </TabsTrigger>
+          <TabsTrigger value="diff">Diff 摘要</TabsTrigger>
+          <TabsTrigger value="risk">风险</TabsTrigger>
+          <TabsTrigger value="decision">决策</TabsTrigger>
         </TabsList>
         <TabsContent value="diff">
           <Card>
