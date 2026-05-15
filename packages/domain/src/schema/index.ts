@@ -7,6 +7,7 @@
 
 export * from './agent-runs';
 export * from './artifacts';
+export * from './code-context';
 export * from './conversations';
 export * from './events';
 export * from './messages';

@@ -4,7 +4,13 @@ import sensible from '@fastify/sensible';
 import Fastify from 'fastify';
 
 import { StartRunBody } from '@cairn/shared-contracts/contracts';
-import { OrchestrationRunId, TaskId, WorkspaceId } from '@cairn/shared-contracts/schemas';
+import {
+  ContextPackCreate,
+  OrchestrationRunId,
+  SourceRootCreate,
+  TaskId,
+  WorkspaceId,
+} from '@cairn/shared-contracts/schemas';
 
 import type { WorkspaceCoreContainer } from './container.js';
 import type { CreateSingleWorkerRunInput } from '@cairn/application';
@@ -82,6 +88,73 @@ export const createWorkspaceCoreApp = async (
     });
 
     return reply.code(202).send(created.run);
+  });
+
+  app.post('/v1/workspaces/:workspaceId/source-roots', async (request, reply) => {
+    const params = WorkspaceId.safeParse(
+      (request.params as Record<string, unknown>)['workspaceId'],
+    );
+    const body = SourceRootCreate.safeParse(request.body);
+
+    if (!params.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid workspace id.', params.error.issues));
+    }
+
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid source root body.', body.error.issues));
+    }
+
+    const created = await options.container.codeContext.registerSourceRoot({
+      workspaceId: params.data,
+      sourceRoot: body.data,
+    });
+
+    return reply.code(201).send(created.sourceRoot);
+  });
+
+  app.get('/v1/workspaces/:workspaceId/source-roots', async (request, reply) => {
+    const params = WorkspaceId.safeParse(
+      (request.params as Record<string, unknown>)['workspaceId'],
+    );
+
+    if (!params.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid workspace id.', params.error.issues));
+    }
+
+    const items = await options.container.codeContext.listSourceRoots({ workspaceId: params.data });
+    return reply.send({ items });
+  });
+
+  app.post('/v1/workspaces/:workspaceId/context-packs', async (request, reply) => {
+    const params = WorkspaceId.safeParse(
+      (request.params as Record<string, unknown>)['workspaceId'],
+    );
+    const body = ContextPackCreate.safeParse(request.body);
+
+    if (!params.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid workspace id.', params.error.issues));
+    }
+
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid context pack body.', body.error.issues));
+    }
+
+    const manifest = await options.container.codeContext.createContextPack({
+      workspaceId: params.data,
+      contextPack: body.data,
+    });
+
+    return reply.code(201).send(manifest);
   });
 
   app.get('/v1/runs/:runId', async (request, reply) => {

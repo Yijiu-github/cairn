@@ -19,6 +19,9 @@
 
 ```text
 Workspace
+  ├─ SourceRoot
+  │    ├─ CodeIndexSnapshot
+  │    └─ ContextPack (引用 SourceRoot / Task / OrchestrationRun)
   └─ Conversation
        ├─ Event (外部输入)
        ├─ Message
@@ -32,10 +35,12 @@ Workspace
 依赖与归属：
 
 - 一个 `Workspace` 下有多个 `Conversation`
+- 一个 `Workspace` 下有多个 `SourceRoot`，每个 `SourceRoot` 可产生多个 `CodeIndexSnapshot`
 - 一个 `Conversation` 下有多个 `Event` / `Message` / `OrchestrationRun`
 - 一个 `OrchestrationRun` 下有多个 `Task`（DAG 结构）
 - 一个 `Task` 下有 1 到 N 个 `AgentRun`（每次 retry 是新的 attempt）
 - 一个 `AgentRun` 可产生多个 `Artifact`
+- `ContextPack` 是 run / task 的上下文输入证据，引用 `SourceRoot`，后续应作为 `Artifact` 持久化内容
 - `TraceEvent` 横切所有层级，仅用于观察
 
 ---
@@ -272,7 +277,71 @@ OrchestrationRun 内的一个**子任务节点**。
 
 ---
 
-## 12. 待办
+## 12. Code Context
+
+R1a 先落地轻量代码上下文索引的元数据基线，不扫描真实文件、不写 AST/FTS，不把源码内容直接塞进数据库。
+
+### SourceRoot
+
+用户授权给 Workspace 使用的代码根目录。
+
+| 字段              | 类型                                         | 必填 | 说明                   |
+| ----------------- | -------------------------------------------- | ---- | ---------------------- |
+| `source_root_id`  | `string (ulid)`                              | ✅   |                        |
+| `workspace_id`    | `string`                                     | ✅   | 一级边界               |
+| `kind`            | `enum: local_directory \| remote_repository` | ✅   | R1a 主要使用本地目录   |
+| `display_name`    | `string`                                     | ✅   | 用户可见名             |
+| `uri`             | `string`                                     | ✅   | 本地 file URI 或远程仓 |
+| `status`          | `enum: active \| indexing \| stale \| error` | ✅   | 索引状态               |
+| `include_globs`   | `json (string[])`                            | ✅   | 用户 include 规则      |
+| `exclude_globs`   | `json (string[])`                            | ✅   | 用户 exclude 规则      |
+| `created_at`      | `timestamp`                                  | ✅   |                        |
+| `updated_at`      | `timestamp`                                  | ✅   |                        |
+| `last_indexed_at` | `timestamp`                                  | ⛔   | 后续索引完成时写入     |
+| `error`           | `text`                                       | ⛔   | 最近一次索引错误       |
+| `metadata`        | `json`                                       | ⛔   | 扩展位                 |
+
+**索引**：`(workspace_id, status)`, `(workspace_id, uri)`
+
+### CodeIndexSnapshot
+
+一次稳定索引快照的元数据。R1a 注册 SourceRoot 时创建 `pending` 快照，表示尚未运行真实扫描。
+
+| 字段             | 类型                              | 必填 | 说明            |
+| ---------------- | --------------------------------- | ---- | --------------- |
+| `snapshot_id`    | `string (ulid)`                   | ✅   |                 |
+| `source_root_id` | `string`                          | ✅   | 所属 SourceRoot |
+| `workspace_id`   | `string`                          | ✅   | 一级边界        |
+| `status`         | `enum: pending \| ready \| error` | ✅   | 快照状态        |
+| `index_version`  | `string`                          | ✅   | 索引格式版本    |
+| `file_count`     | `int`                             | ✅   | R1a 为 0        |
+| `created_at`     | `timestamp`                       | ✅   |                 |
+| `metadata`       | `json`                            | ⛔   | 扩展位          |
+
+**索引**：`(source_root_id, created_at)`, `(workspace_id, created_at)`
+
+### ContextPack
+
+给 Planner / Worker / Runtime Adapter 使用的上下文 manifest。R1a 只持久化 manifest；大内容后续放 artifact store。
+
+| 字段                   | 类型        | 必填 | 说明                               |
+| ---------------------- | ----------- | ---- | ---------------------------------- |
+| `context_pack_id`      | `string`    | ✅   |                                    |
+| `workspace_id`         | `string`    | ✅   | 一级边界                           |
+| `orchestration_run_id` | `string`    | ⛔   | 当目标是 run 时填                  |
+| `task_id`              | `string`    | ⛔   | 当目标是 task 时填                 |
+| `source_root_ids`      | `json`      | ✅   | 参与构造上下文的 SourceRoot        |
+| `created_for`          | `json`      | ✅   | `{ type, orchestrationRunId? }` 等 |
+| `query`                | `text`      | ✅   | 上下文构造意图                     |
+| `items`                | `json`      | ✅   | file excerpt / symbol 等条目       |
+| `token_estimate`       | `int`       | ⛔   | 估算 token                         |
+| `created_at`           | `timestamp` | ✅   |                                    |
+
+**索引**：`(workspace_id, created_at)`, `(orchestration_run_id)`, `(task_id)`
+
+---
+
+## 13. 待办
 
 - [ ] 给出 ER 图（Mermaid）
 - [ ] 提交对应的 Drizzle schema（落地后引用 `packages/storage/sqlite/` 与 `packages/storage/postgres/`）
@@ -284,4 +353,5 @@ OrchestrationRun 内的一个**子任务节点**。
 
 | 日期       | 变更                                                |
 | ---------- | --------------------------------------------------- |
+| 2026-05-15 | 补充轻量代码上下文索引 R1a 领域对象                 |
 | 2026-05-14 | 初版，从 V0.1.0 §12 抽出并补充 heartbeat/lease 字段 |

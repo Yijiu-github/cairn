@@ -112,6 +112,15 @@ R1 先做“够用且稳定”的本地索引：
 
 ### 必须有
 
+R1a 已完成：
+
+- SourceRoot registry：`POST/GET /v1/workspaces/:workspaceId/source-roots`
+- 最小 `CodeIndexSnapshot` 元数据：注册 SourceRoot 时创建 `pending` 快照，不执行真实扫描
+- 最小 `ContextPack` manifest：`POST /v1/workspaces/:workspaceId/context-packs`
+- shared contracts / domain schema / application service / workspace-core SQLite adapter 基线
+
+后续 R1b/R1 继续补齐：
+
 - SourceRoot 注册与状态：`active` / `indexing` / `stale` / `error`。
 - 文件清单：路径、大小、mtime、digest、语言猜测、是否 ignored。
 - 文本搜索：优先 SQLite FTS；不可用时降级为受控 `rg` 查询。
@@ -200,14 +209,14 @@ interface ContextPackItem {
 
 这些 endpoint 只是设计方向，最终以 shared contracts 为准：
 
-| Endpoint                                        | 用途                      |
-| ----------------------------------------------- | ------------------------- |
-| `POST /v1/workspaces/:workspaceId/source-roots` | 注册 SourceRoot           |
-| `GET /v1/workspaces/:workspaceId/source-roots`  | 列出 SourceRoot 与状态    |
-| `POST /v1/source-roots/:sourceRootId/reindex`   | 触发重建索引              |
-| `GET /v1/source-roots/:sourceRootId/index`      | 查看索引状态与快照信息    |
-| `GET /v1/code-search`                           | 文件 / 符号 / 文本搜索    |
-| `POST /v1/context-packs`                        | 生成 ContextPack artifact |
+| Endpoint                                         | 用途                      |
+| ------------------------------------------------ | ------------------------- |
+| `POST /v1/workspaces/:workspaceId/source-roots`  | 注册 SourceRoot           |
+| `GET /v1/workspaces/:workspaceId/source-roots`   | 列出 SourceRoot 与状态    |
+| `POST /v1/source-roots/:sourceRootId/reindex`    | 触发重建索引              |
+| `GET /v1/source-roots/:sourceRootId/index`       | 查看索引状态与快照信息    |
+| `GET /v1/code-search`                            | 文件 / 符号 / 文本搜索    |
+| `POST /v1/workspaces/:workspaceId/context-packs` | 生成 ContextPack manifest |
 
 ---
 
@@ -244,7 +253,8 @@ interface ContextPackItem {
 
 ## 12. 变更历史
 
-| 日期       | 变更                                 |
-| ---------- | ------------------------------------ |
-| 2026-05-15 | 补充 Graphify 调研结论与置信度标签   |
-| 2026-05-15 | 初版，明确自研轻量代码上下文索引方向 |
+| 日期       | 变更                                                      |
+| ---------- | --------------------------------------------------------- |
+| 2026-05-15 | R1a 接入 SourceRoot registry 与 ContextPack manifest 基线 |
+| 2026-05-15 | 补充 Graphify 调研结论与置信度标签                        |
+| 2026-05-15 | 初版，明确自研轻量代码上下文索引方向                      |

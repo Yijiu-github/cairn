@@ -14,7 +14,13 @@ import { createWorkspaceCoreContainer } from '../service/container.js';
 import { SqliteApplicationRepository } from './sqlite-application-repository.js';
 
 import type { WorkspaceCoreContainer } from '../service/container.js';
-import type { EventId, OrchestrationRunId, WorkspaceId } from '@cairn/shared-contracts/schemas';
+import type {
+  ContextPackId,
+  EventId,
+  OrchestrationRunId,
+  SourceRootId,
+  WorkspaceId,
+} from '@cairn/shared-contracts/schemas';
 
 const ids = {
   workspace: '01J000000000000000000000W1' as WorkspaceId,
@@ -71,6 +77,84 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
       expect(tasks[0]).toMatchObject({
         title: 'Persist task',
         status: 'ready',
+      });
+    } finally {
+      second.close();
+    }
+  });
+
+  it('persists SourceRoots and ContextPack manifests across repository instances', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+    let sourceRootId: SourceRootId;
+    let contextPackId: ContextPackId;
+
+    const first = openRepository(databasePath);
+
+    try {
+      const created = await first.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Apply patch',
+          brief: 'Update the target module.',
+        },
+      });
+      const registered = await first.container.codeContext.registerSourceRoot({
+        workspaceId: ids.workspace,
+        sourceRoot: {
+          kind: 'local_directory',
+          displayName: 'Cairn',
+          uri: 'file:///G:/Code/cairn',
+          includeGlobs: [],
+          excludeGlobs: ['node_modules/**'],
+        },
+      });
+      sourceRootId = registered.sourceRoot.sourceRootId;
+
+      const manifest = await first.container.codeContext.createContextPack({
+        workspaceId: ids.workspace,
+        contextPack: {
+          sourceRootIds: [sourceRootId],
+          createdFor: {
+            type: 'task',
+            taskId: created.task.taskId,
+          },
+          query: 'Find persistence code.',
+          items: [
+            {
+              kind: 'user_note',
+              reason: 'Operator selected this repo before scanner output exists.',
+            },
+          ],
+        },
+      });
+      contextPackId = manifest.contextPackId;
+    } finally {
+      first.close();
+    }
+
+    const second = openRepository(databasePath);
+
+    try {
+      await expect(
+        second.container.repository.listSourceRootsByWorkspace(ids.workspace),
+      ).resolves.toMatchObject([
+        {
+          sourceRootId,
+          displayName: 'Cairn',
+          status: 'active',
+        },
+      ]);
+
+      await expect(
+        second.container.repository.getContextPack(contextPackId),
+      ).resolves.toMatchObject({
+        contextPackId,
+        sourceRootIds: [sourceRootId],
+        query: 'Find persistence code.',
       });
     } finally {
       second.close();

@@ -1,18 +1,41 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
 
-import { rootContract, workspaceContract, runContract, operatorContract, API_V1 } from './index.js';
+import {
+  rootContract,
+  workspaceContract,
+  contextContract,
+  runContract,
+  operatorContract,
+  API_V1,
+} from './index.js';
 
 describe('rootContract', () => {
-  it('exposes the three top-level sub-routers', () => {
+  it('exposes the top-level sub-routers', () => {
     // ts-rest 在 c.router({...}) 内部可能 wrap sub-router，
     // 所以这里不用引用相等（toBe），改为结构 + 关键路径检查。
     expect(rootContract.workspace).toBeDefined();
+    expect(rootContract.context).toBeDefined();
     expect(rootContract.run).toBeDefined();
     expect(rootContract.operator).toBeDefined();
     expect(rootContract.workspace.list.path).toBe(workspaceContract.list.path);
+    expect(rootContract.context.registerSourceRoot.path).toBe(
+      contextContract.registerSourceRoot.path,
+    );
     expect(rootContract.run.startRun.path).toBe(runContract.startRun.path);
     expect(rootContract.operator.cancelRun.path).toBe(operatorContract.cancelRun.path);
+  });
+});
+
+describe('contextContract', () => {
+  it('exposes SourceRoot and ContextPack endpoints', () => {
+    expect(contextContract.registerSourceRoot.path).toBe(
+      '/v1/workspaces/:workspaceId/source-roots',
+    );
+    expect(contextContract.listSourceRoots.method).toBe('GET');
+    expect(contextContract.createContextPack.path).toBe(
+      '/v1/workspaces/:workspaceId/context-packs',
+    );
   });
 });
 

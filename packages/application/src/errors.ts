@@ -7,6 +7,7 @@ export type ApplicationErrorCode =
   | 'MISSING_TASK'
   | 'ORCHESTRATION_RUN_TERMINAL'
   | 'RUNTIME_REJECTED'
+  | 'SOURCE_ROOT_NOT_FOUND'
   | 'TASK_NOT_READY'
   | 'TASK_TERMINAL';
 

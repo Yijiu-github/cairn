@@ -15,6 +15,13 @@
       "when": 1778745676996,
       "tag": "0001_loud_valkyrie",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1778830247530,
+      "tag": "0002_zippy_colossus",
+      "breakpoints": true
     }
   ]
 }

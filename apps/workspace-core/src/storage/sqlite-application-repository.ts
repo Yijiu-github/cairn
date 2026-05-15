@@ -4,21 +4,37 @@ import { eq } from 'drizzle-orm';
 
 import {
   agentRuns,
+  codeIndexSnapshots,
+  contextPacks,
   events,
   orchestrationRuns,
+  sourceRoots,
   tasks,
   traceEvents,
   workspaces,
 } from '@cairn/domain/schema';
-import { AgentRun, Task, OrchestrationRun } from '@cairn/shared-contracts/schemas';
+import {
+  AgentRun,
+  CodeIndexSnapshot,
+  ContextPackManifest,
+  OrchestrationRun,
+  SourceRoot,
+  Task,
+} from '@cairn/shared-contracts/schemas';
 import { runSqliteMigrations, type CairnSqliteDatabase } from '@cairn/storage/sqlite';
 
-import type { ApplicationRepository, CreateRunGraphInput } from '@cairn/application';
+import type {
+  ApplicationRepository,
+  CreateRunGraphInput,
+  CreateSourceRootRegistrationInput,
+} from '@cairn/application';
 import type { BudgetHintRow } from '@cairn/domain/schema';
 import type {
   AgentRunId,
+  ContextPackId,
   EventId,
   OrchestrationRunId,
+  SourceRootId,
   TaskId,
   TraceEvent,
   WorkspaceId,
@@ -169,6 +185,46 @@ export class SqliteApplicationRepository implements ApplicationRepository {
   appendTraceEvent(event: TraceEvent): Promise<void> {
     this.db.insert(traceEvents).values(toTraceEventRow(event)).run();
     return Promise.resolve();
+  }
+
+  createSourceRootRegistration(input: CreateSourceRootRegistrationInput): Promise<void> {
+    this.db.transaction((tx) => {
+      tx.insert(sourceRoots).values(toSourceRootRow(input.sourceRoot)).run();
+      tx.insert(codeIndexSnapshots).values(toCodeIndexSnapshotRow(input.initialSnapshot)).run();
+    });
+    return Promise.resolve();
+  }
+
+  listSourceRootsByWorkspace(workspaceId: WorkspaceId): Promise<SourceRoot[]> {
+    const rows = this.db
+      .select()
+      .from(sourceRoots)
+      .where(eq(sourceRoots.workspaceId, workspaceId))
+      .all();
+    return Promise.resolve(rows.map(fromSourceRootRow));
+  }
+
+  listCodeIndexSnapshotsBySourceRoot(sourceRootId: SourceRootId): Promise<CodeIndexSnapshot[]> {
+    const rows = this.db
+      .select()
+      .from(codeIndexSnapshots)
+      .where(eq(codeIndexSnapshots.sourceRootId, sourceRootId))
+      .all();
+    return Promise.resolve(rows.map(fromCodeIndexSnapshotRow));
+  }
+
+  createContextPack(manifest: ContextPackManifest): Promise<void> {
+    this.db.insert(contextPacks).values(toContextPackRow(manifest)).run();
+    return Promise.resolve();
+  }
+
+  getContextPack(contextPackId: ContextPackId): Promise<ContextPackManifest | undefined> {
+    const row = this.db
+      .select()
+      .from(contextPacks)
+      .where(eq(contextPacks.contextPackId, contextPackId))
+      .get();
+    return Promise.resolve(row === undefined ? undefined : fromContextPackRow(row));
   }
 }
 
@@ -332,6 +388,90 @@ const toTraceEventRow = (event: TraceEvent): typeof traceEvents.$inferInsert => 
   ...(event.payloadRef === undefined ? {} : { payloadRef: event.payloadRef }),
   ...(event.payloadInline === undefined ? {} : { payloadInline: event.payloadInline }),
 });
+
+const toSourceRootRow = (sourceRoot: SourceRoot): typeof sourceRoots.$inferInsert => ({
+  sourceRootId: sourceRoot.sourceRootId,
+  workspaceId: sourceRoot.workspaceId,
+  kind: sourceRoot.kind,
+  displayName: sourceRoot.displayName,
+  uri: sourceRoot.uri,
+  status: sourceRoot.status,
+  includeGlobs: sourceRoot.includeGlobs,
+  excludeGlobs: sourceRoot.excludeGlobs,
+  createdAt: sourceRoot.createdAt,
+  updatedAt: sourceRoot.updatedAt,
+  ...(sourceRoot.lastIndexedAt === undefined ? {} : { lastIndexedAt: sourceRoot.lastIndexedAt }),
+  ...(sourceRoot.error === undefined ? {} : { error: sourceRoot.error }),
+  ...(sourceRoot.metadata === undefined ? {} : { metadata: sourceRoot.metadata }),
+});
+
+const fromSourceRootRow = (row: typeof sourceRoots.$inferSelect): SourceRoot =>
+  SourceRoot.parse({
+    sourceRootId: row.sourceRootId,
+    workspaceId: row.workspaceId,
+    kind: row.kind,
+    displayName: row.displayName,
+    uri: row.uri,
+    status: row.status,
+    includeGlobs: row.includeGlobs,
+    excludeGlobs: row.excludeGlobs,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+    ...(row.lastIndexedAt === null ? {} : { lastIndexedAt: row.lastIndexedAt }),
+    ...(row.error === null ? {} : { error: row.error }),
+    ...(row.metadata === null ? {} : { metadata: row.metadata }),
+  });
+
+const toCodeIndexSnapshotRow = (
+  snapshot: CodeIndexSnapshot,
+): typeof codeIndexSnapshots.$inferInsert => ({
+  snapshotId: snapshot.snapshotId,
+  sourceRootId: snapshot.sourceRootId,
+  workspaceId: snapshot.workspaceId,
+  status: snapshot.status,
+  indexVersion: snapshot.indexVersion,
+  fileCount: snapshot.fileCount,
+  createdAt: snapshot.createdAt,
+  ...(snapshot.metadata === undefined ? {} : { metadata: snapshot.metadata }),
+});
+
+const fromCodeIndexSnapshotRow = (row: typeof codeIndexSnapshots.$inferSelect): CodeIndexSnapshot =>
+  CodeIndexSnapshot.parse({
+    snapshotId: row.snapshotId,
+    sourceRootId: row.sourceRootId,
+    workspaceId: row.workspaceId,
+    status: row.status,
+    indexVersion: row.indexVersion,
+    fileCount: row.fileCount,
+    createdAt: row.createdAt,
+    ...(row.metadata === null ? {} : { metadata: row.metadata }),
+  });
+
+const toContextPackRow = (manifest: ContextPackManifest): typeof contextPacks.$inferInsert => ({
+  contextPackId: manifest.contextPackId,
+  workspaceId: manifest.workspaceId,
+  sourceRootIds: manifest.sourceRootIds,
+  createdFor: manifest.createdFor,
+  query: manifest.query,
+  items: manifest.items,
+  createdAt: manifest.createdAt,
+  ...(manifest.createdFor.type === 'orchestration_run'
+    ? { orchestrationRunId: manifest.createdFor.orchestrationRunId }
+    : { taskId: manifest.createdFor.taskId }),
+  ...(manifest.tokenEstimate === undefined ? {} : { tokenEstimate: manifest.tokenEstimate }),
+});
+
+const fromContextPackRow = (row: typeof contextPacks.$inferSelect): ContextPackManifest =>
+  ContextPackManifest.parse({
+    contextPackId: row.contextPackId,
+    workspaceId: row.workspaceId,
+    sourceRootIds: row.sourceRootIds,
+    createdFor: row.createdFor,
+    query: row.query,
+    items: row.items,
+    createdAt: row.createdAt,
+    ...(row.tokenEstimate === null ? {} : { tokenEstimate: row.tokenEstimate }),
+  });
 
 const toBudgetHintRow = (budgetHint: Task['budgetHint']): BudgetHintRow => ({
   ...(budgetHint?.maxTokens === undefined ? {} : { maxTokens: budgetHint.maxTokens }),

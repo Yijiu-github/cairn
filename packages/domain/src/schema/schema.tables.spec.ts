@@ -27,5 +27,8 @@ describe('SQLite persistence schema', () => {
     expect(sql).toContain('CREATE TABLE `agent_runs`');
     expect(sql).toContain('CREATE TABLE `artifacts`');
     expect(sql).toContain('CREATE TABLE `trace_events`');
+    expect(sql).toContain('CREATE TABLE `source_roots`');
+    expect(sql).toContain('CREATE TABLE `code_index_snapshots`');
+    expect(sql).toContain('CREATE TABLE `context_packs`');
   });
 });

@@ -48,6 +48,15 @@ export type ArtifactId = z.infer<typeof ArtifactId>;
 export const TraceEventId = brandedId('TraceEventId');
 export type TraceEventId = z.infer<typeof TraceEventId>;
 
+export const SourceRootId = brandedId('SourceRootId');
+export type SourceRootId = z.infer<typeof SourceRootId>;
+
+export const CodeIndexSnapshotId = brandedId('CodeIndexSnapshotId');
+export type CodeIndexSnapshotId = z.infer<typeof CodeIndexSnapshotId>;
+
+export const ContextPackId = brandedId('ContextPackId');
+export type ContextPackId = z.infer<typeof ContextPackId>;
+
 /**
  * TraceId 与单条 TraceEventId 不同：
  * - TraceId 是贯穿一次执行的关联 id（OrchestrationRun 启动时分配）

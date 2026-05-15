@@ -102,4 +102,84 @@ describe('workspace-core app', () => {
       await app.close();
     }
   });
+
+  it('registers SourceRoots and creates ContextPack manifests', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const sourceRootResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/source-roots`,
+        payload: {
+          displayName: 'Cairn',
+          uri: 'file:///G:/Code/cairn',
+          excludeGlobs: ['node_modules/**'],
+        },
+      });
+
+      expect(sourceRootResponse.statusCode).toBe(201);
+      const sourceRoot = sourceRootResponse.json<{ sourceRootId: string; status: string }>();
+      expect(sourceRoot.status).toBe('active');
+
+      const listResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/workspaces/${ids.workspace}/source-roots`,
+      });
+
+      expect(listResponse.statusCode).toBe(200);
+      expect(listResponse.json()).toMatchObject({
+        items: [{ sourceRootId: sourceRoot.sourceRootId, displayName: 'Cairn' }],
+      });
+
+      const runResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/runs`,
+        payload: {
+          originEventId: ids.event,
+          task: {
+            taskKind: 'edit',
+            title: 'Apply patch',
+            brief: 'Update the target module.',
+          },
+        },
+      });
+      const run = runResponse.json<{ orchestrationRunId: string }>();
+      const tasksResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${run.orchestrationRunId}/tasks`,
+      });
+      const task = first(tasksResponse.json<{ items: { taskId: string }[] }>().items);
+
+      const contextPackResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/context-packs`,
+        payload: {
+          sourceRootIds: [sourceRoot.sourceRootId],
+          createdFor: {
+            type: 'task',
+            taskId: task.taskId,
+          },
+          query: 'Find persistence code.',
+          items: [
+            {
+              kind: 'user_note',
+              reason: 'Operator selected this repo before scanner output exists.',
+            },
+          ],
+        },
+      });
+
+      expect(contextPackResponse.statusCode).toBe(201);
+      expect(contextPackResponse.json()).toMatchObject({
+        workspaceId: ids.workspace,
+        sourceRootIds: [sourceRoot.sourceRootId],
+        query: 'Find persistence code.',
+      });
+    } finally {
+      await app.close();
+    }
+  });
 });
