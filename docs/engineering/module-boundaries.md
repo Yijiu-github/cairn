@@ -111,7 +111,7 @@ import { something } from '../../web/src/something';
 - `@cairn/*` import 是否符合职责矩阵。
 - package exports 与 public API 是否一致。
 
-计划中的自动化路线见 [`standards-automation.md`](./standards-automation.md)；若该文件尚未创建，以后续 Task 5 落地为准。
+自动化路线见 [`standards-automation.md`](./standards-automation.md)。
 
 ## 8. 变更历史
 
