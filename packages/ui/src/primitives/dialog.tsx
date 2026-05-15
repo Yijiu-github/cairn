@@ -1,10 +1,17 @@
-import { createContext, useContext, useId, useMemo } from 'react';
+import { createContext, useContext, useEffect, useId, useMemo, useRef } from 'react';
 
 import { cn } from '../utils/cn';
 
 import { Button } from './button';
 
-import type { ButtonHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
+import type {
+  ButtonHTMLAttributes,
+  HTMLAttributes,
+  KeyboardEvent,
+  MouseEvent,
+  ReactNode,
+  RefObject,
+} from 'react';
 
 interface DialogContextValue {
   readonly descriptionId: string;
@@ -23,15 +30,54 @@ function useDialogContext(): DialogContextValue {
   return value;
 }
 
+function getFocusableElement(container: HTMLElement): HTMLElement | null {
+  return container.querySelector<HTMLElement>(
+    'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+  );
+}
+
 export interface DialogProps extends HTMLAttributes<HTMLDivElement> {
   readonly children: ReactNode;
+  readonly closeOnBackdrop?: boolean;
+  readonly closeOnEscape?: boolean;
+  readonly initialFocusRef?: RefObject<HTMLElement>;
+  readonly onOpenChange?: (open: boolean) => void;
   readonly open: boolean;
 }
 
-export function Dialog({ children, className, open, ...props }: DialogProps) {
+export function Dialog({
+  children,
+  className,
+  closeOnBackdrop = true,
+  closeOnEscape = true,
+  initialFocusRef,
+  onKeyDown,
+  onMouseDown,
+  onOpenChange,
+  open,
+  tabIndex,
+  ...props
+}: DialogProps) {
   const titleId = useId();
   const descriptionId = useId();
+  const overlayRef = useRef<HTMLDivElement>(null);
   const contextValue = useMemo(() => ({ descriptionId, titleId }), [descriptionId, titleId]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const overlay = overlayRef.current;
+
+    if (overlay === null) {
+      return;
+    }
+
+    const target = initialFocusRef?.current ?? getFocusableElement(overlay) ?? overlay;
+
+    target.focus();
+  }, [initialFocusRef, open]);
 
   if (!open) {
     return null;
@@ -41,6 +87,31 @@ export function Dialog({ children, className, open, ...props }: DialogProps) {
     <DialogContext.Provider value={contextValue}>
       <div
         className={cn('fixed inset-0 z-50 grid place-items-center bg-slate-950/40 p-4', className)}
+        onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
+          onKeyDown?.(event);
+
+          if (event.defaultPrevented) {
+            return;
+          }
+
+          if (event.key === 'Escape' && closeOnEscape) {
+            event.stopPropagation();
+            onOpenChange?.(false);
+          }
+        }}
+        onMouseDown={(event: MouseEvent<HTMLDivElement>) => {
+          onMouseDown?.(event);
+
+          if (event.defaultPrevented) {
+            return;
+          }
+
+          if (event.target === event.currentTarget && closeOnBackdrop) {
+            onOpenChange?.(false);
+          }
+        }}
+        ref={overlayRef}
+        tabIndex={tabIndex ?? -1}
         {...props}
       >
         {children}
@@ -56,6 +127,7 @@ export function DialogPanel({ className, ...props }: HTMLAttributes<HTMLDivEleme
     <div
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
+      aria-modal="true"
       className={cn(
         'w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl',
         className,

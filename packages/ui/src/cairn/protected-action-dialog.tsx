@@ -42,7 +42,14 @@ export function ProtectedActionDialog({
   target,
 }: ProtectedActionDialogProps) {
   return (
-    <Dialog open={open}>
+    <Dialog
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) {
+          onCancel();
+        }
+      }}
+      open={open}
+    >
       <DialogPanel>
         <DialogTitle>批准受保护动作？</DialogTitle>
         <DialogDescription>{kindLabel[actionKind]} 需要你确认影响范围。</DialogDescription>

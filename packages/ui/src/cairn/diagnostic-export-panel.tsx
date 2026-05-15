@@ -34,7 +34,7 @@ export function DiagnosticExportPanel({
       </CardHeader>
       <CardContent className="grid gap-4">
         <InlineAlert tone="warning">
-          Token 默认脱敏；本地路径和文件名仍可能包含个人信息。
+          Token 默认脱敏；本地路径默认隐藏，只有勾选后才会包含可能暴露个人信息的路径和文件名。
         </InlineAlert>
         <Checkbox
           checked={includeLogs}
@@ -46,7 +46,7 @@ export function DiagnosticExportPanel({
         <Checkbox
           checked={includePaths}
           description="路径可能暴露用户名、项目名或私人目录结构。"
-          label="包含本地路径"
+          label="包含本地路径和文件名"
           onChange={(event) => {
             onIncludePathsChange(event.target.checked);
           }}

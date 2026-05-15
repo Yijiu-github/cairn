@@ -2,8 +2,15 @@ import { StatusBadge } from '../feedback';
 import { Button, Card, CardContent, CardFooter, CardHeader, CardTitle } from '../primitives';
 import { cn } from '../utils/cn';
 
-import type { CairnArtifactKind, CairnComponentAction, CairnReviewState } from './types';
+import type {
+  CairnArtifactKind,
+  CairnArtifactPathDisplayMode,
+  CairnArtifactSensitivity,
+  CairnComponentAction,
+  CairnReviewState,
+} from './types';
 import type { HTMLAttributes } from 'react';
+
 const kindLabel: Record<CairnArtifactKind, string> = {
   diagnostic: '诊断包',
   document: '文档',
@@ -30,13 +37,21 @@ const reviewTone: Record<CairnReviewState, 'neutral' | 'info' | 'success' | 'war
     rejected: 'danger',
   };
 
+const sensitivityLabel: Record<Exclude<CairnArtifactSensitivity, 'none'>, string> = {
+  local_path: '本地路径风险',
+  secret_risk: '可能包含敏感信息',
+};
+
 export interface ArtifactCardProps extends HTMLAttributes<HTMLDivElement> {
   readonly actions?: readonly CairnComponentAction[];
   readonly artifactId: string;
   readonly kind: CairnArtifactKind;
   readonly path?: string;
+  readonly pathDisplayMode?: CairnArtifactPathDisplayMode;
+  readonly redactionLabel?: string;
   readonly reviewState: CairnReviewState;
   readonly sensitive?: boolean;
+  readonly sensitivity?: CairnArtifactSensitivity;
   readonly summary?: string;
   readonly title: string;
   readonly verification?: string;
@@ -48,13 +63,23 @@ export function ArtifactCard({
   className,
   kind,
   path,
+  pathDisplayMode = 'hidden',
+  redactionLabel = '路径已隐藏',
   reviewState,
   sensitive = false,
+  sensitivity,
   summary,
   title,
   verification,
   ...props
 }: ArtifactCardProps) {
+  const resolvedSensitivity: CairnArtifactSensitivity =
+    sensitivity ?? (sensitive ? 'secret_risk' : 'none');
+  const shouldDisplayPath = path !== undefined && pathDisplayMode !== 'hidden';
+  const shouldDisplayHiddenPath = path !== undefined && pathDisplayMode === 'hidden';
+  const shouldWarnFullPath = path !== undefined && pathDisplayMode === 'full';
+  const shouldDisplaySensitivity = resolvedSensitivity !== 'none';
+
   return (
     <Card className={cn('overflow-hidden', className)} variant="artifact" {...props}>
       <CardHeader>
@@ -71,15 +96,23 @@ export function ArtifactCard({
       </CardHeader>
       <CardContent className="grid gap-3">
         {summary === undefined ? undefined : <p className="text-sm text-slate-700">{summary}</p>}
-        {path === undefined ? undefined : (
+        {shouldDisplayPath ? (
           <div className="truncate font-mono text-xs text-slate-500">{path}</div>
-        )}
-        {verification === undefined && !sensitive ? undefined : (
+        ) : undefined}
+        {shouldDisplayHiddenPath ? (
+          <div className="truncate font-mono text-xs text-slate-500">{redactionLabel}</div>
+        ) : undefined}
+        {verification === undefined &&
+        !shouldDisplaySensitivity &&
+        !shouldWarnFullPath ? undefined : (
           <div className="flex flex-wrap gap-2">
             {verification === undefined ? undefined : (
               <StatusBadge label={verification} tone="success" />
             )}
-            {sensitive ? <StatusBadge label="可能包含敏感信息" tone="warning" /> : undefined}
+            {shouldDisplaySensitivity ? (
+              <StatusBadge label={sensitivityLabel[resolvedSensitivity]} tone="warning" />
+            ) : undefined}
+            {shouldWarnFullPath ? <StatusBadge label="完整路径已显示" tone="warning" /> : undefined}
           </div>
         )}
       </CardContent>
