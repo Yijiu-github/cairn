@@ -77,14 +77,14 @@ DB 命名优先保证迁移稳定和跨 SQLite / PostgreSQL 可读性。
 
 ## 7. HTTP / WebSocket / Artifact
 
-| 对象                 | 规则                       | 示例                 |
-| -------------------- | -------------------------- | -------------------- |
-| HTTP route           | `/v1` + kebab-case path    | `/v1/code-search`    |
-| path param           | camelCase in contract docs | `workspaceId`        |
-| JSON field           | camelCase                  | `workspaceId`        |
-| WebSocket event type | snake_case                 | `run_status_changed` |
-| Artifact type        | snake_case                 | `planner_output`     |
-| Runtime capability   | snake_case                 | `streaming_output`   |
+| 对象                 | 规则                                  | 示例                 |
+| -------------------- | ------------------------------------- | -------------------- |
+| HTTP route           | `/v1` + kebab-case path               | `/v1/code-search`    |
+| path param           | camelCase in contract docs            | `workspaceId`        |
+| JSON field           | camelCase                             | `workspaceId`        |
+| WebSocket event type | dotted namespace + snake_case suffix  | `run.status_changed` |
+| Artifact type        | snake_case                            | `planner_output`     |
+| Runtime capability   | camelCase TS capability profile field | `toolCalling`        |
 
 如果已有 shared contract 使用不同约定，以 contract 为准，并在变更时统一迁移。
 
@@ -96,6 +96,8 @@ DB 命名优先保证迁移稳定和跨 SQLite / PostgreSQL 可读性。
 - `Workflow Builder`
 - `Marketplace`
 - `Tenant`
+- `Agent`（单独使用）
+- `Task Graph Editor`
 
 慎用：
 
