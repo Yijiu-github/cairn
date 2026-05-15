@@ -30,6 +30,7 @@
 | Desktop Shell（Electron）                                                                                      | ⚪ TODO |
 | Embedded Workspace Core                                                                                        | ⚪ TODO |
 | SQLite + 本地 artifact store                                                                                   | ⚪ TODO |
+| 轻量代码上下文索引（SourceRoot / ContextPack 基线）                                                            | ⚪ TODO |
 | Chat / Runs / Tasks / Run Detail / Artifact / Trace 视图                                                       | ⚪ TODO |
 | retry / rerun / cancel                                                                                         | ⚪ TODO |
 | 基础 operator note                                                                                             | ⚪ TODO |
@@ -46,6 +47,7 @@
 - PostgreSQL 支持
 - 共享 workspace
 - 第二个 runtime adapter（接口先抽好，实现在 R2）
+- 语义 embedding / 向量搜索 / 全语言深度代码图
 - 自动更新通道
 - Web Shell 独立接入
 
@@ -68,6 +70,7 @@
 | 基础鉴权（token / OIDC）                        | ⚪ TODO |
 | Web Shell 独立运行                              | ⚪ TODO |
 | 远程 artifact store 选项（本地磁盘 / S3）       | ⚪ TODO |
+| 远程工作区代码上下文索引与权限策略              | ⚪ TODO |
 | 第二个 runtime adapter（候选：Claude / Ollama） | ⚪ TODO |
 | 受控自动更新通道（桌面端）                      | ⚪ TODO |
 | 更稳的观测与日志导出（OTLP exporter）           | ⚪ TODO |
@@ -127,6 +130,7 @@
 
 ## 7. 变更历史
 
-| 日期       | 变更                     |
-| ---------- | ------------------------ |
-| 2026-05-14 | 初版，从 V0.1.0 §16 抽出 |
+| 日期       | 变更                                  |
+| ---------- | ------------------------------------- |
+| 2026-05-14 | 初版，从 V0.1.0 §16 抽出              |
+| 2026-05-15 | 补充轻量代码上下文索引进入 R1/R2 节奏 |

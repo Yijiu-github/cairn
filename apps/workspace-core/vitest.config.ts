@@ -15,6 +15,10 @@ export default defineConfig({
         '../../packages/application/src/testing/index.ts',
       ),
       '@cairn/runtime-gateway': path.resolve(here, '../../packages/runtime_gateway/src'),
+      '@cairn/storage': path.resolve(here, '../../packages/storage/src'),
+      '@cairn/storage/sqlite': path.resolve(here, '../../packages/storage/src/sqlite/index.ts'),
+      '@cairn/domain': path.resolve(here, '../../packages/domain/src'),
+      '@cairn/domain/schema': path.resolve(here, '../../packages/domain/src/schema/index.ts'),
       '@cairn/shared-contracts': path.resolve(here, '../../packages/shared_contracts/src'),
       '@cairn/shared-contracts/contracts': path.resolve(
         here,
