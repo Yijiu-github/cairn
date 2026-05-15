@@ -21,6 +21,10 @@
     "./feedback": {
       "types": "./src/feedback/index.ts",
       "import": "./src/feedback/index.ts"
+    },
+    "./data-display": {
+      "types": "./src/data-display/index.ts",
+      "import": "./src/data-display/index.ts"
     }
   },
   "files": [
