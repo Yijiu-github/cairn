@@ -2,9 +2,10 @@ import { useState } from 'react';
 
 import { ComponentsGalleryPage } from './pages/components-gallery-page';
 import { HomeInboxPreviewPage } from './pages/home-inbox-preview-page';
+import { RunDetailPreviewPage } from './pages/run-detail-preview-page';
 
 export function UiPreviewApp() {
-  const [page, setPage] = useState<'components' | 'home-inbox'>('home-inbox');
+  const [page, setPage] = useState<'components' | 'home-inbox' | 'run-detail'>('run-detail');
 
   return (
     <main className="preview-shell">
@@ -29,6 +30,16 @@ export function UiPreviewApp() {
             Home / Inbox
           </button>
           <button
+            aria-pressed={page === 'run-detail'}
+            className="preview-nav-item"
+            onClick={() => {
+              setPage('run-detail');
+            }}
+            type="button"
+          >
+            Run Detail
+          </button>
+          <button
             aria-pressed={page === 'components'}
             className="preview-nav-item"
             onClick={() => {
@@ -41,7 +52,9 @@ export function UiPreviewApp() {
         </nav>
       </header>
 
-      {page === 'home-inbox' ? <HomeInboxPreviewPage /> : <ComponentsGalleryPage />}
+      {page === 'home-inbox' ? <HomeInboxPreviewPage /> : undefined}
+      {page === 'run-detail' ? <RunDetailPreviewPage /> : undefined}
+      {page === 'components' ? <ComponentsGalleryPage /> : undefined}
     </main>
   );
 }
