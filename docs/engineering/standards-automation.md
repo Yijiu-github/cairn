@@ -26,10 +26,17 @@
 | no console.log                                       | ESLint               |
 | no direct `process` / `process.env`                  | ESLint               |
 | import order                                         | ESLint               |
-| filename kebab-case                                  | ESLint unicorn       |
+| TS/TSX filename kebab-case                           | ESLint unicorn       |
 | markdown lint                                        | markdownlint-cli2    |
 | format                                               | Prettier             |
 | bilingual Conventional Commit title                  | commitlint           |
+
+说明：
+
+- 上表覆盖范围以当前根 `eslint.config.js`、根脚本与 lint-staged 配置为准；测试文件与配置文件存在显式例外。
+- `no explicit any` 在测试文件中关闭；`no unsafe assignment` 在测试文件中关闭，其他 unsafe 规则随 TypeScript 文件范围生效。
+- 直接 `process` / `process.env` 禁止规则当前随 TS/TSX/MTS/CTS 文件范围生效。
+- Husky + lint-staged 会在提交时对 staged 文件运行对应格式化与 lint 任务。
 
 ## 3. Phase 2：`standards:check`
 
