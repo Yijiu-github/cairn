@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { ProtectedActionDialog } from '@cairn/ui';
 
+import { runDetailViewModel } from '../preview-models/run-detail-view-model';
 import {
   RunArtifactsSection,
   RunDetailHeroSection,
@@ -47,13 +48,13 @@ export function RunDetailPreviewPage() {
       </section>
 
       <ProtectedActionDialog
-        actionKind="other"
-        impact="会停止当前运行，但保留已生成的预览文件和证据链记录。"
+        actionKind={runDetailViewModel.protectedAction.actionKind}
+        impact={runDetailViewModel.protectedAction.impact}
         onApprove={closeProtectedAction}
         onCancel={closeProtectedAction}
         onDeny={closeProtectedAction}
         open={protectedOpen}
-        target="run_01JDEMOHOME0000000000001"
+        target={runDetailViewModel.protectedAction.target}
       />
     </div>
   );

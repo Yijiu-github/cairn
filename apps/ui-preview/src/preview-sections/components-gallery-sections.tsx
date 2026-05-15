@@ -41,14 +41,7 @@ import {
   Tooltip,
 } from '@cairn/ui';
 
-import { runActions, taskItems } from '../demo-data';
-import {
-  galleryAgents,
-  galleryDialogCopy,
-  galleryEvidenceItems,
-  galleryFooterItems,
-  galleryRunMetrics,
-} from '../preview-data/components-gallery-data';
+import { componentsGalleryViewModel } from '../preview-models/components-gallery-view-model';
 
 import type { InterventionEffect } from '@cairn/ui';
 import type { Dispatch, SetStateAction } from 'react';
@@ -114,14 +107,14 @@ export function GalleryProductComponentsSection() {
       </div>
       <div className="grid two">
         <RunCard
-          actions={runActions}
-          agentLabel="Supervisor / 白霓"
-          description="生成组件预览页面，并检查 UI 组件状态覆盖。"
-          metrics={galleryRunMetrics}
-          progress={58}
-          runId="run_01JDEMOUI000000000000000"
-          status="running"
-          title="UI preview implementation"
+          actions={componentsGalleryViewModel.product.runActions}
+          agentLabel={componentsGalleryViewModel.product.run.agentLabel}
+          description={componentsGalleryViewModel.product.run.description}
+          metrics={componentsGalleryViewModel.product.run.metrics}
+          progress={componentsGalleryViewModel.product.run.progress}
+          runId={componentsGalleryViewModel.product.run.id}
+          status={componentsGalleryViewModel.product.run.status}
+          title={componentsGalleryViewModel.product.run.title}
         />
 
         <HandoffQueueItem
@@ -134,20 +127,20 @@ export function GalleryProductComponentsSection() {
           waitedFor="3m 12s"
         />
 
-        <TaskTree items={taskItems} selectedId="task_product" />
+        <TaskTree items={componentsGalleryViewModel.product.taskItems} selectedId="task_product" />
 
         <ArtifactCard
           actions={[
             { label: '查看', tone: 'primary' },
             { label: '请求修改', tone: 'secondary' },
           ]}
-          artifactId="artifact_ui_preview_001"
+          artifactId={componentsGalleryViewModel.product.artifact.artifactId}
           kind="document"
-          path="apps/ui-preview/src/ui-preview-app.tsx"
+          path={componentsGalleryViewModel.product.artifact.path}
           reviewState="pending_review"
-          summary="组件预览页面源文件，用于设计和开发共同检查 UI 状态。"
-          title="UI preview app"
-          verification="typecheck passed"
+          summary={componentsGalleryViewModel.product.artifact.summary}
+          title={componentsGalleryViewModel.product.artifact.title}
+          verification={componentsGalleryViewModel.product.artifact.verification}
         />
       </div>
     </section>
@@ -170,7 +163,7 @@ export function GalleryEvidenceRuntimeSection({
         <p>让人类能看懂发生了什么、花了多少、是否该接管。</p>
       </div>
       <div className="grid two">
-        <EvidenceTimeline items={galleryEvidenceItems} />
+        <EvidenceTimeline items={componentsGalleryViewModel.evidenceRuntime.evidence} />
 
         <CostLatencyMeter
           costLabel="$0.04"
@@ -179,18 +172,18 @@ export function GalleryEvidenceRuntimeSection({
           usagePercent={42}
         />
 
-        <AgentStatusStrip agents={galleryAgents} />
+        <AgentStatusStrip agents={componentsGalleryViewModel.evidenceRuntime.agents} />
 
         <ArtifactReviewPanel
           actions={[
             { label: '批准', tone: 'primary' },
             { label: '请求修改', tone: 'secondary' },
           ]}
-          artifactId="artifact_ui_preview_001"
+          artifactId={componentsGalleryViewModel.evidenceRuntime.review.artifactId}
           note={reviewNote}
           onNoteChange={onReviewNoteChange}
           reviewState="pending_review"
-          title="产物审阅"
+          title={componentsGalleryViewModel.evidenceRuntime.review.title}
         />
       </div>
     </section>
@@ -288,8 +281,8 @@ export function GalleryHiddenDialog() {
   return (
     <Dialog open={false}>
       <DialogPanel>
-        <DialogTitle>{galleryDialogCopy.title}</DialogTitle>
-        <DialogDescription>{galleryDialogCopy.description}</DialogDescription>
+        <DialogTitle>{componentsGalleryViewModel.feedback.dialogCopy.title}</DialogTitle>
+        <DialogDescription>{componentsGalleryViewModel.feedback.dialogCopy.description}</DialogDescription>
         <DialogFooter>
           <DialogAction>确认</DialogAction>
           <DialogCancel>取消</DialogCancel>
@@ -302,7 +295,7 @@ export function GalleryHiddenDialog() {
 export function GalleryFooter() {
   return (
     <footer className="footer">
-      <MetadataList items={galleryFooterItems} />
+      <MetadataList items={componentsGalleryViewModel.footer} />
     </footer>
   );
 }

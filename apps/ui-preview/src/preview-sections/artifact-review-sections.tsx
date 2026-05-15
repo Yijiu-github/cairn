@@ -17,13 +17,7 @@ import {
   TabsTrigger,
 } from '@cairn/ui';
 
-import {
-  artifactDecisionItems,
-  artifactReviewProvenanceItems,
-  artifactReviewRelatedArtifacts,
-  artifactRiskItems,
-  artifactShareChecklistBaseItems,
-} from '../preview-data/artifact-review-data';
+import { artifactReviewViewModel } from '../preview-models/artifact-review-view-model';
 
 import type { Dispatch, SetStateAction } from 'react';
 
@@ -37,20 +31,21 @@ export function ArtifactReviewHeroSection({ onProtectedAction }: ArtifactReviewH
       <div className="run-title-block">
         <div className="section-kicker">Artifact Review</div>
         <div className="run-title-row">
-          <h2>Run Detail preview page</h2>
-          <StatusBadge label="待审阅" tone="info" />
-          <StatusBadge label="可能包含敏感路径" tone="warning" />
+          <h2>{artifactReviewViewModel.hero.title}</h2>
+          {artifactReviewViewModel.hero.badges.map((badge) => (
+            <StatusBadge key={badge.label} label={badge.label} tone={badge.tone} />
+          ))}
         </div>
-        <p>
-          审阅页的目标是回答三个问题：产物从哪来、是否可信、批准后会发生什么。这里刻意把本地路径和导出风险放在第一屏。
-        </p>
-        <div className="run-id-line">artifact_run_detail_page · run_01JDEMOHOME0000000000001</div>
+        <p>{artifactReviewViewModel.hero.summary}</p>
+        <div className="run-id-line">
+          {artifactReviewViewModel.artifact.artifactId} · {artifactReviewViewModel.runId}
+        </div>
       </div>
       <div className="run-header-actions">
         <Button>批准</Button>
         <Button variant="secondary">请求修改</Button>
         <Button variant="danger" onClick={onProtectedAction}>
-          删除产物
+          {artifactReviewViewModel.protectedAction.triggerLabel}
         </Button>
       </div>
     </section>
@@ -69,8 +64,9 @@ export function ArtifactOverviewSection() {
         <Button variant="secondary">打开源文件</Button>
       </div>
       <div className="grid two">
-        {artifactReviewRelatedArtifacts.map((artifact) => {
-          const sensitiveProps = artifact.sensitive === undefined ? {} : { sensitive: artifact.sensitive };
+        {artifactReviewViewModel.relatedArtifacts.map((artifact) => {
+          const sensitiveProps =
+            artifact.sensitivity === 'none' ? {} : { sensitive: true };
 
           return (
             <ArtifactCard
@@ -108,7 +104,7 @@ export function ArtifactProvenanceSection() {
         </div>
         <StatusBadge label="trace complete" tone="success" />
       </div>
-      <EvidenceTimeline items={artifactReviewProvenanceItems} />
+      <EvidenceTimeline items={artifactReviewViewModel.provenance} />
     </section>
   );
 }
@@ -161,33 +157,23 @@ export function ArtifactReviewContextSection({
         <TabsContent value="diff">
           <Card>
             <CardContent className="artifact-code-block">
-              <pre>{`+ export function RunDetailPreviewPage() {
-+   return <TaskTree items={runTasks} selectedId="task_define_risk_copy" />;
-+ }
-
-+ .run-detail-layout {
-+   grid-template-columns: minmax(0, 1fr) 380px;
-+ }`}</pre>
+              <pre>{artifactReviewViewModel.reviewContext.diff}</pre>
             </CardContent>
           </Card>
         </TabsContent>
         <TabsContent value="risk">
           <Card>
             <CardContent className="stack">
-              <InlineAlert tone="warning">
-                产物内容安全，但路径可能暴露用户名、项目结构或机器信息；分享前应默认隐藏绝对路径。
-              </InlineAlert>
-              <MetadataList items={artifactRiskItems} />
+              <InlineAlert tone="warning">{artifactReviewViewModel.reviewContext.risk.alert}</InlineAlert>
+              <MetadataList items={artifactReviewViewModel.reviewContext.risk.metrics} />
             </CardContent>
           </Card>
         </TabsContent>
         <TabsContent value="decision">
           <Card>
             <CardContent className="stack">
-              <InlineAlert tone="info">
-                推荐动作：批准页面结构，要求样式和文案在截图审阅后再标记最终 approved。
-              </InlineAlert>
-              <MetadataList items={artifactDecisionItems} />
+              <InlineAlert tone="info">{artifactReviewViewModel.reviewContext.decision.alert}</InlineAlert>
+              <MetadataList items={artifactReviewViewModel.reviewContext.decision.metrics} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -227,10 +213,10 @@ export function ArtifactReviewSidebar({
             onClick: onProtectedAction,
           },
         ]}
-        artifactId="artifact_run_detail_page"
+        artifactId={artifactReviewViewModel.artifact.artifactId}
         note={reviewNote}
         onNoteChange={onReviewNoteChange}
-        reviewState="pending_review"
+        reviewState={artifactReviewViewModel.artifact.reviewState}
         title="审阅决定"
       />
 
@@ -249,9 +235,17 @@ export function ArtifactReviewSidebar({
         <CardContent className="stack">
           <MetadataList
             items={[
-              { label: '绝对路径', value: includePaths ? 'included' : 'hidden by default' },
-              { label: '日志', value: includeLogs ? 'included, redacted' : 'excluded' },
-              ...artifactShareChecklistBaseItems,
+              {
+                label: '绝对路径',
+                value: includePaths
+                  ? artifactReviewViewModel.diagnosticExport.includePathsVisibleLabel
+                  : artifactReviewViewModel.diagnosticExport.includePathsHiddenLabel,
+              },
+              {
+                label: '日志',
+                value: includeLogs ? artifactReviewViewModel.diagnosticExport.includeLogsLabel : 'excluded',
+              },
+              ...artifactReviewViewModel.diagnosticExport.checklistBaseItems,
             ]}
           />
           <InlineAlert tone={includePaths ? 'warning' : 'success'}>

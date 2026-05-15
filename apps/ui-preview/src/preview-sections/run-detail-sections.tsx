@@ -17,15 +17,7 @@ import {
   TaskTree,
 } from '@cairn/ui';
 
-import {
-  runDetailAgents,
-  runDetailArtifacts,
-  runDetailAttributionItems,
-  runDetailCostMetrics,
-  runDetailEvidenceItems,
-  runDetailRuntimeMetrics,
-  runDetailTasks,
-} from '../preview-data/run-detail-data';
+import { runDetailViewModel } from '../preview-models/run-detail-view-model';
 
 import type { InterventionEffect } from '@cairn/ui';
 import type { Dispatch, SetStateAction } from 'react';
@@ -40,22 +32,19 @@ export function RunDetailHeroSection({ onProtectedAction }: RunDetailHeroSection
       <div className="run-title-block">
         <div className="section-kicker">Run Detail</div>
         <div className="run-title-row">
-          <h2>生成 Run Detail 页面 prototype</h2>
+          <h2>{runDetailViewModel.run.title}</h2>
           <StatusBadge label="运行中" tone="info" />
         </div>
-        <p>
-          把任务树、证据链、产物、成本延迟和人工接管组合到同一个控制台视图中，验证 operator
-          是否能快速判断下一步。
-        </p>
+        <p>{runDetailViewModel.run.summary}</p>
         <div className="run-id-line">
-          run_01JDEMOHOME0000000000001 · workspace_id: local_demo_workspace
+          {runDetailViewModel.run.id} · workspace_id: {runDetailViewModel.run.workspaceId}
         </div>
       </div>
       <div className="run-header-actions">
         <Button>接管</Button>
         <Button variant="secondary">暂停</Button>
         <Button variant="danger" onClick={onProtectedAction}>
-          取消运行
+          {runDetailViewModel.protectedAction.triggerLabel}
         </Button>
       </div>
     </section>
@@ -73,7 +62,7 @@ export function RunTaskTreeSection() {
         </div>
         <StatusBadge label="1 blocked" tone="warning" />
       </div>
-      <TaskTree items={runDetailTasks} selectedId="task_define_risk_copy" />
+      <TaskTree items={runDetailViewModel.run.tasks} selectedId="task_define_risk_copy" />
     </section>
   );
 }
@@ -89,7 +78,7 @@ export function RunEvidenceSection() {
         </div>
         <Button variant="secondary">复制摘要</Button>
       </div>
-      <EvidenceTimeline items={runDetailEvidenceItems} />
+      <EvidenceTimeline items={runDetailViewModel.run.evidence} />
     </section>
   );
 }
@@ -106,7 +95,7 @@ export function RunArtifactsSection() {
         <StatusBadge label="2 pending review" tone="warning" />
       </div>
       <div className="grid two">
-        {runDetailArtifacts.map((artifact) => (
+        {runDetailViewModel.run.artifacts.map((artifact) => (
           <ArtifactCard
             actions={artifact.actions}
             artifactId={artifact.artifactId}
@@ -141,21 +130,21 @@ export function RunDetailSidebar({
 }: RunDetailSidebarProps) {
   return (
     <aside className="run-detail-side" aria-label="运行侧栏">
-      <AgentStatusStrip agents={runDetailAgents} />
+      <AgentStatusStrip agents={runDetailViewModel.agents} />
 
       <CostLatencyMeter
-        costLabel="$0.08"
-        latencyLabel="2.1s p50 / 8.4s p95"
-        metrics={runDetailCostMetrics}
-        tokenLabel="31.4k"
-        usagePercent={58}
+        costLabel={runDetailViewModel.cost.costLabel}
+        latencyLabel={runDetailViewModel.cost.latencyLabel}
+        metrics={runDetailViewModel.cost.metrics}
+        tokenLabel={runDetailViewModel.cost.tokenLabel}
+        usagePercent={runDetailViewModel.cost.usagePercent}
       />
 
       <RuntimeHealthCard
-        description="UI preview 使用静态数据，不连接 workspace-core。"
-        metrics={runDetailRuntimeMetrics}
-        runtimeLabel="Preview runtime"
-        status="ready"
+        description={runDetailViewModel.runtime.description}
+        metrics={runDetailViewModel.runtime.metrics}
+        runtimeLabel={runDetailViewModel.runtime.label}
+        status={runDetailViewModel.runtime.status}
       />
 
       <HandoffQueueItem
@@ -181,7 +170,7 @@ export function RunDetailSidebar({
           <CardTitle>错误归因</CardTitle>
         </CardHeader>
         <CardContent className="stack">
-          <MetadataList items={runDetailAttributionItems} />
+          <MetadataList items={runDetailViewModel.attribution} />
           <InlineAlert tone="warning">
             详情页必须让人能分清：是任务阻塞、执行失败，还是产物审阅未通过。
           </InlineAlert>

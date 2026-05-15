@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { ProtectedActionDialog } from '@cairn/ui';
 
-import { defaultInterventionEffect } from '../demo-data';
+import { componentsGalleryViewModel } from '../preview-models/components-gallery-view-model';
 import {
   GalleryEvidenceRuntimeSection,
   GalleryFeedbackSection,
@@ -17,13 +17,15 @@ import type { InterventionEffect } from '@cairn/ui';
 
 export function ComponentsGalleryPage() {
   const [composerMessage, setComposerMessage] =
-    useState('请先暂停当前写入动作，我要补充边界条件。');
+    useState(componentsGalleryViewModel.protectedActions.initialMessage);
   const [composerEffect, setComposerEffect] =
-    useState<InterventionEffect>(defaultInterventionEffect);
+    useState<InterventionEffect>(componentsGalleryViewModel.protectedActions.defaultEffect);
   const [protectedOpen, setProtectedOpen] = useState(false);
   const [includeLogs, setIncludeLogs] = useState(true);
   const [includePaths, setIncludePaths] = useState(false);
-  const [reviewNote, setReviewNote] = useState('证据链完整，可以进入下一步。');
+  const [reviewNote, setReviewNote] = useState(
+    componentsGalleryViewModel.evidenceRuntime.review.initialNote,
+  );
 
   const openProtectedAction = () => {
     setProtectedOpen(true);
@@ -53,13 +55,13 @@ export function ComponentsGalleryPage() {
       <GalleryHiddenDialog />
 
       <ProtectedActionDialog
-        actionKind="file_write"
-        impact="将更新 apps/ui-preview 下的本地预览代码。"
+        actionKind={componentsGalleryViewModel.protectedActions.dialog.actionKind}
+        impact={componentsGalleryViewModel.protectedActions.dialog.impact}
         onApprove={closeProtectedAction}
         onCancel={closeProtectedAction}
         onDeny={closeProtectedAction}
         open={protectedOpen}
-        target="apps/ui-preview"
+        target={componentsGalleryViewModel.protectedActions.dialog.target}
       />
 
       <GalleryFooter />

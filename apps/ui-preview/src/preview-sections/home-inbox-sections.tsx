@@ -13,22 +13,15 @@ import {
   StatusBadge,
 } from '@cairn/ui';
 
-import {
-  homeActiveRuns,
-  homeAgents,
-  homeFilterLabels,
-  homeQueueItems,
-  homeRuntimeMetrics,
-  homeSummaryItems,
-} from '../preview-data/home-inbox-data';
+import { homeInboxViewModel } from '../preview-models/home-inbox-view-model';
 
 export function HomeCommandBarSection() {
   return (
     <section className="home-command-bar page-hero" aria-label="工作区概览">
       <div>
         <div className="section-kicker">Workspace</div>
-        <h2>local_demo_workspace</h2>
-        <p>今日 3 个运行，2 个需要接管，1 个 runtime 降级提示。</p>
+        <h2>{homeInboxViewModel.workspace.name}</h2>
+        <p>{homeInboxViewModel.workspace.summary}</p>
       </div>
       <div className="hero-actions">
         <Button>新建运行</Button>
@@ -51,7 +44,7 @@ export function HomeHandoffSection() {
         <StatusBadge label="2 high priority" tone="warning" />
       </div>
       <div className="stack">
-        {homeQueueItems.map((item) => {
+        {homeInboxViewModel.handoffQueue.map((item) => {
           const waitedForProps = item.waitedFor === undefined ? {} : { waitedFor: item.waitedFor };
 
           return (
@@ -84,7 +77,7 @@ export function HomeRunsSection() {
         <Button variant="secondary">查看全部</Button>
       </div>
       <div className="stack">
-        {homeActiveRuns.map((run) => (
+        {homeInboxViewModel.runs.map((run) => (
           <RunCard
             key={run.id}
             actions={[
@@ -109,13 +102,13 @@ export function HomeRunsSection() {
 export function HomeRuntimeSidebar() {
   return (
     <aside className="home-side-column" aria-label="运行环境和摘要">
-      <AgentStatusStrip agents={homeAgents} />
+      <AgentStatusStrip agents={homeInboxViewModel.agents} />
 
       <RuntimeHealthCard
-        description="本地 preview server 当前未运行；最近一次 production build 通过。"
-        metrics={homeRuntimeMetrics}
-        runtimeLabel="UI Preview Runtime"
-        status="degraded"
+        description={homeInboxViewModel.runtime.description}
+        metrics={homeInboxViewModel.runtime.metrics}
+        runtimeLabel={homeInboxViewModel.runtime.label}
+        status={homeInboxViewModel.runtime.status}
       />
 
       <Card>
@@ -123,7 +116,7 @@ export function HomeRuntimeSidebar() {
           <CardTitle>今日摘要</CardTitle>
         </CardHeader>
         <CardContent className="stack">
-          <MetadataList items={homeSummaryItems} />
+          <MetadataList items={homeInboxViewModel.workspace.stats} />
           <InlineAlert tone="info">
             Home / Inbox 的目标是让 operator 在 30 秒内判断：是否要接管、哪里失败、下一步去哪。
           </InlineAlert>
@@ -135,7 +128,7 @@ export function HomeRuntimeSidebar() {
           <CardTitle>快速过滤</CardTitle>
         </CardHeader>
         <CardContent className="filter-pills">
-          {homeFilterLabels.map((label, index) => (
+          {homeInboxViewModel.filters.map((label, index) => (
             <button className={index === 0 ? 'filter-pill active' : 'filter-pill'} key={label} type="button">
               {label}
             </button>

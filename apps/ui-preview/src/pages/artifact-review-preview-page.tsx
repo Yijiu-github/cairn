@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import { ProtectedActionDialog } from '@cairn/ui';
 
+import { artifactReviewViewModel } from '../preview-models/artifact-review-view-model';
 import {
   ArtifactOverviewSection,
   ArtifactProvenanceSection,
@@ -50,13 +51,13 @@ export function ArtifactReviewPreviewPage() {
       </section>
 
       <ProtectedActionDialog
-        actionKind="artifact_delete"
-        impact="会从当前运行的产物列表移除该 artifact；源码文件不会在这个 prototype 中真实删除。"
+        actionKind={artifactReviewViewModel.protectedAction.actionKind}
+        impact={artifactReviewViewModel.protectedAction.impact}
         onApprove={closeProtectedAction}
         onCancel={closeProtectedAction}
         onDeny={closeProtectedAction}
         open={protectedOpen}
-        target="artifact_run_detail_page"
+        target={artifactReviewViewModel.protectedAction.target}
       />
     </div>
   );
