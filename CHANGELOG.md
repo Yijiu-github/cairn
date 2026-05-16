@@ -37,6 +37,7 @@
 - **`@cairn/application`**：新增应用层编排基线，包含 run/task/agentRun repository 端口、Runtime Gateway 提交端口、single-worker run 创建、adapter event 状态推进与终态不变量测试
 - **`@cairn/workspace-core`**：新增 Fastify 最小服务骨架，包含 `/health`、R1 run/task/agent-run HTTP 闭环、in-memory application ports 与 mock runtime 验证
 - **`@cairn/workspace-core`**：新增 SQLite application repository 适配器，服务启动时执行 domain 迁移并用 `.cairn/workspace-core.sqlite` 持久化 run/task/agent-run 状态
+- **Orchestration Control R1a**：新增 application 与 workspace-core 最小接管控制面，覆盖 pause / resume / cancel run、retry task、rerun 与 operator note，并写入 TraceEvent。
 - **`@cairn/ui`**：新增共享 UI 包工程校验基线，纳入 typecheck / lint / test，并补充公共导出 smoke 测试
 - 设计文档新增轻量代码上下文索引方案，明确 Cairn 自研 SourceRoot / CodeContextIndex / ContextPack 能力，不引入 GitNexus 依赖或许可证受限代码
 - **Code Context R1a**：新增 SourceRoot registry、最小 CodeIndexSnapshot 元数据、ContextPack manifest 契约、domain schema、application service 与 workspace-core API/SQLite 持久化基线

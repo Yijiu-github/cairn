@@ -41,6 +41,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `GET /health` 健康检查。
 - R1 run/task/agent-run HTTP 闭环：可创建 single-worker run，并通过 mock runtime 验证状态推进。
+- Orchestration Control R1a API：pause / resume / cancel run、retry task、rerun、operator note 的最小 HTTP 接管面；取消仍是 application state change，尚未调用真实 runtime kill。
 - SQLite application repository：服务启动可执行 domain 迁移，并用本地 SQLite 持久化 run/task/agent-run 状态。
 - Code Context R1a/R1b-a API：
   - 注册与列出 SourceRoot。
@@ -122,6 +123,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `@cairn/runtime-gateway`：RuntimeAdapter 契约、mock adapter、Codex CLI adapter 基线。
 - `@cairn/application`：single-worker orchestration 与 code context service。
 - `@cairn/workspace-core`：最小服务、SQLite 持久化、code context R1a/R1b-a API。
+- Orchestration Control R1a：`@cairn/application` 与 `@cairn/workspace-core` 支持最小 operator control plane，覆盖 pause / resume / cancel / retry task / rerun / operator note。
 - Code Context R1a/R1b-a：
   - SourceRoot registry。
   - 本地文件清单 reindex。
@@ -145,7 +147,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Orchestration Planner 的真实 planning 输出与多 task DAG。
 - Goal Planner 的 action tree、preconditions、blocked reason、replan reason 持久化。
 - Runtime Gateway 接入真实 Codex CLI 任务的端到端 workspace-core 流程。
-- retry / rerun / cancel 的完整 workspace-core API 与 UI。
+- 真实 Runtime Gateway cancellation / kill、AgentRun retry、protected step approve/reject 与 operator control UI。
 - TraceEvent 持久化与 replay UI。
 - 代码上下文索引的文本搜索、symbol outline、import/export dependency edge。
 - Desktop / Web 的 Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图。
