@@ -21,7 +21,7 @@ export function HomeCommandBarSection() {
     <section className="home-command-bar page-hero" aria-label="工作区概览">
       <div>
         <div className="section-kicker">Workspace</div>
-        <h2>{homeInboxViewModel.workspace.stats[0]?.value ?? 'local_demo_workspace'}</h2>
+        <h2>{homeInboxViewModel.workspace.label}</h2>
         <p>
           Home / Inbox 只承接 operator 当前要处理的接管、运行和审阅；工作区身份、全局导航和 runtime
           总览归 Desktop Shell。

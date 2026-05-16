@@ -17,6 +17,8 @@ import type {
 
 export interface HomeInboxViewModel {
   workspace: {
+    name: string;
+    label: string;
     stats: readonly PreviewMetric[];
   };
   runs: readonly PreviewRunSummary[];
@@ -29,8 +31,11 @@ export interface HomeInboxViewModel {
 
 export const homeInboxViewModel: HomeInboxViewModel = {
   workspace: {
+    name: 'local_demo_workspace',
+    label: 'local_demo_workspace',
     stats: homeSummaryItems,
   },
+
   runs: homeActiveRuns,
   handoffQueue: homeQueueItems,
   agents: homeAgents,
