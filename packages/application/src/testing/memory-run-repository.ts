@@ -18,6 +18,8 @@ import type {
   ContextPackManifest,
   OrchestrationRun,
   OrchestrationRunId,
+  PlanningOutput,
+  PlanningOutputId,
   SourceRoot,
   SourceRootId,
   Task,
@@ -31,6 +33,7 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
   private readonly codeIndexFiles = new Map<CodeIndexFileId, CodeIndexFile>();
   private readonly codeIndexSnapshots = new Map<CodeIndexSnapshotId, CodeIndexSnapshot>();
   private readonly contextPacks = new Map<ContextPackId, ContextPackManifest>();
+  private readonly planningOutputs = new Map<PlanningOutputId, PlanningOutput>();
   private readonly runs = new Map<OrchestrationRunId, OrchestrationRun>();
   private readonly sourceRoots = new Map<SourceRootId, SourceRoot>();
   private readonly tasks = new Map<TaskId, Task>();
@@ -73,6 +76,11 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
     return Promise.resolve();
   }
 
+  createPlanningOutput(output: PlanningOutput): Promise<void> {
+    this.planningOutputs.set(output.planningOutputId, output);
+    return Promise.resolve();
+  }
+
   updateRun(run: OrchestrationRun): Promise<void> {
     this.runs.set(run.orchestrationRunId, run);
     return Promise.resolve();
@@ -85,6 +93,25 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
 
   updateAgentRun(agentRun: AgentRun): Promise<void> {
     this.agentRuns.set(agentRun.runId, agentRun);
+    return Promise.resolve();
+  }
+
+  getPlanningOutput(planningOutputId: PlanningOutputId): Promise<PlanningOutput | undefined> {
+    return Promise.resolve(this.planningOutputs.get(planningOutputId));
+  }
+
+  getPlanningOutputByRun(
+    orchestrationRunId: OrchestrationRunId,
+  ): Promise<PlanningOutput | undefined> {
+    return Promise.resolve(
+      [...this.planningOutputs.values()].find(
+        (planningOutput) => planningOutput.orchestrationRunId === orchestrationRunId,
+      ),
+    );
+  }
+
+  updatePlanningOutput(output: PlanningOutput): Promise<void> {
+    this.planningOutputs.set(output.planningOutputId, output);
     return Promise.resolve();
   }
 

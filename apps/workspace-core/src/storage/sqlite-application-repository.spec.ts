@@ -19,6 +19,7 @@ import type {
   ContextPackId,
   EventId,
   OrchestrationRunId,
+  PlanningOutputId,
   SourceRootId,
   WorkspaceId,
 } from '@cairn/shared-contracts/schemas';
@@ -215,6 +216,79 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
         contextPackId,
         sourceRootIds: [sourceRootId],
         query: 'Find persistence code.',
+      });
+    } finally {
+      second.close();
+    }
+  });
+
+  it('persists PlanningOutput records across repository instances', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+    const planningOutputId = '01J000000000000000000000P1' as PlanningOutputId;
+    let createdRunId: OrchestrationRunId;
+
+    const first = openRepository(databasePath);
+
+    try {
+      const created = await first.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Plan persistence',
+          brief: 'Verify planning output persistence.',
+        },
+      });
+
+      createdRunId = created.run.orchestrationRunId;
+
+      await first.container.repository.createPlanningOutput({
+        planningOutputId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+        actionTree: [
+          {
+            actionId: 'action-1',
+            title: 'Inspect repository',
+            intent: 'Confirm planning output rows persist.',
+            status: 'ready',
+            dependsOnActionIds: [],
+          },
+        ],
+        preconditions: [],
+        contextPackRefs: [],
+        createdAt: '2026-05-17T00:00:00.000Z',
+        updatedAt: '2026-05-17T00:00:00.000Z',
+      });
+    } finally {
+      first.close();
+    }
+
+    const second = openRepository(databasePath);
+
+    try {
+      await expect(
+        second.container.repository.getPlanningOutput(planningOutputId),
+      ).resolves.toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+        actionTree: [
+          {
+            actionId: 'action-1',
+            title: 'Inspect repository',
+          },
+        ],
+      });
+      await expect(
+        second.container.repository.getPlanningOutputByRun(createdRunId),
+      ).resolves.toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
       });
     } finally {
       second.close();
