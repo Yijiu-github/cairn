@@ -17,6 +17,7 @@ import type {
   EventId,
   OrchestrationRun,
   OrchestrationRunId,
+  MessageId,
   StructuredError,
   Task,
   TaskId,
@@ -79,6 +80,48 @@ export interface SubmitTaskToRuntimeInput {
 export interface SubmitTaskToRuntimeResult {
   agentRun: AgentRun;
   providerRunId?: string;
+}
+
+export interface PauseRunInput {
+  runId: OrchestrationRunId;
+  reason?: string;
+}
+
+export interface ResumeRunInput {
+  runId: OrchestrationRunId;
+}
+
+export interface CancelRunInput {
+  runId: OrchestrationRunId;
+  reason?: string;
+}
+
+export interface RetryTaskInput {
+  taskId: TaskId;
+  reason?: string;
+}
+
+export interface RetryTaskResult {
+  taskId: TaskId;
+  newAttempt: number;
+}
+
+export interface RerunInput {
+  runId: OrchestrationRunId;
+  originEventId?: EventId;
+  replan?: boolean;
+  operatorNote?: string;
+}
+
+export interface InjectOperatorNoteInput {
+  runId: OrchestrationRunId;
+  note: string;
+  visibility: 'public' | 'operator_only';
+}
+
+export interface InjectOperatorNoteResult {
+  messageId: MessageId;
+  traceEventId: TraceEventId;
 }
 
 const toIso = (date: Date): string => date.toISOString();
@@ -292,6 +335,212 @@ export class OrchestrationRunService {
         break;
       }
     }
+  }
+
+  async pauseRun(input: PauseRunInput): Promise<OrchestrationRun> {
+    const run = await this.requireRun(input.runId);
+    if (run.status !== 'running') {
+      throw new ApplicationError(
+        'INVALID_RUN_STATE',
+        `Run must be running to pause: ${run.orchestrationRunId}`,
+      );
+    }
+
+    const now = toIso(this.clock.now());
+    const pausedRun: OrchestrationRun = {
+      ...run,
+      status: 'paused',
+      updatedAt: now,
+    };
+    await this.repository.updateRun(pausedRun);
+    await this.appendTrace(pausedRun, undefined, undefined, 'run.paused', 'info', {
+      ...(input.reason === undefined ? {} : { reason: input.reason }),
+    });
+    return pausedRun;
+  }
+
+  async resumeRun(input: ResumeRunInput): Promise<OrchestrationRun> {
+    const run = await this.requireRun(input.runId);
+    if (run.status !== 'paused') {
+      throw new ApplicationError(
+        'INVALID_RUN_STATE',
+        `Run must be paused to resume: ${run.orchestrationRunId}`,
+      );
+    }
+
+    const now = toIso(this.clock.now());
+    const resumedRun: OrchestrationRun = {
+      ...run,
+      status: 'running',
+      updatedAt: now,
+    };
+    await this.repository.updateRun(resumedRun);
+    await this.appendTrace(resumedRun, undefined, undefined, 'run.resumed', 'info', {});
+    return resumedRun;
+  }
+
+  async cancelRun(input: CancelRunInput): Promise<OrchestrationRun> {
+    const run = await this.requireRun(input.runId);
+    if (isRunTerminal(run.status)) {
+      throw new ApplicationError(
+        'ORCHESTRATION_RUN_TERMINAL',
+        `OrchestrationRun is terminal: ${run.orchestrationRunId}`,
+      );
+    }
+
+    const now = toIso(this.clock.now());
+    const reason = input.reason ?? 'Operator cancelled the run.';
+    const error: StructuredError = {
+      layer: 'orchestration',
+      code: 'CANCELLED_BY_OPERATOR',
+      message: reason,
+      retryable: false,
+    };
+    const cancelledRun: OrchestrationRun = {
+      ...run,
+      status: 'cancelled',
+      resultCompleteness: 'empty',
+      completionLevel: 'failed',
+      finishedAt: now,
+      error,
+      updatedAt: now,
+    };
+
+    const tasks = await this.repository.listTasksByRun(run.orchestrationRunId);
+    for (const task of tasks) {
+      if (!isTaskTerminal(task.status)) {
+        await this.repository.updateTask({
+          ...task,
+          status: 'cancelled',
+          failureReason: reason,
+          updatedAt: now,
+        });
+      }
+
+      const agentRuns = await this.repository.listAgentRunsByTask(task.taskId);
+      for (const agentRun of agentRuns) {
+        if (!isAgentRunTerminal(agentRun.status)) {
+          await this.repository.updateAgentRun({
+            ...agentRun,
+            status: 'cancelled',
+            finishedAt: now,
+            error,
+            cancelable: false,
+            updatedAt: now,
+          });
+        }
+      }
+    }
+
+    await this.repository.updateRun(cancelledRun);
+    await this.appendTrace(cancelledRun, undefined, undefined, 'run.cancelled', 'warn', {
+      reason,
+    });
+    return cancelledRun;
+  }
+
+  async retryTask(input: RetryTaskInput): Promise<RetryTaskResult> {
+    const task = await this.requireTask(input.taskId);
+    const run = await this.requireRun(task.orchestrationRunId);
+    this.assertRunCanChange(run);
+
+    if (task.status !== 'failed') {
+      throw new ApplicationError(
+        'INVALID_TASK_STATE',
+        `Task must be failed to retry: ${task.taskId}`,
+      );
+    }
+
+    const now = toIso(this.clock.now());
+    const newAttempt = task.attempt + 1;
+    const retriedTask: Task = {
+      ...task,
+      status: 'ready',
+      attempt: newAttempt,
+      idempotencyKey: `${task.taskId}:${String(newAttempt)}`,
+      updatedAt: now,
+    };
+    delete retriedTask.failureReason;
+
+    await this.repository.updateTask(retriedTask);
+    await this.appendTrace(run, retriedTask, undefined, 'task.retry_requested', 'info', {
+      newAttempt,
+      ...(input.reason === undefined ? {} : { reason: input.reason }),
+    });
+    return { taskId: task.taskId, newAttempt };
+  }
+
+  async rerun(input: RerunInput): Promise<OrchestrationRun> {
+    const previousRun = await this.requireRun(input.runId);
+    if (!isRunTerminal(previousRun.status)) {
+      throw new ApplicationError(
+        'INVALID_RUN_STATE',
+        `Run must be terminal to rerun: ${previousRun.orchestrationRunId}`,
+      );
+    }
+
+    const previousTasks = await this.repository.listTasksByRun(previousRun.orchestrationRunId);
+    if (previousTasks.length !== 1) {
+      throw new ApplicationError(
+        'RERUN_UNSUPPORTED_GRAPH',
+        `R1a rerun supports exactly one task: ${previousRun.orchestrationRunId}`,
+      );
+    }
+
+    const previousTask = previousTasks[0];
+    if (previousTask === undefined) {
+      throw new ApplicationError(
+        'RERUN_UNSUPPORTED_GRAPH',
+        `R1a rerun supports exactly one task: ${previousRun.orchestrationRunId}`,
+      );
+    }
+
+    const created = await this.createSingleWorkerRun({
+      workspaceId: previousRun.workspaceId,
+      originEventId: input.originEventId ?? previousRun.originEventId,
+      ...(previousRun.conversationId === undefined
+        ? {}
+        : { conversationId: previousRun.conversationId }),
+      task: {
+        taskKind: previousTask.taskKind,
+        title: previousTask.title,
+        brief: this.buildRerunBrief(previousTask.brief, input.operatorNote),
+        ...(previousTask.executionProfile === undefined
+          ? {}
+          : { executionProfile: previousTask.executionProfile }),
+        priority: previousTask.priority,
+        contextRefs: previousTask.contextRefs,
+        ...(previousTask.budgetHint === undefined ? {} : { budgetHint: previousTask.budgetHint }),
+      },
+    });
+
+    await this.appendTrace(created.run, created.task, undefined, 'run.rerun_created', 'info', {
+      previousRunId: previousRun.orchestrationRunId,
+      replan: input.replan ?? false,
+      ...(input.operatorNote === undefined ? {} : { operatorNote: input.operatorNote }),
+    });
+    return created.run;
+  }
+
+  async injectOperatorNote(input: InjectOperatorNoteInput): Promise<InjectOperatorNoteResult> {
+    const run = await this.requireRun(input.runId);
+    const traceEventId = this.ids.traceEventId();
+    const createdAt = toIso(this.clock.now());
+    const event: TraceEvent = {
+      traceEventId,
+      workspaceId: run.workspaceId,
+      orchestrationRunId: run.orchestrationRunId,
+      eventType: 'operator.note',
+      level: 'info',
+      payloadInline: {
+        note: input.note,
+        visibility: input.visibility,
+      },
+      createdAt,
+      traceId: run.traceId,
+    };
+    await this.repository.appendTraceEvent(event);
+    return { messageId: `message:${traceEventId}` as MessageId, traceEventId };
   }
 
   private async applyQueuedEvent(
@@ -676,6 +925,14 @@ export class OrchestrationRunService {
     if (isAgentRunTerminal(agentRun.status)) {
       throw new ApplicationError('AGENT_RUN_TERMINAL', `AgentRun is terminal: ${agentRun.runId}`);
     }
+  }
+
+  private buildRerunBrief(brief: string, operatorNote: string | undefined): string {
+    if (operatorNote === undefined || operatorNote.trim() === '') {
+      return brief;
+    }
+
+    return `${brief}\n\nOperator note: ${operatorNote}`;
   }
 
   private async appendTrace(
