@@ -404,6 +404,12 @@ describe('workspace-core app', () => {
     try {
       const { runId } = await createSubmittedRun(app);
 
+      await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/pause`,
+        payload: {},
+      });
+
       const response = await app.inject({
         method: 'POST',
         url: `/v1/runs/${runId}/pause`,
@@ -412,7 +418,7 @@ describe('workspace-core app', () => {
 
       expect(response.statusCode).toBe(409);
       expect(response.json()).toMatchObject({
-        error: { code: 'INVALID_RUN_STATE' },
+        error: { code: 'CONFLICT' },
       });
     } finally {
       await app.close();
@@ -462,7 +468,7 @@ describe('workspace-core app', () => {
       });
       expect(retryResponse.statusCode).toBe(409);
       expect(retryResponse.json()).toMatchObject({
-        error: { code: 'ORCHESTRATION_RUN_TERMINAL' },
+        error: { code: 'CONFLICT' },
       });
     } finally {
       await app.close();
@@ -490,6 +496,19 @@ describe('workspace-core app', () => {
         payload: { note: '' },
       });
       expect(invalidBodyResponse.statusCode).toBe(400);
+
+      const missingBodyResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/cancel`,
+      });
+      expect(missingBodyResponse.statusCode).toBe(400);
+
+      const malformedResumeBodyResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/resume`,
+        payload: [],
+      });
+      expect(malformedResumeBodyResponse.statusCode).toBe(400);
     } finally {
       await app.close();
     }

@@ -2,8 +2,14 @@
 
 import sensible from '@fastify/sensible';
 import Fastify from 'fastify';
+import { z } from 'zod';
 
-import { StartRunBody } from '@cairn/shared-contracts/contracts';
+import {
+  OperatorNoteBody,
+  OperatorReasonBody,
+  OperatorRerunBody,
+  StartRunBody,
+} from '@cairn/shared-contracts/contracts';
 import {
   CodeSearchQuery,
   ContextPackCreate,
@@ -49,6 +55,47 @@ const isApplicationError = (error: unknown): error is ApplicationError =>
   'name' in error &&
   'code' in error &&
   (error as { name?: unknown }).name === 'ApplicationError';
+
+const toApplicationHttpStatus = (error: ApplicationError): 404 | 409 | 500 => {
+  switch (error.code) {
+    case 'MISSING_AGENT_RUN':
+    case 'MISSING_ORCHESTRATION_RUN':
+    case 'MISSING_TASK':
+    case 'SOURCE_ROOT_NOT_FOUND': {
+      return 404;
+    }
+    case 'AGENT_RUN_TERMINAL':
+    case 'INVALID_RUN_STATE':
+    case 'INVALID_TASK_STATE':
+    case 'ORCHESTRATION_RUN_TERMINAL':
+    case 'RERUN_UNSUPPORTED_GRAPH':
+    case 'TASK_NOT_READY':
+    case 'TASK_TERMINAL': {
+      return 409;
+    }
+    case 'RUNTIME_REJECTED': {
+      return 500;
+    }
+  }
+
+  return 500;
+};
+
+const ResumeRunBody = z.object({});
+
+const toApplicationHttpCode = (
+  status: 404 | 409 | 500,
+): 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL_ERROR' => {
+  if (status === 404) {
+    return 'NOT_FOUND';
+  }
+
+  if (status === 409) {
+    return 'CONFLICT';
+  }
+
+  return 'INTERNAL_ERROR';
+};
 
 export const createWorkspaceCoreApp = async (
   options: CreateWorkspaceCoreAppOptions,
@@ -310,6 +357,200 @@ export const createWorkspaceCoreApp = async (
 
     const agentRuns = await options.container.repository.listAgentRunsByTask(taskId.data);
     return reply.send({ items: agentRuns });
+  });
+
+  app.post('/v1/runs/:runId/pause', async (request, reply) => {
+    const runId = OrchestrationRunId.safeParse(
+      (request.params as Record<string, unknown>)['runId'],
+    );
+    const body = OperatorReasonBody.safeParse(request.body);
+
+    if (!runId.success) {
+      return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
+    }
+
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid pause body.', body.error.issues));
+    }
+
+    try {
+      const run = await options.container.orchestrationRuns.pauseRun({
+        runId: runId.data,
+        ...(body.data.reason === undefined ? {} : { reason: body.data.reason }),
+      });
+      return await reply.send(run);
+    } catch (error) {
+      if (isApplicationError(error)) {
+        const status = toApplicationHttpStatus(error);
+        return reply.code(status).send(toApiError(toApplicationHttpCode(status), error.message));
+      }
+
+      throw error;
+    }
+  });
+
+  app.post('/v1/runs/:runId/resume', async (request, reply) => {
+    const runId = OrchestrationRunId.safeParse(
+      (request.params as Record<string, unknown>)['runId'],
+    );
+    const body = ResumeRunBody.safeParse(request.body);
+
+    if (!runId.success) {
+      return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
+    }
+
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid resume body.', body.error.issues));
+    }
+
+    try {
+      const run = await options.container.orchestrationRuns.resumeRun({ runId: runId.data });
+      return await reply.send(run);
+    } catch (error) {
+      if (isApplicationError(error)) {
+        const status = toApplicationHttpStatus(error);
+        return reply.code(status).send(toApiError(toApplicationHttpCode(status), error.message));
+      }
+
+      throw error;
+    }
+  });
+
+  app.post('/v1/runs/:runId/cancel', async (request, reply) => {
+    const runId = OrchestrationRunId.safeParse(
+      (request.params as Record<string, unknown>)['runId'],
+    );
+    const body = OperatorReasonBody.safeParse(request.body);
+
+    if (!runId.success) {
+      return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
+    }
+
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid cancel body.', body.error.issues));
+    }
+
+    try {
+      const run = await options.container.orchestrationRuns.cancelRun({
+        runId: runId.data,
+        ...(body.data.reason === undefined ? {} : { reason: body.data.reason }),
+      });
+      return await reply.send(run);
+    } catch (error) {
+      if (isApplicationError(error)) {
+        const status = toApplicationHttpStatus(error);
+        return reply.code(status).send(toApiError(toApplicationHttpCode(status), error.message));
+      }
+
+      throw error;
+    }
+  });
+
+  app.post('/v1/tasks/:taskId/retry', async (request, reply) => {
+    const taskId = TaskId.safeParse((request.params as Record<string, unknown>)['taskId']);
+    const body = OperatorReasonBody.safeParse(request.body);
+
+    if (!taskId.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid task id.', taskId.error.issues));
+    }
+
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid retry body.', body.error.issues));
+    }
+
+    try {
+      const result = await options.container.orchestrationRuns.retryTask({
+        taskId: taskId.data,
+        ...(body.data.reason === undefined ? {} : { reason: body.data.reason }),
+      });
+      return await reply.code(202).send(result);
+    } catch (error) {
+      if (isApplicationError(error)) {
+        const status = toApplicationHttpStatus(error);
+        return reply.code(status).send(toApiError(toApplicationHttpCode(status), error.message));
+      }
+
+      throw error;
+    }
+  });
+
+  app.post('/v1/runs/:runId/rerun', async (request, reply) => {
+    const runId = OrchestrationRunId.safeParse(
+      (request.params as Record<string, unknown>)['runId'],
+    );
+    const body = OperatorRerunBody.safeParse(request.body);
+
+    if (!runId.success) {
+      return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
+    }
+
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid rerun body.', body.error.issues));
+    }
+
+    try {
+      const run = await options.container.orchestrationRuns.rerun({
+        runId: runId.data,
+        ...(body.data.originEventId === undefined
+          ? {}
+          : { originEventId: body.data.originEventId }),
+        replan: body.data.replan,
+        ...(body.data.operatorNote === undefined ? {} : { operatorNote: body.data.operatorNote }),
+      });
+      return await reply.code(202).send(run);
+    } catch (error) {
+      if (isApplicationError(error)) {
+        const status = toApplicationHttpStatus(error);
+        return reply.code(status).send(toApiError(toApplicationHttpCode(status), error.message));
+      }
+
+      throw error;
+    }
+  });
+
+  app.post('/v1/runs/:runId/notes', async (request, reply) => {
+    const runId = OrchestrationRunId.safeParse(
+      (request.params as Record<string, unknown>)['runId'],
+    );
+    const body = OperatorNoteBody.safeParse(request.body);
+
+    if (!runId.success) {
+      return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
+    }
+
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid operator note body.', body.error.issues));
+    }
+
+    try {
+      const result = await options.container.orchestrationRuns.injectOperatorNote({
+        runId: runId.data,
+        note: body.data.note,
+        visibility: body.data.visibility,
+      });
+      return await reply.code(201).send(result);
+    } catch (error) {
+      if (isApplicationError(error)) {
+        const status = toApplicationHttpStatus(error);
+        return reply.code(status).send(toApiError(toApplicationHttpCode(status), error.message));
+      }
+
+      throw error;
+    }
   });
 
   app.post('/v1/tasks/:taskId/agent-runs', async (request, reply) => {
