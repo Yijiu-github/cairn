@@ -47,6 +47,7 @@
 - 新增 AI 协作工程手册 `docs/engineering/agent-collaboration.md`，沉淀上下文工程、契约设计、文档/ADR 路由，并指向 review gate 文档
 - 新增外部项目参考雷达 `docs/reference/external-project-radar.md`，记录 GitNexus、Graphify、Ruflo、agent-skills、Superpowers、OpenAI Skills 等后续阶段性参考入口
 - 新增项目状态页 `docs/STATUS.md`，记录当前可用能力、测试基线、R1 已完成 / 未完成能力与近期主线
+- 新增 Cairn 工程体检报告，按 R1 交付链路梳理当前工程状态、风险与下一步优先级
 - 新增分支管理设计文档，明确 `main` / `develop` / agent 专项分支 / release / hotfix 的治理边界
 - Orchestration / Code Context 设计补充 Goal Planner 参考：action tree、preconditions、blocked reason 与 replan reason
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
@@ -59,6 +60,7 @@
 - `package.json` 的 `license` 字段从 `SEE LICENSE IN LICENSE` 改为 `Apache-2.0`
 - **`@cairn/storage`**：升级 `better-sqlite3` catalog 至 `^12.10.0`，本机 Node 24.14.0 下可安装 native binding 并执行 SQLite 测试
 - `coding-standards.md` 对齐当前 TypeScript、ESLint、Prettier、commitlint 与人工 review gate 状态
+- `docs/STATUS.md` 同步 UI preview、Node 26 验证观察项与工程体检建议
 
 ### Removed
 
