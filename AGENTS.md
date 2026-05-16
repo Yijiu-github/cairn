@@ -110,7 +110,8 @@ cairn-workspace/
 │  ├─ legal/              ← 隐私 / 数据本地化
 │  └─ reference/          ← 术语 / 命名 / 复盘
 ├─ apps/
-│  └─ workspace-core/     ← 已创建：Fastify 最小服务骨架 / in-memory application ports / mock runtime
+│  ├─ workspace-core/     ← 已创建：Fastify 最小服务骨架 / in-memory application ports / mock runtime
+│  └─ desktop/            ← 已创建：Electron 最小 shell 骨架 / static renderer fixtures / preload identity bridge
 ├─ packages/
 │  ├─ shared_contracts/   ← 已创建：Zod schema / ts-rest contracts / WS events
 │  └─ domain/             ← 已创建：Drizzle SQLite-first schema / migrations
@@ -122,7 +123,7 @@ cairn-workspace/
 └─ .github/
 ```
 
-代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前仅创建 `apps/workspace-core` 与 packages 下共享包；`apps/desktop` 与 `apps/web` 尚未创建**。
+代码层目录的设计规范见 `docs/engineering/repo-layout.md`，**目前已创建 `apps/workspace-core`、`apps/desktop` 最小骨架与 packages 下共享包；`apps/web` 尚未创建**。
 
 ---
 

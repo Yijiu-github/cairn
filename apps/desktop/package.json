@@ -1,0 +1,35 @@
+{
+  "name": "@cairn/desktop",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cairn Electron Desktop Shell.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src electron.vite.config.ts",
+    "build": "electron-vite build",
+    "package": "electron-builder --dir",
+    "clean": "rimraf .turbo out dist release"
+  },
+  "dependencies": {
+    "@cairn/ui": "workspace:*",
+    "@electron-toolkit/preload": "catalog:",
+    "@electron-toolkit/utils": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "electron": "catalog:",
+    "electron-builder": "catalog:",
+    "electron-vite": "catalog:",
+    "rimraf": "^6.0.1",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

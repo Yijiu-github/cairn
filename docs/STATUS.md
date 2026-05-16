@@ -10,7 +10,7 @@
 
 Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**。
 
-已经可运行的主线是共享契约、领域 schema、SQLite storage、Runtime Gateway、Application 编排基线，以及 `apps/workspace-core` 的最小 Fastify 服务。Desktop Shell 与 Web Shell 还没有创建。
+已经可运行的主线是共享契约、领域 schema、SQLite storage、Runtime Gateway、Application 编排基线，`apps/workspace-core` 的最小 Fastify 服务，以及 `apps/desktop` 的 Electron 最小 shell 骨架。Web Shell 还没有创建。
 
 ---
 
@@ -24,17 +24,17 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 ### 已存在 apps / packages
 
-| 路径                        | 状态      | 当前能力                                                                     |
-| --------------------------- | --------- | ---------------------------------------------------------------------------- |
-| `apps/workspace-core`       | 🟢 可用   | Fastify 最小服务，包含 `/health`、run/task/agent-run 闭环与 code context API |
-| `apps/desktop`              | ⚪ 未创建 | Electron Desktop Shell 尚未启动                                              |
-| `apps/web`                  | ⚪ 未创建 | Web Shell 尚未启动                                                           |
-| `packages/shared_contracts` | 🟢 可用   | Zod schemas、ts-rest contracts、Run WebSocket events                         |
-| `packages/domain`           | 🟢 可用   | Drizzle SQLite-first schema 与迁移                                           |
-| `packages/storage`          | 🟢 可用   | better-sqlite3 连接封装、PRAGMA 初始化、domain 迁移 runner                   |
-| `packages/runtime_gateway`  | 🟢 可用   | RuntimeAdapter 契约、mock adapter、Codex CLI JSONL / process 基线            |
-| `packages/application`      | 🟢 可用   | OrchestrationRun service、repository ports、CodeContext service              |
-| `packages/ui`               | 🟡 基线   | 共享 UI 包校验基线、tokens / primitives 导出 smoke test                      |
+| 路径                        | 状态      | 当前能力                                                                        |
+| --------------------------- | --------- | ------------------------------------------------------------------------------- |
+| `apps/workspace-core`       | 🟢 可用   | Fastify 最小服务，包含 `/health`、run/task/agent-run 闭环与 code context API    |
+| `apps/desktop`              | 🟡 骨架   | Electron Desktop Shell 最小骨架，包含 main / preload / renderer 与静态 fixtures |
+| `apps/web`                  | ⚪ 未创建 | Web Shell 尚未启动                                                              |
+| `packages/shared_contracts` | 🟢 可用   | Zod schemas、ts-rest contracts、Run WebSocket events                            |
+| `packages/domain`           | 🟢 可用   | Drizzle SQLite-first schema 与迁移                                              |
+| `packages/storage`          | 🟢 可用   | better-sqlite3 连接封装、PRAGMA 初始化、domain 迁移 runner                      |
+| `packages/runtime_gateway`  | 🟢 可用   | RuntimeAdapter 契约、mock adapter、Codex CLI JSONL / process 基线               |
+| `packages/application`      | 🟢 可用   | OrchestrationRun service、repository ports、CodeContext service                 |
+| `packages/ui`               | 🟡 基线   | 共享 UI 包校验基线、tokens / primitives 导出 smoke test                         |
 
 ### Workspace Core
 
@@ -115,6 +115,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
   - metadata-only ContextPack manifest。
   - excerpt 行号范围与保守 token 估算。
 - `@cairn/ui`：共享 UI 包基线。
+- `@cairn/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 占位视图，以及只读 preload identity bridge。
 
 ---
 
@@ -122,9 +123,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 这些仍然不能假设已经存在：
 
-- `apps/desktop` Electron Desktop Shell。
+- Desktop sidecar 生命周期管理、loopback token、完整 preload / contextBridge allowlist。
 - `apps/web` React Web Shell。
-- Desktop sidecar 生命周期管理、loopback token、preload / contextBridge allowlist。
 - Artifact store 的真实文件内容写入、保留策略与导出。
 - Orchestration Planner 的真实 planning 输出与多 task DAG。
 - Goal Planner 的 action tree、preconditions、blocked reason、replan reason 持久化。
@@ -132,7 +132,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - retry / rerun / cancel 的完整 workspace-core API 与 UI。
 - TraceEvent 持久化与 replay UI。
 - 代码上下文索引的文本搜索、symbol outline、import/export dependency edge。
-- Desktop / Web 的 Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图。
+- Desktop 真实 Workspace Core 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图。
 - macOS / Windows 签名、公证、安装器、更新引导。
 - 面向用户的 install guide、troubleshooting、privacy statement 公开版完善。
 
@@ -147,14 +147,14 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 3. **Code Context R1b**：补文本搜索、TS/JS symbol outline、import/export edges，并让 Planner 能消费 ContextPack。
 4. **Runtime Gateway 真实闭环**：将 Codex CLI adapter 接进 workspace-core 的实际执行路径，形成可观测的 AgentRun 流。
 5. **Artifact / Trace 基线**：把 input/output/planner/context/trace 的 artifact 元数据与文件存储边界打通。
-6. **Desktop Shell 启动 slice**：在 Workspace Core 与 Codex adapter 闭环稳定后，再启动 Electron shell、sidecar 管理与 UI 接入。
+6. **Desktop Shell 接入 slice**：在当前 Electron 最小骨架上继续补 sidecar 管理、preload allowlist 与 Workspace Core UI 接入。
 
 ---
 
 ## 7. 协作提醒
 
 - 开始任何任务前先读 `AGENTS.md`、产品边界、术语表、主设计文档和任务相关文档。
-- 不要引用不存在的 `apps/desktop/src` 或 `apps/web/src`。
+- 不要引用尚未创建的 `apps/web/src`；`apps/desktop/src` 当前仅有静态 shell 骨架，不能假设已接入 Workspace Core 或 sidecar。
 - UI 主线可能有其他 agent 并行开发，改 UI 文档或 `packages/ui` 前先看 `git status` 与相关 diff。
 - 重大更新、接口、状态机、安全边界、数据模型、迁移策略必须同步相关 docs 与 `CHANGELOG.md`。
 - 外部项目只作为参考雷达，详见 [`reference/external-project-radar.md`](reference/external-project-radar.md)。
@@ -165,4 +165,5 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 | 日期       | 变更                                                         |
 | ---------- | ------------------------------------------------------------ |
+| 2026-05-17 | 新增 `apps/desktop` Electron 最小 shell 骨架状态说明         |
 | 2026-05-15 | 初版：记录当前能力、测试基线、R1 完成 / 未完成能力与近期主线 |
