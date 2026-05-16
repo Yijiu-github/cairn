@@ -17,8 +17,6 @@ import type {
 
 export interface HomeInboxViewModel {
   workspace: {
-    name: string;
-    summary: string;
     stats: readonly PreviewMetric[];
   };
   runs: readonly PreviewRunSummary[];
@@ -26,12 +24,11 @@ export interface HomeInboxViewModel {
   agents: readonly PreviewAgent[];
   runtime: PreviewRuntimeSummary;
   filters: readonly string[];
+  boundaryNote: string;
 }
 
 export const homeInboxViewModel: HomeInboxViewModel = {
   workspace: {
-    name: 'local_demo_workspace',
-    summary: '今日 3 个运行，2 个需要接管，1 个 runtime 降级提示。',
     stats: homeSummaryItems,
   },
   runs: homeActiveRuns,
@@ -44,4 +41,6 @@ export const homeInboxViewModel: HomeInboxViewModel = {
     metrics: homeRuntimeMetrics,
   },
   filters: homeFilterLabels,
+  boundaryNote:
+    'Home / Inbox 只承接 operator 当前要处理的接管、运行和审阅；工作区身份、全局导航和 runtime 总览归 Desktop Shell。',
 };
