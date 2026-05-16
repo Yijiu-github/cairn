@@ -294,6 +294,113 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
       second.close();
     }
   });
+
+  it('clears PlanningOutput reasons across repository instances', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+    const planningOutputId = '01J000000000000000000000P2' as PlanningOutputId;
+    let createdRunId: OrchestrationRunId;
+
+    const first = openRepository(databasePath);
+
+    try {
+      const created = await first.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Plan persistence',
+          brief: 'Verify planning output reason clearing.',
+        },
+      });
+
+      createdRunId = created.run.orchestrationRunId;
+
+      await first.container.repository.createPlanningOutput({
+        planningOutputId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        status: 'blocked',
+        actionTree: [],
+        preconditions: [],
+        contextPackRefs: [],
+        blockedReason: {
+          scope: 'run',
+          code: 'needs_review',
+          message: 'Initial block reason.',
+        },
+        createdAt: '2026-05-17T00:00:00.000Z',
+        updatedAt: '2026-05-17T00:00:00.000Z',
+      });
+    } finally {
+      first.close();
+    }
+
+    const second = openRepository(databasePath);
+
+    try {
+      await expect(
+        second.container.repository.getPlanningOutput(planningOutputId),
+      ).resolves.toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        blockedReason: {
+          code: 'needs_review',
+        },
+      });
+      await expect(
+        second.container.repository.getPlanningOutputByRun(createdRunId),
+      ).resolves.toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        blockedReason: {
+          message: 'Initial block reason.',
+        },
+      });
+
+      await second.container.repository.updatePlanningOutput({
+        planningOutputId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+        actionTree: [],
+        preconditions: [],
+        contextPackRefs: [],
+        blockedReason: undefined,
+        replanReason: undefined,
+        createdAt: '2026-05-17T00:00:00.000Z',
+        updatedAt: '2026-05-17T01:00:00.000Z',
+      });
+    } finally {
+      second.close();
+    }
+
+    const third = openRepository(databasePath);
+
+    try {
+      const updatedOutput = await third.container.repository.getPlanningOutput(planningOutputId);
+      const updatedOutputByRun =
+        await third.container.repository.getPlanningOutputByRun(createdRunId);
+
+      expect(updatedOutput).toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+      });
+      expect(updatedOutputByRun).toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+      });
+      expect(updatedOutput?.blockedReason).toBeUndefined();
+      expect(updatedOutput?.replanReason).toBeUndefined();
+      expect(updatedOutputByRun?.blockedReason).toBeUndefined();
+      expect(updatedOutputByRun?.replanReason).toBeUndefined();
+    } finally {
+      third.close();
+    }
+  });
 });
 
 function openRepository(databasePath: string): {

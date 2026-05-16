@@ -34,6 +34,7 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
   private readonly codeIndexSnapshots = new Map<CodeIndexSnapshotId, CodeIndexSnapshot>();
   private readonly contextPacks = new Map<ContextPackId, ContextPackManifest>();
   private readonly planningOutputs = new Map<PlanningOutputId, PlanningOutput>();
+  private readonly planningOutputsByRun = new Map<OrchestrationRunId, PlanningOutputId>();
   private readonly runs = new Map<OrchestrationRunId, OrchestrationRun>();
   private readonly sourceRoots = new Map<SourceRootId, SourceRoot>();
   private readonly tasks = new Map<TaskId, Task>();
@@ -77,7 +78,12 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
   }
 
   createPlanningOutput(output: PlanningOutput): Promise<void> {
+    const previousPlanningOutputId = this.planningOutputsByRun.get(output.orchestrationRunId);
+    if (previousPlanningOutputId !== undefined) {
+      this.planningOutputs.delete(previousPlanningOutputId);
+    }
     this.planningOutputs.set(output.planningOutputId, output);
+    this.planningOutputsByRun.set(output.orchestrationRunId, output.planningOutputId);
     return Promise.resolve();
   }
 
@@ -111,7 +117,15 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
   }
 
   updatePlanningOutput(output: PlanningOutput): Promise<void> {
+    const previousPlanningOutputId = this.planningOutputsByRun.get(output.orchestrationRunId);
+    if (
+      previousPlanningOutputId !== undefined &&
+      previousPlanningOutputId !== output.planningOutputId
+    ) {
+      this.planningOutputs.delete(previousPlanningOutputId);
+    }
     this.planningOutputs.set(output.planningOutputId, output);
+    this.planningOutputsByRun.set(output.orchestrationRunId, output.planningOutputId);
     return Promise.resolve();
   }
 

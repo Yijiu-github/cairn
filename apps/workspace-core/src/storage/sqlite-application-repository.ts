@@ -229,7 +229,7 @@ export class SqliteApplicationRepository implements ApplicationRepository {
   updatePlanningOutput(output: PlanningOutput): Promise<void> {
     this.db
       .update(planningOutputs)
-      .set(toPlanningOutputRow(output))
+      .set(toPlanningOutputUpdateRow(output))
       .where(eq(planningOutputs.planningOutputId, output.planningOutputId))
       .run();
     return Promise.resolve();
@@ -505,6 +505,24 @@ const toPlanningOutputRow = (output: PlanningOutput): typeof planningOutputs.$in
   ...(output.replanReason === undefined
     ? {}
     : { replanReason: toPlanningReplanReasonRow(output.replanReason) }),
+});
+
+const toPlanningOutputUpdateRow = (
+  output: PlanningOutput,
+): typeof planningOutputs.$inferInsert => ({
+  planningOutputId: output.planningOutputId,
+  workspaceId: output.workspaceId,
+  orchestrationRunId: output.orchestrationRunId,
+  status: output.status,
+  actionTree: output.actionTree.map(toPlanningActionNodeRow),
+  preconditions: output.preconditions.map(toPlanningPreconditionRow),
+  contextPackRefs: output.contextPackRefs,
+  createdAt: output.createdAt,
+  updatedAt: output.updatedAt,
+  blockedReason:
+    output.blockedReason === undefined ? null : toPlanningBlockedReasonRow(output.blockedReason),
+  replanReason:
+    output.replanReason === undefined ? null : toPlanningReplanReasonRow(output.replanReason),
 });
 
 const fromPlanningOutputRow = (row: typeof planningOutputs.$inferSelect): PlanningOutput =>
