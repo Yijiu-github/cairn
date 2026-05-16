@@ -57,7 +57,9 @@ const isApplicationError = (error: unknown): error is ApplicationError =>
   (error as { name?: unknown }).name === 'ApplicationError';
 
 const toApplicationHttpStatus = (error: ApplicationError): 404 | 409 | 500 => {
-  switch (error.code) {
+  const code = error.code as string;
+
+  switch (code) {
     case 'MISSING_AGENT_RUN':
     case 'MISSING_ORCHESTRATION_RUN':
     case 'MISSING_TASK':
