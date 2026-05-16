@@ -158,14 +158,30 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 ## 6. 近期主线
 
-建议近期按以下顺序推进：
+### Week of 2026-05-18
 
-1. **Application / Workspace Core orchestration API**：补齐 run lifecycle、operator action、retry/rerun/cancel 的 shared contracts、application ports 与 workspace-core routes。
-2. **Code Context R1b**：补文本搜索、TS/JS symbol outline、import/export edges，并让 Planner 能消费 ContextPack。
-3. **Runtime Gateway 真实闭环**：将 Codex CLI adapter 接进 workspace-core 的实际执行路径，形成可观测的 AgentRun 流。
-4. **Planning Output API slice**：在真实 Planner 前补 Workspace Core HTTP 读取面，让 UI 能查看 PlanningOutput。
-5. **Artifact / Trace 基线**：把 input/output/context/trace 的 artifact 元数据与文件存储边界打通。
-6. **Desktop Shell 启动 slice**：在 Workspace Core 与 Codex adapter 闭环稳定后，再启动 Electron shell、sidecar 管理与 UI 接入。
+目标：完成战略定位刷新，并补齐 PlanningOutput 的读取面，让 UI preview 和后续 Desktop Shell 可以消费规划结果。
+
+1. **战略文档刷新**：更新 README、positioning、roadmap，并新增 competitive positioning 文档。
+2. **Planning Output API slice**：为 Workspace Core 增加 PlanningOutput 读取接口，只读返回现有 application/storage 数据，不实现真实 Planner。
+3. **UI preview 对齐**：在 Run Detail preview 中展示 planning summary / blocked reason / action tree 的静态或 mock 数据形态。
+4. **验证门禁**：保持 `pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build` 通过。
+
+### Week of 2026-05-25
+
+目标：推进 R1 控制台护城河，优先把 Codex runtime 真实闭环和 Artifact / Trace 基线接近可演示状态。
+
+1. **Runtime Gateway 真实闭环**：将 Codex CLI adapter 接入 workspace-core 的实际执行路径，形成可观测 AgentRun 流。
+2. **Artifact / Trace 基线**：明确 artifact store 的文件边界、payload 引用、TraceEvent replay 输入格式。
+3. **Operator control polish**：补齐取消、runtime kill、失败映射与重试路径的最小真实行为。
+4. **Desktop Shell 启动准备**：在 Workspace Core、Codex adapter、Artifact / Trace 基线稳定后，再启动 Electron shell slice。
+
+### 暂不插队
+
+- 不启动企业级团队权限。
+- 不做 marketplace。
+- 不做 workflow builder。
+- 不创建 `apps/web` 或 `apps/desktop`，除非 Workspace Core + Runtime Gateway 闭环已满足启动条件。
 
 ---
 
