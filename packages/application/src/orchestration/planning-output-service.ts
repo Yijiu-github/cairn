@@ -84,7 +84,7 @@ export class PlanningOutputService {
     this.assertRunCanStartPlanning(run);
 
     const existingOutput = await this.repository.getPlanningOutputByRun(input.runId);
-    if (run.plannerOutputRef !== undefined || existingOutput !== undefined) {
+    if (run.plannerOutputRef !== undefined) {
       throw new ApplicationError(
         'PLANNING_OUTPUT_ALREADY_EXISTS',
         `Planning output already exists for run: ${input.runId}`,
@@ -92,20 +92,24 @@ export class PlanningOutputService {
     }
 
     const now = toIso(this.clock.now());
-    const planningOutput: PlanningOutput = {
-      planningOutputId: this.ids.planningOutputId(),
-      workspaceId: run.workspaceId,
-      orchestrationRunId: run.orchestrationRunId,
-      status: 'pending',
-      actionTree: [],
-      preconditions: [],
-      contextPackRefs: input.contextPackRefs ?? [],
-      createdAt: now,
-      updatedAt: now,
-      ...(input.replanReason === undefined ? {} : { replanReason: input.replanReason }),
-    };
+    const planningOutput =
+      existingOutput ??
+      ({
+        planningOutputId: this.ids.planningOutputId(),
+        workspaceId: run.workspaceId,
+        orchestrationRunId: run.orchestrationRunId,
+        status: 'pending',
+        actionTree: [],
+        preconditions: [],
+        contextPackRefs: input.contextPackRefs ?? [],
+        createdAt: now,
+        updatedAt: now,
+        ...(input.replanReason === undefined ? {} : { replanReason: input.replanReason }),
+      } satisfies PlanningOutput);
 
-    await this.repository.createPlanningOutput(planningOutput);
+    if (existingOutput === undefined) {
+      await this.repository.createPlanningOutput(planningOutput);
+    }
     const planningRun: OrchestrationRun = {
       ...run,
       status: 'planning',
@@ -239,7 +243,12 @@ export class PlanningOutputService {
   }
 
   private assertRunCanStartPlanning(run: OrchestrationRun): void {
-    this.assertRunNotTerminal(run);
+    if (run.status !== 'queued' && run.status !== 'planning') {
+      throw new ApplicationError(
+        'INVALID_RUN_STATE',
+        `Run must be queued or planning to start planning: ${run.orchestrationRunId}`,
+      );
+    }
   }
 
   private assertRunNotTerminal(run: OrchestrationRun): void {
@@ -285,6 +294,13 @@ export class PlanningOutputService {
         );
       }
 
+      if (action.parentActionId === action.actionId) {
+        throw new ApplicationError(
+          'INVALID_PLANNING_OUTPUT',
+          `Action cannot be its own parent: ${action.actionId}`,
+        );
+      }
+
       for (const dependencyId of action.dependsOnActionIds) {
         if (dependencyId === action.actionId) {
           throw new ApplicationError(
@@ -303,6 +319,7 @@ export class PlanningOutputService {
     }
 
     this.assertAcyclicDependencies(actionTree);
+    this.assertAcyclicParents(actionTree);
   }
 
   private assertAcyclicDependencies(actionTree: PlanningActionNode[]): void {
@@ -331,6 +348,40 @@ export class PlanningOutputService {
       for (const dependencyId of action.dependsOnActionIds) {
         visit(dependencyId);
       }
+      visiting.delete(actionId);
+      visited.add(actionId);
+    };
+
+    for (const action of actionTree) {
+      visit(action.actionId);
+    }
+  }
+
+  private assertAcyclicParents(actionTree: PlanningActionNode[]): void {
+    const actionsById = new Map(actionTree.map((action) => [action.actionId, action]));
+    const visiting = new Set<string>();
+    const visited = new Set<string>();
+
+    const visit = (actionId: string): void => {
+      if (visited.has(actionId)) {
+        return;
+      }
+
+      if (visiting.has(actionId)) {
+        throw new ApplicationError(
+          'INVALID_PLANNING_OUTPUT',
+          `Action parent cycle detected at action: ${actionId}`,
+        );
+      }
+
+      const action = actionsById.get(actionId);
+      if (action?.parentActionId === undefined) {
+        visited.add(actionId);
+        return;
+      }
+
+      visiting.add(actionId);
+      visit(action.parentActionId);
       visiting.delete(actionId);
       visited.add(actionId);
     };

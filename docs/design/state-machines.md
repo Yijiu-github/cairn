@@ -57,7 +57,7 @@ cancelled   failed     paused◄──►running  failed
 
 - 进入 planning 时写 `run.planning_started` TraceEvent。
 - 生成 Goal Planner 输出后写 `run.planning_completed` TraceEvent，并将 `PlanningOutputId` 写入 `OrchestrationRun.planner_output_ref`。
-- 如果无法规划，写 `run.planning_blocked` 或 `run.planning_failed` TraceEvent，并在 PlanningOutput 中记录 `blockedReason` 或失败错误摘要。
+- 如果无法规划，写 `run.planning_blocked` 或 `run.planning_failed` TraceEvent；被阻塞时在 PlanningOutput 中记录 `blockedReason`，失败错误摘要保存在 OrchestrationRun error 与 TraceEvent 轻量 payload。
 - 因 stale context、前置条件缺失、runtime 失败或 operator 请求触发新一轮规划时，必须新建 OrchestrationRun，并在新 run 的 PlanningOutput 中记录 `replanReason`。
 - PlanningOutput 的完整结构保存在 `planning_outputs`，TraceEvent 只保存 `planningOutputId`、计数、错误码等轻量摘要。
 

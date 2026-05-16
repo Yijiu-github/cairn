@@ -53,7 +53,7 @@ const createRunFixture = (overrides: Partial<OrchestrationRun> = {}): Orchestrat
   orchestrationRunId: ids.run,
   workspaceId: ids.workspace,
   originEventId: '01HZZZZZZZZZZZZZZZZZZZZZE0' as never,
-  status: 'running',
+  status: 'queued',
   executionMode: 'single_worker',
   hasPartialFailures: false,
   resultCompleteness: 'empty',
@@ -135,6 +135,35 @@ describe('PlanningOutputService', () => {
 
     await expect(service.startPlanning({ runId: ids.run })).rejects.toMatchObject({
       code: 'PLANNING_OUTPUT_ALREADY_EXISTS',
+    });
+  });
+
+  it('recovers an orphan pending planning output by linking the run', async () => {
+    const { repository, service } = createService();
+    await repository.createRunGraph({
+      run: createRunFixture(),
+      tasks: [],
+    });
+    await repository.createPlanningOutput(createPlanningOutputFixture());
+
+    const output = await service.startPlanning({ runId: ids.run });
+
+    expect(output).toMatchObject({ planningOutputId: ids.planningOutput });
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({
+      status: 'planning',
+      plannerOutputRef: ids.planningOutput,
+    });
+  });
+
+  it('rejects starting planning from non-planning runtime states', async () => {
+    const { repository, service } = createService();
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'running' }),
+      tasks: [],
+    });
+
+    await expect(service.startPlanning({ runId: ids.run })).rejects.toMatchObject({
+      code: 'INVALID_RUN_STATE',
     });
   });
 
@@ -336,6 +365,17 @@ describe('PlanningOutputService', () => {
     {
       name: 'missing parentActionId',
       actionTree: [createAction({ parentActionId: 'missing-parent' })],
+    },
+    {
+      name: 'self parent',
+      actionTree: [createAction({ parentActionId: 'action-1' })],
+    },
+    {
+      name: 'parent cycle',
+      actionTree: [
+        createAction({ actionId: 'action-1', parentActionId: 'action-2' }),
+        createAction({ actionId: 'action-2', parentActionId: 'action-1' }),
+      ],
     },
   ])('rejects invalid action tree with $name', async ({ actionTree }) => {
     const { repository, service } = createService();
