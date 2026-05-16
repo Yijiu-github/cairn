@@ -119,25 +119,25 @@ Workspace
 
 **一次完整编排执行**，产品最重要的一等对象之一。
 
-| 字段                   | 类型                                                   | 必填 | 说明                                           |
-| ---------------------- | ------------------------------------------------------ | ---- | ---------------------------------------------- |
-| `orchestration_run_id` | `string`                                               | ✅   |                                                |
-| `workspace_id`         | `string`                                               | ✅   |                                                |
-| `conversation_id`      | `string`                                               | ⛔   |                                                |
-| `origin_event_id`      | `string`                                               | ✅   | 触发的 event                                   |
-| `status`               | `enum`（见下）                                         | ✅   |                                                |
-| `execution_mode`       | `enum: direct_answer \| single_worker \| multi_worker` | ✅   | 首发三种                                       |
-| `planner_output_ref`   | `string`                                               | ⛔   | Planning Artifact id，见下文 Goal Planner 输出 |
-| `synthesis_output_ref` | `string`                                               | ⛔   |                                                |
-| `final_response_ref`   | `string`                                               | ⛔   |                                                |
-| `has_partial_failures` | `bool`                                                 | ✅   |                                                |
-| `result_completeness`  | `enum: complete \| partial \| empty`                   | ✅   |                                                |
-| `completion_level`     | `enum: full \| degraded \| failed`                     | ✅   |                                                |
-| `started_at`           | `timestamp`                                            | ⛔   |                                                |
-| `finished_at`          | `timestamp`                                            | ⛔   |                                                |
-| `error_code`           | `string`                                               | ⛔   |                                                |
-| `error_message`        | `text`                                                 | ⛔   |                                                |
-| `trace_id`             | `string`                                               | ✅   | 贯穿一切的关联 id                              |
+| 字段                   | 类型                                                   | 必填 | 说明                                        |
+| ---------------------- | ------------------------------------------------------ | ---- | ------------------------------------------- |
+| `orchestration_run_id` | `string`                                               | ✅   |                                             |
+| `workspace_id`         | `string`                                               | ✅   |                                             |
+| `conversation_id`      | `string`                                               | ⛔   |                                             |
+| `origin_event_id`      | `string`                                               | ✅   | 触发的 event                                |
+| `status`               | `enum`（见下）                                         | ✅   |                                             |
+| `execution_mode`       | `enum: direct_answer \| single_worker \| multi_worker` | ✅   | 首发三种                                    |
+| `planner_output_ref`   | `string`                                               | ⛔   | PlanningOutput id，见下文 Goal Planner 输出 |
+| `synthesis_output_ref` | `string`                                               | ⛔   |                                             |
+| `final_response_ref`   | `string`                                               | ⛔   |                                             |
+| `has_partial_failures` | `bool`                                                 | ✅   |                                             |
+| `result_completeness`  | `enum: complete \| partial \| empty`                   | ✅   |                                             |
+| `completion_level`     | `enum: full \| degraded \| failed`                     | ✅   |                                             |
+| `started_at`           | `timestamp`                                            | ⛔   |                                             |
+| `finished_at`          | `timestamp`                                            | ⛔   |                                             |
+| `error_code`           | `string`                                               | ⛔   |                                             |
+| `error_message`        | `text`                                                 | ⛔   |                                             |
+| `trace_id`             | `string`                                               | ✅   | 贯穿一切的关联 id                           |
 
 **状态枚举（与 state-machines.md 同步）**：
 
@@ -147,20 +147,31 @@ Workspace
 
 ### Goal Planner 输出
 
-`planner_output_ref` 指向一次 planning artifact。它用于解释本轮 run 为什么这样拆分、哪些前置条件已满足、哪里被阻塞，以及下一轮是否需要 replan。
+`planner_output_ref` 指向独立的 `PlanningOutputId`。它用于解释本轮 run 为什么这样拆分、哪些前置条件已满足、哪里被阻塞，以及下一轮是否需要 replan。
 
 R1 只要求 planning 输出是可回放、可审计的结构化说明，不做复杂 workflow builder 或拖拽编辑器。
 
-建议最小结构：
+### PlanningOutput
+
+PlanningOutput 是 Goal Planner 的一等领域对象，不是普通 Artifact。它保存 action tree、preconditions、blocked reason、replan reason 与 ContextPack 引用，用于解释本轮 run 为什么这样规划。
+
+PlanningOutput 状态为 `pending` / `ready` / `blocked` / `failed`；`ready`、`blocked`、`failed` 为终态，终态后不可修改。PlanningOutput 不驱动 Task / AgentRun 状态推进，实际执行仍以 Task DAG 为准。
+
+最小结构：
 
 ```ts
 interface PlanningOutput {
+  planningOutputId: string;
+  workspaceId: string;
+  orchestrationRunId: string;
+  status: 'pending' | 'ready' | 'blocked' | 'failed';
   actionTree: PlanningActionNode[];
   preconditions: PlanningPrecondition[];
   blockedReason?: PlanningBlockedReason;
   replanReason?: PlanningReplanReason;
   contextPackRefs: string[];
   createdAt: string;
+  updatedAt: string;
 }
 
 interface PlanningActionNode {
@@ -202,7 +213,7 @@ interface PlanningReplanReason {
 - `preconditions` 必须能引用 evidence / ContextPack / TraceEvent / Artifact，不能只写模型猜测。
 - `blockedReason` 用于 UI 和 Operator 判断是否要补充输入、批准受保护动作或取消本轮 run。
 - `replanReason` 只描述“为什么新开一轮重新规划”，不允许在同一 OrchestrationRun 内大规模改图。
-- planning artifact 里的大内容或源码片段仍通过引用保存，不能把 ContextPack 内容直接塞进 JSON。
+- PlanningOutput 里的大内容或源码片段仍通过引用保存，不能把 ContextPack 内容直接塞进 JSON。
 
 ---
 

@@ -51,6 +51,7 @@
 - 新增 Cairn 工程体检报告，按 R1 交付链路梳理当前工程状态、风险与下一步优先级
 - 新增分支管理设计文档，明确 `main` / `develop` / agent 专项分支 / release / hotfix 的治理边界
 - Orchestration / Code Context 设计补充 Goal Planner 参考：action tree、preconditions、blocked reason 与 replan reason
+- **Planning Output Model**：新增独立 PlanningOutput schema、SQLite 持久化与 application planning lifecycle，覆盖 action tree、preconditions、blocked reason、replan reason 与 TraceEvent 镜像。
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
 
 ### Changed

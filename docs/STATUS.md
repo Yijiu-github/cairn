@@ -117,8 +117,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - 工程基线：monorepo、lint、format、typecheck、test、commit hooks。
 - 文档基线：product / design / adr / contracts / engineering / ops / legal / reference 分层。
 - ADR-0001 ~ ADR-0017 已落档。
-- `@cairn/shared-contracts`：核心领域 schema、API contract、run event schema。
-- `@cairn/domain`：核心协作对象与 code context 元数据 schema。
+- `@cairn/shared-contracts`：核心领域 schema、API contract、run event schema、PlanningOutput schema。
+- `@cairn/domain`：核心协作对象、code context 元数据与 PlanningOutput schema。
 - `@cairn/storage`：SQLite-first connection 与 migration runner。
 - `@cairn/runtime-gateway`：RuntimeAdapter 契约、mock adapter、Codex CLI adapter 基线。
 - `@cairn/application`：single-worker orchestration 与 code context service。
@@ -130,6 +130,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
   - metadata-only code search。
   - metadata-only ContextPack manifest。
   - excerpt 行号范围与保守 token 估算。
+- Planning Output Model：`planner_output_ref` 指向独立 PlanningOutput，支持 action tree、preconditions、blocked reason、replan reason 的 schema / storage / application 闭环，并保留 TraceEvent 镜像。
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
 
@@ -144,8 +145,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - UI preview 不是 Web Shell，不能假设已有远程 workspace 控制台。
 - Desktop sidecar 生命周期管理、loopback token、preload / contextBridge allowlist。
 - Artifact store 的真实文件内容写入、保留策略与导出。
-- Orchestration Planner 的真实 planning 输出与多 task DAG。
-- Goal Planner 的 action tree、preconditions、blocked reason、replan reason 持久化。
+- 真实 Goal Planner、Planner 到多 Task DAG 的生成逻辑，以及 planning output 的 Workspace Core HTTP 读取 API。
 - Runtime Gateway 接入真实 Codex CLI 任务的端到端 workspace-core 流程。
 - 真实 Runtime Gateway cancellation / kill、AgentRun retry、protected step approve/reject 与 operator control UI。
 - TraceEvent 持久化与 replay UI。
@@ -161,10 +161,10 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 建议近期按以下顺序推进：
 
 1. **Application / Workspace Core orchestration API**：补齐 run lifecycle、operator action、retry/rerun/cancel 的 shared contracts、application ports 与 workspace-core routes。
-2. **Planning 输出模型**：让 `planner_output_ref` 指向可回放的 planning artifact，包含 action tree、preconditions、blocked reason、replan reason，但不做 workflow builder。
-3. **Code Context R1b**：补文本搜索、TS/JS symbol outline、import/export edges，并让 Planner 能消费 ContextPack。
-4. **Runtime Gateway 真实闭环**：将 Codex CLI adapter 接进 workspace-core 的实际执行路径，形成可观测的 AgentRun 流。
-5. **Artifact / Trace 基线**：把 input/output/planner/context/trace 的 artifact 元数据与文件存储边界打通。
+2. **Code Context R1b**：补文本搜索、TS/JS symbol outline、import/export edges，并让 Planner 能消费 ContextPack。
+3. **Runtime Gateway 真实闭环**：将 Codex CLI adapter 接进 workspace-core 的实际执行路径，形成可观测的 AgentRun 流。
+4. **Planning Output API slice**：在真实 Planner 前补 Workspace Core HTTP 读取面，让 UI 能查看 PlanningOutput。
+5. **Artifact / Trace 基线**：把 input/output/context/trace 的 artifact 元数据与文件存储边界打通。
 6. **Desktop Shell 启动 slice**：在 Workspace Core 与 Codex adapter 闭环稳定后，再启动 Electron shell、sidecar 管理与 UI 接入。
 
 ---
