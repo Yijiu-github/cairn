@@ -18,6 +18,7 @@ import type {
   OrchestrationRun,
   OrchestrationRunId,
   MessageId,
+  PlanningOutputId,
   StructuredError,
   Task,
   TaskId,
@@ -35,6 +36,7 @@ export interface ApplicationClock {
 export interface ApplicationIdFactory {
   agentRunId(): AgentRunId;
   orchestrationRunId(): OrchestrationRunId;
+  planningOutputId(): PlanningOutputId;
   taskId(): TaskId;
   traceEventId(): TraceEventId;
   traceId(): TraceId;

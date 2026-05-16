@@ -116,6 +116,9 @@ const createHarness = (
         }
         return id;
       },
+      planningOutputId: () => {
+        throw new Error('No generated planning output id available');
+      },
       traceId: () => ids.trace,
       traceEventId: () => {
         const fixedId = traceEventIds.shift();
