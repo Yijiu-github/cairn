@@ -11,15 +11,39 @@ import { OrchestrationRunService } from './orchestration-run-service.js';
 import type { RuntimeGatewayPort } from '../ports/runtime-gateway-port.js';
 import type { AdapterSubmitAck, AdapterSubmitRequest } from '@cairn/runtime-gateway';
 import type {
+  AgentRun,
   AgentRunId,
   ArtifactId,
   EventId,
+  OrchestrationRun,
   OrchestrationRunId,
+  Task,
   TaskId,
   TraceEventId,
   TraceId,
   WorkspaceId,
 } from '@cairn/shared-contracts/schemas';
+
+type OrchestrationControlHarnessService = OrchestrationRunService & {
+  pauseRun(input: { runId: OrchestrationRunId; reason?: string }): Promise<OrchestrationRun>;
+  resumeRun(input: { runId: OrchestrationRunId }): Promise<OrchestrationRun>;
+  cancelRun(input: { runId: OrchestrationRunId; reason?: string }): Promise<OrchestrationRun>;
+  retryTask(input: { taskId: TaskId; reason?: string }): Promise<{
+    taskId: TaskId;
+    newAttempt: number;
+  }>;
+  rerun(input: {
+    runId: OrchestrationRunId;
+    originEventId?: EventId;
+    replan?: boolean;
+    operatorNote?: string;
+  }): Promise<OrchestrationRun>;
+  injectOperatorNote(input: {
+    runId: OrchestrationRunId;
+    note: string;
+    visibility: 'operator_only' | 'public';
+  }): Promise<{ messageId: string; traceEventId: TraceEventId }>;
+};
 
 const ids = {
   workspace: '01HZZZZZZZZZZZZZZZZZZZZZW0' as WorkspaceId,
@@ -29,6 +53,9 @@ const ids = {
   agentRun: '01HZZZZZZZZZZZZZZZZZZZZZA0' as AgentRunId,
   artifact: '01HZZZZZZZZZZZZZZZZZZZZZF0' as ArtifactId,
   trace: '01HZZZZZZZZZZZZZZZZZZZZZX0' as TraceId,
+  rerun: '01HZZZZZZZZZZZZZZZZZZZZRR1' as OrchestrationRunId,
+  rerunTask: '01HZZZZZZZZZZZZZZZZZZZZTT1' as TaskId,
+  noteTrace: '01HZZZZZZZZZZZZZZZZZZZZZN1' as TraceEventId,
 };
 
 class RecordingRuntimeGateway implements RuntimeGatewayPort {
@@ -44,8 +71,23 @@ class RecordingRuntimeGateway implements RuntimeGatewayPort {
   }
 }
 
-const createHarness = () => {
+const createHarness = (
+  generatedIds: Partial<{
+    runIds: OrchestrationRunId[];
+    taskIds: TaskId[];
+    agentRunIds: AgentRunId[];
+    traceEventIds: TraceEventId[];
+  }> = {},
+): {
+  repository: InMemoryApplicationRepository;
+  runtimeGateway: RecordingRuntimeGateway;
+  service: OrchestrationControlHarnessService;
+} => {
   let traceSequence = 0;
+  const runIds = [...(generatedIds.runIds ?? [ids.run])];
+  const taskIds = [...(generatedIds.taskIds ?? [ids.task])];
+  const agentRunIds = [...(generatedIds.agentRunIds ?? [ids.agentRun])];
+  const traceEventIds = [...(generatedIds.traceEventIds ?? [])];
   const repository = new InMemoryApplicationRepository();
   const runtimeGateway = new RecordingRuntimeGateway();
   const service = new OrchestrationRunService({
@@ -53,19 +95,42 @@ const createHarness = () => {
     runtimeGateway,
     clock: { now: () => new Date('2026-05-14T01:00:00.000Z') },
     ids: {
-      orchestrationRunId: () => ids.run,
-      taskId: () => ids.task,
-      agentRunId: () => ids.agentRun,
+      orchestrationRunId: () => {
+        const id = runIds.shift();
+        if (id === undefined) {
+          throw new Error('No generated run id available');
+        }
+        return id;
+      },
+      taskId: () => {
+        const id = taskIds.shift();
+        if (id === undefined) {
+          throw new Error('No generated task id available');
+        }
+        return id;
+      },
+      agentRunId: () => {
+        const id = agentRunIds.shift();
+        if (id === undefined) {
+          throw new Error('No generated agent run id available');
+        }
+        return id;
+      },
       traceId: () => ids.trace,
-      traceEventId: () =>
-        `01HZZZZZZZZZZZZZZZZZZZZZ${(traceSequence++).toString(16).toUpperCase()}` as TraceEventId,
+      traceEventId: () => {
+        const fixedId = traceEventIds.shift();
+        if (fixedId !== undefined) {
+          return fixedId;
+        }
+        return `01HZZZZZZZZZZZZZZZZZZZZZ${(traceSequence++).toString(16).toUpperCase()}` as TraceEventId;
+      },
     },
-  });
+  }) as OrchestrationControlHarnessService;
   return { repository, runtimeGateway, service };
 };
 
 const createRunAndSubmit = async () => {
-  const harness = createHarness();
+  const harness: ReturnType<typeof createHarness> = createHarness();
   const created = await harness.service.createSingleWorkerRun({
     workspaceId: ids.workspace,
     originEventId: ids.event,
@@ -83,6 +148,57 @@ const createRunAndSubmit = async () => {
   });
   return { ...harness, created, submitted };
 };
+
+const createRunFixture = (overrides: Partial<OrchestrationRun> = {}): OrchestrationRun => ({
+  orchestrationRunId: ids.run,
+  workspaceId: ids.workspace,
+  originEventId: ids.event,
+  status: 'running',
+  executionMode: 'single_worker',
+  hasPartialFailures: false,
+  resultCompleteness: 'empty',
+  completionLevel: 'full',
+  traceId: ids.trace,
+  createdAt: '2026-05-14T00:00:00.000Z',
+  updatedAt: '2026-05-14T00:00:00.000Z',
+  ...overrides,
+});
+
+const createTaskFixture = (overrides: Partial<Task> = {}): Task => ({
+  taskId: ids.task,
+  workspaceId: ids.workspace,
+  orchestrationRunId: ids.run,
+  taskKind: 'edit',
+  title: 'Apply patch',
+  brief: 'Update the target module.',
+  status: 'running',
+  priority: 50,
+  attempt: 0,
+  idempotencyKey: `${ids.task}:0`,
+  dependsOnTaskIds: [],
+  contextRefs: [],
+  artifactRefs: [],
+  createdAt: '2026-05-14T00:00:00.000Z',
+  updatedAt: '2026-05-14T00:00:00.000Z',
+  ...overrides,
+});
+
+const createAgentRunFixture = (overrides: Partial<AgentRun> = {}): AgentRun => ({
+  runId: ids.agentRun,
+  workspaceId: ids.workspace,
+  taskId: ids.task,
+  orchestrationRunId: ids.run,
+  runtimeType: 'mock',
+  status: 'running',
+  attempt: 0,
+  submittedAt: '2026-05-14T00:00:00.000Z',
+  retryable: true,
+  cancelable: true,
+  traceId: ids.trace,
+  createdAt: '2026-05-14T00:00:00.000Z',
+  updatedAt: '2026-05-14T00:00:00.000Z',
+  ...overrides,
+});
 
 describe('OrchestrationRunService', () => {
   it('creates a queued single-worker run with one ready task', async () => {
@@ -238,5 +354,210 @@ describe('OrchestrationRunService', () => {
       }),
     ).rejects.toMatchObject({ code: 'ORCHESTRATION_RUN_TERMINAL' });
     await expect(repository.getRun(ids.run)).resolves.toMatchObject({ status: 'succeeded' });
+  });
+
+  it('pauses and resumes a running orchestration run', async () => {
+    const { repository, service }: ReturnType<typeof createHarness> = createHarness();
+    await repository.createRunGraph({ run: createRunFixture(), tasks: [createTaskFixture()] });
+
+    const paused = await service.pauseRun({ runId: ids.run, reason: 'Operator is reviewing.' });
+
+    expect(paused).toMatchObject({ status: 'paused', updatedAt: '2026-05-14T01:00:00.000Z' });
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          eventType: 'run.paused',
+          level: 'info',
+          payloadInline: { reason: 'Operator is reviewing.' },
+        }),
+      ]),
+    );
+
+    const resumed = await service.resumeRun({ runId: ids.run });
+
+    expect(resumed).toMatchObject({ status: 'running', updatedAt: '2026-05-14T01:00:00.000Z' });
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ eventType: 'run.resumed', level: 'info' }),
+      ]),
+    );
+  });
+
+  it('rejects pause when the run is not running', async () => {
+    const { repository, service }: ReturnType<typeof createHarness> = createHarness();
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'queued' }),
+      tasks: [createTaskFixture({ status: 'ready' })],
+    });
+
+    await expect(service.pauseRun({ runId: ids.run })).rejects.toMatchObject({
+      code: 'INVALID_RUN_STATE',
+    });
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({ status: 'queued' });
+  });
+
+  it('cancels an active run and its non-terminal task and agent run', async () => {
+    const { repository, service }: ReturnType<typeof createHarness> = createHarness();
+    await repository.createRunGraph({ run: createRunFixture(), tasks: [createTaskFixture()] });
+    await repository.createAgentRun(createAgentRunFixture());
+
+    const cancelled = await service.cancelRun({ runId: ids.run, reason: 'Operator stopped it.' });
+
+    expect(cancelled).toMatchObject({
+      status: 'cancelled',
+      finishedAt: '2026-05-14T01:00:00.000Z',
+      completionLevel: 'failed',
+      resultCompleteness: 'empty',
+      error: {
+        layer: 'orchestration',
+        code: 'CANCELLED_BY_OPERATOR',
+        message: 'Operator stopped it.',
+        retryable: false,
+      },
+    });
+    await expect(repository.getTask(ids.task)).resolves.toMatchObject({
+      status: 'cancelled',
+      failureReason: 'Operator stopped it.',
+    });
+    await expect(repository.getAgentRun(ids.agentRun)).resolves.toMatchObject({
+      status: 'cancelled',
+      cancelable: false,
+    });
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ eventType: 'run.cancelled', level: 'warn' }),
+      ]),
+    );
+  });
+
+  it('retries a failed task in a non-terminal run', async () => {
+    const { repository, service }: ReturnType<typeof createHarness> = createHarness();
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'running' }),
+      tasks: [
+        createTaskFixture({
+          status: 'failed',
+          attempt: 1,
+          idempotencyKey: `${ids.task}:1`,
+          failureReason: 'Model failed.',
+        }),
+      ],
+    });
+
+    const result = await service.retryTask({ taskId: ids.task, reason: 'Try again.' });
+
+    expect(result).toEqual({ taskId: ids.task, newAttempt: 2 });
+    await expect(repository.getTask(ids.task)).resolves.toMatchObject({
+      status: 'ready',
+      attempt: 2,
+      idempotencyKey: `${ids.task}:2`,
+    });
+    const task = await repository.getTask(ids.task);
+    expect(task).not.toHaveProperty('failureReason');
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ eventType: 'task.retry_requested', level: 'info' }),
+      ]),
+    );
+  });
+
+  it('rejects retry task when the parent run is terminal', async () => {
+    const { repository, service }: ReturnType<typeof createHarness> = createHarness();
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'failed' }),
+      tasks: [createTaskFixture({ status: 'failed' })],
+    });
+
+    await expect(service.retryTask({ taskId: ids.task })).rejects.toMatchObject({
+      code: 'ORCHESTRATION_RUN_TERMINAL',
+    });
+  });
+
+  it('creates a queued single-worker rerun from a terminal single-task run', async () => {
+    const { repository, service }: ReturnType<typeof createHarness> = createHarness({
+      runIds: [ids.rerun],
+      taskIds: [ids.rerunTask],
+    });
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'failed', finishedAt: '2026-05-14T00:05:00.000Z' }),
+      tasks: [
+        createTaskFixture({
+          status: 'failed',
+          executionProfile: 'mock-profile',
+          contextRefs: [ids.artifact],
+          budgetHint: { maxOutputTokens: 1000 },
+        }),
+      ],
+    });
+
+    const rerun = await service.rerun({
+      runId: ids.run,
+      replan: true,
+      operatorNote: 'Please use the latest context.',
+    });
+
+    expect(rerun).toMatchObject({
+      orchestrationRunId: ids.rerun,
+      originEventId: ids.event,
+      status: 'queued',
+      executionMode: 'single_worker',
+    });
+    const tasks = await repository.listTasksByRun(ids.rerun);
+    expect(tasks).toHaveLength(1);
+    expect(tasks[0]).toMatchObject({
+      taskId: ids.rerunTask,
+      status: 'ready',
+      attempt: 0,
+      executionProfile: 'mock-profile',
+      contextRefs: [ids.artifact],
+      budgetHint: { maxOutputTokens: 1000 },
+      brief: 'Update the target module.\n\nOperator note: Please use the latest context.',
+    });
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ eventType: 'run.rerun_created', level: 'info' }),
+      ]),
+    );
+  });
+
+  it('rejects rerun for a non-terminal run', async () => {
+    const { repository, service }: ReturnType<typeof createHarness> = createHarness();
+    await repository.createRunGraph({ run: createRunFixture({ status: 'running' }), tasks: [] });
+
+    await expect(service.rerun({ runId: ids.run })).rejects.toMatchObject({
+      code: 'INVALID_RUN_STATE',
+    });
+  });
+
+  it('injects an operator note without changing terminal run state', async () => {
+    const { repository, service }: ReturnType<typeof createHarness> = createHarness({
+      traceEventIds: [ids.noteTrace],
+    });
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'succeeded', finishedAt: '2026-05-14T00:05:00.000Z' }),
+      tasks: [createTaskFixture({ status: 'succeeded' })],
+    });
+
+    const result = await service.injectOperatorNote({
+      runId: ids.run,
+      note: 'Remember to inspect the patch manually.',
+      visibility: 'operator_only',
+    });
+
+    expect(result).toEqual({ messageId: `message:${ids.noteTrace}`, traceEventId: ids.noteTrace });
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({
+      status: 'succeeded',
+      updatedAt: '2026-05-14T00:00:00.000Z',
+    });
+    expect(repository.listTraceEvents()).toEqual([
+      expect.objectContaining({
+        traceEventId: ids.noteTrace,
+        eventType: 'operator.note',
+        payloadInline: {
+          note: 'Remember to inspect the patch manually.',
+          visibility: 'operator_only',
+        },
+      }),
+    ]);
   });
 });
