@@ -50,6 +50,7 @@
 - 新增分支管理设计文档，明确 `main` / `develop` / agent 专项分支 / release / hotfix 的治理边界
 - Orchestration / Code Context 设计补充 Goal Planner 参考：action tree、preconditions、blocked reason 与 replan reason
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
+- 新增非阻塞 `pnpm run standards:check`，用于检查跨包相对导入、internal 导入、模块边界与 package exports 漂移
 
 ### Changed
 
@@ -59,6 +60,7 @@
 - `package.json` 的 `license` 字段从 `SEE LICENSE IN LICENSE` 改为 `Apache-2.0`
 - **`@cairn/storage`**：升级 `better-sqlite3` catalog 至 `^12.10.0`，本机 Node 24.14.0 下可安装 native binding 并执行 SQLite 测试
 - `coding-standards.md` 对齐当前 TypeScript、ESLint、Prettier、commitlint 与人工 review gate 状态
+- `docs/engineering/standards-automation.md` 更新 Phase 2 状态，明确 `standards:check` 暂不纳入 `pnpm run check` 或 CI
 
 ### Removed
 

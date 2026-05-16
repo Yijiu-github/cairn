@@ -40,21 +40,21 @@
 
 ## 3. Phase 2：`standards:check`
 
-目标命令：
+当前命令：
 
 ```bash
 pnpm run standards:check
 ```
 
-初期非阻塞，不纳入 `pnpm run check`。
+当前仍为非阻塞命令，不纳入 `pnpm run check`，也不接入 CI。
 
-第一批检查：
+当前检查：
 
 1. 禁止跨包相对导入 `../../packages/*`。
 2. 禁止跨包导入 `src/internal/*`。
 3. 检查 `@cairn/*` import 是否符合 `module-boundaries.md`。
-4. 检查 public API 是否从 `src/index.ts` 或 package `exports` 暴露。
-5. 检查新增文件命名是否符合 `naming-conventions.md`，并尊重例外清单。
+4. 检查 package `exports` 是否指向存在的源码入口。
+5. 检查 `@cairn/*` import 是否通过 package `exports` 暴露。
 
 候选后续检查：
 
