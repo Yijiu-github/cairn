@@ -16,7 +16,13 @@ export { workspaceContract } from './workspace.contract.js';
 export { contextContract } from './context.contract.js';
 export { runContract, StartRunBody } from './run.contract.js';
 export type { StartRunBody as StartRunBodyType } from './run.contract.js';
-export { operatorContract } from './operator.contract.js';
+export {
+  operatorContract,
+  OperatorApproveRejectBody,
+  OperatorNoteBody,
+  OperatorReasonBody,
+  OperatorRerunBody,
+} from './operator.contract.js';
 
 const c = initContract();
 

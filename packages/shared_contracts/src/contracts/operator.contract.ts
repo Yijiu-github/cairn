@@ -22,9 +22,9 @@ import { commonErrorResponses } from './_common.js';
 
 const c = initContract();
 
-const ReasonBody = z.object({ reason: z.string().max(1000).optional() });
+export const OperatorReasonBody = z.object({ reason: z.string().max(1000).optional() });
 
-const RerunBody = z.object({
+export const OperatorRerunBody = z.object({
   /** 原始 event；省略时使用当前 run 的 origin_event_id */
   originEventId: EventId.optional(),
   /** 是否强制 replan（在新 run 内重做规划） */
@@ -33,7 +33,7 @@ const RerunBody = z.object({
   operatorNote: z.string().max(4000).optional(),
 });
 
-const OperatorNoteBody = z.object({
+export const OperatorNoteBody = z.object({
   /**
    * 接管说明 / 上下文。
    * 写为 message + trace event，不改变 run 状态。
@@ -43,7 +43,7 @@ const OperatorNoteBody = z.object({
   visibility: z.enum(['public', 'operator_only']).default('operator_only'),
 });
 
-const ApproveRejectBody = z.object({
+export const OperatorApproveRejectBody = z.object({
   decision: z.enum(['approve', 'reject']),
   reason: z.string().max(1000).optional(),
 });
@@ -54,7 +54,7 @@ export const operatorContract = c.router(
       method: 'POST',
       path: '/runs/:runId/pause',
       pathParams: z.object({ runId: OrchestrationRunId }),
-      body: ReasonBody,
+      body: OperatorReasonBody,
       summary: 'Pause a running orchestration run',
       responses: { 200: OrchestrationRun, ...commonErrorResponses },
     },
@@ -72,7 +72,7 @@ export const operatorContract = c.router(
       method: 'POST',
       path: '/runs/:runId/cancel',
       pathParams: z.object({ runId: OrchestrationRunId }),
-      body: ReasonBody,
+      body: OperatorReasonBody,
       summary: 'Cancel a run (best-effort)',
       responses: { 200: OrchestrationRun, ...commonErrorResponses },
     },
@@ -81,7 +81,7 @@ export const operatorContract = c.router(
       method: 'POST',
       path: '/tasks/:taskId/retry',
       pathParams: z.object({ taskId: TaskId }),
-      body: ReasonBody,
+      body: OperatorReasonBody,
       summary: 'Retry a failed task within the same run (attempt+1)',
       responses: {
         202: z.object({ taskId: TaskId, newAttempt: z.number().int() }),
@@ -93,7 +93,7 @@ export const operatorContract = c.router(
       method: 'POST',
       path: '/agent-runs/:agentRunId/retry',
       pathParams: z.object({ agentRunId: AgentRunId }),
-      body: ReasonBody,
+      body: OperatorReasonBody,
       summary: 'Retry a failed/lost agent run (creates new AgentRun, attempt+1)',
       responses: {
         202: z.object({ taskId: TaskId, newAgentRunId: AgentRunId }),
@@ -105,7 +105,7 @@ export const operatorContract = c.router(
       method: 'POST',
       path: '/runs/:runId/rerun',
       pathParams: z.object({ runId: OrchestrationRunId }),
-      body: RerunBody,
+      body: OperatorRerunBody,
       summary: 'Start a new OrchestrationRun based on the same origin event',
       responses: { 202: OrchestrationRun, ...commonErrorResponses },
     },
@@ -126,7 +126,7 @@ export const operatorContract = c.router(
       method: 'POST',
       path: '/tasks/:taskId/approval',
       pathParams: z.object({ taskId: TaskId }),
-      body: ApproveRejectBody,
+      body: OperatorApproveRejectBody,
       summary: 'Approve or reject a task awaiting operator decision',
       responses: { 200: z.object({ taskId: TaskId, status: z.string() }), ...commonErrorResponses },
     },
