@@ -60,6 +60,9 @@ export type CodeIndexFileId = z.infer<typeof CodeIndexFileId>;
 export const ContextPackId = brandedId('ContextPackId');
 export type ContextPackId = z.infer<typeof ContextPackId>;
 
+export const PlanningOutputId = brandedId('PlanningOutputId');
+export type PlanningOutputId = z.infer<typeof PlanningOutputId>;
+
 /**
  * TraceId 与单条 TraceEventId 不同：
  * - TraceId 是贯穿一次执行的关联 id（OrchestrationRun 启动时分配）
