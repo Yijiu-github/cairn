@@ -28,7 +28,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 | --------------------------- | --------- | ------------------------------------------------------------------------------- |
 | `apps/workspace-core`       | 🟢 可用   | Fastify 最小服务，包含 `/health`、run/task/agent-run 闭环与 code context API    |
 | `apps/ui-preview`           | 🟡 基线   | 静态 UI 组件与产品视图预览应用，可 production build                             |
-| `apps/desktop`              | 🟡 骨架   | Electron Desktop Shell 静态骨架，包含 main / preload / renderer 与静态 fixtures |
+| `apps/desktop`              | 🟡 骨架   | Electron Desktop Shell 静态骨架，包含 main / preload / renderer 与静态 UI 壳视图 |
 | `apps/web`                  | ⚪ 未创建 | Web Shell 尚未启动                                                              |
 | `packages/shared_contracts` | 🟢 可用   | Zod schemas、ts-rest contracts、Run WebSocket events                            |
 | `packages/domain`           | 🟢 可用   | Drizzle SQLite-first schema 与迁移                                              |
@@ -74,8 +74,9 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 ### Desktop Shell
 
 - `apps/desktop` 已提供 Electron 最小静态 shell 骨架。
-- 当前只包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 占位视图，以及只读 preload identity bridge。
+- 当前只包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及只读 preload identity bridge。
 - 当前不启动 Workspace Core sidecar，不接真实 IPC action，不读取或写入本地文件系统，不暴露真实本地路径。
+- 当前 renderer 默认安全基线为 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`。
 
 ---
 
@@ -146,7 +147,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Artifact / Trace Read API：Workspace Core 提供 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口。
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
-- `apps/desktop`：Electron 最小静态 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 占位视图，以及只读 preload identity bridge。
+- `apps/desktop`：Electron 最小静态 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、只读 preload identity bridge，以及 preview-safe 默认隔离设置。
 
 ---
 
