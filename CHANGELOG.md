@@ -18,6 +18,7 @@
 
 ### Added
 
+- 新增战略定位刷新说明，明确 Cairn 以个人本地工作台切入，长期聚焦小团队 Agent 工程控制台，并通过 runtime-neutral control plane 接入 Codex / Claude 等官方 agent 工具。
 - 项目正式命名为 **Cairn**，仓库根目录改名为 `cairn-workspace/`
 - 设计文档 V0.1.0 落位 `docs/design/`
 - 工程文档骨架初始化（product / design / adr / contracts / engineering / ops / legal / reference）
