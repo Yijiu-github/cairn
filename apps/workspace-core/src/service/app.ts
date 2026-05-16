@@ -63,13 +63,18 @@ const toApplicationHttpStatus = (error: ApplicationError): 404 | 409 | 500 => {
     case 'MISSING_AGENT_RUN':
     case 'MISSING_ORCHESTRATION_RUN':
     case 'MISSING_TASK':
+    case 'PLANNING_OUTPUT_NOT_FOUND':
     case 'SOURCE_ROOT_NOT_FOUND': {
       return 404;
     }
     case 'AGENT_RUN_TERMINAL':
     case 'INVALID_RUN_STATE':
+    case 'INVALID_PLANNING_OUTPUT':
     case 'INVALID_TASK_STATE':
     case 'ORCHESTRATION_RUN_TERMINAL':
+    case 'PLANNING_OUTPUT_ALREADY_EXISTS':
+    case 'PLANNING_OUTPUT_RUN_MISMATCH':
+    case 'PLANNING_OUTPUT_TERMINAL':
     case 'RERUN_UNSUPPORTED_GRAPH':
     case 'TASK_NOT_READY':
     case 'TASK_TERMINAL': {

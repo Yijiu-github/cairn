@@ -55,6 +55,17 @@ const isPlanningOutputTerminal = (status: PlanningOutput['status']): boolean =>
     status as typeof PLANNING_OUTPUT_TERMINAL extends Set<infer Status> ? Status : never,
   );
 
+const ORCHESTRATION_RUN_TERMINAL = new Set([
+  'succeeded',
+  'failed',
+  'cancelled',
+  'timeout',
+] as const);
+const isOrchestrationRunTerminal = (status: OrchestrationRun['status']): boolean =>
+  ORCHESTRATION_RUN_TERMINAL.has(
+    status as typeof ORCHESTRATION_RUN_TERMINAL extends Set<infer Status> ? Status : never,
+  );
+
 const toIso = (date: Date): string => date.toISOString();
 
 export class PlanningOutputService {
@@ -95,12 +106,14 @@ export class PlanningOutputService {
     };
 
     await this.repository.createPlanningOutput(planningOutput);
-    await this.repository.updateRun({
+    const planningRun: OrchestrationRun = {
       ...run,
+      status: 'planning',
       plannerOutputRef: planningOutput.planningOutputId,
       updatedAt: now,
-    });
-    await this.appendTraceEvent(run, 'planning_output.started', 'info', {
+    };
+    await this.repository.updateRun(planningRun);
+    await this.appendTraceEvent(planningRun, 'run.planning_started', 'info', {
       planningOutputId: planningOutput.planningOutputId,
       contextPackCount: planningOutput.contextPackRefs.length,
       ...(input.replanReason === undefined ? {} : { replanReason: input.replanReason.trigger }),
@@ -123,7 +136,7 @@ export class PlanningOutputService {
       replanReason: output.replanReason,
     });
 
-    await this.appendTraceEventByOutput(updated, 'planning_output.completed', 'info', {
+    await this.appendTraceEventByOutput(updated, 'run.planning_completed', 'info', {
       planningOutputId: updated.planningOutputId,
       actionCount: updated.actionTree.length,
     });
@@ -144,7 +157,7 @@ export class PlanningOutputService {
       replanReason: output.replanReason,
     });
 
-    await this.appendTraceEventByOutput(updated, 'planning_output.blocked', 'warn', {
+    await this.appendTraceEventByOutput(updated, 'run.planning_blocked', 'warn', {
       planningOutputId: updated.planningOutputId,
       blockedCode: input.blockedReason.code,
     });
@@ -173,7 +186,7 @@ export class PlanningOutputService {
     };
 
     await this.repository.updateRun(failedRun);
-    await this.appendTraceEventByOutput(updated, 'planning_output.failed', 'error', {
+    await this.appendTraceEventByOutput(updated, 'run.planning_failed', 'error', {
       planningOutputId: updated.planningOutputId,
       errorCode: input.error.code,
       retryable: input.error.retryable,
@@ -215,7 +228,8 @@ export class PlanningOutputService {
       );
     }
     const run = await this.requireRun(output.orchestrationRunId);
-    if (run.plannerOutputRef !== undefined && run.plannerOutputRef !== planningOutputId) {
+    this.assertRunNotTerminal(run);
+    if (run.plannerOutputRef !== planningOutputId) {
       throw new ApplicationError(
         'PLANNING_OUTPUT_RUN_MISMATCH',
         `Planning output does not match run planner reference: ${planningOutputId}`,
@@ -225,12 +239,11 @@ export class PlanningOutputService {
   }
 
   private assertRunCanStartPlanning(run: OrchestrationRun): void {
-    if (
-      run.status === 'succeeded' ||
-      run.status === 'failed' ||
-      run.status === 'cancelled' ||
-      run.status === 'timeout'
-    ) {
+    this.assertRunNotTerminal(run);
+  }
+
+  private assertRunNotTerminal(run: OrchestrationRun): void {
+    if (isOrchestrationRunTerminal(run.status)) {
       throw new ApplicationError(
         'ORCHESTRATION_RUN_TERMINAL',
         `OrchestrationRun is terminal: ${run.orchestrationRunId}`,
@@ -253,9 +266,33 @@ export class PlanningOutputService {
   }
 
   private validateDependencies(actionTree: PlanningActionNode[]): void {
-    const actionIds = new Set(actionTree.map((action) => action.actionId));
+    const actionIds = new Set<string>();
     for (const action of actionTree) {
+      if (actionIds.has(action.actionId)) {
+        throw new ApplicationError(
+          'INVALID_PLANNING_OUTPUT',
+          `Action id is duplicated in action tree: ${action.actionId}`,
+        );
+      }
+      actionIds.add(action.actionId);
+    }
+
+    for (const action of actionTree) {
+      if (action.parentActionId !== undefined && !actionIds.has(action.parentActionId)) {
+        throw new ApplicationError(
+          'INVALID_PLANNING_OUTPUT',
+          `Action parent is missing from action tree: ${action.parentActionId}`,
+        );
+      }
+
       for (const dependencyId of action.dependsOnActionIds) {
+        if (dependencyId === action.actionId) {
+          throw new ApplicationError(
+            'INVALID_PLANNING_OUTPUT',
+            `Action cannot depend on itself: ${action.actionId}`,
+          );
+        }
+
         if (!actionIds.has(dependencyId)) {
           throw new ApplicationError(
             'INVALID_PLANNING_OUTPUT',
@@ -263,6 +300,43 @@ export class PlanningOutputService {
           );
         }
       }
+    }
+
+    this.assertAcyclicDependencies(actionTree);
+  }
+
+  private assertAcyclicDependencies(actionTree: PlanningActionNode[]): void {
+    const actionsById = new Map(actionTree.map((action) => [action.actionId, action]));
+    const visiting = new Set<string>();
+    const visited = new Set<string>();
+
+    const visit = (actionId: string): void => {
+      if (visited.has(actionId)) {
+        return;
+      }
+
+      if (visiting.has(actionId)) {
+        throw new ApplicationError(
+          'INVALID_PLANNING_OUTPUT',
+          `Action dependency cycle detected at action: ${actionId}`,
+        );
+      }
+
+      const action = actionsById.get(actionId);
+      if (action === undefined) {
+        return;
+      }
+
+      visiting.add(actionId);
+      for (const dependencyId of action.dependsOnActionIds) {
+        visit(dependencyId);
+      }
+      visiting.delete(actionId);
+      visited.add(actionId);
+    };
+
+    for (const action of actionTree) {
+      visit(action.actionId);
     }
   }
 

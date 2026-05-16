@@ -77,6 +77,15 @@ const createPlanningOutputFixture = (overrides: Partial<PlanningOutput> = {}): P
   ...overrides,
 });
 
+const createAction = (overrides: Partial<PlanningActionNode> = {}): PlanningActionNode => ({
+  actionId: 'action-1',
+  title: 'Inspect repository',
+  intent: 'Confirm the plan',
+  status: 'ready',
+  dependsOnActionIds: [],
+  ...overrides,
+});
+
 const createService = () => {
   const repository = new InMemoryApplicationRepository();
   const service = new PlanningOutputService({ clock, ids: createIds(), repository });
@@ -104,29 +113,48 @@ describe('PlanningOutputService', () => {
       planningOutputId: ids.planningOutput,
       orchestrationRunId: ids.run,
     });
-    expect(repository.listTraceEvents()).toHaveLength(1);
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({
+      status: 'planning',
+      plannerOutputRef: ids.planningOutput,
+      updatedAt: '2026-05-14T01:00:00.000Z',
+    });
+    expect(repository.listTraceEvents()).toMatchObject([
+      {
+        eventType: 'run.planning_started',
+      },
+    ]);
+  });
+
+  it('rejects duplicate planning starts', async () => {
+    const { repository, service } = createService();
+    await repository.createRunGraph({
+      run: createRunFixture({ plannerOutputRef: ids.planningOutput }),
+      tasks: [],
+    });
+    await repository.createPlanningOutput(createPlanningOutputFixture());
+
+    await expect(service.startPlanning({ runId: ids.run })).rejects.toMatchObject({
+      code: 'PLANNING_OUTPUT_ALREADY_EXISTS',
+    });
   });
 
   it('completes planning and validates action dependencies', async () => {
     const { repository, service } = createService();
-    await repository.createRunGraph({ run: createRunFixture(), tasks: [] });
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'planning', plannerOutputRef: ids.planningOutput }),
+      tasks: [],
+    });
     await repository.createPlanningOutput(createPlanningOutputFixture());
 
     const actionTree: PlanningActionNode[] = [
-      {
-        actionId: 'action-1',
-        title: 'Inspect repository',
-        intent: 'Confirm the plan',
-        status: 'ready',
-        dependsOnActionIds: [],
-      },
-      {
+      createAction(),
+      createAction({
         actionId: 'action-2',
         title: 'Apply patch',
         intent: 'Make changes',
         status: 'planned',
         dependsOnActionIds: ['action-1'],
-      },
+      }),
     ];
 
     const updated = await service.completePlanning({
@@ -157,11 +185,19 @@ describe('PlanningOutputService', () => {
       status: 'ready',
       actionTree,
     });
+    expect(repository.listTraceEvents()).toMatchObject([
+      {
+        eventType: 'run.planning_completed',
+      },
+    ]);
   });
 
   it('blocks planning with a blocked reason', async () => {
     const { repository, service } = createService();
-    await repository.createRunGraph({ run: createRunFixture(), tasks: [] });
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'planning', plannerOutputRef: ids.planningOutput }),
+      tasks: [],
+    });
     await repository.createPlanningOutput(createPlanningOutputFixture());
 
     const blockedReason: PlanningBlockedReason = {
@@ -179,12 +215,19 @@ describe('PlanningOutputService', () => {
       status: 'blocked',
       blockedReason,
     });
-    expect(repository.listTraceEvents()).toHaveLength(1);
+    expect(repository.listTraceEvents()).toMatchObject([
+      {
+        eventType: 'run.planning_blocked',
+      },
+    ]);
   });
 
   it('fails planning and updates the run to failed', async () => {
     const { repository, service } = createService();
-    await repository.createRunGraph({ run: createRunFixture(), tasks: [] });
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'planning', plannerOutputRef: ids.planningOutput }),
+      tasks: [],
+    });
     await repository.createPlanningOutput(createPlanningOutputFixture());
 
     const error: StructuredError = {
@@ -209,12 +252,17 @@ describe('PlanningOutputService', () => {
       completionLevel: 'failed',
       error,
     });
+    expect(repository.listTraceEvents()).toMatchObject([
+      {
+        eventType: 'run.planning_failed',
+      },
+    ]);
   });
 
   it('rejects terminal planning outputs', async () => {
     const { repository, service } = createService();
     await repository.createRunGraph({
-      run: createRunFixture(),
+      run: createRunFixture({ status: 'planning', plannerOutputRef: ids.planningOutput }),
       tasks: [],
     });
     await repository.createPlanningOutput(createPlanningOutputFixture({ status: 'ready' }));
@@ -225,6 +273,85 @@ describe('PlanningOutputService', () => {
       }),
     ).rejects.toMatchObject({
       code: 'PLANNING_OUTPUT_TERMINAL',
+    });
+  });
+
+  it('rejects orphan planning output updates', async () => {
+    const { repository, service } = createService();
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'planning' }),
+      tasks: [],
+    });
+    await repository.createPlanningOutput(createPlanningOutputFixture());
+
+    await expect(
+      service.completePlanning({
+        planningOutputId: ids.planningOutput,
+      }),
+    ).rejects.toMatchObject({
+      code: 'PLANNING_OUTPUT_RUN_MISMATCH',
+    });
+  });
+
+  it('rejects terminal run planning updates', async () => {
+    const { repository, service } = createService();
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'succeeded', plannerOutputRef: ids.planningOutput }),
+      tasks: [],
+    });
+    await repository.createPlanningOutput(createPlanningOutputFixture());
+
+    await expect(
+      service.completePlanning({
+        planningOutputId: ids.planningOutput,
+      }),
+    ).rejects.toMatchObject({
+      code: 'ORCHESTRATION_RUN_TERMINAL',
+    });
+  });
+
+  it.each([
+    {
+      name: 'missing dependency',
+      actionTree: [createAction({ dependsOnActionIds: ['missing-action'] })],
+    },
+    {
+      name: 'self dependency',
+      actionTree: [createAction({ dependsOnActionIds: ['action-1'] })],
+    },
+    {
+      name: 'dependency cycle',
+      actionTree: [
+        createAction({ actionId: 'action-1', dependsOnActionIds: ['action-2'] }),
+        createAction({ actionId: 'action-2', dependsOnActionIds: ['action-1'] }),
+      ],
+    },
+    {
+      name: 'duplicate actionId',
+      actionTree: [
+        createAction({ actionId: 'action-1' }),
+        createAction({ actionId: 'action-1', title: 'Duplicate action' }),
+      ],
+    },
+    {
+      name: 'missing parentActionId',
+      actionTree: [createAction({ parentActionId: 'missing-parent' })],
+    },
+  ])('rejects invalid action tree with $name', async ({ actionTree }) => {
+    const { repository, service } = createService();
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'planning', plannerOutputRef: ids.planningOutput }),
+      tasks: [],
+    });
+    await repository.createPlanningOutput(createPlanningOutputFixture());
+
+    await expect(
+      service.completePlanning({
+        planningOutputId: ids.planningOutput,
+        actionTree,
+      }),
+    ).rejects.toMatchObject({
+      code: 'INVALID_PLANNING_OUTPUT',
     });
   });
 });
