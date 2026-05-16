@@ -485,7 +485,7 @@ describe('OrchestrationRunService', () => {
           status: 'failed',
           executionProfile: 'mock-profile',
           contextRefs: [ids.artifact],
-          budgetHint: { maxOutputTokens: 1000 },
+          budgetHint: { maxTokens: 1000 },
         }),
       ],
     });
@@ -510,7 +510,7 @@ describe('OrchestrationRunService', () => {
       attempt: 0,
       executionProfile: 'mock-profile',
       contextRefs: [ids.artifact],
-      budgetHint: { maxOutputTokens: 1000 },
+      budgetHint: { maxTokens: 1000 },
       brief: 'Update the target module.\n\nOperator note: Please use the latest context.',
     });
     expect(repository.listTraceEvents()).toEqual(
