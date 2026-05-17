@@ -11,6 +11,7 @@ import {
   StartRunBody,
 } from '@cairn/shared-contracts/contracts';
 import {
+  ArtifactId,
   CodeSearchQuery,
   ContextPackCreate,
   ContextPackFromCodeSearchCreate,
@@ -343,6 +344,23 @@ export const createWorkspaceCoreApp = async (
     return reply.send(run);
   });
 
+  app.get('/v1/runs/:runId/artifacts', async (request, reply) => {
+    const runId = OrchestrationRunId.safeParse(
+      (request.params as Record<string, unknown>)['runId'],
+    );
+    if (!runId.success) {
+      return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
+    }
+
+    const run = await options.container.repository.getRun(runId.data);
+    if (run === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Run not found.'));
+    }
+
+    const artifacts = await options.container.repository.listArtifactsByRun(runId.data);
+    return reply.send({ items: artifacts });
+  });
+
   app.get('/v1/runs/:runId/planning-output', async (request, reply) => {
     const runId = OrchestrationRunId.safeParse(
       (request.params as Record<string, unknown>)['runId'],
@@ -362,6 +380,23 @@ export const createWorkspaceCoreApp = async (
     }
 
     return reply.send(planningOutput);
+  });
+
+  app.get('/v1/runs/:runId/trace', async (request, reply) => {
+    const runId = OrchestrationRunId.safeParse(
+      (request.params as Record<string, unknown>)['runId'],
+    );
+    if (!runId.success) {
+      return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
+    }
+
+    const run = await options.container.repository.getRun(runId.data);
+    if (run === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Run not found.'));
+    }
+
+    const traceEvents = await options.container.repository.listTraceEventsByRun(runId.data);
+    return reply.send({ items: traceEvents });
   });
 
   app.get('/v1/runs/:runId/tasks', async (request, reply) => {
@@ -386,6 +421,24 @@ export const createWorkspaceCoreApp = async (
 
     const agentRuns = await options.container.repository.listAgentRunsByTask(taskId.data);
     return reply.send({ items: agentRuns });
+  });
+
+  app.get('/v1/artifacts/:artifactId', async (request, reply) => {
+    const artifactId = ArtifactId.safeParse(
+      (request.params as Record<string, unknown>)['artifactId'],
+    );
+    if (!artifactId.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid artifact id.', artifactId.error.issues));
+    }
+
+    const artifact = await options.container.repository.getArtifact(artifactId.data);
+    if (artifact === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Artifact not found.'));
+    }
+
+    return reply.send(artifact);
   });
 
   app.post('/v1/runs/:runId/pause', async (request, reply) => {
