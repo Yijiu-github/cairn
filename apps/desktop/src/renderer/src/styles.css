@@ -161,6 +161,16 @@ h2 {
   opacity: 0.72;
 }
 
+.sidebar-footer {
+  border-top: 1px solid var(--desktop-border);
+  color: var(--desktop-muted);
+  display: grid;
+  font-size: 12px;
+  gap: 6px;
+  line-height: 1.45;
+  padding-top: 14px;
+}
+
 .desktop-main {
   background: rgb(255 255 255 / 56%);
   border-radius: 32px;
@@ -194,6 +204,13 @@ h2 {
   justify-content: flex-end;
 }
 
+.shell-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .content-grid {
   align-items: start;
   display: grid;
@@ -202,9 +219,37 @@ h2 {
 }
 
 .content-stack,
-.run-list {
+.run-list,
+.artifact-list {
   display: grid;
   gap: 14px;
+}
+
+.empty-state-panel {
+  align-items: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
+  border: 1px dashed var(--desktop-border-strong);
+  border-radius: 18px;
+  color: var(--desktop-subtle);
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  line-height: 1.6;
+  padding: 28px;
+  text-align: center;
+}
+
+.empty-state-panel span {
+  align-items: center;
+  background: white;
+  border: 1px solid var(--desktop-border);
+  border-radius: 999px;
+  color: var(--desktop-blue);
+  display: grid;
+  font-size: 26px;
+  height: 52px;
+  justify-content: center;
+  width: 52px;
 }
 
 .timeline-list {
