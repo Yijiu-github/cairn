@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   AgentStatusStrip,
@@ -26,8 +26,12 @@ import { desktopShellModel } from './desktop-model';
 import type { DesktopView } from './desktop-model';
 
 export function DesktopApp() {
-  const [activeView, setActiveView] = useState<DesktopView>('home');
+  const [activeView, setActiveView] = useState<DesktopView>(() => readStoredView());
   const bridgeLabel = useMemo(() => window.cairnDesktop?.app.name ?? 'Cairn Desktop', []);
+
+  useEffect(() => {
+    window.localStorage.setItem('cairn.desktop.activeView', activeView);
+  }, [activeView]);
 
   return (
     <main className="desktop-shell">
@@ -61,6 +65,11 @@ export function DesktopApp() {
           This desktop build uses static fixtures only. It does not start Workspace Core or expose
           local paths.
         </InlineAlert>
+
+        <div className="sidebar-footer" aria-label="Shell metadata">
+          <span>Mode: {window.cairnDesktop?.app.mode ?? 'static-preview'}</span>
+          <span>View: {viewTitle[activeView]}</span>
+        </div>
       </aside>
 
       <section className="desktop-main" aria-label="Desktop content">
@@ -71,7 +80,10 @@ export function DesktopApp() {
             <p>{desktopShellModel.workspace.summary}</p>
           </div>
           <div className="top-bar-actions">
-            <StatusBadge label="Static" tone="neutral" />
+            <div className="shell-status-row" aria-label="Shell status">
+              <StatusBadge label="Preview-safe" tone="success" metadata="static" />
+              <StatusBadge label="Workspace Core" tone="neutral" metadata="not connected" />
+            </div>
             <Button disabled variant="secondary">
               Connect Workspace Core
             </Button>
@@ -96,6 +108,25 @@ const viewTitle: Record<DesktopView, string> = {
   'settings': 'Source Roots / Settings',
 };
 
+function readStoredView(): DesktopView {
+  if (typeof window === 'undefined') {
+    return 'home';
+  }
+
+  const storedView = window.localStorage.getItem('cairn.desktop.activeView');
+
+  if (
+    storedView === 'home' ||
+    storedView === 'run-detail' ||
+    storedView === 'artifact-review' ||
+    storedView === 'settings'
+  ) {
+    return storedView;
+  }
+
+  return 'home';
+}
+
 function HomeView() {
   return (
     <div className="content-grid">
@@ -119,6 +150,7 @@ function HomeView() {
       <aside className="content-stack">
         <RuntimeHealthCard {...desktopShellModel.runtime} />
         <SafetyDefaultsCard />
+        <NextSafeStepCard />
       </aside>
     </div>
   );
@@ -212,7 +244,8 @@ function SettingsView() {
           <CardHeader>
             <CardTitle>Source roots placeholder</CardTitle>
             <CardDescription>
-              Settings are read-only copy until source-root contracts are ready.
+              Settings are read-only until source-root contracts and explicit folder approval are
+              ready.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -225,11 +258,50 @@ function SettingsView() {
             />
           </CardContent>
         </Card>
+
+        <Card variant="interactive">
+          <CardHeader>
+            <CardTitle>No source roots connected</CardTitle>
+            <CardDescription>
+              Future desktop builds should request explicit user approval before indexing any local
+              folder.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="empty-state-panel">
+              <span aria-hidden="true">⌁</span>
+              <p>Choose folder, index metadata, and reveal paths are intentionally unavailable.</p>
+            </div>
+          </CardContent>
+        </Card>
       </section>
       <aside className="content-stack">
         <RuntimeHealthCard {...desktopShellModel.runtime} />
+        <NextSafeStepCard />
       </aside>
     </div>
+  );
+}
+
+function NextSafeStepCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Next safe step</CardTitle>
+        <CardDescription>
+          UI can keep moving without waiting for Workspace Core by shaping static contracts first.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <MetadataList
+          items={[
+            { label: 'Preload allowlist', value: 'design before wiring' },
+            { label: 'Sidecar lifecycle', value: 'contract first' },
+            { label: 'Live actions', value: 'disabled until reviewed' },
+          ]}
+        />
+      </CardContent>
+    </Card>
   );
 }
 
