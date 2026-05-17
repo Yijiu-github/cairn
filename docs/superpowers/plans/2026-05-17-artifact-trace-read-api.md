@@ -54,11 +54,11 @@ Modify these files:
 - Modify: `packages/application/src/ports/run-repository.ts`
 - Modify: `packages/application/src/testing/memory-run-repository.ts`
 
-- [ ] **Step 1: Extend repository port imports**
+- [x] **Step 1: Extend repository port imports**
 
 In `packages/application/src/ports/run-repository.ts`, add `Artifact` and `ArtifactId` to imports from `@cairn/shared-contracts/schemas`.
 
-- [ ] **Step 2: Add repository methods**
+- [x] **Step 2: Add repository methods**
 
 In `ApplicationRepository`, add these methods after `listAgentRunsByTask`:
 
@@ -68,7 +68,7 @@ In `ApplicationRepository`, add these methods after `listAgentRunsByTask`:
   listTraceEventsByRun(orchestrationRunId: OrchestrationRunId): Promise<TraceEvent[]>;
 ```
 
-- [ ] **Step 3: Update memory repository storage**
+- [x] **Step 3: Update memory repository storage**
 
 In `packages/application/src/testing/memory-run-repository.ts`, import `Artifact` and `ArtifactId`.
 
@@ -115,7 +115,7 @@ Add a testing helper near `createAgentRun`:
 
 This helper is intentionally not part of `ApplicationRepository`.
 
-- [ ] **Step 4: Verify application**
+- [x] **Step 4: Verify application**
 
 Run:
 
@@ -126,7 +126,7 @@ pnpm --filter @cairn/application test
 
 Expected: both commands exit `0`.
 
-- [ ] **Step 5: Commit repository port slice**
+- [x] **Step 5: Commit repository port slice**
 
 Run:
 
@@ -144,7 +144,7 @@ Expected: commit succeeds.
 - Modify: `apps/workspace-core/src/storage/sqlite-application-repository.ts`
 - Modify: `apps/workspace-core/src/storage/sqlite-application-repository.spec.ts`
 
-- [ ] **Step 1: Add storage tests**
+- [x] **Step 1: Add storage tests**
 
 In `apps/workspace-core/src/storage/sqlite-application-repository.spec.ts`, add a test that:
 
@@ -157,7 +157,7 @@ In `apps/workspace-core/src/storage/sqlite-application-repository.spec.ts`, add 
 
 Use existing ids and fixture style from the file.
 
-- [ ] **Step 2: Run storage test and verify failure**
+- [x] **Step 2: Run storage test and verify failure**
 
 Run:
 
@@ -167,7 +167,7 @@ pnpm --filter @cairn/workspace-core test -- sqlite-application-repository.spec.t
 
 Expected: fail because SQLite methods do not exist yet.
 
-- [ ] **Step 3: Implement SQLite methods**
+- [x] **Step 3: Implement SQLite methods**
 
 In `apps/workspace-core/src/storage/sqlite-application-repository.ts`:
 
@@ -244,7 +244,7 @@ const fromTraceEventRow = (row: typeof traceEvents.$inferSelect): TraceEvent =>
   });
 ```
 
-- [ ] **Step 4: Verify storage**
+- [x] **Step 4: Verify storage**
 
 Run:
 
@@ -255,7 +255,7 @@ pnpm --filter @cairn/workspace-core typecheck
 
 Expected: both commands exit `0`.
 
-- [ ] **Step 5: Commit SQLite slice**
+- [x] **Step 5: Commit SQLite slice**
 
 Run:
 
@@ -273,7 +273,7 @@ Expected: commit succeeds.
 - Modify: `apps/workspace-core/src/service/app.ts`
 - Modify: `apps/workspace-core/src/service/app.spec.ts`
 
-- [ ] **Step 1: Add route tests**
+- [x] **Step 1: Add route tests**
 
 In `apps/workspace-core/src/service/app.spec.ts`, add tests for:
 
@@ -282,7 +282,7 @@ In `apps/workspace-core/src/service/app.spec.ts`, add tests for:
 3. `GET /v1/artifacts/:artifactId` returns 404 for a missing artifact.
 4. Invalid IDs return 400.
 
-- [ ] **Step 2: Run route tests and verify failure**
+- [x] **Step 2: Run route tests and verify failure**
 
 Run:
 
@@ -292,7 +292,7 @@ pnpm --filter @cairn/workspace-core test -- app.spec.ts
 
 Expected: fail because routes do not exist.
 
-- [ ] **Step 3: Implement routes**
+- [x] **Step 3: Implement routes**
 
 In `apps/workspace-core/src/service/app.ts`:
 
@@ -303,7 +303,7 @@ In `apps/workspace-core/src/service/app.ts`:
 
 Place these near existing run/task read routes.
 
-- [ ] **Step 4: Verify routes**
+- [x] **Step 4: Verify routes**
 
 Run:
 
@@ -314,7 +314,7 @@ pnpm --filter @cairn/workspace-core typecheck
 
 Expected: both commands exit `0`.
 
-- [ ] **Step 5: Commit route slice**
+- [x] **Step 5: Commit route slice**
 
 Run:
 
@@ -332,7 +332,7 @@ Expected: commit succeeds.
 - Modify: `CHANGELOG.md`
 - Modify: `docs/superpowers/plans/2026-05-17-artifact-trace-read-api.md`
 
-- [ ] **Step 1: Update changelog**
+- [x] **Step 1: Update changelog**
 
 Under `[Unreleased]` → `### Added`, after the Runtime Drain Slice entry, add:
 
@@ -340,7 +340,7 @@ Under `[Unreleased]` → `### Added`, after the Runtime Drain Slice entry, add:
 - **Artifact / Trace Read API**：Workspace Core 实现 Artifact metadata 与 TraceEvent replay source 只读接口，供 Run Detail / Replay UI 消费。
 ```
 
-- [ ] **Step 2: Run focused verification**
+- [x] **Step 2: Run focused verification**
 
 Run:
 
@@ -356,7 +356,7 @@ git diff --check
 
 Expected: all commands exit `0`.
 
-- [ ] **Step 3: Commit docs**
+- [x] **Step 3: Commit docs**
 
 Run:
 
