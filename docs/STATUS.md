@@ -158,7 +158,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `apps/web` React Web Shell。
 - UI preview 不是 Web Shell，不能假设已有远程 workspace 控制台。
 - Desktop sidecar 生命周期管理、loopback token、完整 preload / contextBridge allowlist。
-- Desktop 真实 Workspace Core 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图。
+- Desktop 真实 Workspace Core 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前仍保持静态 UI 壳，不接 sidecar）。
 - Artifact store 的真实文件内容写入、保留策略与导出。
 - 真实 Goal Planner 与 Planner 到多 Task DAG 的生成逻辑。
 - Runtime Gateway 接入真实 Codex CLI 任务的端到端 workspace-core 流程。
@@ -179,7 +179,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 1. **战略文档刷新**：更新 README、positioning、roadmap，并新增 competitive positioning 文档。
 2. **Planning Output API slice**：为 Workspace Core 增加 PlanningOutput 读取接口，只读返回现有 application/storage 数据，不实现真实 Planner。
 3. **R1 demo-loop 收口**：补齐 runtime submit、bounded artifact payload read、trace replay 说明与 smoke note。
-4. **UI preview 对齐**：在 Run Detail preview 中展示 planning summary / blocked reason / action tree 的静态或 mock 数据形态。
+4. **Desktop Shell 静态壳收口**：继续补视觉与信息架构收口、空状态、响应式与可访问性，不接真实 sidecar。
 5. **验证门禁**：保持 `pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build` 通过。
 
 ### Week of 2026-05-25
