@@ -4,12 +4,14 @@ import { ApplicationError } from '../errors.js';
 
 import { isAgentRunTerminal, isRunTerminal, isTaskTerminal } from './status.js';
 
+import type { ArtifactStorePort } from '../ports/artifact-store-port.js';
 import type { ApplicationRepository } from '../ports/run-repository.js';
 import type { RuntimeGatewayPort } from '../ports/runtime-gateway-port.js';
 import type { AdapterError, AdapterStreamEvent, ToolDescriptor } from '@cairn/runtime-gateway';
 import type {
   AgentRun,
   AgentRunId,
+  Artifact,
   ArtifactId,
   ArtifactRef,
   BudgetHint,
@@ -35,6 +37,7 @@ export interface ApplicationClock {
 
 export interface ApplicationIdFactory {
   agentRunId(): AgentRunId;
+  artifactId(): ArtifactId;
   orchestrationRunId(): OrchestrationRunId;
   planningOutputId(): PlanningOutputId;
   taskId(): TaskId;
@@ -44,6 +47,7 @@ export interface ApplicationIdFactory {
 
 export interface OrchestrationRunServiceDependencies {
   clock: ApplicationClock;
+  artifactStore: ArtifactStorePort;
   ids: ApplicationIdFactory;
   repository: ApplicationRepository;
   runtimeGateway: RuntimeGatewayPort;
@@ -73,6 +77,7 @@ export interface SubmitTaskToRuntimeInput {
   taskId: TaskId;
   runtimeType: string;
   model: string;
+  prompt?: string;
   inputs?: ArtifactRef[];
   tools?: ToolDescriptor[];
   timeoutMs?: number;
@@ -146,14 +151,24 @@ const toExecutionError = (error: AdapterError): StructuredError => ({
   retryable: error.retryable,
 });
 
+type RuntimeArtifactMetadata = Artifact & {
+  title: string;
+};
+
+const RUNTIME_INPUT_MAX_BYTES = 262_144;
+const RUNTIME_OUTPUT_MAX_BYTES = 262_144;
+
 export class OrchestrationRunService {
   private readonly clock: ApplicationClock;
+  private readonly artifactStore: ArtifactStorePort;
   private readonly ids: ApplicationIdFactory;
   private readonly repository: ApplicationRepository;
   private readonly runtimeGateway: RuntimeGatewayPort;
+  private readonly tokenBuffers = new Map<AgentRunId, string[]>();
 
   constructor(dependencies: OrchestrationRunServiceDependencies) {
     this.clock = dependencies.clock;
+    this.artifactStore = dependencies.artifactStore;
     this.ids = dependencies.ids;
     this.repository = dependencies.repository;
     this.runtimeGateway = dependencies.runtimeGateway;
@@ -238,10 +253,22 @@ export class OrchestrationRunService {
       status: 'dispatched',
       updatedAt: now,
     };
+    const runtimeInputs = [...(input.inputs ?? [])];
+    const agentRunId = this.ids.agentRunId();
+    if (input.prompt !== undefined) {
+      const promptArtifact = await this.createRuntimeInputArtifact(
+        runningRun,
+        dispatchedTask,
+        agentRunId,
+        input.prompt,
+        now,
+      );
+      runtimeInputs.unshift({ artifactId: promptArtifact.artifactId });
+    }
     const firstInputRef =
-      input.inputs?.[0] === undefined ? undefined : (input.inputs[0].artifactId as ArtifactId);
+      runtimeInputs[0] === undefined ? undefined : (runtimeInputs[0].artifactId as ArtifactId);
     const agentRun: AgentRun = {
-      runId: this.ids.agentRunId(),
+      runId: agentRunId,
       workspaceId: task.workspaceId,
       taskId: task.taskId,
       orchestrationRunId: task.orchestrationRunId,
@@ -265,16 +292,22 @@ export class OrchestrationRunService {
       runtimeType: input.runtimeType,
     });
 
-    const ack = await this.runtimeGateway.submit({
-      runId: agentRun.runId,
-      model: input.model,
-      inputs: input.inputs ?? [],
-      traceId: agentRun.traceId,
-      ...(input.tools === undefined ? {} : { tools: input.tools }),
-      ...(input.timeoutMs === undefined ? {} : { timeoutMs: input.timeoutMs }),
-      ...(task.budgetHint === undefined ? {} : { budget: task.budgetHint }),
-      ...(input.options === undefined ? {} : { options: input.options }),
-    });
+    let ack;
+    try {
+      ack = await this.runtimeGateway.submit({
+        runId: agentRun.runId,
+        model: input.model,
+        inputs: runtimeInputs,
+        traceId: agentRun.traceId,
+        ...(input.tools === undefined ? {} : { tools: input.tools }),
+        ...(input.timeoutMs === undefined ? {} : { timeoutMs: input.timeoutMs }),
+        ...(task.budgetHint === undefined ? {} : { budget: task.budgetHint }),
+        ...(input.options === undefined ? {} : { options: input.options }),
+      });
+    } catch {
+      await this.failUnavailableRuntimeSubmit(runningRun, dispatchedTask, agentRun, now);
+      throw new ApplicationError('RUNTIME_UNAVAILABLE', `Runtime unavailable: ${agentRun.runId}`);
+    }
 
     if (!ack.accepted) {
       await this.failRejectedRuntimeSubmit(runningRun, dispatchedTask, agentRun, now);
@@ -300,9 +333,14 @@ export class OrchestrationRunService {
     await this.requireAgentRun(input.agentRunId);
 
     let eventCount = 0;
-    for await (const event of this.runtimeGateway.stream(input.agentRunId)) {
-      await this.applyAdapterEvent(input.agentRunId, event);
-      eventCount += 1;
+    this.tokenBuffers.set(input.agentRunId, []);
+    try {
+      for await (const event of this.runtimeGateway.stream(input.agentRunId)) {
+        await this.applyAdapterEvent(input.agentRunId, event);
+        eventCount += 1;
+      }
+    } finally {
+      this.tokenBuffers.delete(input.agentRunId);
     }
 
     return { agentRunId: input.agentRunId, eventCount };
@@ -351,10 +389,16 @@ export class OrchestrationRunService {
         break;
       }
       case 'progress':
-      case 'token':
       case 'tool_call':
       case 'tool_result': {
         await this.appendTrace(run, task, agentRun, `agent_run.${event.type}`, 'debug', {
+          at: event.at,
+        });
+        break;
+      }
+      case 'token': {
+        this.recordTokenDelta(runId, event.delta);
+        await this.appendTrace(run, task, agentRun, 'agent_run.token', 'debug', {
           at: event.at,
         });
         break;
@@ -652,7 +696,7 @@ export class OrchestrationRunService {
       updatedAt: toEventIso(event.at),
     };
     await this.repository.updateTask(updatedTask);
-    await this.appendTrace(run, updatedTask, agentRun, 'artifact.recorded', 'info', {
+    await this.appendTrace(run, updatedTask, agentRun, 'artifact.created', 'info', {
       artifactId,
       kind: event.artifact.kind,
       role: event.artifact.role,
@@ -666,7 +710,15 @@ export class OrchestrationRunService {
     event: Extract<AdapterStreamEvent, { type: 'succeeded' }>,
   ): Promise<void> {
     const finishedAt = toEventIso(event.at);
-    const outputRef = event.finalArtifactRef.artifactId as ArtifactId;
+    const tokenOutput = this.consumeTokenOutput(agentRun.runId);
+    const outputArtifact =
+      tokenOutput === undefined
+        ? undefined
+        : await this.createRuntimeOutputArtifact(run, task, agentRun, tokenOutput, finishedAt);
+    const outputRef =
+      outputArtifact === undefined
+        ? (event.finalArtifactRef.artifactId as ArtifactId)
+        : outputArtifact.artifactId;
     const artifactRefs = task.artifactRefs.includes(outputRef)
       ? task.artifactRefs
       : [...task.artifactRefs, outputRef];
@@ -713,6 +765,16 @@ export class OrchestrationRunService {
         artifactId: outputRef,
       },
     );
+    await this.appendTrace(
+      succeededRun,
+      succeededTask,
+      succeededAgentRun,
+      'agent_run.succeeded',
+      'info',
+      {
+        artifactId: outputRef,
+      },
+    );
   }
 
   private async applyFailedEvent(
@@ -721,6 +783,7 @@ export class OrchestrationRunService {
     agentRun: AgentRun,
     event: Extract<AdapterStreamEvent, { type: 'failed' }>,
   ): Promise<void> {
+    this.discardTokenOutput(agentRun.runId);
     const finishedAt = toEventIso(event.at);
     const error = toExecutionError(event.error);
     const failedAgentRun: AgentRun = {
@@ -763,6 +826,7 @@ export class OrchestrationRunService {
     agentRun: AgentRun,
     event: Extract<AdapterStreamEvent, { type: 'cancelled' }>,
   ): Promise<void> {
+    this.discardTokenOutput(agentRun.runId);
     const finishedAt = toEventIso(event.at);
     const error: StructuredError = {
       layer: 'execution',
@@ -814,6 +878,7 @@ export class OrchestrationRunService {
     agentRun: AgentRun,
     at: number,
   ): Promise<void> {
+    this.discardTokenOutput(agentRun.runId);
     const finishedAt = toEventIso(at);
     const error: StructuredError = {
       layer: 'execution',
@@ -888,6 +953,170 @@ export class OrchestrationRunService {
       error,
       updatedAt: at,
     });
+  }
+
+  private async failUnavailableRuntimeSubmit(
+    run: OrchestrationRun,
+    task: Task,
+    agentRun: AgentRun,
+    at: string,
+  ): Promise<void> {
+    const error: StructuredError = {
+      layer: 'execution',
+      code: 'RUNTIME_UNAVAILABLE',
+      message: 'Runtime unavailable while submitting the agent run.',
+      retryable: true,
+    };
+    await this.repository.updateAgentRun({
+      ...agentRun,
+      status: 'failed',
+      finishedAt: at,
+      error,
+      cancelable: false,
+      updatedAt: at,
+    });
+    await this.repository.updateTask({
+      ...task,
+      status: 'failed',
+      failureReason: error.message,
+      updatedAt: at,
+    });
+    await this.repository.updateRun({
+      ...run,
+      status: 'failed',
+      hasPartialFailures: true,
+      resultCompleteness: 'empty',
+      completionLevel: 'failed',
+      finishedAt: at,
+      error,
+      updatedAt: at,
+    });
+    await this.appendTrace(run, task, agentRun, 'agent_run.failed', 'error', {
+      code: error.code,
+      retryable: error.retryable,
+    });
+  }
+
+  private async createRuntimeInputArtifact(
+    run: OrchestrationRun,
+    task: Task,
+    agentRunId: AgentRunId,
+    prompt: string,
+    now: string,
+  ): Promise<RuntimeArtifactMetadata> {
+    const artifactId = this.nextArtifactId();
+    const payload = JSON.stringify({
+      prompt,
+      taskId: task.taskId,
+      orchestrationRunId: task.orchestrationRunId,
+    });
+    const payloadResult = await this.artifactStore.writeText({
+      artifactId,
+      workspaceId: task.workspaceId,
+      orchestrationRunId: task.orchestrationRunId,
+      filename: 'runtime-input.json',
+      mediaType: 'application/json',
+      text: payload,
+      maxBytes: RUNTIME_INPUT_MAX_BYTES,
+    });
+    const artifact: RuntimeArtifactMetadata = {
+      artifactId,
+      title: 'Runtime input',
+      workspaceId: task.workspaceId,
+      orchestrationRunId: task.orchestrationRunId,
+      taskId: task.taskId,
+      runId: agentRunId,
+      artifactRole: 'input',
+      kind: 'log',
+      formatVersion: 'runtime-input.v1',
+      uriOrPath: payloadResult.payloadRef,
+      contentType: 'application/json',
+      sizeBytes: payloadResult.byteLength,
+      payloadRef: payloadResult.payloadRef,
+      sensitivity: 'none',
+      producerType: 'system',
+      visibility: 'debug',
+      createdAt: now,
+    };
+    await this.repository.createArtifact(artifact);
+    await this.appendTrace(run, task, undefined, 'artifact.created', 'info', {
+      artifactId,
+      title: artifact.title,
+      truncated: payloadResult.truncated,
+    });
+    return artifact;
+  }
+
+  private async createRuntimeOutputArtifact(
+    run: OrchestrationRun,
+    task: Task,
+    agentRun: AgentRun,
+    text: string,
+    createdAt: string,
+  ): Promise<RuntimeArtifactMetadata> {
+    const artifactId = this.nextArtifactId();
+    const payloadResult = await this.artifactStore.writeText({
+      artifactId,
+      workspaceId: run.workspaceId,
+      orchestrationRunId: run.orchestrationRunId,
+      filename: 'runtime-output.txt',
+      mediaType: 'text/plain',
+      text,
+      maxBytes: RUNTIME_OUTPUT_MAX_BYTES,
+    });
+    const artifact: RuntimeArtifactMetadata = {
+      artifactId,
+      title: 'Runtime output',
+      workspaceId: run.workspaceId,
+      orchestrationRunId: run.orchestrationRunId,
+      taskId: task.taskId,
+      runId: agentRun.runId,
+      artifactRole: 'output',
+      kind: 'log',
+      formatVersion: 'runtime-output.v1',
+      uriOrPath: payloadResult.payloadRef,
+      contentType: 'text/plain',
+      sizeBytes: payloadResult.byteLength,
+      payloadRef: payloadResult.payloadRef,
+      sensitivity: 'none',
+      producerType: 'agent',
+      producerId: agentRun.runId,
+      visibility: 'debug',
+      createdAt,
+    };
+    await this.repository.createArtifact(artifact);
+    await this.appendTrace(run, task, agentRun, 'artifact.created', 'info', {
+      artifactId,
+      title: artifact.title,
+      truncated: payloadResult.truncated,
+    });
+    return artifact;
+  }
+
+  private recordTokenDelta(runId: AgentRunId, delta: string): void {
+    const buffer = this.tokenBuffers.get(runId);
+    if (buffer === undefined) {
+      this.tokenBuffers.set(runId, [delta]);
+      return;
+    }
+    buffer.push(delta);
+  }
+
+  private consumeTokenOutput(runId: AgentRunId): string | undefined {
+    const buffer = this.tokenBuffers.get(runId);
+    if (buffer === undefined) {
+      return undefined;
+    }
+    this.tokenBuffers.delete(runId);
+    return buffer.length === 0 ? undefined : buffer.join('');
+  }
+
+  private discardTokenOutput(runId: AgentRunId): void {
+    this.tokenBuffers.delete(runId);
+  }
+
+  private nextArtifactId(): ArtifactId {
+    return this.ids.artifactId();
   }
 
   private async updateRunStatus(

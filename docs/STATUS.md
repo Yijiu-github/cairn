@@ -41,6 +41,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `GET /health` 健康检查。
 - R1 run/task/agent-run HTTP 闭环：可创建 single-worker run，并通过 mock runtime 验证状态推进。
+- R1 runtime artifact/trace demo loop：可通过 `POST /v1/tasks/:taskId/agent-runs` 提交任务，落 bounded artifact payload refs，并通过 `GET /v1/artifacts/:artifactId/payload` 读取 payload text。
 - Orchestration Control R1a API：pause / resume / cancel run、retry task、rerun、operator note 的最小 HTTP 接管面；取消仍是 application state change，尚未调用真实 runtime kill。
 - SQLite application repository：服务启动可执行 domain 迁移，并用本地 SQLite 持久化 run/task/agent-run 状态。
 - Code Context R1a/R1b-a API：
@@ -142,7 +143,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Planning Output Model：`planner_output_ref` 指向独立 PlanningOutput，支持 action tree、preconditions、blocked reason、replan reason 的 schema / storage / application 闭环，并保留 TraceEvent 镜像。
 - Planning Output read API：Workspace Core 提供 `GET /v1/runs/:runId/planning-output`。
 - Runtime Drain Slice：Workspace Core 可把 submitted AgentRun 的 AdapterStreamEvent 应用回 run/task/agent-run 状态。
-- Artifact / Trace Read API：Workspace Core 提供 Artifact metadata 与 TraceEvent replay source 只读接口。
+- Artifact / Trace Read API：Workspace Core 提供 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口。
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
 - `apps/desktop`：Electron 最小静态 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 占位视图，以及只读 preload identity bridge。
@@ -176,8 +177,9 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 1. **战略文档刷新**：更新 README、positioning、roadmap，并新增 competitive positioning 文档。
 2. **Planning Output API slice**：为 Workspace Core 增加 PlanningOutput 读取接口，只读返回现有 application/storage 数据，不实现真实 Planner。
-3. **UI preview 对齐**：在 Run Detail preview 中展示 planning summary / blocked reason / action tree 的静态或 mock 数据形态。
-4. **验证门禁**：保持 `pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build` 通过。
+3. **R1 demo-loop 收口**：补齐 runtime submit、bounded artifact payload read、trace replay 说明与 smoke note。
+4. **UI preview 对齐**：在 Run Detail preview 中展示 planning summary / blocked reason / action tree 的静态或 mock 数据形态。
+5. **验证门禁**：保持 `pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build` 通过。
 
 ### Week of 2026-05-25
 

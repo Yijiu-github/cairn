@@ -47,6 +47,7 @@ export interface SearchCodeIndexFilesInput {
 
 export interface ApplicationRepository {
   createRunGraph(input: CreateRunGraphInput): Promise<void>;
+  listRunsByWorkspace(workspaceId: WorkspaceId): Promise<OrchestrationRun[]>;
   getRun(orchestrationRunId: OrchestrationRunId): Promise<OrchestrationRun | undefined>;
   getTask(taskId: TaskId): Promise<Task | undefined>;
   getAgentRun(runId: AgentRunId): Promise<AgentRun | undefined>;
@@ -56,10 +57,12 @@ export interface ApplicationRepository {
   getArtifact(artifactId: ArtifactId): Promise<Artifact | undefined>;
   listTraceEventsByRun(orchestrationRunId: OrchestrationRunId): Promise<TraceEvent[]>;
   createAgentRun(agentRun: AgentRun): Promise<void>;
+  createArtifact(artifact: Artifact): Promise<void>;
   createPlanningOutput(output: PlanningOutput): Promise<void>;
   updateRun(run: OrchestrationRun): Promise<void>;
   updateTask(task: Task): Promise<void>;
   updateAgentRun(agentRun: AgentRun): Promise<void>;
+  updateArtifact(artifact: Artifact): Promise<void>;
   getPlanningOutput(planningOutputId: PlanningOutputId): Promise<PlanningOutput | undefined>;
   getPlanningOutputByRun(
     orchestrationRunId: OrchestrationRunId,

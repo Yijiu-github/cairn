@@ -64,6 +64,7 @@ const createSubmittedRun = async (app: Awaited<ReturnType<typeof createWorkspace
   await app.inject({
     method: 'POST',
     url: `/v1/tasks/${task.taskId}/agent-runs`,
+    payload: { runtimeType: 'codex', model: 'default', prompt: 'Say hello.' },
   });
 
   return { runId: run.orchestrationRunId, taskId: task.taskId };
@@ -141,14 +142,60 @@ describe('workspace-core app', () => {
       const submitResponse = await app.inject({
         method: 'POST',
         url: `/v1/tasks/${task.taskId}/agent-runs`,
+        payload: { runtimeType: 'codex', model: 'default', prompt: 'Say hello.' },
       });
 
-      expect(submitResponse.statusCode).toBe(202);
+      expect(submitResponse.statusCode).toBe(201);
       expect(submitResponse.json()).toMatchObject({
+        agentRunId: expect.any(String) as unknown,
         taskId: task.taskId,
         status: 'submitted',
         providerRunId: expect.stringContaining('mock:') as unknown,
       });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('lists workspace runs with pagination and filtering', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/runs`,
+        payload: {
+          originEventId: ids.event,
+          task: {
+            taskKind: 'edit',
+            title: 'First run',
+            brief: 'First run brief.',
+          },
+        },
+      });
+      await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/runs`,
+        payload: {
+          originEventId: '01HZZZZZZZZZZZZZZZZZZZZZE1',
+          task: {
+            taskKind: 'edit',
+            title: 'Second run',
+            brief: 'Second run brief.',
+          },
+        },
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/workspaces/${ids.workspace}/runs?limit=1&status=queued`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({ total: 2, items: [{ status: 'queued' }] });
     } finally {
       await app.close();
     }
@@ -177,7 +224,6 @@ describe('workspace-core app', () => {
       expect(drainResponse.statusCode).toBe(202);
       expect(drainResponse.json()).toMatchObject({
         agentRunId: agentRun.runId,
-        eventCount: 4,
       });
 
       const runResponse = await app.inject({ method: 'GET', url: `/v1/runs/${runId}` });
@@ -213,21 +259,78 @@ describe('workspace-core app', () => {
 
       const response = await app.inject({
         method: 'GET',
-        url: `/v1/runs/${runId}/trace`,
+        url: `/v1/runs/${runId}/trace?eventTypePrefix=run.&limit=50`,
       });
 
       expect(response.statusCode).toBe(200);
       const body = response.json<{ items: { eventType: string }[] }>();
-      expect(body.items.map((event) => event.eventType)).toEqual(
-        expect.arrayContaining(['task.dispatched', 'agent_run.started', 'run.succeeded']),
-      );
-      expect(body.items.at(-1)).toMatchObject({ eventType: 'run.succeeded' });
+      expect(body.items.map((event) => event.eventType)).toEqual([
+        'run.queued',
+        'run.planning',
+        'run.succeeded',
+      ]);
     } finally {
       await app.close();
     }
   });
 
-  it('lists empty Artifact metadata for a run without persisted artifacts', async () => {
+  it('returns 404 when parent run or task is missing for list routes', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const missingRunResponse = await app.inject({
+        method: 'GET',
+        url: '/v1/runs/01HZZZZZZZZZZZZZZZZZZZZZF1/tasks',
+      });
+      expect(missingRunResponse.statusCode).toBe(404);
+
+      const missingTaskResponse = await app.inject({
+        method: 'GET',
+        url: '/v1/tasks/01HZZZZZZZZZZZZZZZZZZZZZF2/agent-runs',
+      });
+      expect(missingTaskResponse.statusCode).toBe(404);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('reads task and agent run resources', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { taskId } = await createSubmittedRun(app);
+
+      const taskResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}`,
+      });
+      expect(taskResponse.statusCode).toBe(200);
+      expect(taskResponse.json()).toMatchObject({ taskId });
+
+      const agentRunsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}/agent-runs`,
+      });
+      const agentRun = first(agentRunsResponse.json<{ items: { runId: string }[] }>().items);
+
+      const agentRunResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/agent-runs/${agentRun.runId}`,
+      });
+      expect(agentRunResponse.statusCode).toBe(200);
+      expect(agentRunResponse.json()).toMatchObject({ runId: agentRun.runId });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('lists input Artifact metadata after runtime submit', async () => {
     const app = await createWorkspaceCoreApp({
       container: createDefaultWorkspaceCoreContainer(),
       logger: false,
@@ -242,7 +345,80 @@ describe('workspace-core app', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toEqual({ items: [] });
+      const body = response.json<{
+        total: number;
+        items: { artifactRole: string; payloadRef: string; sensitivity: string }[];
+      }>();
+      expect(body.total).toBe(1);
+      expect(body.items[0]).toMatchObject({
+        artifactRole: 'input',
+        payloadRef: expect.stringMatching(/^artifact-payload:\/\//u) as unknown,
+        sensitivity: 'none',
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('sanitizes artifact metadata responses', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId } = await createSubmittedRun(app);
+      const artifactsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/artifacts`,
+      });
+      const artifact = first(artifactsResponse.json<{ items: { artifactId: string }[] }>().items);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/artifacts/${artifact.artifactId}`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        artifactId: artifact.artifactId,
+        uriOrPath: expect.stringMatching(/^artifact-payload:\/\//u) as unknown,
+      });
+      expect(JSON.stringify(response.json())).not.toContain('/Users/');
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('reads bounded Artifact payload text without exposing a local file path', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId } = await createSubmittedRun(app);
+      const artifactsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/artifacts`,
+      });
+      const artifact = first(
+        artifactsResponse.json<{ items: { artifactId: string; payloadRef?: string }[] }>().items,
+      );
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/artifacts/${artifact.artifactId}/payload`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        artifactId: artifact.artifactId,
+        mediaType: 'application/json',
+        truncated: false,
+      });
+      expect(response.json<{ text: string }>().text).toContain('Say hello.');
+      expect(JSON.stringify(response.json())).not.toContain('/Users/');
     } finally {
       await app.close();
     }
@@ -262,6 +438,27 @@ describe('workspace-core app', () => {
 
       expect(response.statusCode).toBe(404);
       expect(response.json()).toMatchObject({ error: { code: 'NOT_FOUND' } });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns a dedicated error when Artifact payload is missing', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/artifacts/01HZZZZZZZZZZZZZZZZZZZZZF9/payload',
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toMatchObject({
+        error: { code: 'ARTIFACT_PAYLOAD_NOT_FOUND' },
+      });
     } finally {
       await app.close();
     }

@@ -36,6 +36,13 @@
       "when": 1778949562869,
       "tag": "0004_violet_colonel_america",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1778950800000,
+      "tag": "0005_runtime_artifact_payload",
+      "breakpoints": true
     }
   ]
 }

@@ -9,6 +9,7 @@ import {
   OperatorReasonBody,
   OperatorRerunBody,
   StartRunBody,
+  SubmitTaskToRuntimeBody,
 } from '@cairn/shared-contracts/contracts';
 import {
   ArtifactId,
@@ -25,6 +26,7 @@ import {
 
 import type { WorkspaceCoreContainer } from './container.js';
 import type { ApplicationError, CreateSingleWorkerRunInput } from '@cairn/application';
+import type { Artifact } from '@cairn/shared-contracts/schemas';
 import type { FastifyInstance } from 'fastify';
 import type { ZodError } from 'zod';
 
@@ -58,7 +60,7 @@ const isApplicationError = (error: unknown): error is ApplicationError =>
   'code' in error &&
   (error as { name?: unknown }).name === 'ApplicationError';
 
-const toApplicationHttpStatus = (error: ApplicationError): 404 | 409 | 500 => {
+const toApplicationHttpStatus = (error: ApplicationError): 404 | 409 | 500 | 503 => {
   const code = error.code as string;
 
   switch (code) {
@@ -85,16 +87,100 @@ const toApplicationHttpStatus = (error: ApplicationError): 404 | 409 | 500 => {
     case 'RUNTIME_REJECTED': {
       return 500;
     }
+    case 'RUNTIME_UNAVAILABLE': {
+      return 503;
+    }
   }
 
   return 500;
 };
 
 const ResumeRunBody = z.object({});
+const ListRunsQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  cursor: z.string().optional(),
+  status: z
+    .enum([
+      'queued',
+      'planning',
+      'running',
+      'synthesizing',
+      'paused',
+      'succeeded',
+      'failed',
+      'cancelled',
+      'timeout',
+    ])
+    .optional(),
+  executionMode: z.enum(['direct_answer', 'single_worker', 'multi_worker']).optional(),
+  conversationId: z.string().optional(),
+});
+const ListTasksQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  cursor: z.string().optional(),
+  status: z
+    .enum([
+      'pending',
+      'ready',
+      'dispatched',
+      'running',
+      'succeeded',
+      'failed',
+      'skipped',
+      'cancelled',
+    ])
+    .optional(),
+});
+const ListAgentRunsQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  cursor: z.string().optional(),
+  status: z
+    .enum(['submitted', 'queued', 'running', 'succeeded', 'failed', 'cancelled', 'timeout', 'lost'])
+    .optional(),
+});
+const ListTraceEventsQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  cursor: z.string().optional(),
+  level: z.enum(['debug', 'info', 'warn', 'error']).optional(),
+  eventTypePrefix: z.string().optional(),
+});
+
+const ListArtifactsQuery = z.object({
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  cursor: z.string().optional(),
+});
+
+const paginateItems = <T>(items: T[], limit: number) => ({
+  items: items.slice(0, limit),
+  nextCursor: items.length > limit ? String(limit) : undefined,
+  total: items.length,
+});
+
+const sanitizeArtifactForResponse = (artifact: Artifact): Artifact => ({
+  artifactId: artifact.artifactId,
+  workspaceId: artifact.workspaceId,
+  ...(artifact.orchestrationRunId === undefined
+    ? {}
+    : { orchestrationRunId: artifact.orchestrationRunId }),
+  ...(artifact.taskId === undefined ? {} : { taskId: artifact.taskId }),
+  ...(artifact.runId === undefined ? {} : { runId: artifact.runId }),
+  artifactRole: artifact.artifactRole,
+  kind: artifact.kind,
+  formatVersion: artifact.formatVersion,
+  uriOrPath: artifact.payloadRef ?? 'artifact-payload://redacted',
+  ...(artifact.contentType === undefined ? {} : { contentType: artifact.contentType }),
+  ...(artifact.sizeBytes === undefined ? {} : { sizeBytes: artifact.sizeBytes }),
+  ...(artifact.payloadRef === undefined ? {} : { payloadRef: artifact.payloadRef }),
+  sensitivity: artifact.sensitivity,
+  producerType: artifact.producerType,
+  ...(artifact.producerId === undefined ? {} : { producerId: artifact.producerId }),
+  visibility: artifact.visibility,
+  createdAt: artifact.createdAt,
+});
 
 const toApplicationHttpCode = (
-  status: 404 | 409 | 500,
-): 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL_ERROR' => {
+  status: 404 | 409 | 500 | 503,
+): 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL_ERROR' | 'UNAVAILABLE' => {
   if (status === 404) {
     return 'NOT_FOUND';
   }
@@ -103,7 +189,29 @@ const toApplicationHttpCode = (
     return 'CONFLICT';
   }
 
+  if (status === 503) {
+    return 'UNAVAILABLE';
+  }
+
   return 'INTERNAL_ERROR';
+};
+
+const toArtifactPayloadHttpStatus = (error: unknown): 404 | 413 | 415 => {
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    const code = (error as { code?: unknown }).code;
+    if (code === 'ARTIFACT_PAYLOAD_STORAGE_ERROR') {
+      return 415;
+    }
+    if (code === 'ARTIFACT_PAYLOAD_TOO_LARGE') {
+      return 413;
+    }
+
+    if (code === 'ARTIFACT_PAYLOAD_UNSUPPORTED_MEDIA') {
+      return 415;
+    }
+  }
+
+  return 404;
 };
 
 export const createWorkspaceCoreApp = async (
@@ -154,6 +262,47 @@ export const createWorkspaceCoreApp = async (
     });
 
     return reply.code(202).send(created.run);
+  });
+
+  app.get('/v1/workspaces/:workspaceId/runs', async (request, reply) => {
+    const params = WorkspaceId.safeParse(
+      (request.params as Record<string, unknown>)['workspaceId'],
+    );
+    const query = ListRunsQuery.safeParse(request.query);
+
+    if (!params.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid workspace id.', params.error.issues));
+    }
+
+    if (!query.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid list runs query.', query.error.issues));
+    }
+
+    const runs = await options.container.repository.listRunsByWorkspace(params.data);
+    const filteredRuns = runs.filter((run) => {
+      if (query.data.status !== undefined && run.status !== query.data.status) {
+        return false;
+      }
+      if (
+        query.data.executionMode !== undefined &&
+        run.executionMode !== query.data.executionMode
+      ) {
+        return false;
+      }
+      if (
+        query.data.conversationId !== undefined &&
+        run.conversationId !== query.data.conversationId
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    return reply.send(paginateItems(filteredRuns, query.data.limit));
   });
 
   app.post('/v1/workspaces/:workspaceId/source-roots', async (request, reply) => {
@@ -357,8 +506,16 @@ export const createWorkspaceCoreApp = async (
       return reply.code(404).send(toApiError('NOT_FOUND', 'Run not found.'));
     }
 
+    const query = ListArtifactsQuery.safeParse(request.query);
+    if (!query.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid artifact list query.', query.error.issues));
+    }
+
     const artifacts = await options.container.repository.listArtifactsByRun(runId.data);
-    return reply.send({ items: artifacts });
+    const sanitizedArtifacts = artifacts.map((artifact) => sanitizeArtifactForResponse(artifact));
+    return reply.send(paginateItems(sanitizedArtifacts, query.data.limit));
   });
 
   app.get('/v1/runs/:runId/planning-output', async (request, reply) => {
@@ -395,8 +552,27 @@ export const createWorkspaceCoreApp = async (
       return reply.code(404).send(toApiError('NOT_FOUND', 'Run not found.'));
     }
 
+    const query = ListTraceEventsQuery.safeParse(request.query);
+    if (!query.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid trace query.', query.error.issues));
+    }
+
     const traceEvents = await options.container.repository.listTraceEventsByRun(runId.data);
-    return reply.send({ items: traceEvents });
+    const filteredTraceEvents = traceEvents.filter((event) => {
+      if (query.data.level !== undefined && event.level !== query.data.level) {
+        return false;
+      }
+      if (
+        query.data.eventTypePrefix !== undefined &&
+        !event.eventType.startsWith(query.data.eventTypePrefix)
+      ) {
+        return false;
+      }
+      return true;
+    });
+    return reply.send(paginateItems(filteredTraceEvents, query.data.limit));
   });
 
   app.get('/v1/runs/:runId/tasks', async (request, reply) => {
@@ -407,8 +583,39 @@ export const createWorkspaceCoreApp = async (
       return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
     }
 
+    const run = await options.container.repository.getRun(runId.data);
+    if (run === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Run not found.'));
+    }
+
+    const query = ListTasksQuery.safeParse(request.query);
+    if (!query.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid task list query.', query.error.issues));
+    }
+
     const tasks = await options.container.repository.listTasksByRun(runId.data);
-    return reply.send({ items: tasks });
+    const filteredTasks = tasks.filter((task) =>
+      query.data.status === undefined ? true : task.status === query.data.status,
+    );
+    return reply.send(paginateItems(filteredTasks, query.data.limit));
+  });
+
+  app.get('/v1/tasks/:taskId', async (request, reply) => {
+    const taskId = TaskId.safeParse((request.params as Record<string, unknown>)['taskId']);
+    if (!taskId.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid task id.', taskId.error.issues));
+    }
+
+    const task = await options.container.repository.getTask(taskId.data);
+    if (task === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Task not found.'));
+    }
+
+    return reply.send(task);
   });
 
   app.get('/v1/tasks/:taskId/agent-runs', async (request, reply) => {
@@ -419,8 +626,41 @@ export const createWorkspaceCoreApp = async (
         .send(toApiError('BAD_REQUEST', 'Invalid task id.', taskId.error.issues));
     }
 
+    const task = await options.container.repository.getTask(taskId.data);
+    if (task === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Task not found.'));
+    }
+
+    const query = ListAgentRunsQuery.safeParse(request.query);
+    if (!query.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid agent run list query.', query.error.issues));
+    }
+
     const agentRuns = await options.container.repository.listAgentRunsByTask(taskId.data);
-    return reply.send({ items: agentRuns });
+    const filteredAgentRuns = agentRuns.filter((agentRun) =>
+      query.data.status === undefined ? true : agentRun.status === query.data.status,
+    );
+    return reply.send(paginateItems(filteredAgentRuns, query.data.limit));
+  });
+
+  app.get('/v1/agent-runs/:agentRunId', async (request, reply) => {
+    const agentRunId = AgentRunId.safeParse(
+      (request.params as Record<string, unknown>)['agentRunId'],
+    );
+    if (!agentRunId.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid agent run id.', agentRunId.error.issues));
+    }
+
+    const agentRun = await options.container.repository.getAgentRun(agentRunId.data);
+    if (agentRun === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Agent run not found.'));
+    }
+
+    return reply.send(agentRun);
   });
 
   app.get('/v1/artifacts/:artifactId', async (request, reply) => {
@@ -438,7 +678,48 @@ export const createWorkspaceCoreApp = async (
       return reply.code(404).send(toApiError('NOT_FOUND', 'Artifact not found.'));
     }
 
-    return reply.send(artifact);
+    return reply.send(sanitizeArtifactForResponse(artifact));
+  });
+
+  app.get('/v1/artifacts/:artifactId/payload', async (request, reply) => {
+    const artifactId = ArtifactId.safeParse(
+      (request.params as Record<string, unknown>)['artifactId'],
+    );
+    if (!artifactId.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid artifact id.', artifactId.error.issues));
+    }
+
+    const artifact = await options.container.repository.getArtifact(artifactId.data);
+    if (artifact?.payloadRef === undefined) {
+      return reply
+        .code(404)
+        .send(toApiError('ARTIFACT_PAYLOAD_NOT_FOUND', 'Artifact payload not found.'));
+    }
+
+    try {
+      const payload = await options.container.artifactStore.readText(artifact.payloadRef);
+      return await reply.send({
+        artifactId: artifactId.data,
+        ...payload,
+      });
+    } catch (error) {
+      const status = toArtifactPayloadHttpStatus(error);
+      const code =
+        status === 413
+          ? 'ARTIFACT_PAYLOAD_TOO_LARGE'
+          : status === 415
+            ? 'ARTIFACT_PAYLOAD_UNSUPPORTED_MEDIA'
+            : 'ARTIFACT_PAYLOAD_NOT_FOUND';
+      const message =
+        status === 413
+          ? 'Artifact payload is too large to inline.'
+          : status === 415
+            ? 'Artifact payload media type is unsupported.'
+            : 'Artifact payload not found.';
+      return reply.code(status).send(toApiError(code, message));
+    }
   });
 
   app.post('/v1/runs/:runId/pause', async (request, reply) => {
@@ -477,7 +758,10 @@ export const createWorkspaceCoreApp = async (
     const runId = OrchestrationRunId.safeParse(
       (request.params as Record<string, unknown>)['runId'],
     );
-    const body = ResumeRunBody.safeParse(request.body);
+    const body =
+      request.body === undefined
+        ? { success: true as const, data: undefined }
+        : ResumeRunBody.safeParse(request.body);
 
     if (!runId.success) {
       return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
@@ -662,19 +946,46 @@ export const createWorkspaceCoreApp = async (
 
   app.post('/v1/tasks/:taskId/agent-runs', async (request, reply) => {
     const taskId = TaskId.safeParse((request.params as Record<string, unknown>)['taskId']);
+    const body = SubmitTaskToRuntimeBody.safeParse(request.body);
     if (!taskId.success) {
       return reply
         .code(400)
         .send(toApiError('BAD_REQUEST', 'Invalid task id.', taskId.error.issues));
     }
 
-    const submitted = await options.container.orchestrationRuns.submitTaskToRuntime({
-      taskId: taskId.data,
-      runtimeType: 'mock',
-      model: 'mock-model',
-    });
+    if (!body.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid submit runtime body.', body.error.issues));
+    }
 
-    return reply.code(202).send(submitted.agentRun);
+    try {
+      const submitted = await options.container.orchestrationRuns.submitTaskToRuntime({
+        taskId: taskId.data,
+        runtimeType: body.data.runtimeType,
+        model: body.data.model,
+        prompt: body.data.prompt,
+        ...(body.data.timeoutMs === undefined ? {} : { timeoutMs: body.data.timeoutMs }),
+        ...(body.data.options === undefined ? {} : { options: body.data.options }),
+      });
+
+      return await reply.code(201).send({
+        agentRunId: submitted.agentRun.runId,
+        taskId: submitted.agentRun.taskId,
+        orchestrationRunId: submitted.agentRun.orchestrationRunId,
+        status: submitted.agentRun.status,
+        ...(submitted.providerRunId === undefined
+          ? {}
+          : { providerRunId: submitted.providerRunId }),
+      });
+    } catch (error) {
+      if (isApplicationError(error)) {
+        const status = toApplicationHttpStatus(error);
+        return reply.code(status).send(toApiError(toApplicationHttpCode(status), error.message));
+      }
+
+      throw error;
+    }
   });
 
   return app;

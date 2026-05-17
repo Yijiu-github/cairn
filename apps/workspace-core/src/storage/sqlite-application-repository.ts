@@ -143,6 +143,18 @@ export class SqliteApplicationRepository implements ApplicationRepository {
     return Promise.resolve();
   }
 
+  listRunsByWorkspace(workspaceId: WorkspaceId): Promise<OrchestrationRun[]> {
+    const rows = this.db
+      .select()
+      .from(orchestrationRuns)
+      .where(eq(orchestrationRuns.workspaceId, workspaceId))
+      .orderBy(asc(orchestrationRuns.createdAt))
+      .all();
+    return Promise.resolve(
+      rows.map(fromRunRow).toSorted((left, right) => right.createdAt.localeCompare(left.createdAt)),
+    );
+  }
+
   getRun(orchestrationRunId: OrchestrationRunId): Promise<OrchestrationRun | undefined> {
     const row = this.db
       .select()
@@ -206,6 +218,11 @@ export class SqliteApplicationRepository implements ApplicationRepository {
     return Promise.resolve();
   }
 
+  createArtifact(artifact: Artifact): Promise<void> {
+    this.db.insert(artifacts).values(toArtifactRow(artifact)).run();
+    return Promise.resolve();
+  }
+
   createPlanningOutput(output: PlanningOutput): Promise<void> {
     this.db.insert(planningOutputs).values(toPlanningOutputRow(output)).run();
     return Promise.resolve();
@@ -230,6 +247,15 @@ export class SqliteApplicationRepository implements ApplicationRepository {
       .update(agentRuns)
       .set(toAgentRunRow(agentRun))
       .where(eq(agentRuns.runId, agentRun.runId))
+      .run();
+    return Promise.resolve();
+  }
+
+  updateArtifact(artifact: Artifact): Promise<void> {
+    this.db
+      .update(artifacts)
+      .set(toArtifactRow(artifact))
+      .where(eq(artifacts.artifactId, artifact.artifactId))
       .run();
     return Promise.resolve();
   }
@@ -718,11 +744,35 @@ const fromArtifactRow = (row: typeof artifacts.$inferSelect): Artifact =>
     uriOrPath: row.uriOrPath,
     ...(row.contentType === null ? {} : { contentType: row.contentType }),
     ...(row.sizeBytes === null ? {} : { sizeBytes: row.sizeBytes }),
+    ...(row.payloadRef === null ? {} : { payloadRef: row.payloadRef }),
+    sensitivity: row.sensitivity,
     producerType: row.producerType,
     ...(row.producerId === null ? {} : { producerId: row.producerId }),
     visibility: row.visibility,
     createdAt: row.createdAt,
   });
+
+const toArtifactRow = (artifact: Artifact): typeof artifacts.$inferInsert => ({
+  artifactId: artifact.artifactId,
+  workspaceId: artifact.workspaceId,
+  artifactRole: artifact.artifactRole,
+  kind: artifact.kind,
+  formatVersion: artifact.formatVersion,
+  uriOrPath: artifact.uriOrPath,
+  producerType: artifact.producerType,
+  visibility: artifact.visibility,
+  createdAt: artifact.createdAt,
+  sensitivity: artifact.sensitivity,
+  ...(artifact.orchestrationRunId === undefined
+    ? {}
+    : { orchestrationRunId: artifact.orchestrationRunId }),
+  ...(artifact.taskId === undefined ? {} : { taskId: artifact.taskId }),
+  ...(artifact.runId === undefined ? {} : { runId: artifact.runId }),
+  ...(artifact.contentType === undefined ? {} : { contentType: artifact.contentType }),
+  ...(artifact.sizeBytes === undefined ? {} : { sizeBytes: artifact.sizeBytes }),
+  ...(artifact.payloadRef === undefined ? {} : { payloadRef: artifact.payloadRef }),
+  ...(artifact.producerId === undefined ? {} : { producerId: artifact.producerId }),
+});
 
 const fromTraceEventRow = (row: typeof traceEvents.$inferSelect): TraceEvent =>
   TraceEvent.parse({
