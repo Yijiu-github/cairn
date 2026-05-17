@@ -112,6 +112,16 @@ describe('runContract', () => {
     expect(runContract.getArtifactPayload.method).toBe('GET');
     expect(runContract.getArtifactPayload.path).toBe('/v1/artifacts/:artifactId/payload');
   });
+
+  it('keeps common error responses on runtime and artifact payload endpoints', () => {
+    for (const status of [400, 401, 403, 404, 409, 422, 429, 500] as const) {
+      expect(runContract.submitTaskToRuntime.responses[status]).toBeDefined();
+    }
+
+    for (const status of [400, 401, 403, 404, 409, 413, 415, 422, 429, 500] as const) {
+      expect(runContract.getArtifactPayload.responses[status]).toBeDefined();
+    }
+  });
 });
 
 describe('operatorContract', () => {

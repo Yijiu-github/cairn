@@ -30,8 +30,7 @@ import { PlanningOutput } from '../schemas/planning-output.js';
 import { Task, TaskKind, TaskStatus } from '../schemas/task.js';
 import { TraceEvent } from '../schemas/trace-event.js';
 
-import { commonErrorResponses } from './_common.js';
-import { ApiError } from './_common.js';
+import { ApiError, commonErrorResponses } from './_common.js';
 
 const c = initContract();
 
@@ -198,10 +197,8 @@ export const runContract = c.router(
       summary: 'Submit a task to a runtime adapter',
       responses: {
         201: SubmitTaskToRuntimeResponse,
-        400: ApiError,
-        404: ApiError,
-        409: ApiError,
         503: ApiError,
+        ...commonErrorResponses,
       },
     },
 
@@ -236,9 +233,9 @@ export const runContract = c.router(
       summary: 'Get bounded artifact payload text',
       responses: {
         200: artifactPayloadResponseSchema,
-        404: ApiError,
         413: ApiError,
         415: ApiError,
+        ...commonErrorResponses,
       },
     },
 

@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import { VALID_ULIDS } from '../__fixtures__/valid-ulids.js';
 
-import { artifactPayloadResponseSchema, artifactSchema } from './artifact.js';
+import {
+  artifactPayloadRefSchema,
+  artifactPayloadResponseSchema,
+  artifactSchema,
+} from './artifact.js';
 
 const baseArtifact = {
   artifactId: VALID_ULIDS.artifact,
@@ -36,6 +40,21 @@ describe('artifactSchema', () => {
 
   it('defaults payload sensitivity to none', () => {
     expect(artifactSchema.parse(baseArtifact).sensitivity).toBe('none');
+  });
+});
+
+describe('artifactPayloadRefSchema', () => {
+  it('rejects absolute-path-looking payload refs', () => {
+    expect(
+      artifactPayloadRefSchema.safeParse('artifact-payload:///Users/alice/project/output.txt')
+        .success,
+    ).toBe(false);
+  });
+
+  it('rejects traversal payload refs', () => {
+    expect(
+      artifactPayloadRefSchema.safeParse('artifact-payload://workspace/../secret.txt').success,
+    ).toBe(false);
   });
 });
 

@@ -29,9 +29,23 @@ export const artifactPayloadRefSchema = z
   .string()
   .min(1)
   .startsWith('artifact-payload://')
-  .refine((value) => !value.includes('..'), {
-    message: 'Artifact payload refs must not contain parent path segments.',
-  });
+  .refine(
+    (value) => {
+      const payloadKey = value.slice('artifact-payload://'.length);
+      const segments = payloadKey.split('/');
+
+      return (
+        segments.length > 0 &&
+        segments.every(
+          (segment) => /^[A-Za-z0-9._-]+$/.test(segment) && segment !== '.' && segment !== '..',
+        )
+      );
+    },
+    {
+      message:
+        'Artifact payload refs must use non-empty safe key segments without absolute paths or traversal.',
+    },
+  );
 
 export const artifactPayloadResponseSchema = z.object({
   artifactId: ArtifactId,
