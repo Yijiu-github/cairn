@@ -36,6 +36,8 @@ export const artifacts = sqliteTable(
     uriOrPath: text('uri_or_path').notNull(),
     contentType: text('content_type'),
     sizeBytes: integer('size_bytes'),
+    payloadRef: text('payload_ref'),
+    sensitivity: text('sensitivity').default('none').notNull(),
     producerType: text('producer_type').notNull(),
     producerId: text('producer_id'),
     visibility: text('visibility').notNull(),

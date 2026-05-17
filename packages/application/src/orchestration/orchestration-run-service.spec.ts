@@ -68,6 +68,7 @@ class RecordingRuntimeGateway implements RuntimeGatewayPort {
   readonly requests: AdapterSubmitRequest[] = [];
   readonly cancelled: { runId: AgentRunId; reason?: string }[] = [];
   events: AdapterStreamEvent[];
+  submitError?: Error;
 
   constructor(
     private readonly ack?: AdapterSubmitAck,
@@ -90,6 +91,9 @@ class RecordingRuntimeGateway implements RuntimeGatewayPort {
 
   submit(request: AdapterSubmitRequest): Promise<AdapterSubmitAck> {
     this.requests.push(request);
+    if (this.submitError !== undefined) {
+      return Promise.reject(this.submitError);
+    }
     return Promise.resolve(
       this.ack ?? { runId: request.runId, accepted: true, providerRunId: 'provider:1' },
     );
@@ -196,11 +200,15 @@ class RecordingArtifactStore implements ArtifactStorePort {
     byteLength: number;
     truncated: boolean;
   }> {
-    this.writes.push(input);
+    const bytes = new TextEncoder().encode(input.text);
+    const truncated = bytes.byteLength > input.maxBytes;
+    const text = truncated ? new TextDecoder().decode(bytes.slice(0, input.maxBytes)) : input.text;
+    const stored = { ...input, text };
+    this.writes.push(stored);
     return Promise.resolve({
       payloadRef: `artifact-payload://${input.workspaceId}/${input.orchestrationRunId}/${input.artifactId}/${input.filename}`,
-      byteLength: new TextEncoder().encode(input.text).byteLength,
-      truncated: false,
+      byteLength: new TextEncoder().encode(text).byteLength,
+      truncated,
     });
   }
 
@@ -388,6 +396,38 @@ describe('OrchestrationRunService', () => {
     expect(runtimeGateway.requests[0]?.inputs).toEqual([{ artifactId: ids.artifact }]);
   });
 
+  it('marks runtime submit transport errors as failed durable state', async () => {
+    const { repository, runtimeGateway, service } = createHarness();
+    runtimeGateway.submitError = new Error('Runtime transport unavailable.');
+    const { task } = await service.createSingleWorkerRun({
+      workspaceId: ids.workspace,
+      originEventId: ids.event,
+      task: {
+        taskKind: 'edit',
+        title: 'Apply patch',
+        brief: 'Update the target module.',
+      },
+    });
+
+    await expect(
+      service.submitTaskToRuntime({
+        taskId: task.taskId,
+        runtimeType: 'mock',
+        model: 'mock-model',
+        prompt: 'Please update the target module.',
+      }),
+    ).rejects.toMatchObject({ code: 'RUNTIME_UNAVAILABLE' });
+
+    await expect(repository.getAgentRun(ids.agentRun)).resolves.toMatchObject({
+      status: 'failed',
+      error: {
+        code: 'RUNTIME_UNAVAILABLE',
+      },
+    });
+    await expect(repository.getTask(ids.task)).resolves.toMatchObject({ status: 'failed' });
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({ status: 'failed' });
+  });
+
   it('drains runtime events into application state', async () => {
     const { repository, service } = await createRunAndSubmit();
 
@@ -463,6 +503,89 @@ describe('OrchestrationRunService', () => {
     const traceEvents = await repository.listTraceEventsByRun(ids.run);
     expect(traceEvents.map((event) => event.eventType)).toEqual(
       expect.arrayContaining(['agent_run.started', 'agent_run.succeeded', 'artifact.created']),
+    );
+  });
+
+  it('keeps direct token events buffered for a later success event', async () => {
+    const { repository, service } = createHarness({
+      artifactIds: [ids.artifact, '01HZZZZZZZZZZZZZZZZZZZZOUT' as ArtifactId],
+    });
+    const { task } = await service.createSingleWorkerRun({
+      workspaceId: ids.workspace,
+      originEventId: ids.event,
+      task: {
+        taskKind: 'edit',
+        title: 'Apply patch',
+        brief: 'Update the target module.',
+      },
+    });
+    const { agentRun } = await service.submitTaskToRuntime({
+      taskId: task.taskId,
+      runtimeType: 'mock',
+      model: 'mock-model',
+      prompt: 'Please update the target module.',
+    });
+    await service.applyAdapterEvent(agentRun.runId, {
+      type: 'token',
+      at: Date.parse('2026-05-14T01:00:02.500Z'),
+      delta: 'hello',
+    });
+    await service.applyAdapterEvent(agentRun.runId, {
+      type: 'succeeded',
+      at: Date.parse('2026-05-14T01:00:03.000Z'),
+      finalArtifactRef: { artifactId: ids.artifact },
+    });
+
+    await expect(repository.listArtifactsByRun(ids.run)).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          title: 'Runtime output',
+          artifactRole: 'output',
+        }),
+      ]),
+    );
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({
+      finalResponseRef: '01HZZZZZZZZZZZZZZZZZZZZOUT',
+    });
+  });
+
+  it('keeps the adapter final artifact when no token output was buffered', async () => {
+    const { repository, service } = await createRunAndSubmit();
+
+    await service.applyAdapterEvent(ids.agentRun, {
+      type: 'succeeded',
+      at: Date.parse('2026-05-14T01:00:03.000Z'),
+      finalArtifactRef: { artifactId: ids.artifact },
+    });
+
+    await expect(repository.listArtifactsByRun(ids.run)).resolves.toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ title: 'Runtime output', artifactRole: 'output' }),
+      ]),
+    );
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({
+      finalResponseRef: ids.artifact,
+    });
+  });
+
+  it('clears token buffers after failed terminal events', async () => {
+    const { repository, service } = await createRunAndSubmit();
+
+    await service.applyAdapterEvent(ids.agentRun, {
+      type: 'token',
+      at: Date.parse('2026-05-14T01:00:02.500Z'),
+      delta: 'stale output',
+    });
+    await service.applyAdapterEvent(ids.agentRun, {
+      type: 'failed',
+      at: Date.parse('2026-05-14T01:00:03.000Z'),
+      error: createAdapterError('MODEL_UNAVAILABLE', 'Model is unavailable.', true),
+    });
+
+    await expect(repository.listArtifactsByRun(ids.run)).resolves.toEqual(
+      expect.not.arrayContaining([
+        expect.objectContaining({ title: 'Runtime output', artifactRole: 'output' }),
+      ]),
     );
   });
 

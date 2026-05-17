@@ -1,14 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-  AgentRunId,
-  ArtifactKind,
-  ArtifactId,
-  ArtifactRef,
-  OrchestrationRunId,
-  TaskId,
-  WorkspaceId,
-} from '@cairn/shared-contracts/schemas';
+import type { ArtifactId, OrchestrationRunId, WorkspaceId } from '@cairn/shared-contracts/schemas';
 
 export interface WriteArtifactPayloadInput {
   artifactId: ArtifactId;
@@ -17,6 +9,7 @@ export interface WriteArtifactPayloadInput {
   filename: string;
   mediaType: 'text/plain' | 'application/json';
   text: string;
+  maxBytes: number;
 }
 
 export interface WriteArtifactPayloadResult {
@@ -31,23 +24,7 @@ export interface ReadArtifactPayloadResult {
   truncated: boolean;
 }
 
-export interface RegisterRuntimeArtifactInput {
-  workspaceId: WorkspaceId;
-  orchestrationRunId: OrchestrationRunId;
-  taskId?: TaskId;
-  runId?: AgentRunId;
-  artifact: {
-    artifactRef: ArtifactRef;
-    kind: ArtifactKind;
-    role: 'input' | 'intermediate' | 'output' | 'summary' | 'trace';
-    formatVersion: string;
-    contentType?: string;
-    sizeBytes?: number;
-  };
-}
-
 export interface ArtifactStorePort {
   writeText(input: WriteArtifactPayloadInput): Promise<WriteArtifactPayloadResult>;
   readText(payloadRef: string): Promise<ReadArtifactPayloadResult>;
-  registerRuntimeArtifact?(input: RegisterRuntimeArtifactInput): Promise<void>;
 }

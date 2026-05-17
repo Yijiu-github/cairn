@@ -51,6 +51,14 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
     return Promise.resolve();
   }
 
+  listRunsByWorkspace(workspaceId: WorkspaceId): Promise<OrchestrationRun[]> {
+    return Promise.resolve(
+      [...this.runs.values()]
+        .filter((run) => run.workspaceId === workspaceId)
+        .toSorted((left, right) => right.createdAt.localeCompare(left.createdAt)),
+    );
+  }
+
   getRun(orchestrationRunId: OrchestrationRunId): Promise<OrchestrationRun | undefined> {
     return Promise.resolve(this.runs.get(orchestrationRunId));
   }

@@ -47,6 +47,7 @@ export interface SearchCodeIndexFilesInput {
 
 export interface ApplicationRepository {
   createRunGraph(input: CreateRunGraphInput): Promise<void>;
+  listRunsByWorkspace(workspaceId: WorkspaceId): Promise<OrchestrationRun[]>;
   getRun(orchestrationRunId: OrchestrationRunId): Promise<OrchestrationRun | undefined>;
   getTask(taskId: TaskId): Promise<Task | undefined>;
   getAgentRun(runId: AgentRunId): Promise<AgentRun | undefined>;

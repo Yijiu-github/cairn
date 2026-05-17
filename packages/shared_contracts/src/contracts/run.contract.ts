@@ -54,7 +54,7 @@ const StartRunTaskBody = z.object({
   budgetHint: BudgetHint.optional(),
 });
 
-const SubmitTaskToRuntimeBody = z.object({
+export const SubmitTaskToRuntimeBody = z.object({
   runtimeType: z.literal('codex'),
   model: z.string().min(1).default('default'),
   prompt: z.string().min(1).max(32_000),
@@ -62,13 +62,21 @@ const SubmitTaskToRuntimeBody = z.object({
   options: z.record(z.unknown()).optional(),
 });
 
-const SubmitTaskToRuntimeResponse = z.object({
+export const SubmitTaskToRuntimeResponse = z.object({
   agentRunId: AgentRunId,
   taskId: TaskId,
   orchestrationRunId: OrchestrationRunId,
   status: z.literal('submitted'),
   providerRunId: z.string().optional(),
 });
+export type SubmitTaskToRuntimeBody = z.infer<typeof SubmitTaskToRuntimeBody>;
+export type SubmitTaskToRuntimeResponse = z.infer<typeof SubmitTaskToRuntimeResponse>;
+
+export const DrainRuntimeResponse = z.object({
+  agentRunId: AgentRunId,
+  eventCount: z.number().int().nonnegative(),
+});
+export type DrainRuntimeResponse = z.infer<typeof DrainRuntimeResponse>;
 
 export const StartRunBody = z.object({
   /** 触发该 run 的 event id（必须是已写入 DB 的 Event） */
@@ -198,6 +206,18 @@ export const runContract = c.router(
       responses: {
         201: SubmitTaskToRuntimeResponse,
         503: ApiError,
+        ...commonErrorResponses,
+      },
+    },
+
+    drainAgentRunRuntime: {
+      method: 'POST',
+      path: '/agent-runs/:agentRunId/drain-runtime',
+      pathParams: z.object({ agentRunId: AgentRunId }),
+      body: z.object({}).optional(),
+      summary: 'Drain runtime events for an AgentRun',
+      responses: {
+        202: DrainRuntimeResponse,
         ...commonErrorResponses,
       },
     },

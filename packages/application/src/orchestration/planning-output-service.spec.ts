@@ -38,6 +38,9 @@ const createIds = (): ApplicationIdFactory => ({
   agentRunId: () => {
     throw new Error('Unexpected agentRunId request');
   },
+  artifactId: () => {
+    throw new Error('Unexpected artifactId request');
+  },
   orchestrationRunId: () => {
     throw new Error('Unexpected orchestrationRunId request');
   },

@@ -6,7 +6,6 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { artifacts } from '@cairn/domain/schema';
 import { openSqliteStorage } from '@cairn/storage/sqlite';
 
 import { MockRuntimeGatewayPort } from '../runtime/mock-runtime-gateway-port.js';
@@ -426,24 +425,23 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
       });
       createdRunId = created.run.orchestrationRunId;
 
-      first.storage.db
-        .insert(artifacts)
-        .values({
-          artifactId,
-          workspaceId: ids.workspace,
-          orchestrationRunId: createdRunId,
-          taskId: created.task.taskId,
-          artifactRole: 'output',
-          kind: 'text',
-          formatVersion: 'text.v1',
-          uriOrPath: `artifacts/${artifactId}/content.txt`,
-          contentType: 'text/plain',
-          sizeBytes: 12,
-          producerType: 'agent',
-          visibility: 'operator_only',
-          createdAt: '2026-05-17T00:00:01.000Z',
-        })
-        .run();
+      await first.container.repository.createArtifact({
+        artifactId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        taskId: created.task.taskId,
+        artifactRole: 'output',
+        kind: 'text',
+        formatVersion: 'text.v1',
+        uriOrPath: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
+        contentType: 'text/plain',
+        sizeBytes: 12,
+        payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
+        sensitivity: 'none',
+        producerType: 'agent',
+        visibility: 'operator_only',
+        createdAt: '2026-05-17T00:00:01.000Z',
+      });
 
       await first.container.repository.appendTraceEvent({
         traceEventId: '01J000000000000000000000T2' as TraceEventId,
@@ -478,7 +476,9 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
           orchestrationRunId: createdRunId,
           artifactRole: 'output',
           kind: 'text',
-          uriOrPath: `artifacts/${artifactId}/content.txt`,
+          uriOrPath: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
+          payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
+          sensitivity: 'none',
         }),
       ]);
       await expect(second.container.repository.getArtifact(artifactId)).resolves.toMatchObject({
@@ -486,6 +486,7 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
         orchestrationRunId: createdRunId,
         contentType: 'text/plain',
         sizeBytes: 12,
+        payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
       });
       const traceEvents = await second.container.repository.listTraceEventsByRun(createdRunId);
       expect(traceEvents.slice(0, 2)).toEqual([
@@ -500,6 +501,77 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
           }),
         ]),
       );
+    } finally {
+      second.close();
+    }
+  });
+
+  it('updates Artifact metadata across repository instances', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+    const artifactId = '01J000000000000000000000A2' as ArtifactId;
+    let createdRunId: OrchestrationRunId;
+
+    const first = openRepository(databasePath);
+
+    try {
+      const created = await first.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Artifact update',
+          brief: 'Verify artifact update persistence.',
+        },
+      });
+      createdRunId = created.run.orchestrationRunId;
+
+      await first.container.repository.createArtifact({
+        artifactId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        artifactRole: 'output',
+        kind: 'log',
+        formatVersion: 'runtime-output.v1',
+        uriOrPath: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/runtime-output.txt`,
+        contentType: 'text/plain',
+        sizeBytes: 3,
+        payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/runtime-output.txt`,
+        sensitivity: 'none',
+        producerType: 'agent',
+        visibility: 'debug',
+        createdAt: '2026-05-17T00:00:01.000Z',
+      });
+      await first.container.repository.updateArtifact({
+        artifactId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        artifactRole: 'output',
+        kind: 'log',
+        formatVersion: 'runtime-output.v1',
+        uriOrPath: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/runtime-output.txt`,
+        contentType: 'text/plain',
+        sizeBytes: 6,
+        payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/runtime-output.txt`,
+        sensitivity: 'secret_risk',
+        producerType: 'agent',
+        visibility: 'operator_only',
+        createdAt: '2026-05-17T00:00:01.000Z',
+      });
+    } finally {
+      first.close();
+    }
+
+    const second = openRepository(databasePath);
+
+    try {
+      await expect(second.container.repository.getArtifact(artifactId)).resolves.toMatchObject({
+        artifactId,
+        sizeBytes: 6,
+        sensitivity: 'secret_risk',
+        visibility: 'operator_only',
+      });
     } finally {
       second.close();
     }
@@ -525,6 +597,7 @@ function openRepository(databasePath: string): {
       new MockRuntimeGatewayPort(),
       undefined,
       scanner,
+      undefined,
     ),
     storage,
     close: () => {

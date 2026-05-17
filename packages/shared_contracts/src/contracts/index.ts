@@ -14,8 +14,19 @@ export { ApiError, commonErrorResponses, API_V1 } from './_common.js';
 
 export { workspaceContract } from './workspace.contract.js';
 export { contextContract } from './context.contract.js';
-export { runContract, StartRunBody } from './run.contract.js';
-export type { StartRunBody as StartRunBodyType } from './run.contract.js';
+export {
+  runContract,
+  StartRunBody,
+  SubmitTaskToRuntimeBody,
+  SubmitTaskToRuntimeResponse,
+  DrainRuntimeResponse,
+} from './run.contract.js';
+export type {
+  StartRunBody as StartRunBodyType,
+  SubmitTaskToRuntimeBody as SubmitTaskToRuntimeBodyType,
+  SubmitTaskToRuntimeResponse as SubmitTaskToRuntimeResponseType,
+  DrainRuntimeResponse as DrainRuntimeResponseType,
+} from './run.contract.js';
 export {
   operatorContract,
   OperatorApproveRejectBody,
