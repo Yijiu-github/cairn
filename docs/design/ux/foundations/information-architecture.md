@@ -1,14 +1,14 @@
 # 信息架构 / Information Architecture
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-15
+> 最后更新：2026-05-18
 > 范围：Release 1 Personal Desktop Edition；兼容 Release 2 Web Shell 远程工作区扩展。
 
 ---
 
 ## 1. 设计目标
 
-Cairn 的界面不是聊天工具，也不是任务看板。它是一个 **run-driven agent collaboration workspace**，所以信息架构必须让用户始终回答四个问题：
+Cairn 的界面不是聊天工具，也不是任务看板，更不是 Codex / Claude Code 的复刻 UI。它是一个 **run-driven AI engineering workbench**：连接外部或本地 runtime，并把执行过程组织成可观察、可接管、可验证的 run / artifact / trace，所以信息架构必须让用户始终回答四个问题：
 
 1. 我现在在哪个 workspace？
 2. 哪些 run 正在发生、卡在哪里？
@@ -49,38 +49,38 @@ App Chrome
 
 ### 2.2 Primary Navigation
 
-| 导航      | 主要对象                     | 一句话职责                          |
-| --------- | ---------------------------- | ----------------------------------- |
-| Inbox     | Conversation / draft request | 新请求入口与人类消息上下文          |
-| Runs      | OrchestrationRun             | 所有 run 的列表、过滤、状态总览     |
-| Tasks     | Task                         | 横跨 run 的任务树/队列视角          |
-| Artifacts | Artifact                     | 产物库、补丁、报告、日志、文件引用  |
-| Agents    | Runtime / Agent profile      | runtime 配置、worker 能力、健康状态 |
-| Activity  | TraceEvent                   | 全局事件流、失败、接管、系统日志    |
-| Settings  | Workspace / App / Security   | 本地路径、模型、权限、更新、隐私    |
+| 导航      | 主要对象                     | 一句话职责                                               |
+| --------- | ---------------------------- | -------------------------------------------------------- |
+| Inbox     | Conversation / draft request | 新请求入口与人类消息上下文                               |
+| Runs      | OrchestrationRun             | 所有 run 的列表、过滤、状态总览                          |
+| Tasks     | Task                         | 横跨 run 的任务树/队列视角                               |
+| Artifacts | Artifact                     | 产物库、补丁、报告、日志、文件引用                       |
+| Agents    | Runtime / Capability profile | runtime 配置、worker 能力、健康状态；不是聊天 agent 列表 |
+| Activity  | TraceEvent                   | 全局事件流、失败、接管、系统日志                         |
+| Settings  | Workspace / App / Security   | 本地路径、模型、权限、更新、隐私                         |
 
 ## 3. Release 1 路由 / 页面
 
 R1 虽然是桌面应用，但仍按路由组织页面，便于 Web Shell 复用。
 
-| 路由                     | 页面                   | Release | 说明                                                    |
-| ------------------------ | ---------------------- | ------- | ------------------------------------------------------- |
-| `/`                      | Home / Inbox           | R1      | 默认入口，新建 run、继续草稿、查看近期活动              |
-| `/runs`                  | Run List               | R1      | 状态、runtime、耗时、失败原因、收藏/归档                |
-| `/runs/:runId`           | Run Detail             | R1      | R1 核心页面：task tree + agent runs + trace + artifacts |
-| `/runs/:runId/replay`    | Replay                 | R1      | 按时间轴回放 run；R1 可先做只读                         |
-| `/tasks`                 | Task Explorer          | R1      | 跨 run 查看任务；支持状态过滤                           |
-| `/tasks/:taskId`         | Task Detail            | R1      | task 输入、依赖、关联 agent run、artifact               |
-| `/artifacts`             | Artifact Library       | R1      | 产物列表、类型过滤、打开位置                            |
-| `/artifacts/:artifactId` | Artifact Detail        | R1      | 文本/patch/log/文件预览                                 |
-| `/agents`                | Agent & Runtime        | R1      | Codex runtime 状态、能力、健康检查                      |
-| `/activity`              | Activity Timeline      | R1      | 全局 trace / operator action / system event             |
-| `/settings`              | Settings Index         | R1      | 设置首页                                                |
-| `/settings/workspace`    | Workspace Settings     | R1      | 数据目录、artifact store、备份导出                      |
-| `/settings/runtime`      | Runtime Settings       | R1      | Codex CLI 路径、模型、权限策略                          |
-| `/settings/security`     | Security & Permissions | R1      | protected action、secret、loopback token 说明           |
-| `/settings/updates`      | Updates                | R1      | 手动检查更新、下载安装引导                              |
-| `/settings/privacy`      | Privacy                | R1      | 本地优先、遥测开关、数据导出                            |
+| 路由                     | 页面                   | Release | 说明                                                        |
+| ------------------------ | ---------------------- | ------- | ----------------------------------------------------------- |
+| `/`                      | Home / Inbox           | R1      | 默认入口，新建 run、继续草稿、查看近期活动                  |
+| `/runs`                  | Run List               | R1      | 状态、runtime、耗时、失败原因、收藏/归档                    |
+| `/runs/:runId`           | Run Detail             | R1      | R1 核心页面：task tree + agent runs + trace + artifacts     |
+| `/runs/:runId/replay`    | Replay                 | R1      | 按时间轴回放 run；R1 可先做只读                             |
+| `/tasks`                 | Task Explorer          | R1      | 跨 run 查看任务；支持状态过滤                               |
+| `/tasks/:taskId`         | Task Detail            | R1      | task 输入、依赖、关联 agent run、artifact                   |
+| `/artifacts`             | Artifact Library       | R1      | 产物列表、类型过滤、打开位置                                |
+| `/artifacts/:artifactId` | Artifact Detail        | R1      | 文本/patch/log/文件预览                                     |
+| `/agents`                | Runtime & Capability   | R1      | Codex runtime 状态、能力、健康检查；不展示为聊天 agent 列表 |
+| `/activity`              | Activity Timeline      | R1      | 全局 trace / operator action / system event                 |
+| `/settings`              | Settings Index         | R1      | 设置首页                                                    |
+| `/settings/workspace`    | Workspace Settings     | R1      | 数据目录、artifact store、备份导出                          |
+| `/settings/runtime`      | Runtime Settings       | R1      | Codex CLI 路径、模型、权限策略                              |
+| `/settings/security`     | Security & Permissions | R1      | protected action、secret、loopback token 说明               |
+| `/settings/updates`      | Updates                | R1      | 手动检查更新、下载安装引导                                  |
+| `/settings/privacy`      | Privacy                | R1      | 本地优先、遥测开关、数据导出                                |
 
 ## 4. Run Detail 信息结构
 
@@ -164,7 +164,7 @@ Inspector 永远用于解释“为什么现在是这样”：
 - recent core logs
 - restart core / run diagnostics / export redacted status
 
-Runtime Status 页面不替代 Run Detail；它解释“系统能不能跑”，Run Detail 解释“这个 run 为什么这样”。
+Runtime Status 页面不替代 Run Detail；它解释“系统能不能跑、当前连接了哪些 runtime、能力边界是什么”，Run Detail 解释“这个 run 为什么这样”。
 
 ### 5.4 Handoff Queue
 

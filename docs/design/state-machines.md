@@ -1,7 +1,7 @@
 # 状态机 / State Machines
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-14
+> 最后更新：2026-05-17
 > 来源：[`设计文档V0.1.0.md §11`](设计文档V0.1.0.md) 抽出并扩展
 > 上游术语：见 [`../reference/glossary.md`](../reference/glossary.md)
 
@@ -164,6 +164,16 @@ cancelled   cancelled  cancelled/timeout │
 | **注入 operator note** | operator 主动         | run 任意状态                                                  | 不变（写 message + trace）  |
 | **approve / reject**   | operator 在受保护步骤 | task 处于"等待审批"                                           | task → `running` / `failed` |
 
+接管动作按 effect 分三类：
+
+| Effect         | 含义                                 | 示例                                                 |
+| -------------- | ------------------------------------ | ---------------------------------------------------- |
+| `applies_now`  | 立即影响当前调度                     | approve once、reject、cancel、retry now              |
+| `applies_next` | 作为下一次 planning / retry 的上下文 | add instruction then retry、调整 acceptance criteria |
+| `records_only` | 只沉淀 decision / note，不改变调度   | 记录人工观察、标记需后续复盘                         |
+
+Handoff Queue 只展示需要人类处理的动作，不允许把纯信息流都塞入队列；每个 queue item 必须能追到源对象与 TraceEvent。
+
 ---
 
 ## 6. 错误分层
@@ -241,5 +251,6 @@ while (running) {
 
 | 日期       | 变更                                                             |
 | ---------- | ---------------------------------------------------------------- |
+| 2026-05-17 | 补充 operator intervention effect 与 Handoff Queue 约束          |
 | 2026-05-15 | 补充 planning artifact、blocked reason 与 replan reason 可观察性 |
 | 2026-05-14 | 初版，从 V0.1.0 §11 抽出并补充 lease/heartbeat 与不变量          |

@@ -1,14 +1,14 @@
 # 桌面端线框稿 / Desktop Wireframes
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-15
+> 最后更新：2026-05-18
 > 范围：Release 1 Personal Desktop Edition。本文是工程可落地的低保真设计稿；后续 Figma/高保真稿应以此为信息结构基线。
 
 ---
 
 ## 1. 视觉方向
 
-Cairn 的桌面端应像“工程任务控制台”，而不是传统聊天应用。
+Cairn 的桌面端应像“工程任务控制台”和 runtime 控制面，而不是传统聊天应用，也不是 Codex / Claude Code 的复刻 UI。
 
 关键词：
 
@@ -62,7 +62,7 @@ Cairn 的桌面端应像“工程任务控制台”，而不是传统聊天应�
 ```text
 ┌────────────────────────────────────────────────────────────────────┐
 │ Cairn                                                              │
-│ Local-first multi-agent collaboration workspace                    │
+│ Local-first AI engineering workbench                               │
 │                                                                    │
 │ Step 1 of 4 · Choose workspace                                     │
 │ ┌────────────────────────────────────────────────────────────────┐ │
@@ -95,6 +95,7 @@ Cairn 的桌面端应像“工程任务控制台”，而不是传统聊天应�
 │ │ Path:   —                                            [Browse]  │ │
 │ │                                                                │ │
 │ │ Cairn uses Codex CLI as the first runtime adapter in R1.       │ │
+│ │ This validates the runtime control-plane path, not Codex lock-in.│ │
 │ └────────────────────────────────────────────────────────────────┘ │
 │                                                                    │
 │ [Skip for now]                         [Run diagnostics] [Continue]│

@@ -61,6 +61,7 @@
 - **Artifact / Trace Read API**：Workspace Core 实现 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口，供 Run Detail / Replay UI 消费。
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
 - 新增非阻塞 `pnpm run standards:check`，用于检查跨包相对导入、internal 导入、模块边界与 package exports 漂移
+- 设计文档新增 R1 Codex E2E + Artifact / Trace 最小闭环，明确 Workspace Core、Codex CLI adapter、ArtifactStore 与 TraceEvent 的端到端验收边界
 
 ### Changed
 
