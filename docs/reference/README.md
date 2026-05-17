@@ -4,13 +4,13 @@
 
 ## 文件
 
-| 文件                        | 作用                                    | 状态     |
-| --------------------------- | --------------------------------------- | -------- |
-| `glossary.md`               | 术语表（所有文档共用基础）              | 🟡 Draft |
-| `external-project-radar.md` | 后续可阶段性参考的外部项目清单          | 🟡 Draft |
-| `naming-conventions.md`     | 代码 / 数据库 / 事件 / API 字段命名约定 | ⚪ TODO  |
-| `postmortem-template.md`    | 故障复盘模板                            | ⚪ TODO  |
-| `meeting-notes/`            | 关键决策会议记录 / 个人 work log        | ⚪ 按需  |
+| 文件                        | 作用                                          | 状态     |
+| --------------------------- | --------------------------------------------- | -------- |
+| `glossary.md`               | 术语表（所有文档共用基础）                    | 🟡 Draft |
+| `external-project-radar.md` | 后续可阶段性参考的外部项目清单                | 🟡 Draft |
+| `naming-conventions.md`     | 代码、文档、API、DB、事件与 artifact 命名约定 | 🟡 Draft |
+| `postmortem-template.md`    | 故障复盘模板                                  | ⚪ TODO  |
+| `meeting-notes/`            | 关键决策会议记录 / 个人 work log              | ⚪ 按需  |
 
 ## 重要性排序
 

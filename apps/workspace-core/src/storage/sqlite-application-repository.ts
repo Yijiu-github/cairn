@@ -4,11 +4,13 @@ import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
 import {
   agentRuns,
+  artifacts,
   codeIndexFiles,
   codeIndexSnapshots,
   contextPacks,
   events,
   orchestrationRuns,
+  planningOutputs,
   sourceRoots,
   tasks,
   traceEvents,
@@ -16,12 +18,19 @@ import {
 } from '@cairn/domain/schema';
 import {
   AgentRun,
+  Artifact,
   CodeIndexFile,
   CodeIndexSnapshot,
   ContextPackManifest,
   OrchestrationRun,
+  PlanningActionNode,
+  PlanningBlockedReason,
+  PlanningOutput,
+  PlanningPrecondition,
+  PlanningReplanReason,
   SourceRoot,
   Task,
+  TraceEvent,
 } from '@cairn/shared-contracts/schemas';
 import { runSqliteMigrations, type CairnSqliteDatabase } from '@cairn/storage/sqlite';
 
@@ -34,14 +43,21 @@ import type {
 } from '@cairn/application';
 import type { BudgetHintRow } from '@cairn/domain/schema';
 import type {
+  PlanningActionNodeRow,
+  PlanningBlockedReasonRow,
+  PlanningPreconditionRow,
+  PlanningReplanReasonRow,
+} from '@cairn/domain/schema';
+import type {
   AgentRunId,
+  ArtifactId,
   CodeIndexSnapshotId,
   ContextPackId,
   EventId,
   OrchestrationRunId,
+  PlanningOutputId,
   SourceRootId,
   TaskId,
-  TraceEvent,
   WorkspaceId,
 } from '@cairn/shared-contracts/schemas';
 import type { SQL } from 'drizzle-orm';
@@ -160,8 +176,38 @@ export class SqliteApplicationRepository implements ApplicationRepository {
     return Promise.resolve(rows.map(fromAgentRunRow));
   }
 
+  listArtifactsByRun(orchestrationRunId: OrchestrationRunId): Promise<Artifact[]> {
+    const rows = this.db
+      .select()
+      .from(artifacts)
+      .where(eq(artifacts.orchestrationRunId, orchestrationRunId))
+      .orderBy(asc(artifacts.createdAt))
+      .all();
+    return Promise.resolve(rows.map(fromArtifactRow));
+  }
+
+  getArtifact(artifactId: ArtifactId): Promise<Artifact | undefined> {
+    const row = this.db.select().from(artifacts).where(eq(artifacts.artifactId, artifactId)).get();
+    return Promise.resolve(row === undefined ? undefined : fromArtifactRow(row));
+  }
+
+  listTraceEventsByRun(orchestrationRunId: OrchestrationRunId): Promise<TraceEvent[]> {
+    const rows = this.db
+      .select()
+      .from(traceEvents)
+      .where(eq(traceEvents.orchestrationRunId, orchestrationRunId))
+      .orderBy(asc(traceEvents.createdAt))
+      .all();
+    return Promise.resolve(rows.map(fromTraceEventRow));
+  }
+
   createAgentRun(agentRun: AgentRun): Promise<void> {
     this.db.insert(agentRuns).values(toAgentRunRow(agentRun)).run();
+    return Promise.resolve();
+  }
+
+  createPlanningOutput(output: PlanningOutput): Promise<void> {
+    this.db.insert(planningOutputs).values(toPlanningOutputRow(output)).run();
     return Promise.resolve();
   }
 
@@ -184,6 +230,35 @@ export class SqliteApplicationRepository implements ApplicationRepository {
       .update(agentRuns)
       .set(toAgentRunRow(agentRun))
       .where(eq(agentRuns.runId, agentRun.runId))
+      .run();
+    return Promise.resolve();
+  }
+
+  getPlanningOutput(planningOutputId: PlanningOutputId): Promise<PlanningOutput | undefined> {
+    const row = this.db
+      .select()
+      .from(planningOutputs)
+      .where(eq(planningOutputs.planningOutputId, planningOutputId))
+      .get();
+    return Promise.resolve(row === undefined ? undefined : fromPlanningOutputRow(row));
+  }
+
+  getPlanningOutputByRun(
+    orchestrationRunId: OrchestrationRunId,
+  ): Promise<PlanningOutput | undefined> {
+    const row = this.db
+      .select()
+      .from(planningOutputs)
+      .where(eq(planningOutputs.orchestrationRunId, orchestrationRunId))
+      .get();
+    return Promise.resolve(row === undefined ? undefined : fromPlanningOutputRow(row));
+  }
+
+  updatePlanningOutput(output: PlanningOutput): Promise<void> {
+    this.db
+      .update(planningOutputs)
+      .set(toPlanningOutputUpdateRow(output))
+      .where(eq(planningOutputs.planningOutputId, output.planningOutputId))
       .run();
     return Promise.resolve();
   }
@@ -442,6 +517,149 @@ const toAgentRunRow = (agentRun: AgentRun): typeof agentRuns.$inferInsert => ({
   ...(agentRun.leaseExpiresAt === undefined ? {} : { leaseExpiresAt: agentRun.leaseExpiresAt }),
 });
 
+const toPlanningOutputRow = (output: PlanningOutput): typeof planningOutputs.$inferInsert => ({
+  planningOutputId: output.planningOutputId,
+  workspaceId: output.workspaceId,
+  orchestrationRunId: output.orchestrationRunId,
+  status: output.status,
+  actionTree: output.actionTree.map(toPlanningActionNodeRow),
+  preconditions: output.preconditions.map(toPlanningPreconditionRow),
+  contextPackRefs: output.contextPackRefs,
+  createdAt: output.createdAt,
+  updatedAt: output.updatedAt,
+  ...(output.blockedReason === undefined
+    ? {}
+    : { blockedReason: toPlanningBlockedReasonRow(output.blockedReason) }),
+  ...(output.replanReason === undefined
+    ? {}
+    : { replanReason: toPlanningReplanReasonRow(output.replanReason) }),
+});
+
+const toPlanningOutputUpdateRow = (
+  output: PlanningOutput,
+): typeof planningOutputs.$inferInsert => ({
+  planningOutputId: output.planningOutputId,
+  workspaceId: output.workspaceId,
+  orchestrationRunId: output.orchestrationRunId,
+  status: output.status,
+  actionTree: output.actionTree.map(toPlanningActionNodeRow),
+  preconditions: output.preconditions.map(toPlanningPreconditionRow),
+  contextPackRefs: output.contextPackRefs,
+  createdAt: output.createdAt,
+  updatedAt: output.updatedAt,
+  blockedReason:
+    output.blockedReason === undefined ? null : toPlanningBlockedReasonRow(output.blockedReason),
+  replanReason:
+    output.replanReason === undefined ? null : toPlanningReplanReasonRow(output.replanReason),
+});
+
+const fromPlanningOutputRow = (row: typeof planningOutputs.$inferSelect): PlanningOutput =>
+  PlanningOutput.parse({
+    planningOutputId: row.planningOutputId,
+    workspaceId: row.workspaceId,
+    orchestrationRunId: row.orchestrationRunId,
+    status: row.status,
+    actionTree: row.actionTree.map(fromPlanningActionNodeRow),
+    preconditions: row.preconditions.map(fromPlanningPreconditionRow),
+    ...(row.blockedReason === null || row.blockedReason === undefined
+      ? {}
+      : { blockedReason: fromPlanningBlockedReasonRow(row.blockedReason) }),
+    ...(row.replanReason === null || row.replanReason === undefined
+      ? {}
+      : { replanReason: fromPlanningReplanReasonRow(row.replanReason) }),
+    contextPackRefs: row.contextPackRefs,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  });
+
+const toPlanningActionNodeRow = (
+  node: PlanningOutput['actionTree'][number],
+): PlanningActionNodeRow => ({
+  actionId: node.actionId,
+  title: node.title,
+  intent: node.intent,
+  status: node.status,
+  dependsOnActionIds: node.dependsOnActionIds,
+  ...(node.parentActionId === undefined ? {} : { parentActionId: node.parentActionId }),
+  ...(node.taskId === undefined ? {} : { taskId: node.taskId }),
+});
+
+const fromPlanningActionNodeRow = (
+  row: PlanningActionNodeRow,
+): PlanningOutput['actionTree'][number] =>
+  PlanningActionNode.parse({
+    actionId: row.actionId,
+    title: row.title,
+    intent: row.intent,
+    status: row.status,
+    dependsOnActionIds: row.dependsOnActionIds,
+    ...(row.parentActionId === undefined ? {} : { parentActionId: row.parentActionId }),
+    ...(row.taskId === undefined ? {} : { taskId: row.taskId }),
+  });
+
+const toPlanningPreconditionRow = (
+  precondition: PlanningOutput['preconditions'][number],
+): PlanningPreconditionRow => ({
+  description: precondition.description,
+  status: precondition.status,
+  evidenceRefs: precondition.evidenceRefs,
+  ...(precondition.actionId === undefined ? {} : { actionId: precondition.actionId }),
+});
+
+const fromPlanningPreconditionRow = (
+  row: PlanningPreconditionRow,
+): PlanningOutput['preconditions'][number] =>
+  PlanningPrecondition.parse({
+    description: row.description,
+    status: row.status,
+    evidenceRefs: row.evidenceRefs,
+    ...(row.actionId === undefined ? {} : { actionId: row.actionId }),
+  });
+
+const toPlanningBlockedReasonRow = (
+  blockedReason: NonNullable<PlanningOutput['blockedReason']>,
+): PlanningBlockedReasonRow => ({
+  scope: blockedReason.scope,
+  code: blockedReason.code,
+  message: blockedReason.message,
+  ...(blockedReason.actionId === undefined ? {} : { actionId: blockedReason.actionId }),
+  ...(blockedReason.taskId === undefined ? {} : { taskId: blockedReason.taskId }),
+  ...(blockedReason.operatorActionHint === undefined
+    ? {}
+    : { operatorActionHint: blockedReason.operatorActionHint }),
+});
+
+const fromPlanningBlockedReasonRow = (
+  row: PlanningBlockedReasonRow,
+): PlanningOutput['blockedReason'] =>
+  PlanningBlockedReason.parse({
+    scope: row.scope,
+    code: row.code,
+    message: row.message,
+    ...(row.actionId === undefined ? {} : { actionId: row.actionId }),
+    ...(row.taskId === undefined ? {} : { taskId: row.taskId }),
+    ...(row.operatorActionHint === undefined ? {} : { operatorActionHint: row.operatorActionHint }),
+  });
+
+const toPlanningReplanReasonRow = (
+  replanReason: NonNullable<PlanningOutput['replanReason']>,
+): PlanningReplanReasonRow => ({
+  trigger: replanReason.trigger,
+  message: replanReason.message,
+  ...(replanReason.previousRunId === undefined
+    ? {}
+    : { previousRunId: replanReason.previousRunId }),
+});
+
+const fromPlanningReplanReasonRow = (
+  row: PlanningReplanReasonRow,
+): PlanningOutput['replanReason'] =>
+  PlanningReplanReason.parse({
+    trigger: row.trigger,
+    message: row.message,
+    ...(row.previousRunId === undefined ? {} : { previousRunId: row.previousRunId }),
+  });
+
 const fromAgentRunRow = (row: typeof agentRuns.$inferSelect): AgentRun =>
   AgentRun.parse({
     runId: row.runId,
@@ -486,6 +704,40 @@ const toTraceEventRow = (event: TraceEvent): typeof traceEvents.$inferInsert => 
   ...(event.payloadRef === undefined ? {} : { payloadRef: event.payloadRef }),
   ...(event.payloadInline === undefined ? {} : { payloadInline: event.payloadInline }),
 });
+
+const fromArtifactRow = (row: typeof artifacts.$inferSelect): Artifact =>
+  Artifact.parse({
+    artifactId: row.artifactId,
+    workspaceId: row.workspaceId,
+    ...(row.orchestrationRunId === null ? {} : { orchestrationRunId: row.orchestrationRunId }),
+    ...(row.taskId === null ? {} : { taskId: row.taskId }),
+    ...(row.runId === null ? {} : { runId: row.runId }),
+    artifactRole: row.artifactRole,
+    kind: row.kind,
+    formatVersion: row.formatVersion,
+    uriOrPath: row.uriOrPath,
+    ...(row.contentType === null ? {} : { contentType: row.contentType }),
+    ...(row.sizeBytes === null ? {} : { sizeBytes: row.sizeBytes }),
+    producerType: row.producerType,
+    ...(row.producerId === null ? {} : { producerId: row.producerId }),
+    visibility: row.visibility,
+    createdAt: row.createdAt,
+  });
+
+const fromTraceEventRow = (row: typeof traceEvents.$inferSelect): TraceEvent =>
+  TraceEvent.parse({
+    traceEventId: row.traceEventId,
+    workspaceId: row.workspaceId,
+    ...(row.orchestrationRunId === null ? {} : { orchestrationRunId: row.orchestrationRunId }),
+    ...(row.taskId === null ? {} : { taskId: row.taskId }),
+    ...(row.runId === null ? {} : { runId: row.runId }),
+    eventType: row.eventType,
+    level: row.level,
+    ...(row.payloadRef === null ? {} : { payloadRef: row.payloadRef }),
+    ...(row.payloadInline === null ? {} : { payloadInline: row.payloadInline }),
+    createdAt: row.createdAt,
+    traceId: row.traceId,
+  });
 
 const toSourceRootRow = (sourceRoot: SourceRoot): typeof sourceRoots.$inferInsert => ({
   sourceRootId: sourceRoot.sourceRootId,

@@ -236,6 +236,61 @@ h2 {
   gap: 12px;
 }
 
+.planning-output-card {
+  overflow: hidden;
+}
+
+.planning-output-content,
+.planning-list,
+.planning-column {
+  display: grid;
+  gap: 12px;
+}
+
+.planning-summary,
+.planning-list-item p,
+.planning-list-item span {
+  color: var(--preview-subtle);
+  line-height: 1.6;
+}
+
+.planning-columns {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.planning-column h3 {
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.planning-list-item {
+  align-items: start;
+  background: var(--preview-surface-muted);
+  border: 1px solid var(--preview-border);
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 12px;
+}
+
+.planning-list-item strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.planning-list-item span {
+  display: block;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    monospace;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
 .page-hero,
 .home-command-bar,
 .run-detail-header,
@@ -395,7 +450,8 @@ h2 {
   }
 
   .hero,
-  .grid.two {
+  .grid.two,
+  .planning-columns {
     grid-template-columns: 1fr;
   }
 

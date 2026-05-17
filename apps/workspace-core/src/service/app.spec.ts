@@ -40,6 +40,35 @@ const createScanner = (): CodeContextScannerPort => ({
     ]),
 });
 
+const createSubmittedRun = async (app: Awaited<ReturnType<typeof createWorkspaceCoreApp>>) => {
+  const createResponse = await app.inject({
+    method: 'POST',
+    url: `/v1/workspaces/${ids.workspace}/runs`,
+    payload: {
+      originEventId: ids.event,
+      task: {
+        taskKind: 'edit',
+        title: 'Apply patch',
+        brief: 'Update the target module.',
+      },
+    },
+  });
+  const run = createResponse.json<{ orchestrationRunId: string }>();
+
+  const tasksResponse = await app.inject({
+    method: 'GET',
+    url: `/v1/runs/${run.orchestrationRunId}/tasks`,
+  });
+  const task = first(tasksResponse.json<{ items: { taskId: string }[] }>().items);
+
+  await app.inject({
+    method: 'POST',
+    url: `/v1/tasks/${task.taskId}/agent-runs`,
+  });
+
+  return { runId: run.orchestrationRunId, taskId: task.taskId };
+};
+
 describe('workspace-core app', () => {
   it('serves health status', async () => {
     const app = await createWorkspaceCoreApp({
@@ -120,6 +149,251 @@ describe('workspace-core app', () => {
         status: 'submitted',
         providerRunId: expect.stringContaining('mock:') as unknown,
       });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('drains submitted AgentRun runtime events into terminal state', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId, taskId } = await createSubmittedRun(app);
+      const agentRunsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}/agent-runs`,
+      });
+      const agentRun = first(agentRunsResponse.json<{ items: { runId: string }[] }>().items);
+
+      const drainResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/agent-runs/${agentRun.runId}/drain-runtime`,
+        payload: {},
+      });
+
+      expect(drainResponse.statusCode).toBe(202);
+      expect(drainResponse.json()).toMatchObject({
+        agentRunId: agentRun.runId,
+        eventCount: 4,
+      });
+
+      const runResponse = await app.inject({ method: 'GET', url: `/v1/runs/${runId}` });
+      expect(runResponse.json()).toMatchObject({
+        orchestrationRunId: runId,
+        status: 'succeeded',
+        finalResponseRef: expect.stringContaining('artifact:') as unknown,
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('lists TraceEvents for replay after runtime drain', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId, taskId } = await createSubmittedRun(app);
+      const agentRunsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}/agent-runs`,
+      });
+      const agentRun = first(agentRunsResponse.json<{ items: { runId: string }[] }>().items);
+
+      await app.inject({
+        method: 'POST',
+        url: `/v1/agent-runs/${agentRun.runId}/drain-runtime`,
+        payload: {},
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/trace`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json<{ items: { eventType: string }[] }>();
+      expect(body.items.map((event) => event.eventType)).toEqual(
+        expect.arrayContaining(['task.dispatched', 'agent_run.started', 'run.succeeded']),
+      );
+      expect(body.items.at(-1)).toMatchObject({ eventType: 'run.succeeded' });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('lists empty Artifact metadata for a run without persisted artifacts', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId } = await createSubmittedRun(app);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/artifacts`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toEqual({ items: [] });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 404 for missing Artifact metadata', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/artifacts/01HZZZZZZZZZZZZZZZZZZZZZF9',
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toMatchObject({ error: { code: 'NOT_FOUND' } });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 400 for invalid Artifact and Trace route ids', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const invalidTraceResponse = await app.inject({
+        method: 'GET',
+        url: '/v1/runs/not-a-ulid/trace',
+      });
+      expect(invalidTraceResponse.statusCode).toBe(400);
+
+      const invalidArtifactListResponse = await app.inject({
+        method: 'GET',
+        url: '/v1/runs/not-a-ulid/artifacts',
+      });
+      expect(invalidArtifactListResponse.statusCode).toBe(400);
+
+      const invalidArtifactResponse = await app.inject({
+        method: 'GET',
+        url: '/v1/artifacts/not-a-ulid',
+      });
+      expect(invalidArtifactResponse.statusCode).toBe(400);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('reads a PlanningOutput attached to a run', async () => {
+    const container = createDefaultWorkspaceCoreContainer();
+    const app = await createWorkspaceCoreApp({ container, logger: false });
+
+    try {
+      const createResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/runs`,
+        payload: {
+          originEventId: ids.event,
+          task: {
+            taskKind: 'edit',
+            title: 'Plan task',
+            brief: 'Create a planning output.',
+          },
+        },
+      });
+      const run = createResponse.json<{ orchestrationRunId: string }>();
+      const output = await container.planningOutputs.startPlanning({
+        runId: run.orchestrationRunId as never,
+      });
+      await container.planningOutputs.completePlanning({
+        planningOutputId: output.planningOutputId,
+        actionTree: [
+          {
+            actionId: 'inspect',
+            title: 'Inspect repository',
+            intent: 'Find relevant files.',
+            status: 'ready',
+            dependsOnActionIds: [],
+          },
+        ],
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${run.orchestrationRunId}/planning-output`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        planningOutputId: output.planningOutputId,
+        orchestrationRunId: run.orchestrationRunId,
+        status: 'ready',
+        actionTree: [{ actionId: 'inspect' }],
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 404 when a run has no PlanningOutput', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const createResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/runs`,
+        payload: {
+          originEventId: ids.event,
+          task: {
+            taskKind: 'edit',
+            title: 'No planning output',
+            brief: 'Keep the run queued.',
+          },
+        },
+      });
+      const run = createResponse.json<{ orchestrationRunId: string }>();
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${run.orchestrationRunId}/planning-output`,
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toMatchObject({ error: { code: 'NOT_FOUND' } });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 400 for invalid PlanningOutput route run ids', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/runs/not-a-ulid/planning-output',
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: { code: 'BAD_REQUEST' } });
     } finally {
       await app.close();
     }
@@ -297,6 +571,210 @@ describe('workspace-core app', () => {
             confidence: 'extracted',
           },
         ],
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('pauses and resumes a run through operator routes', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId } = await createSubmittedRun(app);
+
+      const pauseResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/pause`,
+        payload: { reason: 'Review before continuing.' },
+      });
+
+      expect(pauseResponse.statusCode).toBe(200);
+      expect(pauseResponse.json()).toMatchObject({
+        orchestrationRunId: runId,
+        status: 'paused',
+      });
+
+      const resumeResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/resume`,
+        payload: {},
+      });
+
+      expect(resumeResponse.statusCode).toBe(200);
+      expect(resumeResponse.json()).toMatchObject({
+        orchestrationRunId: runId,
+        status: 'running',
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('cancels a run through the operator route', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId } = await createSubmittedRun(app);
+
+      const cancelResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/cancel`,
+        payload: { reason: 'Operator stopped it.' },
+      });
+
+      expect(cancelResponse.statusCode).toBe(200);
+      expect(cancelResponse.json()).toMatchObject({
+        orchestrationRunId: runId,
+        status: 'cancelled',
+        error: { code: 'CANCELLED_BY_OPERATOR' },
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('maps invalid operator state transitions to 409', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId } = await createSubmittedRun(app);
+
+      await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/pause`,
+        payload: {},
+      });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/pause`,
+        payload: {},
+      });
+
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toMatchObject({
+        error: { code: 'CONFLICT' },
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('supports retry task, rerun, and operator notes through operator routes', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId, taskId } = await createSubmittedRun(app);
+
+      await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/cancel`,
+        payload: { reason: 'Stop before retry route check.' },
+      });
+
+      const noteResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/notes`,
+        payload: { note: 'Keep this context for later.', visibility: 'operator_only' },
+      });
+      expect(noteResponse.statusCode).toBe(201);
+      expect(noteResponse.json()).toMatchObject({
+        messageId: expect.stringContaining('message:') as unknown,
+        traceEventId: expect.any(String) as unknown,
+      });
+
+      const rerunResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/rerun`,
+        payload: { operatorNote: 'Try the narrower approach.', replan: true },
+      });
+      expect(rerunResponse.statusCode).toBe(202);
+      expect(rerunResponse.json()).toMatchObject({
+        status: 'queued',
+      });
+
+      const retryResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/tasks/${taskId}/retry`,
+        payload: {},
+      });
+      expect(retryResponse.statusCode).toBe(409);
+      expect(retryResponse.json()).toMatchObject({
+        error: { code: 'CONFLICT' },
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 400 for invalid operator route ids and bodies', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const invalidIdResponse = await app.inject({
+        method: 'POST',
+        url: '/v1/runs/not-a-ulid/pause',
+        payload: {},
+      });
+      expect(invalidIdResponse.statusCode).toBe(400);
+
+      const { runId } = await createSubmittedRun(app);
+      const invalidBodyResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/notes`,
+        payload: { note: '' },
+      });
+      expect(invalidBodyResponse.statusCode).toBe(400);
+
+      const missingBodyResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/cancel`,
+      });
+      expect(missingBodyResponse.statusCode).toBe(400);
+
+      const malformedResumeBodyResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/resume`,
+        payload: [],
+      });
+      expect(malformedResumeBodyResponse.statusCode).toBe(400);
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 404 for missing operator route resources', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/v1/runs/01HZZZZZZZZZZZZZZZZZZZZZZ9/pause',
+        payload: {},
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toMatchObject({
+        error: { code: 'NOT_FOUND' },
       });
     } finally {
       await app.close();

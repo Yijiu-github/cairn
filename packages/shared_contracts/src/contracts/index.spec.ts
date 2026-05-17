@@ -72,6 +72,7 @@ describe('runContract', () => {
     const expected = [
       'listRuns',
       'getRun',
+      'getPlanningOutput',
       'startRun',
       'listTasks',
       'getTask',
@@ -93,6 +94,11 @@ describe('runContract', () => {
 
   it('listTraceEvents path is the replay-source endpoint', () => {
     expect(runContract.listTraceEvents.path).toBe('/v1/runs/:runId/trace');
+  });
+
+  it('getPlanningOutput path is the run planning output endpoint', () => {
+    expect(runContract.getPlanningOutput.method).toBe('GET');
+    expect(runContract.getPlanningOutput.path).toBe('/v1/runs/:runId/planning-output');
   });
 });
 

@@ -5,12 +5,16 @@ import { VALID_ULIDS } from '../__fixtures__/valid-ulids.js';
 
 import { RunEvent, safeParseRunEvent } from './run-events.js';
 
+import type { PlanningOutputId } from '../schemas/ids.js';
+
 const baseEnvelope = {
   runId: VALID_ULIDS.orchestrationRun,
   traceId: VALID_ULIDS.traceId,
   at: '2026-05-14T01:00:00.000Z',
   seq: 0,
 };
+
+const validPlanningOutputId = '01HZZZZZZZZZZZZZZZZZZZZZY0';
 
 const samples = {
   'run.status_changed': {
@@ -21,7 +25,7 @@ const samples = {
   'run.planner_output': {
     ...baseEnvelope,
     type: 'run.planner_output',
-    plannerOutputRef: VALID_ULIDS.artifact,
+    plannerOutputRef: validPlanningOutputId,
   },
   'run.synthesis_output': {
     ...baseEnvelope,
@@ -122,6 +126,16 @@ describe('RunEvent discriminated union', () => {
       console.error(result.error.format());
     }
     expect(result.success).toBe(true);
+  });
+
+  it('types run.planner_output plannerOutputRef as PlanningOutputId', () => {
+    const result = RunEvent.parse(samples['run.planner_output']);
+    if (result.type !== 'run.planner_output') {
+      throw new Error('expected planner output event');
+    }
+
+    const plannerOutputRef: PlanningOutputId = result.plannerOutputRef;
+    expect(plannerOutputRef).toBe(validPlanningOutputId);
   });
 
   it('rejects unknown event types', () => {

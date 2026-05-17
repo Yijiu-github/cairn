@@ -120,6 +120,29 @@ export interface PreviewRunDetail {
   artifacts: readonly PreviewArtifact[];
 }
 
+export interface PreviewPlanningAction {
+  id: string;
+  title: string;
+  intent: string;
+  status: 'ready' | 'blocked' | 'running' | 'completed';
+  dependsOn: readonly string[];
+}
+
+export interface PreviewPlanningPrecondition {
+  label: string;
+  status: 'satisfied' | 'pending' | 'failed';
+  detail: string;
+}
+
+export interface PreviewPlanningOutput {
+  id: string;
+  status: 'pending' | 'ready' | 'blocked' | 'failed';
+  summary: string;
+  blockedReason?: string;
+  preconditions: readonly PreviewPlanningPrecondition[];
+  actions: readonly PreviewPlanningAction[];
+}
+
 export interface PreviewCostSummary {
   costLabel: string;
   latencyLabel: string;

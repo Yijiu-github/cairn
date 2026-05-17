@@ -10,6 +10,8 @@ import type {
 import type {
   AgentRun,
   AgentRunId,
+  Artifact,
+  ArtifactId,
   CodeIndexFile,
   CodeIndexFileId,
   CodeIndexSnapshot,
@@ -18,6 +20,8 @@ import type {
   ContextPackManifest,
   OrchestrationRun,
   OrchestrationRunId,
+  PlanningOutput,
+  PlanningOutputId,
   SourceRoot,
   SourceRootId,
   Task,
@@ -28,9 +32,12 @@ import type {
 
 export class InMemoryApplicationRepository implements ApplicationRepository {
   private readonly agentRuns = new Map<AgentRunId, AgentRun>();
+  private readonly artifacts = new Map<ArtifactId, Artifact>();
   private readonly codeIndexFiles = new Map<CodeIndexFileId, CodeIndexFile>();
   private readonly codeIndexSnapshots = new Map<CodeIndexSnapshotId, CodeIndexSnapshot>();
   private readonly contextPacks = new Map<ContextPackId, ContextPackManifest>();
+  private readonly planningOutputs = new Map<PlanningOutputId, PlanningOutput>();
+  private readonly planningOutputsByRun = new Map<OrchestrationRunId, PlanningOutputId>();
   private readonly runs = new Map<OrchestrationRunId, OrchestrationRun>();
   private readonly sourceRoots = new Map<SourceRootId, SourceRoot>();
   private readonly tasks = new Map<TaskId, Task>();
@@ -68,8 +75,43 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
     );
   }
 
+  listArtifactsByRun(orchestrationRunId: OrchestrationRunId): Promise<Artifact[]> {
+    return Promise.resolve(
+      [...this.artifacts.values()].filter(
+        (artifact) => artifact.orchestrationRunId === orchestrationRunId,
+      ),
+    );
+  }
+
+  getArtifact(artifactId: ArtifactId): Promise<Artifact | undefined> {
+    return Promise.resolve(this.artifacts.get(artifactId));
+  }
+
+  listTraceEventsByRun(orchestrationRunId: OrchestrationRunId): Promise<TraceEvent[]> {
+    return Promise.resolve(
+      this.traceEvents
+        .filter((event) => event.orchestrationRunId === orchestrationRunId)
+        .toSorted((left, right) => left.createdAt.localeCompare(right.createdAt)),
+    );
+  }
+
   createAgentRun(agentRun: AgentRun): Promise<void> {
     this.agentRuns.set(agentRun.runId, agentRun);
+    return Promise.resolve();
+  }
+
+  createArtifact(artifact: Artifact): Promise<void> {
+    this.artifacts.set(artifact.artifactId, artifact);
+    return Promise.resolve();
+  }
+
+  createPlanningOutput(output: PlanningOutput): Promise<void> {
+    const previousPlanningOutputId = this.planningOutputsByRun.get(output.orchestrationRunId);
+    if (previousPlanningOutputId !== undefined) {
+      this.planningOutputs.delete(previousPlanningOutputId);
+    }
+    this.planningOutputs.set(output.planningOutputId, output);
+    this.planningOutputsByRun.set(output.orchestrationRunId, output.planningOutputId);
     return Promise.resolve();
   }
 
@@ -85,6 +127,33 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
 
   updateAgentRun(agentRun: AgentRun): Promise<void> {
     this.agentRuns.set(agentRun.runId, agentRun);
+    return Promise.resolve();
+  }
+
+  getPlanningOutput(planningOutputId: PlanningOutputId): Promise<PlanningOutput | undefined> {
+    return Promise.resolve(this.planningOutputs.get(planningOutputId));
+  }
+
+  getPlanningOutputByRun(
+    orchestrationRunId: OrchestrationRunId,
+  ): Promise<PlanningOutput | undefined> {
+    return Promise.resolve(
+      [...this.planningOutputs.values()].find(
+        (planningOutput) => planningOutput.orchestrationRunId === orchestrationRunId,
+      ),
+    );
+  }
+
+  updatePlanningOutput(output: PlanningOutput): Promise<void> {
+    const previousPlanningOutputId = this.planningOutputsByRun.get(output.orchestrationRunId);
+    if (
+      previousPlanningOutputId !== undefined &&
+      previousPlanningOutputId !== output.planningOutputId
+    ) {
+      this.planningOutputs.delete(previousPlanningOutputId);
+    }
+    this.planningOutputs.set(output.planningOutputId, output);
+    this.planningOutputsByRun.set(output.orchestrationRunId, output.planningOutputId);
     return Promise.resolve();
   }
 

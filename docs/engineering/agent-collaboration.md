@@ -90,60 +90,11 @@ ADR 规则：
 
 ## 6. Code Review Quality Gate
 
-提交或请求 review 前，按以下顺序自查：
-
-1. **正确性**：实现是否覆盖真实需求？边界、空值、重复提交、权限、状态不匹配是否处理？
-2. **契约一致性**：schema、contract、service、storage、测试是否同步？
-3. **架构边界**：是否保持依赖方向？是否把业务逻辑塞进 bridge、route 或 adapter？
-4. **安全与隐私**：是否泄露 secret、源码内容、业务 payload、真实本地路径？
-5. **测试证据**：是否跑了与改动范围匹配的 typecheck、lint、test、docs lint 或 E2E？
-6. **文档证据**：重大更新是否同步设计文档、ADR、README、ops 或 changelog？
-7. **协作风险**：是否碰了他人正在改的 UI / 大分支 / 角色边界？是否需要先沟通？
-
-Review 输出优先列问题，再给总结。没有发现问题时，也要说明剩余风险或未覆盖测试。
+提交或请求 review 前，先按 [`review-gates.md`](./review-gates.md) 给 diff 做风险分级，并输出 risk、changed surfaces、required verification、docs updated、findings 与 residual risk。
 
 ## 7. Review Risk Gate
 
-每次提交前先给 diff 做风险分类。这个 gate 未来可以成为海棠 QA 的固定检查入口。
-
-### 7.1 风险分级
-
-| 等级    | 典型 diff                                                       | 最低验证要求                                       |
-| ------- | --------------------------------------------------------------- | -------------------------------------------------- |
-| Low     | 文档、注释、非行为性测试说明、README 索引                       | `pnpm run docs:lint`、`git diff --check`           |
-| Medium  | 单包内部逻辑、局部 API 调用、UI 非关键路径                      | 相关包 `typecheck` / `lint` / `test` + diff check  |
-| High    | schema、API、迁移、状态机、runtime、storage、安全边界、跨包流程 | `pnpm run check` + 相关包测试 + 设计/ADR/CHANGELOG |
-| Release | 签名、安装器、更新、数据迁移、隐私/遥测、远程部署               | High 要求 + release playbook / 手动回滚说明        |
-
-风险取最高项，不按文件数量平均。例如只改一行 migration 也属于 High。
-
-### 7.2 变更提示清单
-
-出现以下任一项时，review 必须显式说明：
-
-- **Schema / DB**：新增字段、枚举、索引、迁移、默认值、兼容旧数据策略。
-- **API / Contract**：请求/响应字段、错误码、状态码、WS event、runtime adapter 接口变化。
-- **State Machine**：状态、转移、终态不变量、retry/rerun/replan 语义变化。
-- **Security / Privacy**：secret、token、文件系统访问、loopback auth、诊断导出、遥测 payload。
-- **Artifact / Trace**：大 payload、源码片段、路径、日志、保留/导出策略。
-- **Docs / ADR**：产品范围、设计、契约、安装、排错、发布、CHANGELOG 是否同步。
-- **UI / Desktop Bridge**：是否绕过 Workspace Core，是否引入桌面专属业务语义。
-- **Dependency / Tooling**：新依赖、原生模块、Node 版本、CI 命令、构建缓存变化。
-
-### 7.3 Review 输出模板
-
-```text
-Risk: Low | Medium | High | Release
-Changed surfaces: schema/API/storage/runtime/security/docs/UI/...
-Required verification run:
-- ...
-Docs updated:
-- ...
-Residual risk:
-- ...
-```
-
-如果 review 发现问题，按严重程度列 findings；如果没有发现问题，也要保留 `Residual risk`。
+工程 review gate 的权威规则已迁移到 [`review-gates.md`](./review-gates.md)。本文件只保留 AI 协作入口与上下文工程提示，避免 gate 规则在多个文档中分叉。
 
 ## 8. Frontend Gate
 

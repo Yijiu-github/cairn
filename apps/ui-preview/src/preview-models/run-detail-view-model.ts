@@ -4,6 +4,7 @@ import {
   runDetailAttributionItems,
   runDetailCostMetrics,
   runDetailEvidenceItems,
+  runDetailPlanningOutput,
   runDetailRuntimeMetrics,
   runDetailTasks,
 } from '../preview-data/run-detail-data';
@@ -13,6 +14,7 @@ import type {
   PreviewArtifact,
   PreviewCostSummary,
   PreviewMetric,
+  PreviewPlanningOutput,
   PreviewProtectedAction,
   PreviewRunDetail,
   PreviewRuntimeSummary,
@@ -25,6 +27,7 @@ export interface RunDetailViewModel {
   cost: PreviewCostSummary;
   attribution: readonly PreviewMetric[];
   protectedAction: PreviewProtectedAction;
+  planningOutput: PreviewPlanningOutput;
 }
 
 const runArtifacts: readonly PreviewArtifact[] = runDetailArtifacts.map((artifact) => ({
@@ -65,4 +68,5 @@ export const runDetailViewModel: RunDetailViewModel = {
     impact: '会停止当前运行，但保留已生成的预览文件和证据链记录。',
     triggerLabel: '取消运行',
   },
+  planningOutput: runDetailPlanningOutput,
 };

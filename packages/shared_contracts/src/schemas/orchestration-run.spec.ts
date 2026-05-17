@@ -25,6 +25,8 @@ const fullRun = {
   updatedAt: '2026-05-14T01:00:00.000Z',
 };
 
+const validPlanningOutputId = '01HZZZZZZZZZZZZZZZZZZZZZY0';
+
 describe('OrchestrationRunStatus enum', () => {
   it('contains the 9 documented statuses', () => {
     const expected = [
@@ -87,6 +89,15 @@ describe('OrchestrationRun', () => {
 
   it('allows optional ref / timestamp / error fields to be omitted', () => {
     expect(OrchestrationRun.safeParse({ ...fullRun }).success).toBe(true);
+  });
+
+  it('accepts plannerOutputRef as a PlanningOutputId', () => {
+    expect(
+      OrchestrationRun.safeParse({
+        ...fullRun,
+        plannerOutputRef: validPlanningOutputId,
+      }).success,
+    ).toBe(true);
   });
 
   it('rejects when required field is missing', () => {

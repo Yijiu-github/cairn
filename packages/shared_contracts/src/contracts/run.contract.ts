@@ -26,6 +26,7 @@ import {
   OrchestrationRunStatus,
   ExecutionMode,
 } from '../schemas/orchestration-run.js';
+import { PlanningOutput } from '../schemas/planning-output.js';
 import { Task, TaskKind, TaskStatus } from '../schemas/task.js';
 import { TraceEvent } from '../schemas/trace-event.js';
 
@@ -97,6 +98,17 @@ export const runContract = c.router(
       summary: 'Get a single orchestration run',
       responses: {
         200: OrchestrationRun,
+        ...commonErrorResponses,
+      },
+    },
+
+    getPlanningOutput: {
+      method: 'GET',
+      path: '/runs/:runId/planning-output',
+      pathParams: z.object({ runId: OrchestrationRunId }),
+      summary: 'Get the PlanningOutput attached to a run',
+      responses: {
+        200: PlanningOutput,
         ...commonErrorResponses,
       },
     },

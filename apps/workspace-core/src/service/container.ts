@@ -2,7 +2,11 @@
 
 import { ulid } from 'ulid';
 
-import { CodeContextService, OrchestrationRunService } from '@cairn/application';
+import {
+  CodeContextService,
+  OrchestrationRunService,
+  PlanningOutputService,
+} from '@cairn/application';
 import { InMemoryApplicationRepository } from '@cairn/application/testing';
 import { EventId, WorkspaceId } from '@cairn/shared-contracts/schemas';
 import { openSqliteStorage } from '@cairn/storage/sqlite';
@@ -24,6 +28,7 @@ import type {
   CodeIndexSnapshotId,
   ContextPackId,
   OrchestrationRunId,
+  PlanningOutputId,
   SourceRootId,
   TaskId,
   TraceEventId,
@@ -32,6 +37,7 @@ import type {
 
 export interface WorkspaceCoreContainer {
   codeContext: CodeContextService;
+  planningOutputs: PlanningOutputService;
   orchestrationRuns: OrchestrationRunService;
   repository: ApplicationRepository;
   runtimeGateway: RuntimeGatewayPort;
@@ -43,6 +49,7 @@ export interface CreateDefaultWorkspaceCoreContainerOptions {
   bootstrapWorkspaceId?: string;
   bootstrapEventId?: string;
   codeContextScanner?: CodeContextScannerPort;
+  runtimeGateway?: RuntimeGatewayPort;
 }
 
 const createUlidFactory = (): ApplicationIdFactory & CodeContextIdFactory => ({
@@ -51,6 +58,7 @@ const createUlidFactory = (): ApplicationIdFactory & CodeContextIdFactory => ({
   codeIndexSnapshotId: () => ulid() as CodeIndexSnapshotId,
   contextPackId: () => ulid() as ContextPackId,
   orchestrationRunId: () => ulid() as OrchestrationRunId,
+  planningOutputId: () => ulid() as PlanningOutputId,
   sourceRootId: () => ulid() as SourceRootId,
   taskId: () => ulid() as TaskId,
   traceEventId: () => ulid() as TraceEventId,
@@ -76,6 +84,11 @@ export const createWorkspaceCoreContainer = (
       repository,
       scanner,
     }),
+    planningOutputs: new PlanningOutputService({
+      clock,
+      ids,
+      repository,
+    }),
     orchestrationRuns: new OrchestrationRunService({
       clock,
       ids,
@@ -87,6 +100,17 @@ export const createWorkspaceCoreContainer = (
 
 export const createInMemoryWorkspaceCoreContainer = (): WorkspaceCoreContainer =>
   createWorkspaceCoreContainer(new InMemoryApplicationRepository(), new MockRuntimeGatewayPort());
+
+export const createInMemoryWorkspaceCoreContainerWithRuntime = (
+  runtimeGateway: RuntimeGatewayPort,
+  scanner?: CodeContextScannerPort,
+): WorkspaceCoreContainer =>
+  createWorkspaceCoreContainer(
+    new InMemoryApplicationRepository(),
+    runtimeGateway,
+    undefined,
+    scanner,
+  );
 
 export const createInMemoryWorkspaceCoreContainerWithScanner = (
   scanner: CodeContextScannerPort,
@@ -102,6 +126,13 @@ export const createDefaultWorkspaceCoreContainer = (
   options: CreateDefaultWorkspaceCoreContainerOptions = {},
 ): WorkspaceCoreContainer => {
   if (options.databasePath === undefined) {
+    if (options.runtimeGateway !== undefined) {
+      return createInMemoryWorkspaceCoreContainerWithRuntime(
+        options.runtimeGateway,
+        options.codeContextScanner,
+      );
+    }
+
     if (options.codeContextScanner === undefined) {
       return createInMemoryWorkspaceCoreContainer();
     }
@@ -119,7 +150,7 @@ export const createDefaultWorkspaceCoreContainer = (
 
   return createWorkspaceCoreContainer(
     repository,
-    new MockRuntimeGatewayPort(),
+    options.runtimeGateway ?? new MockRuntimeGatewayPort(),
     () => {
       storage.close();
     },

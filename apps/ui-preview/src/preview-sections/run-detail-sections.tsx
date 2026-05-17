@@ -58,6 +58,72 @@ export function RunDetailHeroSection({ onProtectedAction }: RunDetailHeroSection
   );
 }
 
+export function RunPlanningOutputSection() {
+  const planningOutput = runDetailViewModel.planningOutput;
+
+  return (
+    <section className="preview-section" aria-labelledby="planning-output-heading">
+      <div className="section-heading split-heading">
+        <div>
+          <div className="section-kicker">Planning Output</div>
+          <h2 id="planning-output-heading">规划结果</h2>
+          <p>展示 Goal Planner 产出的 summary、阻塞原因、前置条件和 action tree。</p>
+        </div>
+        <StatusBadge label={planningOutput.status} tone="warning" />
+      </div>
+
+      <Card className="planning-output-card">
+        <CardHeader>
+          <CardTitle>{planningOutput.id}</CardTitle>
+        </CardHeader>
+        <CardContent className="planning-output-content">
+          <p className="planning-summary">{planningOutput.summary}</p>
+
+          {planningOutput.blockedReason === undefined ? undefined : (
+            <InlineAlert tone="warning">{planningOutput.blockedReason}</InlineAlert>
+          )}
+
+          <div className="planning-columns">
+            <div className="planning-column">
+              <h3>Preconditions</h3>
+              <div className="planning-list">
+                {planningOutput.preconditions.map((precondition) => (
+                  <div className="planning-list-item" key={precondition.label}>
+                    <div>
+                      <strong>{precondition.label}</strong>
+                      <p>{precondition.detail}</p>
+                    </div>
+                    <StatusBadge label={precondition.status} tone="neutral" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="planning-column">
+              <h3>Action Tree</h3>
+              <div className="planning-list">
+                {planningOutput.actions.map((action) => (
+                  <div className="planning-list-item" key={action.id}>
+                    <div>
+                      <strong>{action.title}</strong>
+                      <p>{action.intent}</p>
+                      <span>
+                        depends_on:{' '}
+                        {action.dependsOn.length === 0 ? 'none' : action.dependsOn.join(', ')}
+                      </span>
+                    </div>
+                    <StatusBadge label={action.status} tone="info" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
 export function RunTaskTreeSection() {
   return (
     <section className="preview-section" aria-labelledby="run-task-heading">
