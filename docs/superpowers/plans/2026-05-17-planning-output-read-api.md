@@ -49,7 +49,7 @@ Modify these files:
 - Modify: `packages/shared_contracts/src/contracts/run.contract.ts`
 - Modify: `packages/shared_contracts/src/contracts/index.spec.ts`
 
-- [ ] **Step 1: Import PlanningOutput**
+- [x] **Step 1: Import PlanningOutput**
 
 In `packages/shared_contracts/src/contracts/run.contract.ts`, add:
 
@@ -59,7 +59,7 @@ import { PlanningOutput } from '../schemas/planning-output.js';
 
 near the other schema imports.
 
-- [ ] **Step 2: Add contract operation**
+- [x] **Step 2: Add contract operation**
 
 In `runContract`, add this after `getRun` and before `startRun`:
 
@@ -76,7 +76,7 @@ In `runContract`, add this after `getRun` and before `startRun`:
     },
 ```
 
-- [ ] **Step 3: Update contract tests**
+- [x] **Step 3: Update contract tests**
 
 In `packages/shared_contracts/src/contracts/index.spec.ts`, add `'getPlanningOutput'` to the `expected` array in `runContract exposes the full read path set`.
 
@@ -89,7 +89,7 @@ it('getPlanningOutput path is the run planning output endpoint', () => {
 });
 ```
 
-- [ ] **Step 4: Verify contracts**
+- [x] **Step 4: Verify contracts**
 
 Run:
 
@@ -100,7 +100,7 @@ pnpm --filter @cairn/shared-contracts typecheck
 
 Expected: both commands exit `0`.
 
-- [ ] **Step 5: Commit contract**
+- [x] **Step 5: Commit contract**
 
 Run:
 
@@ -118,7 +118,7 @@ Expected: commit succeeds.
 - Modify: `apps/workspace-core/src/service/app.ts`
 - Modify: `apps/workspace-core/src/service/app.spec.ts`
 
-- [ ] **Step 1: Add route tests**
+- [x] **Step 1: Add route tests**
 
 In `apps/workspace-core/src/service/app.spec.ts`, add a test after `creates and reads a single-worker run`:
 
@@ -235,7 +235,7 @@ it('returns 400 for invalid PlanningOutput route run ids', async () => {
 });
 ```
 
-- [ ] **Step 2: Run route test and verify failure**
+- [x] **Step 2: Run route test and verify failure**
 
 Run:
 
@@ -245,7 +245,7 @@ pnpm --filter @cairn/workspace-core test -- app.spec.ts
 
 Expected: fail because route is not implemented yet.
 
-- [ ] **Step 3: Implement route**
+- [x] **Step 3: Implement route**
 
 In `apps/workspace-core/src/service/app.ts`, add this after `GET /v1/runs/:runId` and before `GET /v1/runs/:runId/tasks`:
 
@@ -270,7 +270,7 @@ app.get('/v1/runs/:runId/planning-output', async (request, reply) => {
 });
 ```
 
-- [ ] **Step 4: Verify workspace-core**
+- [x] **Step 4: Verify workspace-core**
 
 Run:
 
@@ -281,7 +281,7 @@ pnpm --filter @cairn/workspace-core typecheck
 
 Expected: both commands exit `0`.
 
-- [ ] **Step 5: Commit route**
+- [x] **Step 5: Commit route**
 
 Run:
 
@@ -298,7 +298,7 @@ Expected: commit succeeds.
 
 - Modify: `CHANGELOG.md`
 
-- [ ] **Step 1: Update changelog**
+- [x] **Step 1: Update changelog**
 
 Under `[Unreleased]` → `### Added`, add:
 
@@ -306,7 +306,7 @@ Under `[Unreleased]` → `### Added`, add:
 - **Planning Output API**：新增 `GET /v1/runs/:runId/planning-output` 只读接口，供 UI / Desktop Shell 查看现有 PlanningOutput。
 ```
 
-- [ ] **Step 2: Run focused verification**
+- [x] **Step 2: Run focused verification**
 
 Run:
 
@@ -322,7 +322,7 @@ git diff --check
 
 Expected: all commands exit `0`.
 
-- [ ] **Step 3: Commit changelog and plan**
+- [x] **Step 3: Commit changelog and plan**
 
 Run:
 

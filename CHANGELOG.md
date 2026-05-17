@@ -53,6 +53,7 @@
 - 新增分支管理设计文档，明确 `main` / `develop` / agent 专项分支 / release / hotfix 的治理边界
 - Orchestration / Code Context 设计补充 Goal Planner 参考：action tree、preconditions、blocked reason 与 replan reason
 - **Planning Output Model**：新增独立 PlanningOutput schema、SQLite 持久化与 application planning lifecycle，覆盖 action tree、preconditions、blocked reason、replan reason 与 TraceEvent 镜像。
+- **Planning Output API**：新增 `GET /v1/runs/:runId/planning-output` 只读接口，供 UI / Desktop Shell 查看现有 PlanningOutput。
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
 
 ### Changed
