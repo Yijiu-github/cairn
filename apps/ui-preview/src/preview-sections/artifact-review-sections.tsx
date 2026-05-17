@@ -30,6 +30,15 @@ export function ArtifactReviewHeroSection({ onProtectedAction }: ArtifactReviewH
     <section className="artifact-review-hero page-hero" aria-label="产物审阅摘要">
       <div className="run-title-block">
         <div className="section-kicker">Artifact Review</div>
+        <nav className="preview-breadcrumb" aria-label="页面路径">
+          <span>Desktop Shell</span>
+          <span aria-hidden="true">/</span>
+          <span>Home / Inbox</span>
+          <span aria-hidden="true">/</span>
+          <span>Run Detail</span>
+          <span aria-hidden="true">/</span>
+          <strong>Artifact Review</strong>
+        </nav>
         <div className="run-title-row">
           <h2>{artifactReviewViewModel.hero.title}</h2>
           {artifactReviewViewModel.hero.badges.map((badge) => (
@@ -59,7 +68,7 @@ export function ArtifactOverviewSection() {
         <div>
           <div className="section-kicker">Overview</div>
           <h2 id="artifact-overview-heading">产物概览</h2>
-          <p>把审阅状态、路径、敏感性和验证结论放在同一组卡片里。</p>
+          <p>把审阅状态、路径、敏感性和验证结论放在同一组卡片里；默认隐藏本地路径。</p>
         </div>
         <Button variant="secondary">打开源文件</Button>
       </div>
