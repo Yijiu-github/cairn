@@ -22,7 +22,7 @@ V0.1.0 中"回放"被反复提到，但**没有明确定义**。本文先把语�
 - ❌ 重新调用 runtime
 - ❌ 触发副作用
 
-如果你想"重新执行"，请用 `retry`（task 级）、`rerun`（新 run）或 `replan`（新 run 含重新规划）。三者区别见 [`state-machines.md`](state-machines.md#4-retry--rerun--replan-语义极其重要不可混用)。
+如果你想"重新执行"，请用 `retry`（task 级）、`rerun`（新 run）或 `replan`（新 run 含重新规划）。三者区别见 [`state-machines.md`](state-machines.md#4-retry-rerun-replan-语义极其重要不可混用)。
 
 ### 2.1 Replay 的输入
 
@@ -37,7 +37,19 @@ V0.1.0 中"回放"被反复提到，但**没有明确定义**。本文先把语�
 - 关键产物预览
 - 失败归因高亮（从 TraceEvent 的 `level=error` 推导）
 
-### 2.3 Replay 与实时观察的关系
+### 2.3 用户可见规则
+
+UI 文案必须避免把 replay 描述成“重新执行”。推荐文案：
+
+> Replay 会从已保存的事件和产物重建当时的执行视图，不会再次调用 runtime，也不会修改文件。
+
+如果用户想再次执行：
+
+- 同一 run 内失败节点 → `retry`。
+- 基于同一原始请求重开 → `rerun`。
+- 需要重新规划任务图 → `replan`。
+
+### 2.4 Replay 与实时观察的关系
 
 实时观察 = 接 WebSocket 流，看 TraceEvent 实时到达  
 Replay = 不接流，从 DB 读历史 TraceEvent 渲染
@@ -79,7 +91,16 @@ Replay = 不接流，从 DB 读历史 TraceEvent 渲染
    - 不强制干预；scheduler tick 自动按状态机推进
 5. 启动 scheduler tick 主循环
 
-### 3.4 部分失败处理
+### 3.4 丢失执行的产品行为
+
+当 AgentRun 因 lease 超时转为 `lost` 时：
+
+1. 必须写 `TraceEvent(event_type=agent_run.lost)`。
+2. 必须生成或刷新 Handoff Queue projection：`reason=runtime_issue` 或 `failed_task`。
+3. UI 默认推荐动作是 `Retry` 或 `Open diagnostics`，不得自动重放 runtime。
+4. 如果错误 `retryable=false`，主操作必须改为 `Inspect` / `Configure runtime`，不能诱导用户重试。
+
+### 3.5 部分失败处理
 
 OrchestrationRun 完成时：
 
@@ -89,7 +110,18 @@ OrchestrationRun 完成时：
 
 判定关键路径的规则由 planner 输出标注（待 spike）。
 
-## 4. 幂等性要求
+## 4. 恢复后的操作边界
+
+| 操作     | 允许条件                                | 必须新建对象                            | 用户提示                 |
+| -------- | --------------------------------------- | --------------------------------------- | ------------------------ |
+| `retry`  | Task / AgentRun 失败且 `retryable=true` | 新 AgentRun attempt                     | “重试当前失败节点”       |
+| `rerun`  | 任意终态 OrchestrationRun               | 新 OrchestrationRun                     | “基于同一请求重新跑一轮” |
+| `replan` | 用户需要改变范围 / 策略 / task graph    | 新 OrchestrationRun + 新 planner output | “重新规划并开始新一轮”   |
+| `replay` | 有 TraceEvent / Artifact                | 不新建执行对象                          | “只回放历史视图”         |
+
+所有操作必须写 TraceEvent；终态对象不可被复活。
+
+## 5. 幂等性要求
 
 为支持 retry / 崩溃恢复，所有"对外提交"操作必须**幂等**：
 
@@ -98,9 +130,9 @@ OrchestrationRun 完成时：
 - Runtime Adapter 在重复 key 时应当返回前一次结果而非创建新执行
 - 若 runtime 不支持幂等，由 Runtime Gateway 在本端做去重缓存
 
-## 5. 数据一致性
+## 6. 数据一致性
 
-### 5.1 事务边界
+### 6.1 事务边界
 
 DB-driven scheduler（ADR-0006）下，所有状态转移必须在**单个事务内**完成：
 
@@ -108,27 +140,27 @@ DB-driven scheduler（ADR-0006）下，所有状态转移必须在**单个事务
 - 更新对象状态
 - 更新关联对象（如 task → ready 同时 dispatched 的 agent_run 提交）
 
-### 5.2 SQLite 与 Postgres 差异
+### 6.2 SQLite 与 Postgres 差异
 
 - SQLite：使用 `BEGIN IMMEDIATE` 防止 writer 饥饿；启用 WAL
 - Postgres：使用 `SELECT ... FOR UPDATE SKIP LOCKED` 拾取任务
 - 两者均必须有**唯一约束**保证不会双重 dispatch（如 `(task_id, attempt)` unique）
 
-## 6. 桌面端电源中断 / 系统休眠
+## 7. 桌面端电源中断 / 系统休眠
 
 - 系统休眠：Electron `powerMonitor` 监听 `suspend` / `resume`
 - 休眠时：scheduler tick 暂停；运行中的 AgentRun 视情况标记
 - 恢复时：触发上面的恢复流程
 - 用户主动退出：scheduler tick 完成当前 tick 后退出；保留所有 DB 状态
 
-## 7. 卸载与数据迁移
+## 8. 卸载与数据迁移
 
 - 卸载时**默认不删除用户数据**（保留 `<userData>/workspaces/`）
 - 提供"完全卸载（含数据）"选项
 - 升级时自动备份当前 schema 版本的数据库文件（保留 N 个版本）
 - 数据库迁移失败时回滚到备份
 
-## 8. 待办
+## 9. 待办
 
 - [ ] Spike：LangGraph JS 中断后能否从 checkpoint 恢复
 - [ ] 决定关键路径判定规则
@@ -137,6 +169,7 @@ DB-driven scheduler（ADR-0006）下，所有状态转移必须在**单个事务
 
 ## 变更历史
 
-| 日期       | 变更                                     |
-| ---------- | ---------------------------------------- |
-| 2026-05-14 | 初版，明确 replay 语义并补充崩溃恢复机制 |
+| 日期       | 变更                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| 2026-05-17 | 补充 replay 用户文案、lost handoff 行为与 retry/rerun/replan 操作边界 |
+| 2026-05-14 | 初版，明确 replay 语义并补充崩溃恢复机制                              |

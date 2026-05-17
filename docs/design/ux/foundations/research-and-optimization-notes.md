@@ -3,6 +3,8 @@
 > 状态：🟡 Draft
 > 最后更新：2026-05-15
 > 范围：Release 1 Personal Desktop Edition 的 UX 设计补强。本文不是视觉稿来源记录；当前 SVG 仍是手写低保真线框，不是 image2 生成图。
+>
+> 产品级调研入口：[`../../../research/agent-workspace-product-patterns-2026-05.md`](../../../research/agent-workspace-product-patterns-2026-05.md)。本文只保留 UX 映射与设计优化说明。
 
 ---
 
@@ -146,4 +148,5 @@ R1 不必做复杂图可视化，但数据结构和 UI 占位要先留好。
 
 | 日期       | 变更                                                                           |
 | ---------- | ------------------------------------------------------------------------------ |
+| 2026-05-17 | 补充指向独立 `docs/research/` 调研区的入口                                     |
 | 2026-05-15 | 初版：调研 agent workspace、observability、human handoff，并提炼到 Cairn R1 UX |

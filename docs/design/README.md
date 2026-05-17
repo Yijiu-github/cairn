@@ -16,6 +16,15 @@
 | `code-context-index.md`          | 本地优先的轻量代码上下文索引、ContextPack 与索引隐私边界                         | 🟡 Draft    |
 | `r1-codex-e2e-artifact-trace.md` | R1 Codex E2E + Artifact / Trace 最小闭环设计                                     | 🟡 Draft    |
 | `ux/`                            | 信息架构、关键流程、屏幕清单                                                     | ⚪ TODO     |
+| `../research/`                   | 外部调研输入；仅作为设计来源，采纳后必须落入本目录或 ADR / contracts             | 🟡 Draft    |
+
+## R1 设计硬规则（由调研提升）
+
+- Artifact 是一等交接物：用户可见产物必须有 provenance、review state、verification refs 与 reuse policy。
+- Inspector 是证据链界面：R1 至少保留 timeline、causality、first failure、cost / latency 四类视角的数据位置。
+- Handoff Queue 是 P0：Home / Inbox 与 Run Header 必须显示“现在需要人类处理什么”。
+- Replay 只重建视图，不重新执行；retry / rerun / replan 不得混用。
+- Runtime Adapter 先声明 Capability Profile；R1 Codex CLI，R2 优先 Generic OpenAI-Compatible Adapter，不做单一第三方反代专属 adapter。
 
 ## 与主稿（V0.1.0）的关系
 

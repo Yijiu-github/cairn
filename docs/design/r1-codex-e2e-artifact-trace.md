@@ -33,7 +33,9 @@ Release 1 已经拍板：桌面本地工作区、Workspace Core、SQLite、本�
 4. Artifact 元数据落 DB，内容落本地 artifact store；TraceEvent 只内嵌小 payload，大 payload 通过 `payloadRef` 指向 Artifact。
 5. Run Detail 页面需要的三组数据都可由 Workspace Core API 提供：状态树、artifact 列表、trace timeline。
 6. Replay 只从 TraceEvent + Artifact 重建视图，不重新执行 runtime。
-7. 无 Codex CLI / 无 OpenAI 凭据环境下，仍可用 mock / fixture adapter 验收同一条状态与持久化链路。
+7. Artifact 必须带 provenance / review / verification / reuse 元数据，避免成为不可审阅的附件。
+8. Run Detail Inspector 至少保留 timeline、causality、first failure、cost / latency 四类视角的数据位置。
+9. 无 Codex CLI / 无 OpenAI 凭据环境下，仍可用 mock / fixture adapter 验收同一条状态与持久化链路。
 
 ### 2.2 暂不做到
 
@@ -62,8 +64,8 @@ Event(user/system input)
 - **OrchestrationRun**：一次完整执行。R1 single-worker 下依然保留 `execution_mode`，不因为简单而绕过 run。
 - **Task**：可调度的子任务。R1 只有一个 ready task，但仍写 `idempotency_key`。
 - **AgentRun**：一次具体 runtime 调用。Task retry 时新增 AgentRun，不覆盖旧 AgentRun。
-- **Artifact**：大内容与可下载内容的唯一载体。
-- **TraceEvent**：回放和排错的时间线输入，不承载大正文。
+- **Artifact**：大内容与可下载内容的唯一载体，也是 review / handoff 的一等交接物。
+- **TraceEvent**：回放和排错的时间线输入，不承载大正文；用于把 failure / artifact 反查到上游原因。
 
 ### 3.2 ID 与引用
 
@@ -196,7 +198,21 @@ Sandbox 与 artifact store 分开：
 
 > 如果某次执行没有 stderr 内容，可以不创建 `codex.stderr.log`，但 trace 中应记录 `stderr_empty=true`。
 
-### 5.3 写入顺序
+### 5.3 Review / Provenance 默认值
+
+R1 创建 artifact 时必须写入这些默认值：
+
+| artifact             | `review_state` | `owner_type` | `reuse_policy`                                | `verification_refs`                  |
+| -------------------- | -------------- | ------------ | --------------------------------------------- | ------------------------------------ |
+| `prompt.md`          | `unreviewed`   | `system`     | `sensitive`                                   | 空                                   |
+| `codex.stdout.jsonl` | `unreviewed`   | `system`     | `run_local`                                   | 空                                   |
+| `codex.stderr.log`   | `unreviewed`   | `system`     | `run_local`                                   | 空                                   |
+| `final-response.md`  | `unreviewed`   | `agent`      | `reusable`（人工接受后）/ `run_local`（默认） | 可指向 test log / manual review note |
+| `error.json`         | `unreviewed`   | `system`     | `run_local`                                   | 空                                   |
+
+`source_input_refs` 至少包含 prompt / context artifact；没有输入 artifact 时，必须记录由 Task brief 生成的 prompt artifact。
+
+### 5.4 写入顺序
 
 1. 写临时文件：`<artifact>.tmp`。
 2. fsync / close 后 rename 到目标文件名。
@@ -204,8 +220,9 @@ Sandbox 与 artifact store 分开：
 4. 插入 Artifact 元数据。
 5. 写 `TraceEvent(event_type=artifact.recorded, payload_inline={ artifact_id, role, kind })`。
 6. 将 artifact id 加入 `Task.artifact_refs`；最终输出同时写 `AgentRun.output_ref` 与 `OrchestrationRun.final_response_ref`。
+7. 为用户可见 artifact 写入 `review_state` / `owner_type` / `source_input_refs` / `verification_refs` / `reuse_policy` 默认值。
 
-### 5.4 ArtifactStorePort 扩展
+### 5.5 ArtifactStorePort 扩展
 
 现有 `ArtifactStorePort.registerRuntimeArtifact()` 只登记 descriptor。R1 E2E 需要补齐内容写入端口：
 
@@ -270,7 +287,20 @@ R1 最小事件集：
 - stdout JSONL、stderr、token 聚合正文、错误详情栈等必须放 Artifact，再用 `payload_ref` 指向。
 - `payload_inline` 禁止放 secret、完整 prompt、完整用户代码片段。
 
-### 6.3 Replay 输入
+### 6.3 Inspector 视角
+
+R1 Inspector 不要求复杂图可视化，但数据与 UI tab 必须能表达四种视角：
+
+| 视角           | 回答的问题                           | 最小数据来源                                               |
+| -------------- | ------------------------------------ | ---------------------------------------------------------- |
+| Timeline       | 发生了什么、顺序如何                 | `TraceEvent.created_at` + `event_type`                     |
+| Causality      | 这个 artifact / failure 从哪里来     | `task_id` / `run_id` / `payload_ref` / `source_input_refs` |
+| First failure  | 第一处 error / timeout / lost 在哪里 | 最早 `level=error` 或终态失败事件                          |
+| Cost & latency | 这次长任务花了多久、重试几次         | AgentRun 时间戳、Task attempt、budget/cost payload         |
+
+未知 TraceEvent 前端必须可降级显示 raw payload，不能让 replay 崩溃。
+
+### 6.4 Replay 输入
 
 Run Detail 的 replay 数据源：
 
@@ -284,18 +314,22 @@ Replay 渲染层只接受 TraceEvent 序列和懒加载 Artifact，不调用 run
 
 ---
 
-## 7. Workspace Core API 最小增量
+## 7. Workspace Core API baseline 与剩余缺口
 
-现有 `run.contract.ts` 已声明 list/get Run、Task、AgentRun、Artifact、TraceEvent。R1 E2E 需要让 workspace-core 实现这些最小读接口：
+现有 `run.contract.ts` 已声明 list/get Run、Task、AgentRun、Artifact、TraceEvent。当前 `develop` 已落地 Workspace Core 的 artifact / trace 只读 baseline，R1 E2E 继续依赖这些接口作为 Run Detail 与 Replay 的数据源：
 
 - `GET /v1/runs/:runId`
 - `GET /v1/runs/:runId/tasks`
 - `GET /v1/tasks/:taskId/agent-runs`
 - `GET /v1/runs/:runId/artifacts`
 - `GET /v1/artifacts/:artifactId`
+- `GET /v1/artifacts/:artifactId/payload`
 - `GET /v1/runs/:runId/trace`
+- `GET /v1/workspaces/:workspaceId/handoff-items`（可先由现有对象实时投影，不要求 R1 独立持久化）
 
-并补一个提交 runtime 的实现细节接口，直到 scheduler tick 接管：
+R1 剩余重点不再是补齐 artifact / trace 读 API，而是把这些已落地 endpoint 接到真实 Codex runtime drain 与 Run Detail / Replay 消费路径上。
+
+当前还保留一个提交 runtime 的实现细节接口，直到 scheduler tick 接管：
 
 ```text
 POST /v1/tasks/:taskId/agent-runs
@@ -436,26 +470,28 @@ R1 至少做到：
 
 ## 12. 落地顺序建议
 
-1. **补 ArtifactStorePort 内容写入与 SQLite 实现**：先支持 text/log/json 三类。
-2. **补 ApplicationRepository 查询接口**：list artifacts、get artifact、list trace events。
-3. **补 Workspace Core 读 API**：artifact / trace 两类 endpoint。
-4. **完成 CodexRuntimeAdapter**：把 `codex-process.ts` 接入 RuntimeAdapter 接口。
-5. **补 RuntimeGatewayPort stream 消费循环**：submit 后持续把 adapter events 交给 Application service。
-6. **补 fixture E2E 集成测试**：不依赖真实 Codex。
-7. **补真实 Codex smoke 文档**：作为手动验收。
-8. **Run Detail UI 再消费同一组 API**：不要让 UI 直接读文件系统。
+当前 `develop` 已完成 ArtifactStorePort / SQLite 内容写入、ApplicationRepository artifact / trace 查询、Workspace Core Artifact / Trace read API 与 Runtime Artifact/Trace demo loop baseline。后续 R1 收口顺序建议调整为：
+
+1. **完成 CodexRuntimeAdapter 集成**：把 `codex-process.ts` 接入 RuntimeAdapter 接口，并保留 mock / fixture 路径。
+2. **收紧 RuntimeGatewayPort stream 消费循环**：submit 后持续把 adapter events 交给 Application service，覆盖取消 / drain / 非零退出边界。
+3. **补 fixture E2E 集成测试**：不依赖真实 Codex，验证 final response artifact 与 trace replay source。
+4. **补真实 Codex smoke 文档**：作为手动验收，不放进默认 CI。
+5. **Run Detail UI 消费同一组 API**：不要让 UI 直接读文件系统。
+6. **补 handoff projection 与 operator review 文案**：先 projection，不要求 R1 独立持久化。
 
 ---
 
 ## 13. 开放问题
 
 - R1 是否正式引入 `AgentRun.status=lost`，还是先用 failed + `RUNTIME_LOST` 表达？
+- Handoff Queue 是否在 R1 只做 projection，还是同时落最小 `handoff_items` 表？建议 R1 先 projection。
 - Artifact 内容下载 API 是否放进 R1，还是 R1 UI 只通过 Workspace Core 内部读取？
 - `agent_run.token` 是否需要逐 token trace，还是只保留 final response + progress？建议 R1 不逐 token 入库，避免 SQLite 写放大。
 - `workspace-write` 的授权入口放在 execution profile 还是 operator confirmation？建议 R1 先只做 execution profile 显式配置。
 
 ## 变更历史
 
-| 日期       | 变更                                                |
-| ---------- | --------------------------------------------------- |
-| 2026-05-15 | 初版，定义 R1 Codex E2E + Artifact / Trace 最小闭环 |
+| 日期       | 变更                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------ |
+| 2026-05-17 | 补充 Artifact provenance/review/reuse、Inspector 视角与 Handoff Queue API projection |
+| 2026-05-15 | 初版，定义 R1 Codex E2E + Artifact / Trace 最小闭环                                  |

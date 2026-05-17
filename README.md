@@ -1,6 +1,6 @@
 # Cairn
 
-> 一个本地优先、可自托管的 **Agent 工程控制台**：先服务重度 AI 编程个人开发者，同时为小技术团队保留可观察、可回放、可接管的协作核心。
+> 一个本地优先、可自托管的 **AI 工程工作台 / Agent 工程控制台**：连接 Codex / Claude Code / 本地模型等 runtime，把复杂工程任务放大为可追踪、可回放、可接管、可复用的 run / artifact / trace 系统。
 
 **Cairn** = 登山者沿途堆起的石头路标。每完成一段路，加一颗石头。
 我们用它来比喻这个产品的核心：**复杂任务一步步堆积、过程可见、产物沉淀、长期可回看**。
@@ -9,13 +9,16 @@
 
 ## 这是什么
 
-Cairn 不是又一个聊天 bot，也不是一个 IDE 内的补全 copilot。它是一个：
+Cairn 不是又一个聊天 bot，也不是一个 IDE 内的补全 copilot，更不把自己定位为 Codex、Claude Code 或任何单一 coding agent 的替身。它是一个：
 
-- **本地优先 + 自托管** 的 Agent 工程控制台
+- **本地优先 + 自托管** 的 AI 工程工作台 / Agent 工程控制台
+- 面向 Codex CLI / Claude Code CLI / 本地模型 / 用户自配 runtime 的 **控制面与证据层**
 - 在 **桌面端（Windows / macOS Apple Silicon）** 与 **Web 端** 共享同一套 Workspace Core
 - 支持把复杂工程任务 **规划 → 执行 → 回传 → 回放 → 沉淀**
 - 将 Codex / Claude / 本地模型等 runtime 纳入统一的 run、artifact、trace、operator control 语义
 - 由主 Agent（Supervisor）统筹、worker 角色分工、**人类可随时接管**
+
+Runtime 负责“生成与执行”，Cairn 负责“组织、观察、接管、验证、沉淀与复用”。因此 Cairn 的差异化不在于比 Codex/Claude 更会写代码，而在于让这些能力在真实工程任务中更可控、更可信、更可持续。
 
 适合谁：
 
@@ -31,7 +34,7 @@ Cairn 不试图替代 Codex、Claude Code、Cursor 或 Windsurf 的代码生成�
 
 > **Pre-Release / 工程基线建设阶段**
 
-- ✅ 设计文档 V0.1.0 已定稿（见 [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)）
+- ✅ 设计文档 V0.1.0 已定稿，并补充 runtime 控制面 / 证据层定位语义（见 [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)）
 - ✅ Monorepo 工程基线、共享契约、领域持久化 schema、SQLite storage、Runtime Gateway 与 Application 编排基线已启动
 - ✅ Workspace Core 最小服务骨架已启动：Fastify 入口、健康检查、R1 run/task/agent-run 基础 HTTP 闭环与 mock runtime 验证
 - 🚧 Desktop 已有最小 Electron shell 与静态 UI 壳视图；当前主线仍是 Workspace Core 接入 SQLite repository 与 Codex CLI adapter
@@ -48,6 +51,7 @@ Cairn 不试图替代 Codex、Claude Code、Cursor 或 Windsurf 的代码生成�
 | 了解产品愿景与定位                       | [`docs/product/`](docs/product/)                                         |
 | 看完整的设计主稿                         | [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)         |
 | 看领域模型 / 状态机 / 安全模型等设计细节 | [`docs/design/`](docs/design/)                                           |
+| 看外部调研与产品模式参考                 | [`docs/research/`](docs/research/)                                       |
 | 了解为什么选 Electron / Node / SQLite 等 | [`docs/adr/`](docs/adr/)                                                 |
 | 接入新的 runtime adapter                 | [`docs/contracts/runtime-adapter.md`](docs/contracts/runtime-adapter.md) |
 | 了解仓库结构、代码风格、测试策略         | [`docs/engineering/`](docs/engineering/)                                 |
