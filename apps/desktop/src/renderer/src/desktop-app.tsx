@@ -133,10 +133,7 @@ function HomeView() {
       <section className="content-stack">
         <section className="content-stack" aria-label="Handoff inbox">
           {desktopShellModel.handoffs.map((handoff) => (
-            <HandoffQueueItem
-              key={`${handoff.sourceLabel}-${handoff.title}`}
-              {...handoff}
-            />
+            <HandoffQueueItem key={`${handoff.sourceLabel}-${handoff.title}`} {...handoff} />
           ))}
         </section>
 

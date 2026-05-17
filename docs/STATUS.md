@@ -24,18 +24,18 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 ### 已存在 apps / packages
 
-| 路径                        | 状态      | 当前能力                                                                        |
-| --------------------------- | --------- | ------------------------------------------------------------------------------- |
-| `apps/workspace-core`       | 🟢 可用   | Fastify 最小服务，包含 `/health`、run/task/agent-run 闭环与 code context API    |
-| `apps/ui-preview`           | 🟡 基线   | 静态 UI 组件与产品视图预览应用，可 production build                             |
+| 路径                        | 状态      | 当前能力                                                                         |
+| --------------------------- | --------- | -------------------------------------------------------------------------------- |
+| `apps/workspace-core`       | 🟢 可用   | Fastify 最小服务，包含 `/health`、run/task/agent-run 闭环与 code context API     |
+| `apps/ui-preview`           | 🟡 基线   | 静态 UI 组件与产品视图预览应用，可 production build                              |
 | `apps/desktop`              | 🟡 骨架   | Electron Desktop Shell 静态骨架，包含 main / preload / renderer 与静态 UI 壳视图 |
-| `apps/web`                  | ⚪ 未创建 | Web Shell 尚未启动                                                              |
-| `packages/shared_contracts` | 🟢 可用   | Zod schemas、ts-rest contracts、Run WebSocket events                            |
-| `packages/domain`           | 🟢 可用   | Drizzle SQLite-first schema 与迁移                                              |
-| `packages/storage`          | 🟢 可用   | better-sqlite3 连接封装、PRAGMA 初始化、domain 迁移 runner                      |
-| `packages/runtime_gateway`  | 🟢 可用   | RuntimeAdapter 契约、mock adapter、Codex CLI JSONL / process 基线               |
-| `packages/application`      | 🟢 可用   | OrchestrationRun service、repository ports、CodeContext service                 |
-| `packages/ui`               | 🟡 基线   | 共享 UI tokens、primitives、feedback 与 Cairn 业务组件基线                      |
+| `apps/web`                  | ⚪ 未创建 | Web Shell 尚未启动                                                               |
+| `packages/shared_contracts` | 🟢 可用   | Zod schemas、ts-rest contracts、Run WebSocket events                             |
+| `packages/domain`           | 🟢 可用   | Drizzle SQLite-first schema 与迁移                                               |
+| `packages/storage`          | 🟢 可用   | better-sqlite3 连接封装、PRAGMA 初始化、domain 迁移 runner                       |
+| `packages/runtime_gateway`  | 🟢 可用   | RuntimeAdapter 契约、mock adapter、Codex CLI JSONL / process 基线                |
+| `packages/application`      | 🟢 可用   | OrchestrationRun service、repository ports、CodeContext service                  |
+| `packages/ui`               | 🟡 基线   | 共享 UI tokens、primitives、feedback 与 Cairn 业务组件基线                       |
 
 ### Workspace Core
 
