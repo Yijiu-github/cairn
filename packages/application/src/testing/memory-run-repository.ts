@@ -105,6 +105,11 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
     return Promise.resolve();
   }
 
+  updateArtifact(artifact: Artifact): Promise<void> {
+    this.artifacts.set(artifact.artifactId, artifact);
+    return Promise.resolve();
+  }
+
   createPlanningOutput(output: PlanningOutput): Promise<void> {
     const previousPlanningOutputId = this.planningOutputsByRun.get(output.orchestrationRunId);
     if (previousPlanningOutputId !== undefined) {

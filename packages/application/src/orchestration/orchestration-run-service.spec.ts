@@ -8,6 +8,7 @@ import { InMemoryApplicationRepository } from '../testing/memory-run-repository.
 
 import { OrchestrationRunService } from './orchestration-run-service.js';
 
+import type { ArtifactStorePort, WriteArtifactPayloadInput } from '../ports/artifact-store-port.js';
 import type { RuntimeGatewayPort } from '../ports/runtime-gateway-port.js';
 import type {
   AdapterCancelAck,
@@ -66,10 +67,11 @@ const ids = {
 class RecordingRuntimeGateway implements RuntimeGatewayPort {
   readonly requests: AdapterSubmitRequest[] = [];
   readonly cancelled: { runId: AgentRunId; reason?: string }[] = [];
+  events: AdapterStreamEvent[];
 
   constructor(
     private readonly ack?: AdapterSubmitAck,
-    private readonly events: readonly AdapterStreamEvent[] = [
+    events: AdapterStreamEvent[] = [
       { type: 'queued', at: Date.parse('2026-05-14T01:00:01.000Z') },
       {
         type: 'started',
@@ -82,7 +84,9 @@ class RecordingRuntimeGateway implements RuntimeGatewayPort {
         finalArtifactRef: { artifactId: ids.artifact },
       },
     ],
-  ) {}
+  ) {
+    this.events = events;
+  }
 
   submit(request: AdapterSubmitRequest): Promise<AdapterSubmitAck> {
     this.requests.push(request);
@@ -116,9 +120,11 @@ const createHarness = (
     runIds: OrchestrationRunId[];
     taskIds: TaskId[];
     agentRunIds: AgentRunId[];
+    artifactIds: ArtifactId[];
     traceEventIds: TraceEventId[];
   }> = {},
 ): {
+  artifactStore: RecordingArtifactStore;
   repository: InMemoryApplicationRepository;
   runtimeGateway: RecordingRuntimeGateway;
   service: OrchestrationControlHarnessService;
@@ -127,10 +133,13 @@ const createHarness = (
   const runIds = [...(generatedIds.runIds ?? [ids.run])];
   const taskIds = [...(generatedIds.taskIds ?? [ids.task])];
   const agentRunIds = [...(generatedIds.agentRunIds ?? [ids.agentRun])];
+  const artifactIds = [...(generatedIds.artifactIds ?? [ids.artifact])];
   const traceEventIds = [...(generatedIds.traceEventIds ?? [])];
+  const artifactStore = new RecordingArtifactStore();
   const repository = new InMemoryApplicationRepository();
   const runtimeGateway = new RecordingRuntimeGateway();
   const service = new OrchestrationRunService({
+    artifactStore,
     repository,
     runtimeGateway,
     clock: { now: () => new Date('2026-05-14T01:00:00.000Z') },
@@ -156,6 +165,13 @@ const createHarness = (
         }
         return id;
       },
+      artifactId: () => {
+        const id = artifactIds.shift();
+        if (id === undefined) {
+          throw new Error('No generated artifact id available');
+        }
+        return id;
+      },
       planningOutputId: () => {
         throw new Error('No generated planning output id available');
       },
@@ -169,8 +185,43 @@ const createHarness = (
       },
     },
   }) as OrchestrationControlHarnessService;
-  return { repository, runtimeGateway, service };
+  return { artifactStore, repository, runtimeGateway, service };
 };
+
+class RecordingArtifactStore implements ArtifactStorePort {
+  readonly writes: WriteArtifactPayloadInput[] = [];
+
+  writeText(input: WriteArtifactPayloadInput): Promise<{
+    payloadRef: string;
+    byteLength: number;
+    truncated: boolean;
+  }> {
+    this.writes.push(input);
+    return Promise.resolve({
+      payloadRef: `artifact-payload://${input.workspaceId}/${input.orchestrationRunId}/${input.artifactId}/${input.filename}`,
+      byteLength: new TextEncoder().encode(input.text).byteLength,
+      truncated: false,
+    });
+  }
+
+  readText(payloadRef: string): Promise<{
+    mediaType: 'text/plain' | 'application/json';
+    text: string;
+    truncated: boolean;
+  }> {
+    const write = this.writes.find((candidate) =>
+      payloadRef.endsWith(`/${candidate.artifactId}/${candidate.filename}`),
+    );
+    if (write === undefined) {
+      throw new Error(`Unknown payload ref: ${payloadRef}`);
+    }
+    return Promise.resolve({
+      mediaType: write.mediaType,
+      text: write.text,
+      truncated: false,
+    });
+  }
+}
 
 const createRunAndSubmit = async () => {
   const harness: ReturnType<typeof createHarness> = createHarness();
@@ -302,6 +353,41 @@ describe('OrchestrationRunService', () => {
     });
   });
 
+  it('creates an input artifact before submitting a ready task to runtime', async () => {
+    const { repository, runtimeGateway, service } = createHarness();
+    const { task } = await service.createSingleWorkerRun({
+      workspaceId: ids.workspace,
+      originEventId: ids.event,
+      task: {
+        taskKind: 'edit',
+        title: 'Apply patch',
+        brief: 'Update the target module.',
+      },
+    });
+
+    await service.submitTaskToRuntime({
+      taskId: task.taskId,
+      runtimeType: 'mock',
+      model: 'mock-model',
+      prompt: 'Please update the target module.',
+    });
+
+    const artifacts = await repository.listArtifactsByRun(ids.run);
+    expect(artifacts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          artifactId: ids.artifact,
+          title: 'Runtime input',
+          artifactRole: 'input',
+          kind: 'log',
+          payloadRef: expect.stringMatching(/^artifact-payload:\/\//),
+          sensitivity: 'none',
+        }),
+      ]),
+    );
+    expect(runtimeGateway.requests[0]?.inputs).toEqual([{ artifactId: ids.artifact }]);
+  });
+
   it('drains runtime events into application state', async () => {
     const { repository, service } = await createRunAndSubmit();
 
@@ -321,6 +407,63 @@ describe('OrchestrationRunService', () => {
       status: 'succeeded',
       finalResponseRef: ids.artifact,
     });
+  });
+
+  it('drains runtime output into artifact metadata and trace events', async () => {
+    const { repository, runtimeGateway, service } = createHarness({
+      artifactIds: [
+        '01HZZZZZZZZZZZZZZZZZZZZFIN' as ArtifactId,
+        '01HZZZZZZZZZZZZZZZZZZZZOUT' as ArtifactId,
+      ],
+    });
+    runtimeGateway.events = [
+      { type: 'queued', at: Date.parse('2026-05-14T01:00:01.000Z') },
+      { type: 'started', at: Date.parse('2026-05-14T01:00:02.000Z') },
+      { type: 'token', at: Date.parse('2026-05-14T01:00:02.500Z'), delta: 'hello' },
+      {
+        type: 'succeeded',
+        at: Date.parse('2026-05-14T01:00:03.000Z'),
+        finalArtifactRef: { artifactId: ids.artifact },
+      },
+    ];
+    const { task } = await service.createSingleWorkerRun({
+      workspaceId: ids.workspace,
+      originEventId: ids.event,
+      task: {
+        taskKind: 'edit',
+        title: 'Apply patch',
+        brief: 'Update the target module.',
+      },
+    });
+
+    const submitted = await service.submitTaskToRuntime({
+      taskId: task.taskId,
+      runtimeType: 'mock',
+      model: 'mock-model',
+      prompt: 'Please update the target module.',
+    });
+    await service.drainAgentRunRuntime({ agentRunId: submitted.agentRun.runId });
+
+    const artifacts = await repository.listArtifactsByRun(ids.run);
+    expect(artifacts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          artifactId: '01HZZZZZZZZZZZZZZZZZZZZOUT',
+          title: 'Runtime output',
+          artifactRole: 'output',
+          kind: 'log',
+          payloadRef: expect.stringMatching(/^artifact-payload:\/\//),
+          sensitivity: 'none',
+        }),
+      ]),
+    );
+    await expect(repository.getTask(ids.task)).resolves.toMatchObject({
+      artifactRefs: ['01HZZZZZZZZZZZZZZZZZZZZOUT'],
+    });
+    const traceEvents = await repository.listTraceEventsByRun(ids.run);
+    expect(traceEvents.map((event) => event.eventType)).toEqual(
+      expect.arrayContaining(['agent_run.started', 'agent_run.succeeded', 'artifact.created']),
+    );
   });
 
   it('maps queued, started, and succeeded events into terminal run state', async () => {
