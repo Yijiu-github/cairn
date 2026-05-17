@@ -1,0 +1,18 @@
+appId: io.cairn.app
+productName: Cairn
+copyright: Copyright © 2026 Cairn
+files:
+  - out/**
+directories:
+  output: release
+  buildResources: resources
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - dmg
+win:
+  target:
+    - nsis
+linux:
+  target:
+    - AppImage

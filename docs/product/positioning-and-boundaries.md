@@ -8,7 +8,7 @@
 
 ## 1. 一句话定位
 
-> **Cairn 是面向个人开发者与小技术团队的、自托管且本地优先的多 Agent 协作工作台。**
+> **Cairn 是本地优先、可自托管的 Agent 工程控制台：先服务重度 AI 编程个人开发者，同时为 2–10 人小技术团队保留共享工作区、可观察、可回放与可接管的协作核心。**
 
 ## 2. 五个不能退回去的关键词
 
@@ -18,6 +18,14 @@
 4. **协作核心**（共享语义）
 5. **人类可接管**
 
+## 2.1 市场切入顺序
+
+Cairn 的市场切入顺序是：**个人本地入口 → 远程 workspace → 小团队控制台**。
+
+- R1 先把个人本地工作台做成可信闭环，验证 Workspace Core、Runtime Gateway、Artifact、Trace、PlanningOutput 与 Operator control。
+- R2 通过 remote workspace 打开团队入口，但仍坚持用户自控 server 与共享核心语义。
+- R3 聚焦 2–10 人小团队的 agent 工程控制台，而不是企业级多租户治理平台。
+
 ## 3. 我们是什么
 
 - 一个 **agent collaboration workspace**
@@ -25,6 +33,12 @@
 - 一个 **以 task / run / artifact / trace / operator intervention 为核心的产品系统**
 
 ## 4. 我们不是什么
+
+## 4.1 与官方 Agent 工具的关系
+
+Codex、Claude Code、Cursor、Windsurf 等工具会持续增强 worktree、并行任务、后台执行与 PR 生成能力。Cairn 不把这些基础 agent runner 能力当成护城河。
+
+Cairn 的定位是 runtime-neutral control plane：把 Codex / Claude / 本地模型 / OpenAI-compatible endpoint 作为 Runtime Adapter 接入，并在其上提供 durable memory、replay、audit、artifact registry、planning output 与 operator cockpit。
 
 - ❌ 通用企业 AI 治理平台
 - ❌ 面向所有模型、所有入口、所有组织的"大宽平台"

@@ -11,7 +11,7 @@ import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 
 import { AgentRun, AgentRunStatus } from '../schemas/agent-run.js';
-import { Artifact } from '../schemas/artifact.js';
+import { Artifact, artifactPayloadResponseSchema } from '../schemas/artifact.js';
 import { BudgetHint, PaginationQuery, Paginated } from '../schemas/common.js';
 import {
   WorkspaceId,
@@ -26,10 +26,11 @@ import {
   OrchestrationRunStatus,
   ExecutionMode,
 } from '../schemas/orchestration-run.js';
+import { PlanningOutput } from '../schemas/planning-output.js';
 import { Task, TaskKind, TaskStatus } from '../schemas/task.js';
 import { TraceEvent } from '../schemas/trace-event.js';
 
-import { commonErrorResponses } from './_common.js';
+import { ApiError, commonErrorResponses } from './_common.js';
 
 const c = initContract();
 
@@ -52,6 +53,30 @@ const StartRunTaskBody = z.object({
   contextRefs: z.array(ArtifactId).optional(),
   budgetHint: BudgetHint.optional(),
 });
+
+export const SubmitTaskToRuntimeBody = z.object({
+  runtimeType: z.literal('codex'),
+  model: z.string().min(1).default('default'),
+  prompt: z.string().min(1).max(32_000),
+  timeoutMs: z.number().int().positive().max(600_000).optional(),
+  options: z.record(z.unknown()).optional(),
+});
+
+export const SubmitTaskToRuntimeResponse = z.object({
+  agentRunId: AgentRunId,
+  taskId: TaskId,
+  orchestrationRunId: OrchestrationRunId,
+  status: z.literal('submitted'),
+  providerRunId: z.string().optional(),
+});
+export type SubmitTaskToRuntimeBody = z.infer<typeof SubmitTaskToRuntimeBody>;
+export type SubmitTaskToRuntimeResponse = z.infer<typeof SubmitTaskToRuntimeResponse>;
+
+export const DrainRuntimeResponse = z.object({
+  agentRunId: AgentRunId,
+  eventCount: z.number().int().nonnegative(),
+});
+export type DrainRuntimeResponse = z.infer<typeof DrainRuntimeResponse>;
 
 export const StartRunBody = z.object({
   /** 触发该 run 的 event id（必须是已写入 DB 的 Event） */
@@ -97,6 +122,17 @@ export const runContract = c.router(
       summary: 'Get a single orchestration run',
       responses: {
         200: OrchestrationRun,
+        ...commonErrorResponses,
+      },
+    },
+
+    getPlanningOutput: {
+      method: 'GET',
+      path: '/runs/:runId/planning-output',
+      pathParams: z.object({ runId: OrchestrationRunId }),
+      summary: 'Get the PlanningOutput attached to a run',
+      responses: {
+        200: PlanningOutput,
         ...commonErrorResponses,
       },
     },
@@ -161,6 +197,31 @@ export const runContract = c.router(
       },
     },
 
+    submitTaskToRuntime: {
+      method: 'POST',
+      path: '/tasks/:taskId/agent-runs',
+      pathParams: z.object({ taskId: TaskId }),
+      body: SubmitTaskToRuntimeBody,
+      summary: 'Submit a task to a runtime adapter',
+      responses: {
+        201: SubmitTaskToRuntimeResponse,
+        503: ApiError,
+        ...commonErrorResponses,
+      },
+    },
+
+    drainAgentRunRuntime: {
+      method: 'POST',
+      path: '/agent-runs/:agentRunId/drain-runtime',
+      pathParams: z.object({ agentRunId: AgentRunId }),
+      body: z.object({}).optional(),
+      summary: 'Drain runtime events for an AgentRun',
+      responses: {
+        202: DrainRuntimeResponse,
+        ...commonErrorResponses,
+      },
+    },
+
     // --- Artifact ---
     listArtifacts: {
       method: 'GET',
@@ -181,6 +242,19 @@ export const runContract = c.router(
       summary: 'Get artifact metadata (content fetched separately)',
       responses: {
         200: Artifact,
+        ...commonErrorResponses,
+      },
+    },
+
+    getArtifactPayload: {
+      method: 'GET',
+      path: '/artifacts/:artifactId/payload',
+      pathParams: z.object({ artifactId: ArtifactId }),
+      summary: 'Get bounded artifact payload text',
+      responses: {
+        200: artifactPayloadResponseSchema,
+        413: ApiError,
+        415: ApiError,
         ...commonErrorResponses,
       },
     },

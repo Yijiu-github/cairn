@@ -3,12 +3,16 @@
 import type {
   AgentRun,
   AgentRunId,
+  Artifact,
+  ArtifactId,
   CodeIndexFile,
   CodeIndexSnapshot,
   ContextPackId,
   ContextPackManifest,
   OrchestrationRun,
   OrchestrationRunId,
+  PlanningOutput,
+  PlanningOutputId,
   SourceRoot,
   SourceRootId,
   Task,
@@ -43,15 +47,27 @@ export interface SearchCodeIndexFilesInput {
 
 export interface ApplicationRepository {
   createRunGraph(input: CreateRunGraphInput): Promise<void>;
+  listRunsByWorkspace(workspaceId: WorkspaceId): Promise<OrchestrationRun[]>;
   getRun(orchestrationRunId: OrchestrationRunId): Promise<OrchestrationRun | undefined>;
   getTask(taskId: TaskId): Promise<Task | undefined>;
   getAgentRun(runId: AgentRunId): Promise<AgentRun | undefined>;
   listTasksByRun(orchestrationRunId: OrchestrationRunId): Promise<Task[]>;
   listAgentRunsByTask(taskId: TaskId): Promise<AgentRun[]>;
+  listArtifactsByRun(orchestrationRunId: OrchestrationRunId): Promise<Artifact[]>;
+  getArtifact(artifactId: ArtifactId): Promise<Artifact | undefined>;
+  listTraceEventsByRun(orchestrationRunId: OrchestrationRunId): Promise<TraceEvent[]>;
   createAgentRun(agentRun: AgentRun): Promise<void>;
+  createArtifact(artifact: Artifact): Promise<void>;
+  createPlanningOutput(output: PlanningOutput): Promise<void>;
   updateRun(run: OrchestrationRun): Promise<void>;
   updateTask(task: Task): Promise<void>;
   updateAgentRun(agentRun: AgentRun): Promise<void>;
+  updateArtifact(artifact: Artifact): Promise<void>;
+  getPlanningOutput(planningOutputId: PlanningOutputId): Promise<PlanningOutput | undefined>;
+  getPlanningOutputByRun(
+    orchestrationRunId: OrchestrationRunId,
+  ): Promise<PlanningOutput | undefined>;
+  updatePlanningOutput(output: PlanningOutput): Promise<void>;
   appendTraceEvent(event: TraceEvent): Promise<void>;
   createSourceRootRegistration(input: CreateSourceRootRegistrationInput): Promise<void>;
   getSourceRoot(sourceRootId: SourceRootId): Promise<SourceRoot | undefined>;

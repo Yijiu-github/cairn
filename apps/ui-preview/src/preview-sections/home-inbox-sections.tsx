@@ -13,6 +13,7 @@ import {
   StatusBadge,
 } from '@cairn/ui';
 
+import { homeSummaryItems } from '../preview-data/home-inbox-data';
 import { homeInboxViewModel } from '../preview-models/home-inbox-view-model';
 
 export function HomeCommandBarSection() {
@@ -20,8 +21,11 @@ export function HomeCommandBarSection() {
     <section className="home-command-bar page-hero" aria-label="工作区概览">
       <div>
         <div className="section-kicker">Workspace</div>
-        <h2>{homeInboxViewModel.workspace.name}</h2>
-        <p>{homeInboxViewModel.workspace.summary}</p>
+        <h2>{homeInboxViewModel.workspace.label}</h2>
+        <p>
+          Home / Inbox 只承接 operator 当前要处理的接管、运行和审阅；工作区身份、全局导航和 runtime
+          总览归 Desktop Shell。
+        </p>
       </div>
       <div className="hero-actions">
         <Button>新建运行</Button>
@@ -116,10 +120,25 @@ export function HomeRuntimeSidebar() {
           <CardTitle>今日摘要</CardTitle>
         </CardHeader>
         <CardContent className="stack">
-          <MetadataList items={homeInboxViewModel.workspace.stats} />
+          <MetadataList items={homeSummaryItems} />
           <InlineAlert tone="info">
             Home / Inbox 的目标是让 operator 在 30 秒内判断：是否要接管、哪里失败、下一步去哪。
           </InlineAlert>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>页面边界</CardTitle>
+        </CardHeader>
+        <CardContent className="stack">
+          <InlineAlert tone="warning">{homeInboxViewModel.boundaryNote}</InlineAlert>
+          <MetadataList
+            items={[
+              { label: '保留', value: 'handoff / active runs / operator focus' },
+              { label: '上移到 Shell', value: 'workspace identity / global nav / runtime summary' },
+            ]}
+          />
         </CardContent>
       </Card>
 

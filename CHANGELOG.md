@@ -18,6 +18,7 @@
 
 ### Added
 
+- 新增战略定位刷新说明，明确 Cairn 以个人本地工作台切入，长期聚焦小团队 Agent 工程控制台，并通过 runtime-neutral control plane 接入 Codex / Claude 等官方 agent 工具。
 - 项目正式命名为 **Cairn**，仓库根目录改名为 `cairn-workspace/`
 - 设计文档 V0.1.0 落位 `docs/design/`
 - 工程文档骨架初始化（product / design / adr / contracts / engineering / ops / legal / reference）
@@ -37,7 +38,9 @@
 - **`@cairn/application`**：新增应用层编排基线，包含 run/task/agentRun repository 端口、Runtime Gateway 提交端口、single-worker run 创建、adapter event 状态推进与终态不变量测试
 - **`@cairn/workspace-core`**：新增 Fastify 最小服务骨架，包含 `/health`、R1 run/task/agent-run HTTP 闭环、in-memory application ports 与 mock runtime 验证
 - **`@cairn/workspace-core`**：新增 SQLite application repository 适配器，服务启动时执行 domain 迁移并用 `.cairn/workspace-core.sqlite` 持久化 run/task/agent-run 状态
+- **Orchestration Control R1a**：新增 application 与 workspace-core 最小接管控制面，覆盖 pause / resume / cancel run、retry task、rerun 与 operator note，并写入 TraceEvent。
 - **`@cairn/ui`**：新增共享 UI 包工程校验基线，纳入 typecheck / lint / test，并补充公共导出 smoke 测试
+- **`@cairn/desktop`**：新增 Electron 最小 shell 骨架与静态 UI 壳视图，包含 Home / Run Detail / Artifact Review / Settings 四个静态视图、只读 preload identity bridge 与 preview-safe 默认隔离设置
 - 设计文档新增轻量代码上下文索引方案，明确 Cairn 自研 SourceRoot / CodeContextIndex / ContextPack 能力，不引入 GitNexus 依赖或许可证受限代码
 - **Code Context R1a**：新增 SourceRoot registry、最小 CodeIndexSnapshot 元数据、ContextPack manifest 契约、domain schema、application service 与 workspace-core API/SQLite 持久化基线
 - **Code Context R1b-a**：新增手动 reindex 与本地文件清单快照，持久化 `code_index_files` 派生元数据并通过 workspace-core 查询最新索引
@@ -47,8 +50,15 @@
 - 新增 AI 协作工程手册 `docs/engineering/agent-collaboration.md`，沉淀上下文工程、契约设计、文档/ADR 路由，并指向 review gate 文档
 - 新增外部项目参考雷达 `docs/reference/external-project-radar.md`，记录 GitNexus、Graphify、Ruflo、agent-skills、Superpowers、OpenAI Skills 等后续阶段性参考入口
 - 新增项目状态页 `docs/STATUS.md`，记录当前可用能力、测试基线、R1 已完成 / 未完成能力与近期主线
+- 新增 Cairn 工程体检报告，按 R1 交付链路梳理当前工程状态、风险与下一步优先级
 - 新增分支管理设计文档，明确 `main` / `develop` / agent 专项分支 / release / hotfix 的治理边界
 - Orchestration / Code Context 设计补充 Goal Planner 参考：action tree、preconditions、blocked reason 与 replan reason
+- **Planning Output Model**：新增独立 PlanningOutput schema、SQLite 持久化与 application planning lifecycle，覆盖 action tree、preconditions、blocked reason、replan reason 与 TraceEvent 镜像。
+- **Planning Output API**：新增 `GET /v1/runs/:runId/planning-output` 只读接口，供 UI / Desktop Shell 查看现有 PlanningOutput。
+- **UI Preview Planning Output**：Run Detail preview 新增静态 PlanningOutput 展示，覆盖 planning summary、blocked reason、preconditions 与 action tree。
+- **Runtime Drain Slice**：新增显式 runtime stream drain 路径，Workspace Core 可把 submitted AgentRun 的 AdapterStreamEvent 应用回 run/task/agent-run 状态，为 Codex CLI 真实闭环铺路。
+- **Runtime Artifact/Trace Demo Loop**：新增 Task runtime submit、bounded artifact payload reference/read、runtime output artifact metadata 与 TraceEvent replay source 闭环。
+- **Artifact / Trace Read API**：Workspace Core 实现 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口，供 Run Detail / Replay UI 消费。
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
 - 新增非阻塞 `pnpm run standards:check`，用于检查跨包相对导入、internal 导入、模块边界与 package exports 漂移
 
@@ -60,6 +70,7 @@
 - `package.json` 的 `license` 字段从 `SEE LICENSE IN LICENSE` 改为 `Apache-2.0`
 - **`@cairn/storage`**：升级 `better-sqlite3` catalog 至 `^12.10.0`，本机 Node 24.14.0 下可安装 native binding 并执行 SQLite 测试
 - `coding-standards.md` 对齐当前 TypeScript、ESLint、Prettier、commitlint 与人工 review gate 状态
+- `docs/STATUS.md` 同步 UI preview、Node 26 验证观察项与工程体检建议
 - `docs/engineering/standards-automation.md` 更新 Phase 2 状态，明确 `standards:check` 暂不纳入 `pnpm run check` 或 CI
 
 ### Removed

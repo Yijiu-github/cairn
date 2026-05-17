@@ -8,6 +8,7 @@ import {
   RunDetailHeroSection,
   RunDetailSidebar,
   RunEvidenceSection,
+  RunPlanningOutputSection,
   RunTaskTreeSection,
 } from '../preview-sections/run-detail-sections';
 
@@ -33,6 +34,7 @@ export function RunDetailPreviewPage() {
 
       <section className="run-detail-layout">
         <div className="run-detail-main">
+          <RunPlanningOutputSection />
           <RunTaskTreeSection />
           <RunEvidenceSection />
           <RunArtifactsSection />

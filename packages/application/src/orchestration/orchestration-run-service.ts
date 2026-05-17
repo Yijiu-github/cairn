@@ -4,12 +4,14 @@ import { ApplicationError } from '../errors.js';
 
 import { isAgentRunTerminal, isRunTerminal, isTaskTerminal } from './status.js';
 
+import type { ArtifactStorePort } from '../ports/artifact-store-port.js';
 import type { ApplicationRepository } from '../ports/run-repository.js';
 import type { RuntimeGatewayPort } from '../ports/runtime-gateway-port.js';
 import type { AdapterError, AdapterStreamEvent, ToolDescriptor } from '@cairn/runtime-gateway';
 import type {
   AgentRun,
   AgentRunId,
+  Artifact,
   ArtifactId,
   ArtifactRef,
   BudgetHint,
@@ -17,6 +19,8 @@ import type {
   EventId,
   OrchestrationRun,
   OrchestrationRunId,
+  MessageId,
+  PlanningOutputId,
   StructuredError,
   Task,
   TaskId,
@@ -33,7 +37,9 @@ export interface ApplicationClock {
 
 export interface ApplicationIdFactory {
   agentRunId(): AgentRunId;
+  artifactId(): ArtifactId;
   orchestrationRunId(): OrchestrationRunId;
+  planningOutputId(): PlanningOutputId;
   taskId(): TaskId;
   traceEventId(): TraceEventId;
   traceId(): TraceId;
@@ -41,6 +47,7 @@ export interface ApplicationIdFactory {
 
 export interface OrchestrationRunServiceDependencies {
   clock: ApplicationClock;
+  artifactStore: ArtifactStorePort;
   ids: ApplicationIdFactory;
   repository: ApplicationRepository;
   runtimeGateway: RuntimeGatewayPort;
@@ -70,6 +77,7 @@ export interface SubmitTaskToRuntimeInput {
   taskId: TaskId;
   runtimeType: string;
   model: string;
+  prompt?: string;
   inputs?: ArtifactRef[];
   tools?: ToolDescriptor[];
   timeoutMs?: number;
@@ -79,6 +87,57 @@ export interface SubmitTaskToRuntimeInput {
 export interface SubmitTaskToRuntimeResult {
   agentRun: AgentRun;
   providerRunId?: string;
+}
+
+export interface DrainAgentRunRuntimeInput {
+  agentRunId: AgentRunId;
+}
+
+export interface DrainAgentRunRuntimeResult {
+  agentRunId: AgentRunId;
+  eventCount: number;
+}
+
+export interface PauseRunInput {
+  runId: OrchestrationRunId;
+  reason?: string;
+}
+
+export interface ResumeRunInput {
+  runId: OrchestrationRunId;
+}
+
+export interface CancelRunInput {
+  runId: OrchestrationRunId;
+  reason?: string;
+}
+
+export interface RetryTaskInput {
+  taskId: TaskId;
+  reason?: string;
+}
+
+export interface RetryTaskResult {
+  taskId: TaskId;
+  newAttempt: number;
+}
+
+export interface RerunInput {
+  runId: OrchestrationRunId;
+  originEventId?: EventId;
+  replan?: boolean;
+  operatorNote?: string;
+}
+
+export interface InjectOperatorNoteInput {
+  runId: OrchestrationRunId;
+  note: string;
+  visibility: 'public' | 'operator_only';
+}
+
+export interface InjectOperatorNoteResult {
+  messageId: MessageId;
+  traceEventId: TraceEventId;
 }
 
 const toIso = (date: Date): string => date.toISOString();
@@ -92,14 +151,24 @@ const toExecutionError = (error: AdapterError): StructuredError => ({
   retryable: error.retryable,
 });
 
+type RuntimeArtifactMetadata = Artifact & {
+  title: string;
+};
+
+const RUNTIME_INPUT_MAX_BYTES = 262_144;
+const RUNTIME_OUTPUT_MAX_BYTES = 262_144;
+
 export class OrchestrationRunService {
   private readonly clock: ApplicationClock;
+  private readonly artifactStore: ArtifactStorePort;
   private readonly ids: ApplicationIdFactory;
   private readonly repository: ApplicationRepository;
   private readonly runtimeGateway: RuntimeGatewayPort;
+  private readonly tokenBuffers = new Map<AgentRunId, string[]>();
 
   constructor(dependencies: OrchestrationRunServiceDependencies) {
     this.clock = dependencies.clock;
+    this.artifactStore = dependencies.artifactStore;
     this.ids = dependencies.ids;
     this.repository = dependencies.repository;
     this.runtimeGateway = dependencies.runtimeGateway;
@@ -184,10 +253,22 @@ export class OrchestrationRunService {
       status: 'dispatched',
       updatedAt: now,
     };
+    const runtimeInputs = [...(input.inputs ?? [])];
+    const agentRunId = this.ids.agentRunId();
+    if (input.prompt !== undefined) {
+      const promptArtifact = await this.createRuntimeInputArtifact(
+        runningRun,
+        dispatchedTask,
+        agentRunId,
+        input.prompt,
+        now,
+      );
+      runtimeInputs.unshift({ artifactId: promptArtifact.artifactId });
+    }
     const firstInputRef =
-      input.inputs?.[0] === undefined ? undefined : (input.inputs[0].artifactId as ArtifactId);
+      runtimeInputs[0] === undefined ? undefined : (runtimeInputs[0].artifactId as ArtifactId);
     const agentRun: AgentRun = {
-      runId: this.ids.agentRunId(),
+      runId: agentRunId,
       workspaceId: task.workspaceId,
       taskId: task.taskId,
       orchestrationRunId: task.orchestrationRunId,
@@ -211,16 +292,22 @@ export class OrchestrationRunService {
       runtimeType: input.runtimeType,
     });
 
-    const ack = await this.runtimeGateway.submit({
-      runId: agentRun.runId,
-      model: input.model,
-      inputs: input.inputs ?? [],
-      traceId: agentRun.traceId,
-      ...(input.tools === undefined ? {} : { tools: input.tools }),
-      ...(input.timeoutMs === undefined ? {} : { timeoutMs: input.timeoutMs }),
-      ...(task.budgetHint === undefined ? {} : { budget: task.budgetHint }),
-      ...(input.options === undefined ? {} : { options: input.options }),
-    });
+    let ack;
+    try {
+      ack = await this.runtimeGateway.submit({
+        runId: agentRun.runId,
+        model: input.model,
+        inputs: runtimeInputs,
+        traceId: agentRun.traceId,
+        ...(input.tools === undefined ? {} : { tools: input.tools }),
+        ...(input.timeoutMs === undefined ? {} : { timeoutMs: input.timeoutMs }),
+        ...(task.budgetHint === undefined ? {} : { budget: task.budgetHint }),
+        ...(input.options === undefined ? {} : { options: input.options }),
+      });
+    } catch {
+      await this.failUnavailableRuntimeSubmit(runningRun, dispatchedTask, agentRun, now);
+      throw new ApplicationError('RUNTIME_UNAVAILABLE', `Runtime unavailable: ${agentRun.runId}`);
+    }
 
     if (!ack.accepted) {
       await this.failRejectedRuntimeSubmit(runningRun, dispatchedTask, agentRun, now);
@@ -238,6 +325,25 @@ export class OrchestrationRunService {
     };
     await this.repository.updateAgentRun(acknowledgedAgentRun);
     return { agentRun: acknowledgedAgentRun, providerRunId: ack.providerRunId };
+  }
+
+  async drainAgentRunRuntime(
+    input: DrainAgentRunRuntimeInput,
+  ): Promise<DrainAgentRunRuntimeResult> {
+    await this.requireAgentRun(input.agentRunId);
+
+    let eventCount = 0;
+    this.tokenBuffers.set(input.agentRunId, []);
+    try {
+      for await (const event of this.runtimeGateway.stream(input.agentRunId)) {
+        await this.applyAdapterEvent(input.agentRunId, event);
+        eventCount += 1;
+      }
+    } finally {
+      this.tokenBuffers.delete(input.agentRunId);
+    }
+
+    return { agentRunId: input.agentRunId, eventCount };
   }
 
   async applyAdapterEvent(runId: AgentRunId, event: AdapterStreamEvent): Promise<void> {
@@ -283,7 +389,6 @@ export class OrchestrationRunService {
         break;
       }
       case 'progress':
-      case 'token':
       case 'tool_call':
       case 'tool_result': {
         await this.appendTrace(run, task, agentRun, `agent_run.${event.type}`, 'debug', {
@@ -291,7 +396,221 @@ export class OrchestrationRunService {
         });
         break;
       }
+      case 'token': {
+        this.recordTokenDelta(runId, event.delta);
+        await this.appendTrace(run, task, agentRun, 'agent_run.token', 'debug', {
+          at: event.at,
+        });
+        break;
+      }
     }
+  }
+
+  async pauseRun(input: PauseRunInput): Promise<OrchestrationRun> {
+    const run = await this.requireRun(input.runId);
+    if (run.status !== 'running') {
+      throw new ApplicationError(
+        'INVALID_RUN_STATE',
+        `Run must be running to pause: ${run.orchestrationRunId}`,
+      );
+    }
+
+    const now = toIso(this.clock.now());
+    const pausedRun: OrchestrationRun = {
+      ...run,
+      status: 'paused',
+      updatedAt: now,
+    };
+    await this.repository.updateRun(pausedRun);
+    await this.appendTrace(pausedRun, undefined, undefined, 'run.paused', 'info', {
+      ...(input.reason === undefined ? {} : { reason: input.reason }),
+    });
+    return pausedRun;
+  }
+
+  async resumeRun(input: ResumeRunInput): Promise<OrchestrationRun> {
+    const run = await this.requireRun(input.runId);
+    if (run.status !== 'paused') {
+      throw new ApplicationError(
+        'INVALID_RUN_STATE',
+        `Run must be paused to resume: ${run.orchestrationRunId}`,
+      );
+    }
+
+    const now = toIso(this.clock.now());
+    const resumedRun: OrchestrationRun = {
+      ...run,
+      status: 'running',
+      updatedAt: now,
+    };
+    await this.repository.updateRun(resumedRun);
+    await this.appendTrace(resumedRun, undefined, undefined, 'run.resumed', 'info', {});
+    return resumedRun;
+  }
+
+  async cancelRun(input: CancelRunInput): Promise<OrchestrationRun> {
+    const run = await this.requireRun(input.runId);
+    if (isRunTerminal(run.status)) {
+      throw new ApplicationError(
+        'ORCHESTRATION_RUN_TERMINAL',
+        `OrchestrationRun is terminal: ${run.orchestrationRunId}`,
+      );
+    }
+
+    const now = toIso(this.clock.now());
+    const reason = input.reason ?? 'Operator cancelled the run.';
+    const error: StructuredError = {
+      layer: 'orchestration',
+      code: 'CANCELLED_BY_OPERATOR',
+      message: reason,
+      retryable: false,
+    };
+    const cancelledRun: OrchestrationRun = {
+      ...run,
+      status: 'cancelled',
+      resultCompleteness: 'empty',
+      completionLevel: 'failed',
+      finishedAt: now,
+      error,
+      updatedAt: now,
+    };
+
+    const tasks = await this.repository.listTasksByRun(run.orchestrationRunId);
+    for (const task of tasks) {
+      if (!isTaskTerminal(task.status)) {
+        await this.repository.updateTask({
+          ...task,
+          status: 'cancelled',
+          failureReason: reason,
+          updatedAt: now,
+        });
+      }
+
+      const agentRuns = await this.repository.listAgentRunsByTask(task.taskId);
+      for (const agentRun of agentRuns) {
+        if (!isAgentRunTerminal(agentRun.status)) {
+          await this.runtimeGateway.cancel(agentRun.runId, reason);
+          await this.repository.updateAgentRun({
+            ...agentRun,
+            status: 'cancelled',
+            finishedAt: now,
+            error,
+            cancelable: false,
+            updatedAt: now,
+          });
+        }
+      }
+    }
+
+    await this.repository.updateRun(cancelledRun);
+    await this.appendTrace(cancelledRun, undefined, undefined, 'run.cancelled', 'warn', {
+      reason,
+    });
+    return cancelledRun;
+  }
+
+  async retryTask(input: RetryTaskInput): Promise<RetryTaskResult> {
+    const task = await this.requireTask(input.taskId);
+    const run = await this.requireRun(task.orchestrationRunId);
+    this.assertRunCanChange(run);
+
+    if (task.status !== 'failed') {
+      throw new ApplicationError(
+        'INVALID_TASK_STATE',
+        `Task must be failed to retry: ${task.taskId}`,
+      );
+    }
+
+    const now = toIso(this.clock.now());
+    const newAttempt = task.attempt + 1;
+    const retriedTask: Task = {
+      ...task,
+      status: 'ready',
+      attempt: newAttempt,
+      idempotencyKey: `${task.taskId}:${String(newAttempt)}`,
+      updatedAt: now,
+    };
+    delete retriedTask.failureReason;
+
+    await this.repository.updateTask(retriedTask);
+    await this.appendTrace(run, retriedTask, undefined, 'task.retry_requested', 'info', {
+      newAttempt,
+      ...(input.reason === undefined ? {} : { reason: input.reason }),
+    });
+    return { taskId: task.taskId, newAttempt };
+  }
+
+  async rerun(input: RerunInput): Promise<OrchestrationRun> {
+    const previousRun = await this.requireRun(input.runId);
+    if (!isRunTerminal(previousRun.status)) {
+      throw new ApplicationError(
+        'INVALID_RUN_STATE',
+        `Run must be terminal to rerun: ${previousRun.orchestrationRunId}`,
+      );
+    }
+
+    const previousTasks = await this.repository.listTasksByRun(previousRun.orchestrationRunId);
+    if (previousTasks.length !== 1) {
+      throw new ApplicationError(
+        'RERUN_UNSUPPORTED_GRAPH',
+        `R1a rerun supports exactly one task: ${previousRun.orchestrationRunId}`,
+      );
+    }
+
+    const previousTask = previousTasks[0];
+    if (previousTask === undefined) {
+      throw new ApplicationError(
+        'RERUN_UNSUPPORTED_GRAPH',
+        `R1a rerun supports exactly one task: ${previousRun.orchestrationRunId}`,
+      );
+    }
+
+    const created = await this.createSingleWorkerRun({
+      workspaceId: previousRun.workspaceId,
+      originEventId: input.originEventId ?? previousRun.originEventId,
+      ...(previousRun.conversationId === undefined
+        ? {}
+        : { conversationId: previousRun.conversationId }),
+      task: {
+        taskKind: previousTask.taskKind,
+        title: previousTask.title,
+        brief: this.buildRerunBrief(previousTask.brief, input.operatorNote),
+        ...(previousTask.executionProfile === undefined
+          ? {}
+          : { executionProfile: previousTask.executionProfile }),
+        priority: previousTask.priority,
+        contextRefs: previousTask.contextRefs,
+        ...(previousTask.budgetHint === undefined ? {} : { budgetHint: previousTask.budgetHint }),
+      },
+    });
+
+    await this.appendTrace(created.run, created.task, undefined, 'run.rerun_created', 'info', {
+      previousRunId: previousRun.orchestrationRunId,
+      replan: input.replan ?? false,
+      ...(input.operatorNote === undefined ? {} : { operatorNote: input.operatorNote }),
+    });
+    return created.run;
+  }
+
+  async injectOperatorNote(input: InjectOperatorNoteInput): Promise<InjectOperatorNoteResult> {
+    const run = await this.requireRun(input.runId);
+    const traceEventId = this.ids.traceEventId();
+    const createdAt = toIso(this.clock.now());
+    const event: TraceEvent = {
+      traceEventId,
+      workspaceId: run.workspaceId,
+      orchestrationRunId: run.orchestrationRunId,
+      eventType: 'operator.note',
+      level: 'info',
+      payloadInline: {
+        note: input.note,
+        visibility: input.visibility,
+      },
+      createdAt,
+      traceId: run.traceId,
+    };
+    await this.repository.appendTraceEvent(event);
+    return { messageId: `message:${traceEventId}` as MessageId, traceEventId };
   }
 
   private async applyQueuedEvent(
@@ -377,7 +696,7 @@ export class OrchestrationRunService {
       updatedAt: toEventIso(event.at),
     };
     await this.repository.updateTask(updatedTask);
-    await this.appendTrace(run, updatedTask, agentRun, 'artifact.recorded', 'info', {
+    await this.appendTrace(run, updatedTask, agentRun, 'artifact.created', 'info', {
       artifactId,
       kind: event.artifact.kind,
       role: event.artifact.role,
@@ -391,7 +710,15 @@ export class OrchestrationRunService {
     event: Extract<AdapterStreamEvent, { type: 'succeeded' }>,
   ): Promise<void> {
     const finishedAt = toEventIso(event.at);
-    const outputRef = event.finalArtifactRef.artifactId as ArtifactId;
+    const tokenOutput = this.consumeTokenOutput(agentRun.runId);
+    const outputArtifact =
+      tokenOutput === undefined
+        ? undefined
+        : await this.createRuntimeOutputArtifact(run, task, agentRun, tokenOutput, finishedAt);
+    const outputRef =
+      outputArtifact === undefined
+        ? (event.finalArtifactRef.artifactId as ArtifactId)
+        : outputArtifact.artifactId;
     const artifactRefs = task.artifactRefs.includes(outputRef)
       ? task.artifactRefs
       : [...task.artifactRefs, outputRef];
@@ -438,6 +765,16 @@ export class OrchestrationRunService {
         artifactId: outputRef,
       },
     );
+    await this.appendTrace(
+      succeededRun,
+      succeededTask,
+      succeededAgentRun,
+      'agent_run.succeeded',
+      'info',
+      {
+        artifactId: outputRef,
+      },
+    );
   }
 
   private async applyFailedEvent(
@@ -446,6 +783,7 @@ export class OrchestrationRunService {
     agentRun: AgentRun,
     event: Extract<AdapterStreamEvent, { type: 'failed' }>,
   ): Promise<void> {
+    this.discardTokenOutput(agentRun.runId);
     const finishedAt = toEventIso(event.at);
     const error = toExecutionError(event.error);
     const failedAgentRun: AgentRun = {
@@ -488,6 +826,7 @@ export class OrchestrationRunService {
     agentRun: AgentRun,
     event: Extract<AdapterStreamEvent, { type: 'cancelled' }>,
   ): Promise<void> {
+    this.discardTokenOutput(agentRun.runId);
     const finishedAt = toEventIso(event.at);
     const error: StructuredError = {
       layer: 'execution',
@@ -539,6 +878,7 @@ export class OrchestrationRunService {
     agentRun: AgentRun,
     at: number,
   ): Promise<void> {
+    this.discardTokenOutput(agentRun.runId);
     const finishedAt = toEventIso(at);
     const error: StructuredError = {
       layer: 'execution',
@@ -615,6 +955,170 @@ export class OrchestrationRunService {
     });
   }
 
+  private async failUnavailableRuntimeSubmit(
+    run: OrchestrationRun,
+    task: Task,
+    agentRun: AgentRun,
+    at: string,
+  ): Promise<void> {
+    const error: StructuredError = {
+      layer: 'execution',
+      code: 'RUNTIME_UNAVAILABLE',
+      message: 'Runtime unavailable while submitting the agent run.',
+      retryable: true,
+    };
+    await this.repository.updateAgentRun({
+      ...agentRun,
+      status: 'failed',
+      finishedAt: at,
+      error,
+      cancelable: false,
+      updatedAt: at,
+    });
+    await this.repository.updateTask({
+      ...task,
+      status: 'failed',
+      failureReason: error.message,
+      updatedAt: at,
+    });
+    await this.repository.updateRun({
+      ...run,
+      status: 'failed',
+      hasPartialFailures: true,
+      resultCompleteness: 'empty',
+      completionLevel: 'failed',
+      finishedAt: at,
+      error,
+      updatedAt: at,
+    });
+    await this.appendTrace(run, task, agentRun, 'agent_run.failed', 'error', {
+      code: error.code,
+      retryable: error.retryable,
+    });
+  }
+
+  private async createRuntimeInputArtifact(
+    run: OrchestrationRun,
+    task: Task,
+    agentRunId: AgentRunId,
+    prompt: string,
+    now: string,
+  ): Promise<RuntimeArtifactMetadata> {
+    const artifactId = this.nextArtifactId();
+    const payload = JSON.stringify({
+      prompt,
+      taskId: task.taskId,
+      orchestrationRunId: task.orchestrationRunId,
+    });
+    const payloadResult = await this.artifactStore.writeText({
+      artifactId,
+      workspaceId: task.workspaceId,
+      orchestrationRunId: task.orchestrationRunId,
+      filename: 'runtime-input.json',
+      mediaType: 'application/json',
+      text: payload,
+      maxBytes: RUNTIME_INPUT_MAX_BYTES,
+    });
+    const artifact: RuntimeArtifactMetadata = {
+      artifactId,
+      title: 'Runtime input',
+      workspaceId: task.workspaceId,
+      orchestrationRunId: task.orchestrationRunId,
+      taskId: task.taskId,
+      runId: agentRunId,
+      artifactRole: 'input',
+      kind: 'log',
+      formatVersion: 'runtime-input.v1',
+      uriOrPath: payloadResult.payloadRef,
+      contentType: 'application/json',
+      sizeBytes: payloadResult.byteLength,
+      payloadRef: payloadResult.payloadRef,
+      sensitivity: 'none',
+      producerType: 'system',
+      visibility: 'debug',
+      createdAt: now,
+    };
+    await this.repository.createArtifact(artifact);
+    await this.appendTrace(run, task, undefined, 'artifact.created', 'info', {
+      artifactId,
+      title: artifact.title,
+      truncated: payloadResult.truncated,
+    });
+    return artifact;
+  }
+
+  private async createRuntimeOutputArtifact(
+    run: OrchestrationRun,
+    task: Task,
+    agentRun: AgentRun,
+    text: string,
+    createdAt: string,
+  ): Promise<RuntimeArtifactMetadata> {
+    const artifactId = this.nextArtifactId();
+    const payloadResult = await this.artifactStore.writeText({
+      artifactId,
+      workspaceId: run.workspaceId,
+      orchestrationRunId: run.orchestrationRunId,
+      filename: 'runtime-output.txt',
+      mediaType: 'text/plain',
+      text,
+      maxBytes: RUNTIME_OUTPUT_MAX_BYTES,
+    });
+    const artifact: RuntimeArtifactMetadata = {
+      artifactId,
+      title: 'Runtime output',
+      workspaceId: run.workspaceId,
+      orchestrationRunId: run.orchestrationRunId,
+      taskId: task.taskId,
+      runId: agentRun.runId,
+      artifactRole: 'output',
+      kind: 'log',
+      formatVersion: 'runtime-output.v1',
+      uriOrPath: payloadResult.payloadRef,
+      contentType: 'text/plain',
+      sizeBytes: payloadResult.byteLength,
+      payloadRef: payloadResult.payloadRef,
+      sensitivity: 'none',
+      producerType: 'agent',
+      producerId: agentRun.runId,
+      visibility: 'debug',
+      createdAt,
+    };
+    await this.repository.createArtifact(artifact);
+    await this.appendTrace(run, task, agentRun, 'artifact.created', 'info', {
+      artifactId,
+      title: artifact.title,
+      truncated: payloadResult.truncated,
+    });
+    return artifact;
+  }
+
+  private recordTokenDelta(runId: AgentRunId, delta: string): void {
+    const buffer = this.tokenBuffers.get(runId);
+    if (buffer === undefined) {
+      this.tokenBuffers.set(runId, [delta]);
+      return;
+    }
+    buffer.push(delta);
+  }
+
+  private consumeTokenOutput(runId: AgentRunId): string | undefined {
+    const buffer = this.tokenBuffers.get(runId);
+    if (buffer === undefined) {
+      return undefined;
+    }
+    this.tokenBuffers.delete(runId);
+    return buffer.length === 0 ? undefined : buffer.join('');
+  }
+
+  private discardTokenOutput(runId: AgentRunId): void {
+    this.tokenBuffers.delete(runId);
+  }
+
+  private nextArtifactId(): ArtifactId {
+    return this.ids.artifactId();
+  }
+
   private async updateRunStatus(
     run: OrchestrationRun,
     status: OrchestrationRun['status'],
@@ -676,6 +1180,14 @@ export class OrchestrationRunService {
     if (isAgentRunTerminal(agentRun.status)) {
       throw new ApplicationError('AGENT_RUN_TERMINAL', `AgentRun is terminal: ${agentRun.runId}`);
     }
+  }
+
+  private buildRerunBrief(brief: string, operatorNote: string | undefined): string {
+    if (operatorNote === undefined || operatorNote.trim() === '') {
+      return brief;
+    }
+
+    return `${brief}\n\nOperator note: ${operatorNote}`;
   }
 
   private async appendTrace(

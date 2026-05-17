@@ -37,13 +37,14 @@ cp .env.example .env
 # 当前已启动的是 workspace-core 最小服务
 pnpm --filter @cairn/workspace-core dev
 
-# Desktop / Web 应用创建后再补齐：
-# pnpm dev
+# 当前 desktop 是 Electron 最小 shell 骨架，暂不接 workspace-core sidecar
+pnpm --filter @cairn/desktop dev
+
+# Web 应用创建后再补齐：
 # pnpm --filter @cairn/web dev
-# pnpm --filter @cairn/desktop dev
 ```
 
-> ⚠️ 目前 `apps/desktop` 与 `apps/web` 尚未创建。桌面端在开发态下会由 Electron 连接本地 workspace-core sidecar，具体命令将在对应应用启动后补齐。
+> ⚠️ 目前 `apps/desktop` 是最小 shell 骨架：renderer 使用静态 fixtures，preload 只暴露只读 identity bridge，尚未启动或连接本地 workspace-core sidecar。`apps/web` 尚未创建。
 
 ## 4. 数据库
 

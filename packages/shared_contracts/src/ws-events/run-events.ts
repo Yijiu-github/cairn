@@ -25,7 +25,14 @@ import {
   CompletionLevel,
   StructuredError,
 } from '../schemas/common.js';
-import { OrchestrationRunId, TaskId, AgentRunId, ArtifactId, TraceId } from '../schemas/ids.js';
+import {
+  OrchestrationRunId,
+  TaskId,
+  AgentRunId,
+  ArtifactId,
+  PlanningOutputId,
+  TraceId,
+} from '../schemas/ids.js';
 import { OrchestrationRunStatus, ExecutionMode } from '../schemas/orchestration-run.js';
 import { TaskStatus } from '../schemas/task.js';
 
@@ -53,7 +60,7 @@ const RunStatusChanged = BaseRunEvent.extend({
 
 const RunPlannerOutput = BaseRunEvent.extend({
   type: z.literal('run.planner_output'),
-  plannerOutputRef: ArtifactId,
+  plannerOutputRef: PlanningOutputId,
 });
 
 const RunSynthesisOutput = BaseRunEvent.extend({

@@ -18,8 +18,11 @@ import type { CodeContextScannerPort } from '@cairn/application';
 import type {
   ContextPackId,
   EventId,
+  ArtifactId,
   OrchestrationRunId,
+  PlanningOutputId,
   SourceRootId,
+  TraceEventId,
   WorkspaceId,
 } from '@cairn/shared-contracts/schemas';
 
@@ -220,10 +223,364 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
       second.close();
     }
   });
+
+  it('persists PlanningOutput records across repository instances', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+    const planningOutputId = '01J000000000000000000000P1' as PlanningOutputId;
+    let createdRunId: OrchestrationRunId;
+
+    const first = openRepository(databasePath);
+
+    try {
+      const created = await first.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Plan persistence',
+          brief: 'Verify planning output persistence.',
+        },
+      });
+
+      createdRunId = created.run.orchestrationRunId;
+
+      await first.container.repository.createPlanningOutput({
+        planningOutputId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+        actionTree: [
+          {
+            actionId: 'action-1',
+            title: 'Inspect repository',
+            intent: 'Confirm planning output rows persist.',
+            status: 'ready',
+            dependsOnActionIds: [],
+          },
+        ],
+        preconditions: [],
+        contextPackRefs: [],
+        createdAt: '2026-05-17T00:00:00.000Z',
+        updatedAt: '2026-05-17T00:00:00.000Z',
+      });
+    } finally {
+      first.close();
+    }
+
+    const second = openRepository(databasePath);
+
+    try {
+      await expect(
+        second.container.repository.getPlanningOutput(planningOutputId),
+      ).resolves.toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+        actionTree: [
+          {
+            actionId: 'action-1',
+            title: 'Inspect repository',
+          },
+        ],
+      });
+      await expect(
+        second.container.repository.getPlanningOutputByRun(createdRunId),
+      ).resolves.toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+      });
+    } finally {
+      second.close();
+    }
+  });
+
+  it('clears PlanningOutput reasons across repository instances', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+    const planningOutputId = '01J000000000000000000000P2' as PlanningOutputId;
+    let createdRunId: OrchestrationRunId;
+
+    const first = openRepository(databasePath);
+
+    try {
+      const created = await first.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Plan persistence',
+          brief: 'Verify planning output reason clearing.',
+        },
+      });
+
+      createdRunId = created.run.orchestrationRunId;
+
+      await first.container.repository.createPlanningOutput({
+        planningOutputId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        status: 'blocked',
+        actionTree: [],
+        preconditions: [],
+        contextPackRefs: [],
+        blockedReason: {
+          scope: 'run',
+          code: 'needs_review',
+          message: 'Initial block reason.',
+        },
+        createdAt: '2026-05-17T00:00:00.000Z',
+        updatedAt: '2026-05-17T00:00:00.000Z',
+      });
+    } finally {
+      first.close();
+    }
+
+    const second = openRepository(databasePath);
+
+    try {
+      await expect(
+        second.container.repository.getPlanningOutput(planningOutputId),
+      ).resolves.toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        blockedReason: {
+          code: 'needs_review',
+        },
+      });
+      await expect(
+        second.container.repository.getPlanningOutputByRun(createdRunId),
+      ).resolves.toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        blockedReason: {
+          message: 'Initial block reason.',
+        },
+      });
+
+      await second.container.repository.updatePlanningOutput({
+        planningOutputId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+        actionTree: [],
+        preconditions: [],
+        contextPackRefs: [],
+        blockedReason: undefined,
+        replanReason: undefined,
+        createdAt: '2026-05-17T00:00:00.000Z',
+        updatedAt: '2026-05-17T01:00:00.000Z',
+      });
+    } finally {
+      second.close();
+    }
+
+    const third = openRepository(databasePath);
+
+    try {
+      const updatedOutput = await third.container.repository.getPlanningOutput(planningOutputId);
+      const updatedOutputByRun =
+        await third.container.repository.getPlanningOutputByRun(createdRunId);
+
+      expect(updatedOutput).toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+      });
+      expect(updatedOutputByRun).toMatchObject({
+        planningOutputId,
+        orchestrationRunId: createdRunId,
+        status: 'ready',
+      });
+      expect(updatedOutput?.blockedReason).toBeUndefined();
+      expect(updatedOutput?.replanReason).toBeUndefined();
+      expect(updatedOutputByRun?.blockedReason).toBeUndefined();
+      expect(updatedOutputByRun?.replanReason).toBeUndefined();
+    } finally {
+      third.close();
+    }
+  });
+
+  it('reads Artifact metadata and ordered TraceEvents across repository instances', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+    const artifactId = '01J000000000000000000000A1' as ArtifactId;
+    let createdRunId: OrchestrationRunId;
+
+    const first = openRepository(databasePath);
+
+    try {
+      const created = await first.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Trace persistence',
+          brief: 'Verify artifact and trace reads.',
+        },
+      });
+      createdRunId = created.run.orchestrationRunId;
+
+      await first.container.repository.createArtifact({
+        artifactId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        taskId: created.task.taskId,
+        artifactRole: 'output',
+        kind: 'text',
+        formatVersion: 'text.v1',
+        uriOrPath: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
+        contentType: 'text/plain',
+        sizeBytes: 12,
+        payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
+        sensitivity: 'none',
+        producerType: 'agent',
+        visibility: 'operator_only',
+        createdAt: '2026-05-17T00:00:01.000Z',
+      });
+
+      await first.container.repository.appendTraceEvent({
+        traceEventId: '01J000000000000000000000T2' as TraceEventId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        eventType: 'run.succeeded',
+        level: 'info',
+        payloadInline: { artifactId },
+        createdAt: '2026-05-17T00:00:02.000Z',
+        traceId: created.run.traceId,
+      });
+      await first.container.repository.appendTraceEvent({
+        traceEventId: '01J000000000000000000000T1' as TraceEventId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        eventType: 'run.queued',
+        level: 'info',
+        payloadInline: { executionMode: 'single_worker' },
+        createdAt: '2026-05-17T00:00:00.000Z',
+        traceId: created.run.traceId,
+      });
+    } finally {
+      first.close();
+    }
+
+    const second = openRepository(databasePath);
+
+    try {
+      await expect(second.container.repository.listArtifactsByRun(createdRunId)).resolves.toEqual([
+        expect.objectContaining({
+          artifactId,
+          orchestrationRunId: createdRunId,
+          artifactRole: 'output',
+          kind: 'text',
+          uriOrPath: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
+          payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
+          sensitivity: 'none',
+        }),
+      ]);
+      await expect(second.container.repository.getArtifact(artifactId)).resolves.toMatchObject({
+        artifactId,
+        orchestrationRunId: createdRunId,
+        contentType: 'text/plain',
+        sizeBytes: 12,
+        payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/content.txt`,
+      });
+      const traceEvents = await second.container.repository.listTraceEventsByRun(createdRunId);
+      expect(traceEvents.slice(0, 2)).toEqual([
+        expect.objectContaining({ eventType: 'run.queued' }),
+        expect.objectContaining({ eventType: 'run.succeeded' }),
+      ]);
+      expect(traceEvents).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            eventType: 'run.queued',
+            payloadInline: { executionMode: 'single_worker' },
+          }),
+        ]),
+      );
+    } finally {
+      second.close();
+    }
+  });
+
+  it('updates Artifact metadata across repository instances', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+    const artifactId = '01J000000000000000000000A2' as ArtifactId;
+    let createdRunId: OrchestrationRunId;
+
+    const first = openRepository(databasePath);
+
+    try {
+      const created = await first.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Artifact update',
+          brief: 'Verify artifact update persistence.',
+        },
+      });
+      createdRunId = created.run.orchestrationRunId;
+
+      await first.container.repository.createArtifact({
+        artifactId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        artifactRole: 'output',
+        kind: 'log',
+        formatVersion: 'runtime-output.v1',
+        uriOrPath: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/runtime-output.txt`,
+        contentType: 'text/plain',
+        sizeBytes: 3,
+        payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/runtime-output.txt`,
+        sensitivity: 'none',
+        producerType: 'agent',
+        visibility: 'debug',
+        createdAt: '2026-05-17T00:00:01.000Z',
+      });
+      await first.container.repository.updateArtifact({
+        artifactId,
+        workspaceId: ids.workspace,
+        orchestrationRunId: createdRunId,
+        artifactRole: 'output',
+        kind: 'log',
+        formatVersion: 'runtime-output.v1',
+        uriOrPath: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/runtime-output.txt`,
+        contentType: 'text/plain',
+        sizeBytes: 6,
+        payloadRef: `artifact-payload://${ids.workspace}/${createdRunId}/${artifactId}/runtime-output.txt`,
+        sensitivity: 'secret_risk',
+        producerType: 'agent',
+        visibility: 'operator_only',
+        createdAt: '2026-05-17T00:00:01.000Z',
+      });
+    } finally {
+      first.close();
+    }
+
+    const second = openRepository(databasePath);
+
+    try {
+      await expect(second.container.repository.getArtifact(artifactId)).resolves.toMatchObject({
+        artifactId,
+        sizeBytes: 6,
+        sensitivity: 'secret_risk',
+        visibility: 'operator_only',
+      });
+    } finally {
+      second.close();
+    }
+  });
 });
 
 function openRepository(databasePath: string): {
   container: WorkspaceCoreContainer;
+  storage: ReturnType<typeof openSqliteStorage>;
   close: () => void;
 } {
   const storage = openSqliteStorage({ databasePath });
@@ -240,7 +597,9 @@ function openRepository(databasePath: string): {
       new MockRuntimeGatewayPort(),
       undefined,
       scanner,
+      undefined,
     ),
+    storage,
     close: () => {
       storage.close();
     },

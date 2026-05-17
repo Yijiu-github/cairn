@@ -72,13 +72,16 @@ describe('runContract', () => {
     const expected = [
       'listRuns',
       'getRun',
+      'getPlanningOutput',
       'startRun',
       'listTasks',
       'getTask',
       'listAgentRuns',
       'getAgentRun',
+      'submitTaskToRuntime',
       'listArtifacts',
       'getArtifact',
+      'getArtifactPayload',
       'listTraceEvents',
     ] as const;
     for (const op of expected) {
@@ -93,6 +96,31 @@ describe('runContract', () => {
 
   it('listTraceEvents path is the replay-source endpoint', () => {
     expect(runContract.listTraceEvents.path).toBe('/v1/runs/:runId/trace');
+  });
+
+  it('getPlanningOutput path is the run planning output endpoint', () => {
+    expect(runContract.getPlanningOutput.method).toBe('GET');
+    expect(runContract.getPlanningOutput.path).toBe('/v1/runs/:runId/planning-output');
+  });
+
+  it('submitTaskToRuntime is the runtime dispatch endpoint', () => {
+    expect(runContract.submitTaskToRuntime.method).toBe('POST');
+    expect(runContract.submitTaskToRuntime.path).toBe('/v1/tasks/:taskId/agent-runs');
+  });
+
+  it('getArtifactPayload is the bounded artifact payload endpoint', () => {
+    expect(runContract.getArtifactPayload.method).toBe('GET');
+    expect(runContract.getArtifactPayload.path).toBe('/v1/artifacts/:artifactId/payload');
+  });
+
+  it('keeps common error responses on runtime and artifact payload endpoints', () => {
+    for (const status of [400, 401, 403, 404, 409, 422, 429, 500] as const) {
+      expect(runContract.submitTaskToRuntime.responses[status]).toBeDefined();
+    }
+
+    for (const status of [400, 401, 403, 404, 409, 413, 415, 422, 429, 500] as const) {
+      expect(runContract.getArtifactPayload.responses[status]).toBeDefined();
+    }
   });
 });
 

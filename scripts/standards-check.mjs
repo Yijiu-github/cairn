@@ -39,17 +39,37 @@ const collectExportTargets = (exportsField) => {
     return [];
   }
 
-  return [];
+  return Object.values(exportsField).flatMap((value) => collectExportTargets(value));
 };
 
-const flattenExportEntries = (exportsField, prefix = '.') => {
-  const entries = [];
+const collectExportTargetGroups = (exportsField) => {
+  if (typeof exportsField === 'string') {
+    return [[exportsField]];
+  }
 
-  if (typeof exportsField === 'string' || Array.isArray(exportsField)) {
-    const targets = collectExportTargets(exportsField);
-    if (targets.length > 0) {
-      entries.push({ subpath: prefix, targets });
-    }
+  if (!Array.isArray(exportsField)) {
+    return [];
+  }
+
+  const targets = exportsField.flatMap((value) => collectExportTargets(value));
+  return targets.length > 0 ? [targets] : [];
+};
+
+const isExportSubpathKey = (key) => key === '.' || key.startsWith('./');
+
+const formatConditionPath = (conditionPath) => conditionPath.join(' ');
+
+const formatExportTargetDetail = ({ subpath, conditionPath, target }) => {
+  const prefix = formatConditionPath(conditionPath);
+  return prefix.length > 0 ? `${subpath} ${prefix} -> ${target}` : `${subpath} -> ${target}`;
+};
+
+const flattenExportEntries = (exportsField, subpath = '.', conditionPath = []) => {
+  const entries = [];
+  const targetGroups = collectExportTargetGroups(exportsField);
+
+  if (targetGroups.length > 0) {
+    entries.push({ subpath, conditionPath, targetGroups });
     return entries;
   }
 
@@ -57,23 +77,21 @@ const flattenExportEntries = (exportsField, prefix = '.') => {
     return entries;
   }
 
-  const conditionKeys = new Set(['types', 'import', 'default', 'require']);
-  const conditionEntries = Object.entries(exportsField).filter(([key]) => conditionKeys.has(key));
+  const objectEntries = Object.entries(exportsField);
+  const hasSubpathKeys = objectEntries.some(([key]) => isExportSubpathKey(key));
 
-  if (conditionEntries.length > 0) {
-    const targets = [];
-    for (const [, value] of conditionEntries) {
-      targets.push(...collectExportTargets(value));
+  if (hasSubpathKeys) {
+    for (const [exportSubpath, value] of objectEntries) {
+      if (isExportSubpathKey(exportSubpath)) {
+        entries.push(...flattenExportEntries(value, exportSubpath, []));
+      }
     }
 
-    if (targets.length > 0) {
-      entries.push({ subpath: prefix, targets });
-    }
     return entries;
   }
 
-  for (const [subpath, value] of Object.entries(exportsField)) {
-    entries.push(...flattenExportEntries(value, subpath));
+  for (const [condition, value] of objectEntries) {
+    entries.push(...flattenExportEntries(value, subpath, [...conditionPath, condition]));
   }
 
   return entries;
@@ -185,8 +203,28 @@ const isInternalImport = (specifier) => {
   return specifier.includes('/internal/');
 };
 
-const isCrossPackageRelativeImport = (specifier) => {
-  return specifier.startsWith('..') && specifier.includes('packages/');
+const resolveRelativeImportPath = (relativeFilePath, specifier) => {
+  if (!specifier.startsWith('.')) {
+    return null;
+  }
+
+  return toPosixPath(path.normalize(path.join(path.dirname(relativeFilePath), specifier)));
+};
+
+const isCrossPackageRelativeImport = ({ relativeFilePath, specifier, packageByName }) => {
+  if (specifier.startsWith('.') && specifier.includes('/packages/')) {
+    return true;
+  }
+
+  const resolvedImportPath = resolveRelativeImportPath(relativeFilePath, specifier);
+  if (!resolvedImportPath) {
+    return false;
+  }
+
+  const owningPackage = getWorkspacePackageForFile(relativeFilePath, packageByName);
+  const importedPackage = getWorkspacePackageForFile(resolvedImportPath, packageByName);
+
+  return isCrossPackageImport(owningPackage, importedPackage);
 };
 
 const isAllowedExportedSubpath = (specifier, workspacePackage) => {
@@ -215,6 +253,7 @@ const allowedDependencyTargetsByPackage = new Map([
     ]),
   ],
   ['@cairn/ui-preview', new Set(['@cairn/ui'])],
+  ['@cairn/desktop', new Set(['@cairn/shared-contracts', '@cairn/ui'])],
 ]);
 
 const canImportPackage = (owningPackage, importedPackage) => {
@@ -277,7 +316,13 @@ export const checkSourceFile = ({ relativeFilePath, sourceText, packageByName })
   const owningPackage = getWorkspacePackageForFile(normalizedFilePath, packageByName);
 
   for (const specifier of extractImportSpecifiers(sourceText)) {
-    if (isCrossPackageRelativeImport(specifier)) {
+    if (
+      isCrossPackageRelativeImport({
+        relativeFilePath: normalizedFilePath,
+        specifier,
+        packageByName,
+      })
+    ) {
       diagnostics.push({
         code: 'cross_package_relative_import',
         file: normalizedFilePath,
@@ -343,42 +388,48 @@ export const checkPackagePublicApi = async (rootDirectory, workspacePackage) => 
     return diagnostics;
   }
 
-  for (const { subpath, targets } of collectExports(packageJson.exports)) {
-    if (targets.length === 0) {
+  for (const { subpath, conditionPath, targetGroups } of collectExports(packageJson.exports)) {
+    if (targetGroups.length === 0) {
       continue;
     }
 
-    let targetExists = false;
+    for (const targets of targetGroups) {
+      let targetExists = false;
 
-    for (const target of targets) {
-      const targetPath = target.startsWith('./') ? target.slice(2) : target;
-      if (targetPath.length === 0) {
-        continue;
-      }
-
-      const resolvedTargetPath = path.join(
-        rootDirectory,
-        workspacePackage.relativeDirectory,
-        targetPath,
-      );
-      try {
-        const targetStat = await stat(resolvedTargetPath);
-        if (targetStat.isFile()) {
-          targetExists = true;
-          break;
+      for (const target of targets) {
+        const targetPath = target.startsWith('./') ? target.slice(2) : target;
+        if (targetPath.length === 0) {
+          continue;
         }
-      } catch {
-        continue;
-      }
-    }
 
-    if (!targetExists) {
-      diagnostics.push({
-        code: 'missing_public_export_target',
-        file: path.join(workspacePackage.relativeDirectory, packageJsonFileName),
-        message: 'package.json exports points to a missing source file.',
-        detail: `${subpath} -> ${targets[0]}`,
-      });
+        const resolvedTargetPath = path.join(
+          rootDirectory,
+          workspacePackage.relativeDirectory,
+          targetPath,
+        );
+        try {
+          const targetStat = await stat(resolvedTargetPath);
+          if (targetStat.isFile()) {
+            targetExists = true;
+            break;
+          }
+        } catch {
+          continue;
+        }
+      }
+
+      if (!targetExists) {
+        diagnostics.push({
+          code: 'missing_public_export_target',
+          file: path.join(workspacePackage.relativeDirectory, packageJsonFileName),
+          message: 'package.json exports points to a missing source file.',
+          detail: formatExportTargetDetail({
+            subpath,
+            conditionPath,
+            target: targets[0],
+          }),
+        });
+      }
     }
   }
 

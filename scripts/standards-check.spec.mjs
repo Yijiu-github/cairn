@@ -119,6 +119,76 @@ test('checkSourceFile reports boundaries and export issues', () => {
   );
 });
 
+test('checkSourceFile reports sibling package relative imports', () => {
+  const packageByName = new Map([
+    [
+      '@cairn/application',
+      {
+        name: '@cairn/application',
+        relativeDirectory: 'packages/application',
+        exportedSubpaths: new Set(['.']),
+      },
+    ],
+    [
+      '@cairn/storage',
+      {
+        name: '@cairn/storage',
+        relativeDirectory: 'packages/storage',
+        exportedSubpaths: new Set(['.']),
+      },
+    ],
+  ]);
+
+  assert.deepEqual(
+    checkSourceFile({
+      relativeFilePath: 'packages/application/src/service.ts',
+      sourceText: "import { createStorage } from '../../storage/src/index';",
+      packageByName,
+    }),
+    [
+      {
+        code: 'cross_package_relative_import',
+        file: 'packages/application/src/service.ts',
+        message: 'Use @cairn/* package exports instead of relative imports into packages/.',
+        detail: '../../storage/src/index',
+      },
+    ],
+  );
+});
+
+test('checkSourceFile allows documented package exports', () => {
+  const packageByName = new Map([
+    [
+      '@cairn/shared-contracts',
+      {
+        name: '@cairn/shared-contracts',
+        relativeDirectory: 'packages/shared_contracts',
+        exportedSubpaths: new Set(['.', './contracts']),
+      },
+    ],
+    [
+      '@cairn/runtime-gateway',
+      {
+        name: '@cairn/runtime-gateway',
+        relativeDirectory: 'packages/runtime_gateway',
+        exportedSubpaths: new Set(['.']),
+      },
+    ],
+  ]);
+
+  assert.deepEqual(
+    checkSourceFile({
+      relativeFilePath: 'packages/application/src/service.ts',
+      sourceText: [
+        "import { runContract } from '@cairn/shared-contracts/contracts';",
+        "import { RuntimeAdapter } from '@cairn/runtime-gateway';",
+      ].join('\n'),
+      packageByName,
+    }),
+    [],
+  );
+});
+
 test('checkSourceFile reports non-exported package subpaths', () => {
   const packageByName = new Map([
     [
@@ -201,6 +271,55 @@ test('checkPackagePublicApi accepts array export fallbacks when one target exist
 
     assert.ok(applicationPackage);
     assert.deepEqual(await checkPackagePublicApi(root, applicationPackage), []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('checkPackagePublicApi reports missing condition export targets individually', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'cairn-standards-'));
+
+  try {
+    await writeJson(path.join(root, 'packages/application/package.json'), {
+      name: '@cairn/application',
+      exports: {
+        '.': {
+          types: './src/index.ts',
+          import: './src/missing.ts',
+        },
+        './browser': {
+          browser: './src/browser.ts',
+          node: './src/missing-node.ts',
+        },
+      },
+    });
+    await writeText(
+      path.join(root, 'packages/application/src/index.ts'),
+      'export const value = 1;\n',
+    );
+    await writeText(
+      path.join(root, 'packages/application/src/browser.ts'),
+      'export const browserValue = 1;\n',
+    );
+
+    const packages = await discoverWorkspacePackages(root);
+    const applicationPackage = packages.get('@cairn/application');
+
+    assert.ok(applicationPackage);
+    assert.deepEqual(await checkPackagePublicApi(root, applicationPackage), [
+      {
+        code: 'missing_public_export_target',
+        file: 'packages/application/package.json',
+        message: 'package.json exports points to a missing source file.',
+        detail: '. import -> ./src/missing.ts',
+      },
+      {
+        code: 'missing_public_export_target',
+        file: 'packages/application/package.json',
+        message: 'package.json exports points to a missing source file.',
+        detail: './browser node -> ./src/missing-node.ts',
+      },
+    ]);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

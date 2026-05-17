@@ -1,6 +1,6 @@
 # Cairn
 
-> 一个面向个人开发者与小技术团队的、自托管且本地优先的 **多 Agent 协作工作台**。
+> 一个本地优先、可自托管的 **Agent 工程控制台**：先服务重度 AI 编程个人开发者，同时为小技术团队保留可观察、可回放、可接管的协作核心。
 
 **Cairn** = 登山者沿途堆起的石头路标。每完成一段路，加一颗石头。
 我们用它来比喻这个产品的核心：**复杂任务一步步堆积、过程可见、产物沉淀、长期可回看**。
@@ -11,9 +11,10 @@
 
 Cairn 不是又一个聊天 bot，也不是一个 IDE 内的补全 copilot。它是一个：
 
-- **本地优先 + 自托管** 的多 Agent 协作系统
-- 在 **桌面端（Windows / macOS Apple Silicon）** 与 **Web 端** 共享同一套协作核心
-- 支持把复杂工程任务 **拆分 → 执行 → 回传 → 回放 → 沉淀**
+- **本地优先 + 自托管** 的 Agent 工程控制台
+- 在 **桌面端（Windows / macOS Apple Silicon）** 与 **Web 端** 共享同一套 Workspace Core
+- 支持把复杂工程任务 **规划 → 执行 → 回传 → 回放 → 沉淀**
+- 将 Codex / Claude / 本地模型等 runtime 纳入统一的 run、artifact、trace、operator control 语义
 - 由主 Agent（Supervisor）统筹、worker 角色分工、**人类可随时接管**
 
 适合谁：
@@ -21,6 +22,8 @@ Cairn 不是又一个聊天 bot，也不是一个 IDE 内的补全 copilot。它
 1. 重度 AI 编程的个人开发者
 2. 2~10 人的小技术团队
 3. 本地优先 / 数据自控 / 不愿被某个 SaaS 绑死的用户
+
+Cairn 不试图替代 Codex、Claude Code、Cursor 或 Windsurf 的代码生成能力。它更像这些 agent runtime 之上的本地塔台：记录任务为什么启动、如何规划、谁执行了什么、产物在哪里、失败如何恢复，以及人类何时介入。
 
 ---
 
@@ -31,7 +34,7 @@ Cairn 不是又一个聊天 bot，也不是一个 IDE 内的补全 copilot。它
 - ✅ 设计文档 V0.1.0 已定稿（见 [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)）
 - ✅ Monorepo 工程基线、共享契约、领域持久化 schema、SQLite storage、Runtime Gateway 与 Application 编排基线已启动
 - ✅ Workspace Core 最小服务骨架已启动：Fastify 入口、健康检查、R1 run/task/agent-run 基础 HTTP 闭环与 mock runtime 验证
-- 🚧 Desktop / Web 应用代码尚未启动；当前主线是把 Workspace Core 接入 SQLite repository 与 Codex CLI adapter
+- 🚧 Desktop 已有最小 Electron shell 与静态 UI 壳视图；当前主线仍是 Workspace Core 接入 SQLite repository 与 Codex CLI adapter
 - 🗓 Release 1 目标：Personal Desktop Edition（Windows + macOS Apple Silicon）
 
 详情见 [`docs/product/roadmap.md`](docs/product/roadmap.md)。

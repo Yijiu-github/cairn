@@ -243,6 +243,10 @@ packages/runtime_gateway/src/adapters/codex/
 └─ codex-errors.ts
 ```
 
+### R1 demo-loop smoke flow
+
+Workspace Core 的 R1 demo-loop 通过 `POST /v1/tasks/:taskId/agent-runs` 提交任务，并在 drain 后通过 `GET /v1/artifacts/:artifactId/payload` 读取 bounded payload text；adapter 只提供执行与流式事件，不直接写数据库或落 artifact 文件。
+
 ### Release 2 候选（尚未承诺，按优先级）
 
 #### 1. Generic OpenAI-Compatible Adapter（强烈推荐 R2 首位）
