@@ -49,6 +49,7 @@ export interface CreateDefaultWorkspaceCoreContainerOptions {
   bootstrapWorkspaceId?: string;
   bootstrapEventId?: string;
   codeContextScanner?: CodeContextScannerPort;
+  runtimeGateway?: RuntimeGatewayPort;
 }
 
 const createUlidFactory = (): ApplicationIdFactory & CodeContextIdFactory => ({
@@ -100,6 +101,17 @@ export const createWorkspaceCoreContainer = (
 export const createInMemoryWorkspaceCoreContainer = (): WorkspaceCoreContainer =>
   createWorkspaceCoreContainer(new InMemoryApplicationRepository(), new MockRuntimeGatewayPort());
 
+export const createInMemoryWorkspaceCoreContainerWithRuntime = (
+  runtimeGateway: RuntimeGatewayPort,
+  scanner?: CodeContextScannerPort,
+): WorkspaceCoreContainer =>
+  createWorkspaceCoreContainer(
+    new InMemoryApplicationRepository(),
+    runtimeGateway,
+    undefined,
+    scanner,
+  );
+
 export const createInMemoryWorkspaceCoreContainerWithScanner = (
   scanner: CodeContextScannerPort,
 ): WorkspaceCoreContainer =>
@@ -114,6 +126,13 @@ export const createDefaultWorkspaceCoreContainer = (
   options: CreateDefaultWorkspaceCoreContainerOptions = {},
 ): WorkspaceCoreContainer => {
   if (options.databasePath === undefined) {
+    if (options.runtimeGateway !== undefined) {
+      return createInMemoryWorkspaceCoreContainerWithRuntime(
+        options.runtimeGateway,
+        options.codeContextScanner,
+      );
+    }
+
     if (options.codeContextScanner === undefined) {
       return createInMemoryWorkspaceCoreContainer();
     }
@@ -131,7 +150,7 @@ export const createDefaultWorkspaceCoreContainer = (
 
   return createWorkspaceCoreContainer(
     repository,
-    new MockRuntimeGatewayPort(),
+    options.runtimeGateway ?? new MockRuntimeGatewayPort(),
     () => {
       storage.close();
     },
