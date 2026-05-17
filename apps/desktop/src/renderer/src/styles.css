@@ -202,7 +202,8 @@ h2 {
 }
 
 .content-stack,
-.run-list {
+.run-list,
+.artifact-list {
   display: grid;
   gap: 14px;
 }

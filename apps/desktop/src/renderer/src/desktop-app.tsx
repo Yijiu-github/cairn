@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 import {
   AgentStatusStrip,
+  ArtifactCard,
   ArtifactReviewPanel,
   Button,
   Card,
@@ -10,11 +11,14 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  EvidenceTimeline,
+  HandoffQueueItem,
   InlineAlert,
   MetadataList,
   RunCard,
   RuntimeHealthCard,
   StatusBadge,
+  TaskTree,
 } from '@cairn/ui';
 
 import { desktopShellModel } from './desktop-model';
@@ -96,20 +100,14 @@ function HomeView() {
   return (
     <div className="content-grid">
       <section className="content-stack">
-        <Card>
-          <CardHeader>
-            <CardTitle>Handoff inbox placeholder</CardTitle>
-            <CardDescription>
-              Operator work queue and resumable decisions will land here.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <InlineAlert tone="info" title="No live queue yet">
-              The first desktop PR keeps this as shell state only. Future work should adapt real
-              handoff data through a thin app-shell model.
-            </InlineAlert>
-          </CardContent>
-        </Card>
+        <section className="content-stack" aria-label="Handoff inbox">
+          {desktopShellModel.handoffs.map((handoff) => (
+            <HandoffQueueItem
+              key={`${handoff.sourceLabel}-${handoff.title}`}
+              {...handoff}
+            />
+          ))}
+        </section>
 
         <div className="run-list">
           {desktopShellModel.pinnedRuns.map((run) => (
@@ -137,24 +135,13 @@ function RunDetailView() {
     <div className="content-grid">
       <section className="content-stack">
         <RunCard {...run} />
-        <Card>
-          <CardHeader>
-            <CardTitle>Timeline placeholder</CardTitle>
-            <CardDescription>
-              Run events stay static until the Workspace Core UI contract is wired.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ol className="timeline-list">
-              <li>Shell created</li>
-              <li>Renderer mounted</li>
-              <li>Workspace Core connection intentionally skipped</li>
-            </ol>
-          </CardContent>
-        </Card>
+        <EvidenceTimeline items={desktopShellModel.runDetail.evidence} />
       </section>
       <aside className="content-stack">
-        <RuntimeHealthCard {...desktopShellModel.runtime} />
+        <TaskTree
+          items={desktopShellModel.runDetail.tasks}
+          selectedId={desktopShellModel.runDetail.selectedTaskId}
+        />
         <Card>
           <CardHeader>
             <CardTitle>Operator controls</CardTitle>
@@ -189,6 +176,11 @@ function ArtifactReviewView() {
           reviewState="pending_review"
           title={desktopShellModel.artifactReview.title}
         />
+        <div className="artifact-list">
+          {desktopShellModel.artifactReview.artifacts.map((artifact) => (
+            <ArtifactCard key={artifact.artifactId} {...artifact} />
+          ))}
+        </div>
       </section>
       <aside className="content-stack">
         <SafetyDefaultsCard />
