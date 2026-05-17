@@ -9,7 +9,12 @@ import { InMemoryApplicationRepository } from '../testing/memory-run-repository.
 import { OrchestrationRunService } from './orchestration-run-service.js';
 
 import type { RuntimeGatewayPort } from '../ports/runtime-gateway-port.js';
-import type { AdapterSubmitAck, AdapterSubmitRequest } from '@cairn/runtime-gateway';
+import type {
+  AdapterCancelAck,
+  AdapterStreamEvent,
+  AdapterSubmitAck,
+  AdapterSubmitRequest,
+} from '@cairn/runtime-gateway';
 import type {
   AgentRun,
   AgentRunId,
@@ -60,13 +65,48 @@ const ids = {
 
 class RecordingRuntimeGateway implements RuntimeGatewayPort {
   readonly requests: AdapterSubmitRequest[] = [];
+  readonly cancelled: { runId: AgentRunId; reason?: string }[] = [];
 
-  constructor(private readonly ack?: AdapterSubmitAck) {}
+  constructor(
+    private readonly ack?: AdapterSubmitAck,
+    private readonly events: readonly AdapterStreamEvent[] = [
+      { type: 'queued', at: Date.parse('2026-05-14T01:00:01.000Z') },
+      {
+        type: 'started',
+        at: Date.parse('2026-05-14T01:00:02.000Z'),
+        providerRunId: 'provider:stream',
+      },
+      {
+        type: 'succeeded',
+        at: Date.parse('2026-05-14T01:00:03.000Z'),
+        finalArtifactRef: { artifactId: ids.artifact },
+      },
+    ],
+  ) {}
 
   submit(request: AdapterSubmitRequest): Promise<AdapterSubmitAck> {
     this.requests.push(request);
     return Promise.resolve(
       this.ack ?? { runId: request.runId, accepted: true, providerRunId: 'provider:1' },
+    );
+  }
+
+  stream(_runId: AgentRunId): AsyncIterable<AdapterStreamEvent> {
+    const events = this.events;
+    return {
+      async *[Symbol.asyncIterator]() {
+        await Promise.resolve();
+        for (const event of events) {
+          yield event;
+        }
+      },
+    };
+  }
+
+  cancel(runId: AgentRunId, reason?: string): Promise<AdapterCancelAck> {
+    this.cancelled.push(reason === undefined ? { runId } : { runId, reason });
+    return Promise.resolve(
+      reason === undefined ? { runId, cancelled: true } : { runId, cancelled: true, reason },
     );
   }
 }
@@ -262,6 +302,27 @@ describe('OrchestrationRunService', () => {
     });
   });
 
+  it('drains runtime events into application state', async () => {
+    const { repository, service } = await createRunAndSubmit();
+
+    const drained = await service.drainAgentRunRuntime({ agentRunId: ids.agentRun });
+
+    expect(drained.eventCount).toBe(3);
+    await expect(repository.getAgentRun(ids.agentRun)).resolves.toMatchObject({
+      status: 'succeeded',
+      providerRunId: 'provider:stream',
+      outputRef: ids.artifact,
+    });
+    await expect(repository.getTask(ids.task)).resolves.toMatchObject({
+      status: 'succeeded',
+      artifactRefs: [ids.artifact],
+    });
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({
+      status: 'succeeded',
+      finalResponseRef: ids.artifact,
+    });
+  });
+
   it('maps queued, started, and succeeded events into terminal run state', async () => {
     const { repository, service } = await createRunAndSubmit();
 
@@ -400,11 +461,15 @@ describe('OrchestrationRunService', () => {
   });
 
   it('cancels an active run and its non-terminal task and agent run', async () => {
-    const { repository, service }: ReturnType<typeof createHarness> = createHarness();
+    const { repository, runtimeGateway, service }: ReturnType<typeof createHarness> =
+      createHarness();
     await repository.createRunGraph({ run: createRunFixture(), tasks: [createTaskFixture()] });
     await repository.createAgentRun(createAgentRunFixture());
 
     const cancelled = await service.cancelRun({ runId: ids.run, reason: 'Operator stopped it.' });
+    expect(runtimeGateway.cancelled).toEqual([
+      { runId: ids.agentRun, reason: 'Operator stopped it.' },
+    ]);
 
     expect(cancelled).toMatchObject({
       status: 'cancelled',

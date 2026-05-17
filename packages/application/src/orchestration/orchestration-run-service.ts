@@ -84,6 +84,15 @@ export interface SubmitTaskToRuntimeResult {
   providerRunId?: string;
 }
 
+export interface DrainAgentRunRuntimeInput {
+  agentRunId: AgentRunId;
+}
+
+export interface DrainAgentRunRuntimeResult {
+  agentRunId: AgentRunId;
+  eventCount: number;
+}
+
 export interface PauseRunInput {
   runId: OrchestrationRunId;
   reason?: string;
@@ -285,6 +294,20 @@ export class OrchestrationRunService {
     return { agentRun: acknowledgedAgentRun, providerRunId: ack.providerRunId };
   }
 
+  async drainAgentRunRuntime(
+    input: DrainAgentRunRuntimeInput,
+  ): Promise<DrainAgentRunRuntimeResult> {
+    await this.requireAgentRun(input.agentRunId);
+
+    let eventCount = 0;
+    for await (const event of this.runtimeGateway.stream(input.agentRunId)) {
+      await this.applyAdapterEvent(input.agentRunId, event);
+      eventCount += 1;
+    }
+
+    return { agentRunId: input.agentRunId, eventCount };
+  }
+
   async applyAdapterEvent(runId: AgentRunId, event: AdapterStreamEvent): Promise<void> {
     const agentRun = await this.requireAgentRun(runId);
     const task = await this.requireTask(agentRun.taskId);
@@ -422,6 +445,7 @@ export class OrchestrationRunService {
       const agentRuns = await this.repository.listAgentRunsByTask(task.taskId);
       for (const agentRun of agentRuns) {
         if (!isAgentRunTerminal(agentRun.status)) {
+          await this.runtimeGateway.cancel(agentRun.runId, reason);
           await this.repository.updateAgentRun({
             ...agentRun,
             status: 'cancelled',
