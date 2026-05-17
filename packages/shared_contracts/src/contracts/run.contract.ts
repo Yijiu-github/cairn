@@ -11,7 +11,7 @@ import { initContract } from '@ts-rest/core';
 import { z } from 'zod';
 
 import { AgentRun, AgentRunStatus } from '../schemas/agent-run.js';
-import { Artifact } from '../schemas/artifact.js';
+import { Artifact, artifactPayloadResponseSchema } from '../schemas/artifact.js';
 import { BudgetHint, PaginationQuery, Paginated } from '../schemas/common.js';
 import {
   WorkspaceId,
@@ -31,6 +31,7 @@ import { Task, TaskKind, TaskStatus } from '../schemas/task.js';
 import { TraceEvent } from '../schemas/trace-event.js';
 
 import { commonErrorResponses } from './_common.js';
+import { ApiError } from './_common.js';
 
 const c = initContract();
 
@@ -52,6 +53,22 @@ const StartRunTaskBody = z.object({
   priority: z.number().int().min(0).max(100).optional(),
   contextRefs: z.array(ArtifactId).optional(),
   budgetHint: BudgetHint.optional(),
+});
+
+const SubmitTaskToRuntimeBody = z.object({
+  runtimeType: z.literal('codex'),
+  model: z.string().min(1).default('default'),
+  prompt: z.string().min(1).max(32_000),
+  timeoutMs: z.number().int().positive().max(600_000).optional(),
+  options: z.record(z.unknown()).optional(),
+});
+
+const SubmitTaskToRuntimeResponse = z.object({
+  agentRunId: AgentRunId,
+  taskId: TaskId,
+  orchestrationRunId: OrchestrationRunId,
+  status: z.literal('submitted'),
+  providerRunId: z.string().optional(),
 });
 
 export const StartRunBody = z.object({
@@ -173,6 +190,21 @@ export const runContract = c.router(
       },
     },
 
+    submitTaskToRuntime: {
+      method: 'POST',
+      path: '/tasks/:taskId/agent-runs',
+      pathParams: z.object({ taskId: TaskId }),
+      body: SubmitTaskToRuntimeBody,
+      summary: 'Submit a task to a runtime adapter',
+      responses: {
+        201: SubmitTaskToRuntimeResponse,
+        400: ApiError,
+        404: ApiError,
+        409: ApiError,
+        503: ApiError,
+      },
+    },
+
     // --- Artifact ---
     listArtifacts: {
       method: 'GET',
@@ -194,6 +226,19 @@ export const runContract = c.router(
       responses: {
         200: Artifact,
         ...commonErrorResponses,
+      },
+    },
+
+    getArtifactPayload: {
+      method: 'GET',
+      path: '/artifacts/:artifactId/payload',
+      pathParams: z.object({ artifactId: ArtifactId }),
+      summary: 'Get bounded artifact payload text',
+      responses: {
+        200: artifactPayloadResponseSchema,
+        404: ApiError,
+        413: ApiError,
+        415: ApiError,
       },
     },
 

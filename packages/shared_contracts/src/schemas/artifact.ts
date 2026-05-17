@@ -22,6 +22,25 @@ export type ArtifactRole = z.infer<typeof ArtifactRole>;
 export const ArtifactKind = z.enum(['text', 'patch', 'log', 'file_snapshot', 'json', 'binary']);
 export type ArtifactKind = z.infer<typeof ArtifactKind>;
 
+export const artifactSensitivitySchema = z.enum(['none', 'local_path', 'secret_risk']);
+export type ArtifactSensitivity = z.infer<typeof artifactSensitivitySchema>;
+
+export const artifactPayloadRefSchema = z
+  .string()
+  .min(1)
+  .startsWith('artifact-payload://')
+  .refine((value) => !value.includes('..'), {
+    message: 'Artifact payload refs must not contain parent path segments.',
+  });
+
+export const artifactPayloadResponseSchema = z.object({
+  artifactId: ArtifactId,
+  mediaType: z.enum(['text/plain', 'application/json']),
+  text: z.string().max(262_144),
+  truncated: z.boolean(),
+});
+export type ArtifactPayloadResponse = z.infer<typeof artifactPayloadResponseSchema>;
+
 // ---------------------------------------------------------------------------
 // 核心对象
 // ---------------------------------------------------------------------------
@@ -48,6 +67,8 @@ export const Artifact = z.object({
   uriOrPath: z.string().min(1),
   contentType: z.string().optional(),
   sizeBytes: z.number().int().nonnegative().optional(),
+  payloadRef: artifactPayloadRefSchema.optional(),
+  sensitivity: artifactSensitivitySchema.default('none'),
 
   producerType: ProducerType,
   producerId: z.string().optional(),
@@ -56,3 +77,5 @@ export const Artifact = z.object({
   createdAt: Iso8601,
 });
 export type Artifact = z.infer<typeof Artifact>;
+
+export const artifactSchema = Artifact;

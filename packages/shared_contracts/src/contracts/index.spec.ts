@@ -78,8 +78,10 @@ describe('runContract', () => {
       'getTask',
       'listAgentRuns',
       'getAgentRun',
+      'submitTaskToRuntime',
       'listArtifacts',
       'getArtifact',
+      'getArtifactPayload',
       'listTraceEvents',
     ] as const;
     for (const op of expected) {
@@ -99,6 +101,16 @@ describe('runContract', () => {
   it('getPlanningOutput path is the run planning output endpoint', () => {
     expect(runContract.getPlanningOutput.method).toBe('GET');
     expect(runContract.getPlanningOutput.path).toBe('/v1/runs/:runId/planning-output');
+  });
+
+  it('submitTaskToRuntime is the runtime dispatch endpoint', () => {
+    expect(runContract.submitTaskToRuntime.method).toBe('POST');
+    expect(runContract.submitTaskToRuntime.path).toBe('/v1/tasks/:taskId/agent-runs');
+  });
+
+  it('getArtifactPayload is the bounded artifact payload endpoint', () => {
+    expect(runContract.getArtifactPayload.method).toBe('GET');
+    expect(runContract.getArtifactPayload.path).toBe('/v1/artifacts/:artifactId/payload');
   });
 });
 
