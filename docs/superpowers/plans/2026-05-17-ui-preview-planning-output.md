@@ -54,7 +54,7 @@ Modify these files:
 - Modify: `apps/ui-preview/src/preview-data/run-detail-data.ts`
 - Modify: `apps/ui-preview/src/preview-models/run-detail-view-model.ts`
 
-- [ ] **Step 1: Add preview interfaces**
+- [x] **Step 1: Add preview interfaces**
 
 In `apps/ui-preview/src/preview-models/preview-types.ts`, after `PreviewRunDetail`, add:
 
@@ -83,7 +83,7 @@ export interface PreviewPlanningOutput {
 }
 ```
 
-- [ ] **Step 2: Add mock PlanningOutput data**
+- [x] **Step 2: Add mock PlanningOutput data**
 
 In `apps/ui-preview/src/preview-data/run-detail-data.ts`, after `runDetailTasks`, add:
 
@@ -137,7 +137,7 @@ export const runDetailPlanningOutput = {
 };
 ```
 
-- [ ] **Step 3: Expose planning output view model**
+- [x] **Step 3: Expose planning output view model**
 
 In `apps/ui-preview/src/preview-models/run-detail-view-model.ts`:
 
@@ -146,7 +146,7 @@ In `apps/ui-preview/src/preview-models/run-detail-view-model.ts`:
 3. Add `planningOutput: PreviewPlanningOutput;` to `RunDetailViewModel`.
 4. Add `planningOutput: runDetailPlanningOutput,` to `runDetailViewModel`.
 
-- [ ] **Step 4: Run model verification**
+- [x] **Step 4: Run model verification**
 
 Run:
 
@@ -156,7 +156,7 @@ pnpm --filter @cairn/ui-preview typecheck
 
 Expected: command exits `0`.
 
-- [ ] **Step 5: Commit model slice**
+- [x] **Step 5: Commit model slice**
 
 Run:
 
@@ -175,7 +175,7 @@ Expected: commit succeeds.
 - Modify: `apps/ui-preview/src/pages/run-detail-preview-page.tsx`
 - Modify: `apps/ui-preview/src/styles.css`
 
-- [ ] **Step 1: Add section component**
+- [x] **Step 1: Add section component**
 
 In `apps/ui-preview/src/preview-sections/run-detail-sections.tsx`, add this function before `RunTaskTreeSection`:
 
@@ -247,14 +247,14 @@ export function RunPlanningOutputSection() {
 }
 ```
 
-- [ ] **Step 2: Place section in page**
+- [x] **Step 2: Place section in page**
 
 In `apps/ui-preview/src/pages/run-detail-preview-page.tsx`:
 
 1. Add `RunPlanningOutputSection` to the import from `run-detail-sections`.
 2. Render `<RunPlanningOutputSection />` immediately before `<RunTaskTreeSection />`.
 
-- [ ] **Step 3: Add CSS**
+- [x] **Step 3: Add CSS**
 
 In `apps/ui-preview/src/styles.css`, after `.stack`, add:
 
@@ -317,7 +317,7 @@ In `apps/ui-preview/src/styles.css`, after `.stack`, add:
 
 In the mobile media query where `.grid.two` becomes one column, add `.planning-columns` to the same rule.
 
-- [ ] **Step 4: Run UI verification**
+- [x] **Step 4: Run UI verification**
 
 Run:
 
@@ -329,7 +329,7 @@ pnpm --filter @cairn/ui-preview build
 
 Expected: all commands exit `0`.
 
-- [ ] **Step 5: Commit UI section**
+- [x] **Step 5: Commit UI section**
 
 Run:
 
@@ -347,7 +347,7 @@ Expected: commit succeeds.
 - Modify: `CHANGELOG.md`
 - Modify: `docs/superpowers/plans/2026-05-17-ui-preview-planning-output.md`
 
-- [ ] **Step 1: Update changelog**
+- [x] **Step 1: Update changelog**
 
 Under `[Unreleased]` → `### Added`, after the Planning Output API entry, add:
 
@@ -355,7 +355,7 @@ Under `[Unreleased]` → `### Added`, after the Planning Output API entry, add:
 - **UI Preview Planning Output**：Run Detail preview 新增静态 PlanningOutput 展示，覆盖 planning summary、blocked reason、preconditions 与 action tree。
 ```
 
-- [ ] **Step 2: Run final verification**
+- [x] **Step 2: Run final verification**
 
 Run:
 
@@ -370,7 +370,7 @@ git diff --check
 
 Expected: all commands exit `0`.
 
-- [ ] **Step 3: Commit docs**
+- [x] **Step 3: Commit docs**
 
 Run:
 
