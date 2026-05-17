@@ -14,6 +14,7 @@ import {
   CodeSearchQuery,
   ContextPackCreate,
   ContextPackFromCodeSearchCreate,
+  AgentRunId,
   OrchestrationRunId,
   SourceRootCreate,
   SourceRootId,
@@ -571,6 +572,31 @@ export const createWorkspaceCoreApp = async (
         visibility: body.data.visibility,
       });
       return await reply.code(201).send(result);
+    } catch (error) {
+      if (isApplicationError(error)) {
+        const status = toApplicationHttpStatus(error);
+        return reply.code(status).send(toApiError(toApplicationHttpCode(status), error.message));
+      }
+
+      throw error;
+    }
+  });
+
+  app.post('/v1/agent-runs/:agentRunId/drain-runtime', async (request, reply) => {
+    const agentRunId = AgentRunId.safeParse(
+      (request.params as Record<string, unknown>)['agentRunId'],
+    );
+    if (!agentRunId.success) {
+      return reply
+        .code(400)
+        .send(toApiError('BAD_REQUEST', 'Invalid agent run id.', agentRunId.error.issues));
+    }
+
+    try {
+      const result = await options.container.orchestrationRuns.drainAgentRunRuntime({
+        agentRunId: agentRunId.data,
+      });
+      return await reply.code(202).send(result);
     } catch (error) {
       if (isApplicationError(error)) {
         const status = toApplicationHttpStatus(error);

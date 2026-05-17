@@ -154,6 +154,43 @@ describe('workspace-core app', () => {
     }
   });
 
+  it('drains submitted AgentRun runtime events into terminal state', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId, taskId } = await createSubmittedRun(app);
+      const agentRunsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}/agent-runs`,
+      });
+      const agentRun = first(agentRunsResponse.json<{ items: { runId: string }[] }>().items);
+
+      const drainResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/agent-runs/${agentRun.runId}/drain-runtime`,
+        payload: {},
+      });
+
+      expect(drainResponse.statusCode).toBe(202);
+      expect(drainResponse.json()).toMatchObject({
+        agentRunId: agentRun.runId,
+        eventCount: 4,
+      });
+
+      const runResponse = await app.inject({ method: 'GET', url: `/v1/runs/${runId}` });
+      expect(runResponse.json()).toMatchObject({
+        orchestrationRunId: runId,
+        status: 'succeeded',
+        finalResponseRef: expect.stringContaining('artifact:') as unknown,
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
   it('reads a PlanningOutput attached to a run', async () => {
     const container = createDefaultWorkspaceCoreContainer();
     const app = await createWorkspaceCoreApp({ container, logger: false });
