@@ -10,6 +10,8 @@ import type {
 import type {
   AgentRun,
   AgentRunId,
+  Artifact,
+  ArtifactId,
   CodeIndexFile,
   CodeIndexFileId,
   CodeIndexSnapshot,
@@ -30,6 +32,7 @@ import type {
 
 export class InMemoryApplicationRepository implements ApplicationRepository {
   private readonly agentRuns = new Map<AgentRunId, AgentRun>();
+  private readonly artifacts = new Map<ArtifactId, Artifact>();
   private readonly codeIndexFiles = new Map<CodeIndexFileId, CodeIndexFile>();
   private readonly codeIndexSnapshots = new Map<CodeIndexSnapshotId, CodeIndexSnapshot>();
   private readonly contextPacks = new Map<ContextPackId, ContextPackManifest>();
@@ -72,8 +75,33 @@ export class InMemoryApplicationRepository implements ApplicationRepository {
     );
   }
 
+  listArtifactsByRun(orchestrationRunId: OrchestrationRunId): Promise<Artifact[]> {
+    return Promise.resolve(
+      [...this.artifacts.values()].filter(
+        (artifact) => artifact.orchestrationRunId === orchestrationRunId,
+      ),
+    );
+  }
+
+  getArtifact(artifactId: ArtifactId): Promise<Artifact | undefined> {
+    return Promise.resolve(this.artifacts.get(artifactId));
+  }
+
+  listTraceEventsByRun(orchestrationRunId: OrchestrationRunId): Promise<TraceEvent[]> {
+    return Promise.resolve(
+      this.traceEvents
+        .filter((event) => event.orchestrationRunId === orchestrationRunId)
+        .toSorted((left, right) => left.createdAt.localeCompare(right.createdAt)),
+    );
+  }
+
   createAgentRun(agentRun: AgentRun): Promise<void> {
     this.agentRuns.set(agentRun.runId, agentRun);
+    return Promise.resolve();
+  }
+
+  createArtifact(artifact: Artifact): Promise<void> {
+    this.artifacts.set(artifact.artifactId, artifact);
     return Promise.resolve();
   }
 

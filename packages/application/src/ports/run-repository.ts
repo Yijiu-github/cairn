@@ -3,6 +3,8 @@
 import type {
   AgentRun,
   AgentRunId,
+  Artifact,
+  ArtifactId,
   CodeIndexFile,
   CodeIndexSnapshot,
   ContextPackId,
@@ -50,6 +52,9 @@ export interface ApplicationRepository {
   getAgentRun(runId: AgentRunId): Promise<AgentRun | undefined>;
   listTasksByRun(orchestrationRunId: OrchestrationRunId): Promise<Task[]>;
   listAgentRunsByTask(taskId: TaskId): Promise<AgentRun[]>;
+  listArtifactsByRun(orchestrationRunId: OrchestrationRunId): Promise<Artifact[]>;
+  getArtifact(artifactId: ArtifactId): Promise<Artifact | undefined>;
+  listTraceEventsByRun(orchestrationRunId: OrchestrationRunId): Promise<TraceEvent[]>;
   createAgentRun(agentRun: AgentRun): Promise<void>;
   createPlanningOutput(output: PlanningOutput): Promise<void>;
   updateRun(run: OrchestrationRun): Promise<void>;
