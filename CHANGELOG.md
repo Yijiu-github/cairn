@@ -60,6 +60,7 @@
 - **Runtime Artifact/Trace Demo Loop**：新增 Task runtime submit、bounded artifact payload reference/read、runtime output artifact metadata 与 TraceEvent replay source 闭环。
 - **Artifact / Trace Read API**：Workspace Core 实现 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口，供 Run Detail / Replay UI 消费。
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
+- 新增非阻塞 `pnpm run standards:check`，用于检查跨包相对导入、internal 导入、模块边界与 package exports 漂移
 
 ### Changed
 
@@ -70,6 +71,7 @@
 - **`@cairn/storage`**：升级 `better-sqlite3` catalog 至 `^12.10.0`，本机 Node 24.14.0 下可安装 native binding 并执行 SQLite 测试
 - `coding-standards.md` 对齐当前 TypeScript、ESLint、Prettier、commitlint 与人工 review gate 状态
 - `docs/STATUS.md` 同步 UI preview、Node 26 验证观察项与工程体检建议
+- `docs/engineering/standards-automation.md` 更新 Phase 2 状态，明确 `standards:check` 暂不纳入 `pnpm run check` 或 CI
 
 ### Removed
 
