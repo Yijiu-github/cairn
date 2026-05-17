@@ -342,6 +342,27 @@ export const createWorkspaceCoreApp = async (
     return reply.send(run);
   });
 
+  app.get('/v1/runs/:runId/planning-output', async (request, reply) => {
+    const runId = OrchestrationRunId.safeParse(
+      (request.params as Record<string, unknown>)['runId'],
+    );
+    if (!runId.success) {
+      return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
+    }
+
+    const run = await options.container.repository.getRun(runId.data);
+    if (run === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Run not found.'));
+    }
+
+    const planningOutput = await options.container.repository.getPlanningOutputByRun(runId.data);
+    if (planningOutput === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Planning output not found.'));
+    }
+
+    return reply.send(planningOutput);
+  });
+
   app.get('/v1/runs/:runId/tasks', async (request, reply) => {
     const runId = OrchestrationRunId.safeParse(
       (request.params as Record<string, unknown>)['runId'],

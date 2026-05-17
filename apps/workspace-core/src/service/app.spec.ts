@@ -154,6 +154,109 @@ describe('workspace-core app', () => {
     }
   });
 
+  it('reads a PlanningOutput attached to a run', async () => {
+    const container = createDefaultWorkspaceCoreContainer();
+    const app = await createWorkspaceCoreApp({ container, logger: false });
+
+    try {
+      const createResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/runs`,
+        payload: {
+          originEventId: ids.event,
+          task: {
+            taskKind: 'edit',
+            title: 'Plan task',
+            brief: 'Create a planning output.',
+          },
+        },
+      });
+      const run = createResponse.json<{ orchestrationRunId: string }>();
+      const output = await container.planningOutputs.startPlanning({
+        runId: run.orchestrationRunId as never,
+      });
+      await container.planningOutputs.completePlanning({
+        planningOutputId: output.planningOutputId,
+        actionTree: [
+          {
+            actionId: 'inspect',
+            title: 'Inspect repository',
+            intent: 'Find relevant files.',
+            status: 'ready',
+            dependsOnActionIds: [],
+          },
+        ],
+      });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${run.orchestrationRunId}/planning-output`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.json()).toMatchObject({
+        planningOutputId: output.planningOutputId,
+        orchestrationRunId: run.orchestrationRunId,
+        status: 'ready',
+        actionTree: [{ actionId: 'inspect' }],
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 404 when a run has no PlanningOutput', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const createResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/workspaces/${ids.workspace}/runs`,
+        payload: {
+          originEventId: ids.event,
+          task: {
+            taskKind: 'edit',
+            title: 'No planning output',
+            brief: 'Keep the run queued.',
+          },
+        },
+      });
+      const run = createResponse.json<{ orchestrationRunId: string }>();
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${run.orchestrationRunId}/planning-output`,
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toMatchObject({ error: { code: 'NOT_FOUND' } });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 400 for invalid PlanningOutput route run ids', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/runs/not-a-ulid/planning-output',
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: { code: 'BAD_REQUEST' } });
+    } finally {
+      await app.close();
+    }
+  });
+
   it('registers SourceRoots and creates ContextPack manifests', async () => {
     const app = await createWorkspaceCoreApp({
       container: createDefaultWorkspaceCoreContainer({ codeContextScanner: createScanner() }),
