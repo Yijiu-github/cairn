@@ -55,6 +55,7 @@
 - **Planning Output Model**：新增独立 PlanningOutput schema、SQLite 持久化与 application planning lifecycle，覆盖 action tree、preconditions、blocked reason、replan reason 与 TraceEvent 镜像。
 - **Planning Output API**：新增 `GET /v1/runs/:runId/planning-output` 只读接口，供 UI / Desktop Shell 查看现有 PlanningOutput。
 - **UI Preview Planning Output**：Run Detail preview 新增静态 PlanningOutput 展示，覆盖 planning summary、blocked reason、preconditions 与 action tree。
+- **Runtime Drain Slice**：新增显式 runtime stream drain 路径，Workspace Core 可把 submitted AgentRun 的 AdapterStreamEvent 应用回 run/task/agent-run 状态，为 Codex CLI 真实闭环铺路。
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
 
 ### Changed

@@ -62,7 +62,7 @@ Modify these files:
 - Modify: `packages/application/src/orchestration/orchestration-run-service.ts`
 - Modify: `packages/application/src/orchestration/orchestration-run-service.spec.ts`
 
-- [ ] **Step 1: Extend test gateway first**
+- [x] **Step 1: Extend test gateway first**
 
 In `packages/application/src/orchestration/orchestration-run-service.spec.ts`, update imports from `@cairn/runtime-gateway` to include `AdapterCancelAck` and `AdapterStreamEvent`.
 
@@ -112,7 +112,7 @@ class RecordingRuntimeGateway implements RuntimeGatewayPort {
 }
 ```
 
-- [ ] **Step 2: Add failing drain test**
+- [x] **Step 2: Add failing drain test**
 
 Add this test after `submits a ready task to the runtime gateway and records an AgentRun`:
 
@@ -139,7 +139,7 @@ it('drains runtime events into application state', async () => {
 });
 ```
 
-- [ ] **Step 3: Add failing cancel delegation test**
+- [x] **Step 3: Add failing cancel delegation test**
 
 Add this expectation to `cancels an active run and its non-terminal task and agent run` after `cancelRun`:
 
@@ -147,7 +147,7 @@ Add this expectation to `cancels an active run and its non-terminal task and age
 expect(runtimeGateway.cancelled).toEqual([{ runId: ids.agentRun, reason: 'Operator stopped it.' }]);
 ```
 
-- [ ] **Step 4: Run application test and verify failure**
+- [x] **Step 4: Run application test and verify failure**
 
 Run:
 
@@ -157,7 +157,7 @@ pnpm --filter @cairn/application test -- orchestration-run-service.spec.ts
 
 Expected: fail because the port and service method do not exist yet.
 
-- [ ] **Step 5: Extend RuntimeGatewayPort**
+- [x] **Step 5: Extend RuntimeGatewayPort**
 
 In `packages/application/src/ports/runtime-gateway-port.ts`, replace the import with:
 
@@ -181,7 +181,7 @@ export interface RuntimeGatewayPort {
 }
 ```
 
-- [ ] **Step 6: Add drain method to service**
+- [x] **Step 6: Add drain method to service**
 
 In `packages/application/src/orchestration/orchestration-run-service.ts`, add near the submit result interfaces:
 
@@ -214,7 +214,7 @@ async drainAgentRunRuntime(
 }
 ```
 
-- [ ] **Step 7: Delegate cancel to runtime gateway**
+- [x] **Step 7: Delegate cancel to runtime gateway**
 
 In `cancelRun`, inside the non-terminal `agentRun` branch and before `updateAgentRun`, add:
 
@@ -222,7 +222,7 @@ In `cancelRun`, inside the non-terminal `agentRun` branch and before `updateAgen
 await this.runtimeGateway.cancel(agentRun.runId, reason);
 ```
 
-- [ ] **Step 8: Verify application**
+- [x] **Step 8: Verify application**
 
 Run:
 
@@ -233,7 +233,7 @@ pnpm --filter @cairn/application typecheck
 
 Expected: both commands exit `0`.
 
-- [ ] **Step 9: Commit application slice**
+- [x] **Step 9: Commit application slice**
 
 Run:
 
@@ -252,7 +252,7 @@ Expected: commit succeeds.
 - Create: `apps/workspace-core/src/runtime/runtime-adapter-gateway-port.ts`
 - Modify: `apps/workspace-core/src/service/container.ts`
 
-- [ ] **Step 1: Update mock runtime gateway**
+- [x] **Step 1: Update mock runtime gateway**
 
 In `apps/workspace-core/src/runtime/mock-runtime-gateway-port.ts`, update imports to include `AdapterCancelAck`, `AdapterStreamEvent`, `ArtifactRef`, and `AgentRunId`.
 
@@ -293,7 +293,7 @@ export class MockRuntimeGatewayPort implements RuntimeGatewayPort {
 }
 ```
 
-- [ ] **Step 2: Create RuntimeAdapter gateway wrapper**
+- [x] **Step 2: Create RuntimeAdapter gateway wrapper**
 
 Create `apps/workspace-core/src/runtime/runtime-adapter-gateway-port.ts`:
 
@@ -327,13 +327,13 @@ export class RuntimeAdapterGatewayPort implements RuntimeGatewayPort {
 }
 ```
 
-- [ ] **Step 3: Allow runtime gateway injection in default container**
+- [x] **Step 3: Allow runtime gateway injection in default container**
 
 In `apps/workspace-core/src/service/container.ts`, add `runtimeGateway?: RuntimeGatewayPort;` to `CreateDefaultWorkspaceCoreContainerOptions`.
 
 Use `options.runtimeGateway ?? new MockRuntimeGatewayPort()` in all default container paths instead of creating a mock inline.
 
-- [ ] **Step 4: Verify workspace-core types**
+- [x] **Step 4: Verify workspace-core types**
 
 Run:
 
@@ -343,7 +343,7 @@ pnpm --filter @cairn/workspace-core typecheck
 
 Expected: command exits `0`.
 
-- [ ] **Step 5: Commit wrapper slice**
+- [x] **Step 5: Commit wrapper slice**
 
 Run:
 
@@ -361,7 +361,7 @@ Expected: commit succeeds.
 - Modify: `apps/workspace-core/src/service/app.ts`
 - Modify: `apps/workspace-core/src/service/app.spec.ts`
 
-- [ ] **Step 1: Add route test**
+- [x] **Step 1: Add route test**
 
 In `apps/workspace-core/src/service/app.spec.ts`, add this test after `creates and reads a single-worker run`:
 
@@ -404,7 +404,7 @@ it('drains submitted AgentRun runtime events into terminal state', async () => {
 });
 ```
 
-- [ ] **Step 2: Run test and verify failure**
+- [x] **Step 2: Run test and verify failure**
 
 Run:
 
@@ -414,7 +414,7 @@ pnpm --filter @cairn/workspace-core test -- app.spec.ts
 
 Expected: fail because the drain route does not exist yet.
 
-- [ ] **Step 3: Implement route**
+- [x] **Step 3: Implement route**
 
 In `apps/workspace-core/src/service/app.ts`, import `AgentRunId` from `@cairn/shared-contracts/schemas`.
 
@@ -447,7 +447,7 @@ app.post('/v1/agent-runs/:agentRunId/drain-runtime', async (request, reply) => {
 });
 ```
 
-- [ ] **Step 4: Verify workspace-core**
+- [x] **Step 4: Verify workspace-core**
 
 Run:
 
@@ -458,7 +458,7 @@ pnpm --filter @cairn/workspace-core typecheck
 
 Expected: both commands exit `0`.
 
-- [ ] **Step 5: Commit route slice**
+- [x] **Step 5: Commit route slice**
 
 Run:
 
@@ -476,7 +476,7 @@ Expected: commit succeeds.
 - Modify: `CHANGELOG.md`
 - Modify: `docs/superpowers/plans/2026-05-17-codex-runtime-drain.md`
 
-- [ ] **Step 1: Update changelog**
+- [x] **Step 1: Update changelog**
 
 Under `[Unreleased]` → `### Added`, after the UI Preview Planning Output entry, add:
 
@@ -484,7 +484,7 @@ Under `[Unreleased]` → `### Added`, after the UI Preview Planning Output entry
 - **Runtime Drain Slice**：新增显式 runtime stream drain 路径，Workspace Core 可把 submitted AgentRun 的 AdapterStreamEvent 应用回 run/task/agent-run 状态，为 Codex CLI 真实闭环铺路。
 ```
 
-- [ ] **Step 2: Run focused verification**
+- [x] **Step 2: Run focused verification**
 
 Run:
 
@@ -500,7 +500,7 @@ git diff --check
 
 Expected: all commands exit `0`.
 
-- [ ] **Step 3: Commit docs**
+- [x] **Step 3: Commit docs**
 
 Run:
 
