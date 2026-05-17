@@ -4,6 +4,7 @@ import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 
 import {
   agentRuns,
+  artifacts,
   codeIndexFiles,
   codeIndexSnapshots,
   contextPacks,
@@ -17,6 +18,7 @@ import {
 } from '@cairn/domain/schema';
 import {
   AgentRun,
+  Artifact,
   CodeIndexFile,
   CodeIndexSnapshot,
   ContextPackManifest,
@@ -28,6 +30,7 @@ import {
   PlanningReplanReason,
   SourceRoot,
   Task,
+  TraceEvent,
 } from '@cairn/shared-contracts/schemas';
 import { runSqliteMigrations, type CairnSqliteDatabase } from '@cairn/storage/sqlite';
 
@@ -47,6 +50,7 @@ import type {
 } from '@cairn/domain/schema';
 import type {
   AgentRunId,
+  ArtifactId,
   CodeIndexSnapshotId,
   ContextPackId,
   EventId,
@@ -54,7 +58,6 @@ import type {
   PlanningOutputId,
   SourceRootId,
   TaskId,
-  TraceEvent,
   WorkspaceId,
 } from '@cairn/shared-contracts/schemas';
 import type { SQL } from 'drizzle-orm';
@@ -171,6 +174,31 @@ export class SqliteApplicationRepository implements ApplicationRepository {
   listAgentRunsByTask(taskId: TaskId): Promise<AgentRun[]> {
     const rows = this.db.select().from(agentRuns).where(eq(agentRuns.taskId, taskId)).all();
     return Promise.resolve(rows.map(fromAgentRunRow));
+  }
+
+  listArtifactsByRun(orchestrationRunId: OrchestrationRunId): Promise<Artifact[]> {
+    const rows = this.db
+      .select()
+      .from(artifacts)
+      .where(eq(artifacts.orchestrationRunId, orchestrationRunId))
+      .orderBy(asc(artifacts.createdAt))
+      .all();
+    return Promise.resolve(rows.map(fromArtifactRow));
+  }
+
+  getArtifact(artifactId: ArtifactId): Promise<Artifact | undefined> {
+    const row = this.db.select().from(artifacts).where(eq(artifacts.artifactId, artifactId)).get();
+    return Promise.resolve(row === undefined ? undefined : fromArtifactRow(row));
+  }
+
+  listTraceEventsByRun(orchestrationRunId: OrchestrationRunId): Promise<TraceEvent[]> {
+    const rows = this.db
+      .select()
+      .from(traceEvents)
+      .where(eq(traceEvents.orchestrationRunId, orchestrationRunId))
+      .orderBy(asc(traceEvents.createdAt))
+      .all();
+    return Promise.resolve(rows.map(fromTraceEventRow));
   }
 
   createAgentRun(agentRun: AgentRun): Promise<void> {
@@ -676,6 +704,40 @@ const toTraceEventRow = (event: TraceEvent): typeof traceEvents.$inferInsert => 
   ...(event.payloadRef === undefined ? {} : { payloadRef: event.payloadRef }),
   ...(event.payloadInline === undefined ? {} : { payloadInline: event.payloadInline }),
 });
+
+const fromArtifactRow = (row: typeof artifacts.$inferSelect): Artifact =>
+  Artifact.parse({
+    artifactId: row.artifactId,
+    workspaceId: row.workspaceId,
+    ...(row.orchestrationRunId === null ? {} : { orchestrationRunId: row.orchestrationRunId }),
+    ...(row.taskId === null ? {} : { taskId: row.taskId }),
+    ...(row.runId === null ? {} : { runId: row.runId }),
+    artifactRole: row.artifactRole,
+    kind: row.kind,
+    formatVersion: row.formatVersion,
+    uriOrPath: row.uriOrPath,
+    ...(row.contentType === null ? {} : { contentType: row.contentType }),
+    ...(row.sizeBytes === null ? {} : { sizeBytes: row.sizeBytes }),
+    producerType: row.producerType,
+    ...(row.producerId === null ? {} : { producerId: row.producerId }),
+    visibility: row.visibility,
+    createdAt: row.createdAt,
+  });
+
+const fromTraceEventRow = (row: typeof traceEvents.$inferSelect): TraceEvent =>
+  TraceEvent.parse({
+    traceEventId: row.traceEventId,
+    workspaceId: row.workspaceId,
+    ...(row.orchestrationRunId === null ? {} : { orchestrationRunId: row.orchestrationRunId }),
+    ...(row.taskId === null ? {} : { taskId: row.taskId }),
+    ...(row.runId === null ? {} : { runId: row.runId }),
+    eventType: row.eventType,
+    level: row.level,
+    ...(row.payloadRef === null ? {} : { payloadRef: row.payloadRef }),
+    ...(row.payloadInline === null ? {} : { payloadInline: row.payloadInline }),
+    createdAt: row.createdAt,
+    traceId: row.traceId,
+  });
 
 const toSourceRootRow = (sourceRoot: SourceRoot): typeof sourceRoots.$inferInsert => ({
   sourceRootId: sourceRoot.sourceRootId,
