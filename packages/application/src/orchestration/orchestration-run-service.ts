@@ -489,7 +489,33 @@ export class OrchestrationRunService {
       const agentRuns = await this.repository.listAgentRunsByTask(task.taskId);
       for (const agentRun of agentRuns) {
         if (!isAgentRunTerminal(agentRun.status)) {
-          await this.runtimeGateway.cancel(agentRun.runId, reason);
+          try {
+            const cancelAck = await this.runtimeGateway.cancel(agentRun.runId, reason);
+            if (!cancelAck.cancelled) {
+              await this.appendTrace(
+                cancelledRun,
+                task,
+                agentRun,
+                'agent_run.cancel_not_acknowledged',
+                'warn',
+                {
+                  reason: cancelAck.reason ?? 'cancel_not_acknowledged',
+                },
+              );
+            }
+          } catch (cancelError) {
+            await this.appendTrace(
+              cancelledRun,
+              task,
+              agentRun,
+              'agent_run.cancel_dispatch_failed',
+              'warn',
+              {
+                message: this.toErrorMessage(cancelError),
+              },
+            );
+          }
+
           await this.repository.updateAgentRun({
             ...agentRun,
             status: 'cancelled',
@@ -1180,6 +1206,14 @@ export class OrchestrationRunService {
     if (isAgentRunTerminal(agentRun.status)) {
       throw new ApplicationError('AGENT_RUN_TERMINAL', `AgentRun is terminal: ${agentRun.runId}`);
     }
+  }
+
+  private toErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return String(error);
   }
 
   private buildRerunBrief(brief: string, operatorNote: string | undefined): string {
