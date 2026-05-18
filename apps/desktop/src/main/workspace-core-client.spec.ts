@@ -162,6 +162,28 @@ it('sanitizes unsafe SourceRoot display names before exposing renderer snapshots
   expect(serialized).not.toContain('sk-live-secret');
 });
 
+it('sanitizes URI-like SourceRoot display names before exposing renderer snapshots', async () => {
+  const unsafeLabels = [
+    'file:/Users/alice/private/project',
+    'vscode://file/Users/alice/project',
+    's3://private-bucket',
+  ];
+
+  for (const sourceRootDisplayName of unsafeLabels) {
+    const fetch = createWorkspaceCoreFetch({ sourceRootDisplayName });
+    const client = new WorkspaceCoreReadClient({
+      fetch: fetch.fetch,
+      getConnection: () => createConnectedConnection(),
+    });
+
+    const snapshot = await client.readSnapshot();
+    const serialized = JSON.stringify(snapshot);
+
+    expect(snapshot.sourceRoots[0]?.displayName).toBe('Source root');
+    expect(serialized).not.toContain(sourceRootDisplayName);
+  }
+});
+
 it('sanitizes arbitrary POSIX absolute SourceRoot display names', async () => {
   const fetch = createWorkspaceCoreFetch({
     sourceRootDisplayName: '/opt/cairn/project',
@@ -218,6 +240,24 @@ it('sanitizes Windows slash SourceRoot display names before exposing renderer sn
     },
   ]);
   expect(serialized).not.toContain('C:/Users/alice/private/project');
+});
+
+it('sanitizes Windows backslash SourceRoot display names before exposing renderer snapshots', async () => {
+  const unsafeLabels = ['C:\\Users\\alice\\private\\project', '\\Users\\alice\\project'];
+
+  for (const sourceRootDisplayName of unsafeLabels) {
+    const fetch = createWorkspaceCoreFetch({ sourceRootDisplayName });
+    const client = new WorkspaceCoreReadClient({
+      fetch: fetch.fetch,
+      getConnection: () => createConnectedConnection(),
+    });
+
+    const snapshot = await client.readSnapshot();
+    const serialized = JSON.stringify(snapshot);
+
+    expect(snapshot.sourceRoots[0]?.displayName).toBe('Source root');
+    expect(serialized).not.toContain(sourceRootDisplayName);
+  }
 });
 
 it('keeps run snapshots when SourceRoot endpoint returns non-ok', async () => {
