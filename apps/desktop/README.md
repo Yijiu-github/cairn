@@ -4,11 +4,11 @@ Cairn Electron Desktop Shell.
 
 This first skeleton is intentionally preview-safe:
 
-- static renderer fixtures only
-- dev-mode Workspace Core sidecar status only
-- no live Workspace Core data actions
+- static renderer fixtures when Workspace Core is disconnected
+- dev-mode Workspace Core sidecar status and read-only run/task/artifact/trace snapshots
+- no live Workspace Core mutation actions
 - no filesystem reads or writes
-- local paths remain redacted by default
+- local paths and payload text remain redacted or summarized by default
 - renderer isolation is enabled with `contextIsolation: true`, `nodeIntegration: false`, and
   `sandbox: true`
 
@@ -58,23 +58,24 @@ Use this checklist after `pnpm --filter @cairn/desktop dev`:
 - The app window opens with the Cairn title.
 - Navigation switches between Home / Inbox, Run Detail, Artifact Review, and Settings.
 - The sidebar still says preview-safe shell.
-- Workspace Core status is read through the preload allowlist and may show connected, starting, or
-  degraded.
+- Workspace Core status and read-only run/task/artifact/trace snapshots are read through preload
+  allowlists and may show connected, starting, degraded, empty, or read-error states.
 - Operator controls remain disabled.
 - Artifact Review keeps local path language redacted or hidden.
 
 ## Current UI slice
 
-The renderer is a static desktop product shell that reuses `@cairn/ui` components and models the
-first navigation shape:
+The renderer reuses `@cairn/ui` components and models the first navigation shape. When the dev
+sidecar is connected it reads sanitized Workspace Core snapshots; otherwise it falls back to static
+preview fixtures:
 
-- **Home / Inbox** — handoff queue, pinned runs, runtime health, and safety defaults
+- **Home / Inbox** — handoff queue, live-or-preview runs, runtime health, and safety defaults
 - **Run Detail** — selected run card, evidence timeline, task tree, and disabled operator
   controls
 - **Artifact Review** — protected review panel, redacted artifact cards, and path exposure
   policy
 - **Settings** — read-only source-root and connection placeholders
 
-Workspace Core integration is limited to a dev-mode sidecar lifecycle and read-only connection
-status. Future work must add bundled sidecar packaging, live data adapters, and action-specific
-safety gates before any filesystem access or operator action is exposed.
+Workspace Core integration is limited to a dev-mode sidecar lifecycle plus read-only snapshots.
+Future work must add bundled sidecar packaging and action-specific safety gates before any
+filesystem access, operator action, or runtime mutation is exposed.
