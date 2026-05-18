@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import type { CairnDesktopBridge } from '../../preload/bridge';
+import type { CairnDesktopBridge } from '../../preload/bridge.js';
 
 declare global {
   interface Window {

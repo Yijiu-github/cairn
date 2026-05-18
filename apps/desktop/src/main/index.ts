@@ -8,6 +8,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron';
 
 import { sanitizeWorkspaceCoreConnection } from '../shared/workspace-core-connection.js';
 
+import { WorkspaceCoreReadClient } from './workspace-core-client.js';
 import { WorkspaceCoreSidecarManager } from './workspace-core-sidecar.js';
 
 const rendererDevServerUrl = env['ELECTRON_RENDERER_URL'];
@@ -26,12 +27,34 @@ const sidecarFetch = async (
   };
 };
 
+const workspaceReadFetch = async (
+  input: string | URL,
+  init?: {
+    readonly method?: 'GET';
+    readonly headers?: {
+      readonly authorization: string;
+    };
+  },
+) => {
+  const response = await fetch(input, init);
+  return {
+    json: async () => (await response.json()) as unknown,
+    ok: response.ok,
+    status: response.status,
+  };
+};
+
 const sidecarManager = new WorkspaceCoreSidecarManager({
   databasePath:
     env['CAIRN_WORKSPACE_CORE_DB_PATH'] ?? join(tmpdir(), 'cairn-workspace-core.sqlite'),
   fetch: sidecarFetch,
   mode: is.dev ? 'development' : 'packaged',
   workspaceRootDir: cwd(),
+});
+
+const workspaceReadClient = new WorkspaceCoreReadClient({
+  fetch: workspaceReadFetch,
+  getConnection: () => sidecarManager.getStatus(),
 });
 
 ipcMain.handle('cairn:sidecar:get-connection-status', () => {
@@ -43,6 +66,11 @@ ipcMain.handle('cairn:sidecar:restart', async () => {
   const snapshot = await sidecarManager.restart();
   return sanitizeWorkspaceCoreConnection(snapshot);
 });
+
+ipcMain.handle(
+  'cairn:workspace:read-snapshot',
+  async () => await workspaceReadClient.readSnapshot(),
+);
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
