@@ -295,6 +295,27 @@ it('keeps run snapshots when SourceRoot schema is invalid', async () => {
   expect(snapshot.sourceRoots).toEqual([]);
 });
 
+it('drops SourceRoot snapshots when enum fields contain sensitive invalid values', async () => {
+  const fetch = createWorkspaceCoreFetch({
+    sourceRootKind: '/Users/alice/private/project',
+    sourceRootStatus: 'token sk-live-secret',
+  });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+  const serialized = JSON.stringify(snapshot);
+
+  expect(snapshot.runs).toHaveLength(1);
+  expect(snapshot.selectedRun?.runId).toBe(ids.run);
+  expect(snapshot.sourceRoots).toEqual([]);
+  expect(serialized).not.toContain('/Users/alice/private/project');
+  expect(serialized).not.toContain('token sk-live-secret');
+  expect(serialized).not.toContain('sk-live-secret');
+});
+
 it('keeps run snapshots when SourceRoot fetch rejects', async () => {
   const fetch = createWorkspaceCoreFetch({ rejectSourceRoots: true });
   const client = new WorkspaceCoreReadClient({
@@ -505,6 +526,8 @@ interface WorkspaceCoreFetchOptions {
   readonly runCount?: number;
   readonly sourceRootDisplayName?: string;
   readonly sourceRootError?: string;
+  readonly sourceRootKind?: string;
+  readonly sourceRootStatus?: string;
   readonly taskFailureReason?: string;
   readonly taskStatus?: string;
   readonly throwSourceRootJson?: boolean;
@@ -680,10 +703,10 @@ const apiTraceEvent = (payloadInline: Record<string, unknown> = { title: 'Apply 
 const apiSourceRoot = (options: WorkspaceCoreFetchOptions = {}) => ({
   sourceRootId: ids.sourceRoot,
   workspaceId: ids.workspace,
-  kind: 'local_directory',
+  kind: options.sourceRootKind ?? 'local_directory',
   displayName: options.sourceRootDisplayName ?? 'Cairn Workspace',
   uri: 'file:///Users/alice/private/project',
-  status: options.sourceRootError === undefined ? 'active' : 'error',
+  status: options.sourceRootStatus ?? (options.sourceRootError === undefined ? 'active' : 'error'),
   includeGlobs: ['src/**', 'README.md'],
   excludeGlobs: ['node_modules/**', '.git/**', '.env*'],
   createdAt: '2026-05-18T00:00:00.000Z',

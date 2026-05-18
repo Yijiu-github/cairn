@@ -31,10 +31,10 @@ const apiRunSchema = z.object({
 
 const apiSourceRootSchema = z.object({
   sourceRootId: z.string().min(1),
-  kind: z.string().min(1),
+  kind: z.enum(['local_directory', 'remote_repository']),
   displayName: z.string().min(1),
   uri: z.string().min(1),
-  status: z.string().min(1),
+  status: z.enum(['active', 'indexing', 'stale', 'error']),
   includeGlobs: z.array(z.string()),
   excludeGlobs: z.array(z.string()),
   createdAt: z.string(),
