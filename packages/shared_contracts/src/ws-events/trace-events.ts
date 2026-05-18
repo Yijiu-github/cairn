@@ -11,6 +11,7 @@
 
 import { z } from 'zod';
 
+import { OrchestrationRunId } from '../schemas/ids.js';
 import { TraceEvent } from '../schemas/trace-event.js';
 
 /** 包装一层订阅级 envelope，便于未来扩展（如 batch 推送）。 */
@@ -25,7 +26,7 @@ export type TraceStreamEvent = z.infer<typeof TraceStreamEvent>;
 /** 服务端在订阅初始化完成时发送一次。 */
 export const TraceStreamReady = z.object({
   type: z.literal('trace.ready'),
-  runId: z.string(),
+  runId: OrchestrationRunId,
   /** 从该 seq 开始增量推送（前面的可通过 HTTP listTraceEvents 拉取） */
   fromSeq: z.number().int().nonnegative(),
 });
