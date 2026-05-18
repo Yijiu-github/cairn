@@ -1,7 +1,7 @@
 # 项目状态 / Project Status
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-17
+> 最后更新：2026-05-18
 > 目的：给人类与多 agent 协作提供当前事实基线，减少“我以为已经有 Desktop/Web”的误判。
 
 ---
@@ -77,6 +77,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - 当前只包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及只读 preload identity bridge。
 - 当前不启动 Workspace Core sidecar，不接真实 IPC action，不读取或写入本地文件系统，不暴露真实本地路径。
 - 当前 renderer 默认安全基线为 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`。
+- macOS 本机开发闭环已补齐：可通过 `dev` / `dev:debug` / `build` / `package` 验证静态 shell、调试 main / renderer，并生成未签名开发态包。
 
 ---
 
@@ -148,6 +149,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
 - `apps/desktop`：Electron 最小静态 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、只读 preload identity bridge，以及 preview-safe 默认隔离设置。
+- `apps/desktop` macOS 本机开发闭环：补齐调试脚本、preview-safe smoke 清单、开发态构建和未签名本机打包说明。
 
 ---
 
@@ -215,6 +217,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 | 日期       | 变更                                                         |
 | ---------- | ------------------------------------------------------------ |
+| 2026-05-18 | 补充 `apps/desktop` macOS 本机开发闭环状态                   |
 | 2026-05-17 | 新增 `apps/desktop` Electron 最小静态 shell 骨架状态说明     |
 | 2026-05-16 | 补充 UI preview、Node 26 验证观察项与工程体检同步建议        |
 | 2026-05-15 | 初版：记录当前能力、测试基线、R1 完成 / 未完成能力与近期主线 |

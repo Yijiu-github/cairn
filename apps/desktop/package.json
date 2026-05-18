@@ -8,6 +8,8 @@
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
+    "dev:debug": "electron-vite dev --inspect 9229 --remoteDebuggingPort 9230",
+    "preview": "electron-vite preview --skipBuild",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src electron.vite.config.ts",
     "build": "electron-vite build",

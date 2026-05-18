@@ -1,7 +1,7 @@
 # 本地开发环境 / Local Dev Setup
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-15
+> 最后更新：2026-05-18
 > 目标读者：新协作者、第一次拉代码的人
 
 ---
@@ -45,6 +45,85 @@ pnpm --filter @cairn/desktop dev
 ```
 
 > ⚠️ 目前 `apps/desktop` 是最小 shell 骨架：renderer 使用静态 fixtures，preload 只暴露只读 identity bridge，尚未启动或连接本地 workspace-core sidecar。`apps/web` 尚未创建。
+
+### macOS Desktop 本机开发闭环
+
+这条路径只验证当前 Electron 静态 shell，不代表 Desktop 已经接入 Workspace Core
+sidecar。
+
+1. 检查本机依赖：
+
+   ```bash
+   node --version
+   pnpm --version
+   xcode-select -p
+   ```
+
+   如果 `xcode-select -p` 失败，先安装 Xcode Command Line Tools：
+
+   ```bash
+   xcode-select --install
+   ```
+
+2. 安装依赖并跑基础校验：
+
+   ```bash
+   pnpm install
+   pnpm --filter @cairn/desktop typecheck
+   pnpm --filter @cairn/desktop lint
+   ```
+
+3. 分开启动当前可用的开发入口：
+
+   ```bash
+   # 终端 1：Workspace Core 最小服务，默认 mock runtime
+   pnpm --filter @cairn/workspace-core dev
+
+   # 终端 2：Electron Desktop 静态 shell
+   pnpm --filter @cairn/desktop dev
+
+   # 可选：浏览器里的 UI preview
+   pnpm --filter @cairn/ui-preview dev
+   ```
+
+   `pnpm dev` 当前会让 Turborepo 运行所有已存在 workspace 的 `dev` task；它不会创建
+   Web app，也不会让 Desktop 自动启动或连接 Workspace Core sidecar。调试 Desktop
+   时优先使用上面的分开启动方式。
+
+4. Desktop Shell smoke 清单：
+   - Electron 窗口标题为 Cairn。
+   - 左侧可在 Home / Inbox、Run Detail、Artifact Review、Settings 间切换。
+   - Sidebar 显示 preview-safe shell。
+   - 顶部 Workspace Core 状态仍为 not connected。
+   - Operator controls 保持 disabled。
+   - Artifact Review 中本地路径语言保持 redacted / hidden。
+
+5. 调试 Electron：
+
+   ```bash
+   pnpm --filter @cairn/desktop dev:debug
+   ```
+
+   - Main process inspector：在 Chrome / Edge 打开 `chrome://inspect`，附加到
+     `127.0.0.1:9229`。
+   - Renderer DevTools：Electron 窗口聚焦后按 `Option` + `Command` + `I`。
+   - Chromium remote debugging：需要浏览器检查 renderer 时使用 `127.0.0.1:9230`。
+
+6. 开发态构建和未签名本机打包：
+
+   ```bash
+   pnpm --filter @cairn/desktop build
+   pnpm --filter @cairn/desktop package
+   ```
+
+   `package` 生成的是开发态未签名目录包，输出在 `apps/desktop/release/`。如果 macOS
+   Gatekeeper 对本机开发包加了 quarantine，可只对本机生成物执行：
+
+   ```bash
+   xattr -cr apps/desktop/release
+   ```
+
+   正式签名、公证、DMG 发布和自动更新仍未启动，后续需要单独设计。
 
 ## 4. 数据库
 
@@ -143,11 +222,12 @@ pnpm typecheck          # tsc --noEmit
 pnpm --filter @cairn/desktop dev:debug
 ```
 
-DevTools 自动打开 Renderer；Main 进程附加 `--inspect=9229`。
+Main 进程通过 `127.0.0.1:9229` 附加调试；Renderer DevTools 可在 Electron 窗口中按
+`Option` + `Command` + `I` 打开。
 
 ### Sidecar 与 Main 通信
 
-`apps/desktop/src/dev/loopback-inspector.ts` 提供调试 endpoint 查看 sidecar 实时状态（待写）。
+尚未实现。当前 Desktop 不启动 Workspace Core sidecar，也没有 loopback inspector。
 
 ## 10. 常见问题
 
@@ -168,7 +248,6 @@ DevTools 自动打开 Renderer；Main 进程附加 `--inspect=9229`。
 
 ## 12. 待办
 
-- [ ] 仓库代码启动后填充实际 `pnpm dev` 行为
 - [ ] 补充 Windows 上桌面端调试流程
 - [ ] 录制一段 30 秒的"零到运行"演示视频
 
@@ -176,5 +255,6 @@ DevTools 自动打开 Renderer；Main 进程附加 `--inspect=9229`。
 
 | 日期       | 变更                                 |
 | ---------- | ------------------------------------ |
+| 2026-05-18 | 补充 macOS Desktop 本机开发闭环      |
 | 2026-05-15 | 更新 Workspace Core 最小服务启动方式 |
 | 2026-05-14 | 初版（占位，代码启动后填充）         |

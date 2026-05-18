@@ -14,6 +14,46 @@ This first skeleton is intentionally preview-safe:
 
 The package follows ADR-0012 with `electron-vite` for main / preload / renderer builds.
 
+## macOS local loop
+
+From the repository root:
+
+```bash
+pnpm install
+pnpm --filter @cairn/desktop dev
+```
+
+Debug mode opens the same static shell while enabling local inspector ports:
+
+```bash
+pnpm --filter @cairn/desktop dev:debug
+```
+
+- Main process inspector: attach to `127.0.0.1:9229` from `chrome://inspect`.
+- Renderer DevTools: focus the Electron window and press `Option` + `Command` + `I`.
+- Chromium remote debugging port: `127.0.0.1:9230`.
+
+Build and create a local unsigned development package:
+
+```bash
+pnpm --filter @cairn/desktop build
+pnpm --filter @cairn/desktop package
+```
+
+The package output is under `apps/desktop/release/`. It is not signed, notarized, or ready for
+distribution.
+
+### Preview-safe smoke
+
+Use this checklist after `pnpm --filter @cairn/desktop dev`:
+
+- The app window opens with the Cairn title.
+- Navigation switches between Home / Inbox, Run Detail, Artifact Review, and Settings.
+- The sidebar still says preview-safe shell.
+- Workspace Core status remains not connected.
+- Operator controls remain disabled.
+- Artifact Review keeps local path language redacted or hidden.
+
 ## Current UI slice
 
 The renderer is a static desktop product shell that reuses `@cairn/ui` components and models the
