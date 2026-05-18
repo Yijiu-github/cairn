@@ -50,23 +50,34 @@ export type TraceEventType = z.infer<typeof TraceEventType>;
 // 核心对象
 // ---------------------------------------------------------------------------
 
-export const TraceEvent = z.object({
-  traceEventId: TraceEventId,
-  workspaceId: WorkspaceId,
+export const TraceEvent = z
+  .object({
+    traceEventId: TraceEventId,
+    workspaceId: WorkspaceId,
 
-  // 关联（按层级填）
-  orchestrationRunId: OrchestrationRunId.optional(),
-  taskId: TaskId.optional(),
-  runId: AgentRunId.optional(),
+    // 关联（按层级填）
+    orchestrationRunId: OrchestrationRunId.optional(),
+    taskId: TaskId.optional(),
+    runId: AgentRunId.optional(),
 
-  eventType: TraceEventType,
-  level: TraceLevel,
-  /** 大 payload 落 artifact，本字段为 artifact id */
-  payloadRef: ArtifactId.optional(),
-  /** 小 payload 可以内嵌 */
-  payloadInline: z.record(z.unknown()).optional(),
+    eventType: TraceEventType,
+    level: TraceLevel,
+    /** 大 payload 落 artifact，本字段为 artifact id */
+    payloadRef: ArtifactId.optional(),
+    /** 小 payload 可以内嵌 */
+    payloadInline: z.record(z.unknown()).optional(),
 
-  createdAt: Iso8601,
-  traceId: TraceId,
-});
+    createdAt: Iso8601,
+    traceId: TraceId,
+  })
+  .superRefine((value, ctx) => {
+    // payload 只能二选一：要么引用 artifact，要么内联小对象；禁止同时出现。
+    if (value.payloadRef !== undefined && value.payloadInline !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'payloadRef and payloadInline are mutually exclusive',
+        path: ['payloadInline'],
+      });
+    }
+  });
 export type TraceEvent = z.infer<typeof TraceEvent>;
