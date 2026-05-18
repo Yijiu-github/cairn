@@ -109,21 +109,23 @@ sidecar。
    - Renderer DevTools：Electron 窗口聚焦后按 `Option` + `Command` + `I`。
    - Chromium remote debugging：需要浏览器检查 renderer 时使用 `127.0.0.1:9230`。
 
-6. 开发态构建和未签名本机打包：
+6. 开发态构建和 macOS 本机打包：
 
    ```bash
    pnpm --filter @cairn/desktop build
-   pnpm --filter @cairn/desktop package
+   pnpm --filter @cairn/desktop package:mac:dir
    ```
 
-   `package` 生成的是开发态未签名目录包，输出在 `apps/desktop/release/`。如果 macOS
-   Gatekeeper 对本机开发包加了 quarantine，可只对本机生成物执行：
+   `package:mac:dir` 生成的是开发态 ad-hoc directory package，输出在
+   `apps/desktop/release/`。如果 macOS Gatekeeper 对本机开发包加了 quarantine，可只对
+   本机生成物执行：
 
    ```bash
    xattr -cr apps/desktop/release
    ```
 
-   正式签名、公证、DMG 发布和自动更新仍未启动，后续需要单独设计。
+   正式发布形态使用 `pnpm --filter @cairn/desktop package:mac:dmg`，它依赖 Developer ID
+   签名与 notarization 凭据。DMG 发布和自动更新仍未启动，后续需要单独设计。
 
 ## 4. 数据库
 

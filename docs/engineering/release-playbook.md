@@ -1,7 +1,7 @@
 # 发布手册 / Release Playbook
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-14  
+> 状态：🟡 Draft
+> 最后更新：2026-05-18
 > 关联：`ci-cd.md`、`../design/distribution-and-signing.md`
 
 ---
@@ -62,11 +62,14 @@ git push origin v0.X.Y
 
 `release.yml` 自动触发：
 
-1. 构建 macOS arm64 → 签名 → 公证 → 打 staple
-2. 构建 Windows x64 → 云签名
-3. 构建 Linux server tarball（如启用）
-4. 生成 update manifest
-5. 上传到 GitHub Releases（draft）
+1. 运行 `pnpm --filter @cairn/desktop package:mac:dmg`
+2. 由 electron-builder 按配置完成签名与 notarization
+3. 如 notarization 失败，用 `xcrun notarytool log <submission-id>` 排查
+4. 用 `xcrun stapler validate apps/desktop/release/mac-arm64/Cairn.app` 验证最终安装器
+5. 构建 Windows x64 → 云签名
+6. 构建 Linux server tarball（如启用）
+7. 生成 update manifest
+8. 上传到 GitHub Releases（draft）
 
 ### 2.5 检查并发布
 

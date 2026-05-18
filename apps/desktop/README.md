@@ -33,15 +33,23 @@ pnpm --filter @cairn/desktop dev:debug
 - Renderer DevTools: focus the Electron window and press `Option` + `Command` + `I`.
 - Chromium remote debugging port: `127.0.0.1:9230`.
 
-Build and create a local unsigned development package:
+Build and create a local ad-hoc directory package:
 
 ```bash
 pnpm --filter @cairn/desktop build
-pnpm --filter @cairn/desktop package
+pnpm --filter @cairn/desktop package:mac:dir
 ```
 
 The package output is under `apps/desktop/release/`. It is not signed, notarized, or ready for
 distribution.
+
+Build the release-shaped macOS installer when signing and notarization credentials are present:
+
+```bash
+pnpm --filter @cairn/desktop package:mac:dmg
+```
+
+That path produces the DMG release artifact expected for distribution.
 
 ### Preview-safe smoke
 

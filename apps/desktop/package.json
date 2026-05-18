@@ -13,7 +13,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint src electron.vite.config.ts",
     "build": "electron-vite build",
-    "package": "electron-builder --dir",
+    "package": "electron-builder --dir -c.electronVersion=$(node -p \"require('electron/package.json').version\")",
+    "package:mac:dir": "electron-builder --mac --dir -c.mac.identity=- -c.electronVersion=$(node -p \"require('electron/package.json').version\")",
+    "package:mac:dmg": "electron-builder --mac -c.electronVersion=$(node -p \"require('electron/package.json').version\")",
     "clean": "rimraf .turbo out dist release"
   },
   "dependencies": {

@@ -77,7 +77,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - 当前只包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及只读 preload identity bridge。
 - 当前不启动 Workspace Core sidecar，不接真实 IPC action，不读取或写入本地文件系统，不暴露真实本地路径。
 - 当前 renderer 默认安全基线为 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`。
-- macOS 本机开发闭环已补齐：可通过 `dev` / `dev:debug` / `build` / `package` 验证静态 shell、调试 main / renderer，并生成未签名开发态包。
+- macOS 本机开发闭环已补齐：可通过 `dev` / `dev:debug` / `build` / `package:mac:dir` 验证静态 shell、调试 main / renderer，并生成未签名开发态包。
+- macOS packaging baseline 已补上文档和显式命令：本地验证用 `package:mac:dir`，发布形态用 `package:mac:dmg`；release automation 仍未实现。
 
 ---
 

@@ -1,9 +1,9 @@
 # 分发、签名与更新 / Distribution, Signing & Updates
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-14
+> 最后更新：2026-05-18
 > 来源：[`设计文档V0.1.0.md §15`](设计文档V0.1.0.md) 扩展
-> 关联：ADR-0003、`engineering/ci-cd.md`、`engineering/release-playbook.md`
+> 关联：ADR-0003、`engineering/ci-cd.md`、`engineering/release-playbook.md`、`engineering/macos-packaging.md`
 
 ---
 
@@ -49,21 +49,25 @@
 
 ### 2.4 公证流程
 
-```text
-build .app
-  ↓
-codesign --deep --options=runtime --entitlements entitlements.plist
-  ↓
-压缩为 .zip 或 .dmg
-  ↓
-xcrun notarytool submit --wait
-  ↓
-xcrun stapler staple <.dmg 或 .app>
-  ↓
-分发
+本仓库把 macOS 路径拆成两个显式命令：
+
+```bash
+# 本地验证用，ad-hoc signing，输出 unpacked directory package
+pnpm --filter @cairn/desktop package:mac:dir
+
+# 发布安装器用，Developer ID + notarization，输出 DMG
+pnpm --filter @cairn/desktop package:mac:dmg
 ```
 
-完整脚本与 CI 配置见 [`../engineering/release-playbook.md`](../engineering/release-playbook.md)。
+electron-builder 的 macOS notarization 变量约定以官方文档为准：
+
+- `APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER`
+- `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID`
+- `APPLE_KEYCHAIN` + `APPLE_KEYCHAIN_PROFILE`
+
+`APPLE_APP_PASSWORD` 不是这里的正式名字，不要在仓库文档里继续使用。
+
+完整操作手册见 [`../engineering/macos-packaging.md`](../engineering/macos-packaging.md)，CI / release 细节见 [`../engineering/release-playbook.md`](../engineering/release-playbook.md)。
 
 ## 3. Windows
 

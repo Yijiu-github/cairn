@@ -1,7 +1,7 @@
 # CI / CD
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-14  
+> 状态：🟡 Draft
+> 最后更新：2026-05-18
 > 关联：`testing-strategy.md`、`release-playbook.md`、`../design/distribution-and-signing.md`
 
 ---
@@ -84,23 +84,22 @@ jobs:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v4
-        with: { node-version: 20, cache: pnpm }
+        with:
+          node-version-file: .node-version
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @cairn/desktop build:mac
-      # 签名
       - name: Import signing identity
         uses: apple-actions/import-codesign-certs@v3
         with:
           p12-file-base64: ${{ secrets.MACOS_CERT_P12 }}
           p12-password: ${{ secrets.MACOS_CERT_PASSWORD }}
-      - run: scripts/sign-macos.sh
-      # 公证
-      - run: scripts/notarize-macos.sh
+      - run: pnpm --filter @cairn/desktop package:mac:dmg
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       - uses: actions/upload-artifact@v4
 
@@ -108,7 +107,8 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.15.0, run_install: false }
       - uses: actions/setup-node@v4
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @cairn/desktop build:win
@@ -136,12 +136,13 @@ jobs:
 
 ## 6. Secrets
 
-| Secret                                                        | 用途                             |
-| ------------------------------------------------------------- | -------------------------------- |
-| `MACOS_CERT_P12` / `MACOS_CERT_PASSWORD`                      | macOS Developer ID 证书          |
-| `APPLE_ID` / `APPLE_APP_PASSWORD` / `APPLE_TEAM_ID`           | notarytool                       |
-| `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` | Windows 云签名                   |
-| `RELEASE_GITHUB_TOKEN`                                        | 发布到 GitHub Releases（必要时） |
+| Secret                                                        | 用途                                         |
+| ------------------------------------------------------------- | -------------------------------------------- |
+| `MACOS_CERT_P12` / `MACOS_CERT_PASSWORD`                      | macOS Developer ID 证书                      |
+| `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` / `APPLE_TEAM_ID`  | notarytool（Apple ID flow）                  |
+| `APPLE_API_KEY` / `APPLE_API_KEY_ID` / `APPLE_API_ISSUER`     | notarytool（App Store Connect API key flow） |
+| `AZURE_TENANT_ID` / `AZURE_CLIENT_ID` / `AZURE_CLIENT_SECRET` | Windows 云签名                               |
+| `RELEASE_GITHUB_TOKEN`                                        | 发布到 GitHub Releases（必要时）             |
 
 **绝不**：
 

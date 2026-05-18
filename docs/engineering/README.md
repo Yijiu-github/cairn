@@ -4,22 +4,23 @@
 
 ## 文件
 
-| 文件                      | 作用                                                      | 状态     |
-| ------------------------- | --------------------------------------------------------- | -------- |
-| `repo-layout.md`          | apps / packages 责任 + 依赖方向                           | 🟡 Draft |
-| `coding-standards.md`     | TS/ESM、错误处理、日志、异步、数据库、测试与公开 API 规则 | 🟡 Draft |
-| `module-boundaries.md`    | 包职责、依赖方向、public/internal API 边界                | 🟡 Draft |
-| `agent-collaboration.md`  | AI 协作、上下文工程、契约设计与文档/ADR 路由              | 🟡 Draft |
-| `review-gates.md`         | 风险分级、验证命令、文档同步与 review 输出模板            | 🟡 Draft |
-| `standards-automation.md` | 已自动化规则、standards:check 与 CI 接入路线              | 🟡 Draft |
-| `git-workflow.md`         | 分支管理、远程分支生命周期、PR / release / hotfix 流程    | 🟡 Draft |
-| `commit-convention.md`    | Conventional Commits + 中英双语提交规则 + commitlint      | 🟡 Draft |
-| `testing-strategy.md`     | Unit / Contract / Integration / E2E 金字塔                | 🟡 Draft |
-| `ci-cd.md`                | GitHub Actions 矩阵、签名公证、artifact 发布              | 🟡 Draft |
-| `local-dev-setup.md`      | 本地一键起 desktop + workspace-core + web                 | 🟡 Draft |
-| `release-playbook.md`     | 从 tag 到分发到回滚的逐步手册                             | 🟡 Draft |
-| `db-migrations.md`        | Drizzle 迁移流程、SQLite↔PG 差异                          | ⚪ TODO  |
-| `observability.md`        | 日志、trace_id、本地/远程 backend                         | ⚪ TODO  |
+| 文件                      | 作用                                                        | 状态     |
+| ------------------------- | ----------------------------------------------------------- | -------- |
+| `repo-layout.md`          | apps / packages 责任 + 依赖方向                             | 🟡 Draft |
+| `coding-standards.md`     | TS/ESM、错误处理、日志、异步、数据库、测试与公开 API 规则   | 🟡 Draft |
+| `module-boundaries.md`    | 包职责、依赖方向、public/internal API 边界                  | 🟡 Draft |
+| `agent-collaboration.md`  | AI 协作、上下文工程、契约设计与文档/ADR 路由                | 🟡 Draft |
+| `review-gates.md`         | 风险分级、验证命令、文档同步与 review 输出模板              | 🟡 Draft |
+| `standards-automation.md` | 已自动化规则、standards:check 与 CI 接入路线                | 🟡 Draft |
+| `git-workflow.md`         | 分支管理、远程分支生命周期、PR / release / hotfix 流程      | 🟡 Draft |
+| `commit-convention.md`    | Conventional Commits + 中英双语提交规则 + commitlint        | 🟡 Draft |
+| `testing-strategy.md`     | Unit / Contract / Integration / E2E 金字塔                  | 🟡 Draft |
+| `ci-cd.md`                | GitHub Actions 矩阵、签名公证、artifact 发布                | 🟡 Draft |
+| `local-dev-setup.md`      | 本地一键起 desktop + workspace-core + web                   | 🟡 Draft |
+| `macos-packaging.md`      | macOS package / signing / notarization / installer 操作手册 | 🟡 Draft |
+| `release-playbook.md`     | 从 tag 到分发到回滚的逐步手册                               | 🟡 Draft |
+| `db-migrations.md`        | Drizzle 迁移流程、SQLite↔PG 差异                            | ⚪ TODO  |
+| `observability.md`        | 日志、trace_id、本地/远程 backend                           | ⚪ TODO  |
 
 ## 阅读顺序
 
@@ -38,6 +39,7 @@
 
 发布前：
 
+- `macos-packaging.md`
 - `release-playbook.md`
 - `ci-cd.md`
 

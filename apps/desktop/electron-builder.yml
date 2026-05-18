@@ -9,7 +9,9 @@ directories:
 mac:
   category: public.app-category.developer-tools
   target:
-    - dmg
+    - target: dmg
+      arch:
+        - arm64
 win:
   target:
     - nsis
