@@ -42,6 +42,17 @@ export const AGENT_RUN_TERMINAL_STATUSES = [
   'lost',
 ] as const satisfies readonly AgentRunStatus[];
 
+/**
+ * 允许进入 retry 的来源状态（state-machines.md §5 operator 动作矩阵）。
+ *
+ * 当前明确仅支持 failed / lost，timeout / cancelled 需要走 rerun。
+ */
+export const AgentRunRetrySourceStatus = z.enum(['failed', 'lost']);
+export type AgentRunRetrySourceStatus = z.infer<typeof AgentRunRetrySourceStatus>;
+
+export const AGENT_RUN_RETRY_SOURCE_STATUSES =
+  AgentRunRetrySourceStatus.options satisfies readonly AgentRunStatus[];
+
 // ---------------------------------------------------------------------------
 // 核心对象
 // ---------------------------------------------------------------------------
