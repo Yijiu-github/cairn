@@ -55,7 +55,6 @@ await adapter.submit({
 
 ## 后续
 
-- 将 `createCodexRuntimeAdapter` 接入 Workspace Core 的实际 runtime 选择路径
 - 补 artifact payload resolver，让 Codex adapter 不依赖 `options.prompt` 传入提示词
 - 用真实长任务验证 Windows 下取消行为与 stdout JSONL 流式粒度
 - 补 `docs/ops/install-guide.md` 与 `docs/ops/troubleshooting.md`

@@ -46,6 +46,31 @@ pnpm --filter @cairn/desktop dev
 
 > ⚠️ 目前 `apps/desktop` 是最小 shell 骨架：renderer 使用静态 fixtures，preload 只暴露只读 identity bridge，尚未启动或连接本地 workspace-core sidecar。`apps/web` 尚未创建。
 
+### Workspace Core runtime 选择
+
+默认 runtime 是 mock，不需要本机安装 Codex CLI：
+
+```bash
+pnpm --filter @cairn/workspace-core dev
+```
+
+如要显式启用 Codex CLI adapter：
+
+```bash
+CAIRN_WORKSPACE_CORE_RUNTIME=codex \
+CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR=.cairn/runtime \
+pnpm --filter @cairn/workspace-core dev
+```
+
+可选变量：
+
+| 变量                                      | 默认值           | 说明                                                   |
+| ----------------------------------------- | ---------------- | ------------------------------------------------------ |
+| `CAIRN_WORKSPACE_CORE_RUNTIME`            | `mock`           | `mock` 或 `codex`                                      |
+| `CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR`    | `.cairn/runtime` | Codex CLI adapter 的受控工作目录                       |
+| `CAIRN_WORKSPACE_CORE_CODEX_EXECUTABLE`   | `codex`          | 自定义 Codex CLI 可执行文件路径                        |
+| `CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE` | `read-only`      | `read-only` / `workspace-write` / `danger-full-access` |
+
 ## 4. 数据库
 
 ### 本地 SQLite（默认）

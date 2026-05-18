@@ -42,6 +42,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `GET /health` 健康检查。
 - R1 run/task/agent-run HTTP 闭环：可创建 single-worker run，并通过 mock runtime 验证状态推进。
 - R1 runtime artifact/trace demo loop：可通过 `POST /v1/tasks/:taskId/agent-runs` 提交任务，落 bounded artifact payload refs，并通过 `GET /v1/artifacts/:artifactId/payload` 读取 payload text。
+- Runtime gateway factory：服务默认使用 mock runtime，也可通过 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 显式注入 Codex RuntimeAdapter。
 - Orchestration Control R1a API：pause / resume / cancel run、retry task、rerun、operator note 的最小 HTTP 接管面；取消仍是 application state change，尚未调用真实 runtime kill。
 - SQLite application repository：服务启动可执行 domain 迁移，并用本地 SQLite 持久化 run/task/agent-run 状态。
 - Code Context R1a/R1b-a API：
@@ -134,7 +135,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `@cairn/storage`：SQLite-first connection 与 migration runner。
 - `@cairn/runtime-gateway`：RuntimeAdapter 契约、mock adapter、Codex CLI adapter 生命周期基线。
 - `@cairn/application`：single-worker orchestration、planning output 与 code context service。
-- `@cairn/workspace-core`：最小服务、SQLite 持久化、code context R1a/R1b-a API。
+- `@cairn/workspace-core`：最小服务、SQLite 持久化、code context R1a/R1b-a API 与显式 Codex runtime gateway factory。
 - Orchestration Control R1a：`@cairn/application` 与 `@cairn/workspace-core` 支持最小 operator control plane，覆盖 pause / resume / cancel / retry task / rerun 与 operator note。
 - Code Context R1a/R1b-a：
   - SourceRoot registry。
@@ -162,7 +163,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Desktop 真实 Workspace Core 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前仍保持静态 UI 壳，不接 sidecar）。
 - Artifact store 的真实文件内容写入、保留策略与导出。
 - 真实 Goal Planner 与 Planner 到多 Task DAG 的生成逻辑。
-- Workspace Core 默认运行时选择真实 Codex CLI 的端到端流程。
+- Codex adapter artifact payload resolver 与真实长任务 smoke 验证。
 - 真实 Runtime Gateway cancellation / kill、AgentRun retry、protected step approve/reject 与 operator control UI。
 - TraceEvent replay UI。
 - 代码上下文索引的文本搜索、symbol outline、import/export dependency edge。
