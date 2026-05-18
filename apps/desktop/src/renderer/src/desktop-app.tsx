@@ -27,12 +27,19 @@ import {
 } from '../../shared/workspace-core-connection.js';
 
 import { desktopShellModel } from './desktop-model';
+import {
+  mapWorkspaceArtifactsToArtifactCards,
+  mapWorkspaceRunsToRunCards,
+  mapWorkspaceTasksToTaskTree,
+  mapWorkspaceTraceToEvidence,
+} from './workspace-snapshot-view';
 
 import type { DesktopView } from './desktop-model';
 import type {
   WorkspaceCoreConnectionView,
   WorkspaceCoreRuntimeViewModel,
-} from '../../shared/workspace-core-connection';
+} from '../../shared/workspace-core-connection.js';
+import type { WorkspaceCoreReadSnapshot } from '../../shared/workspace-core-data.js';
 
 export function DesktopApp() {
   const [activeView, setActiveView] = useState<DesktopView>(() => readStoredView());
@@ -43,6 +50,8 @@ export function DesktopApp() {
     state: 'not_started',
     updatedAt: new Date().toISOString(),
   }));
+  const [workspaceSnapshot, setWorkspaceSnapshot] = useState<WorkspaceCoreReadSnapshot>();
+  const [workspaceReadError, setWorkspaceReadError] = useState<string>();
 
   useEffect(() => {
     window.localStorage.setItem('cairn.desktop.activeView', activeView);
@@ -56,6 +65,19 @@ export function DesktopApp() {
       void window.cairnDesktop?.sidecar.getConnectionStatus().then((snapshot) => {
         if (!cancelled) {
           setConnectionView(snapshot);
+          void window.cairnDesktop?.workspace
+            .readSnapshot()
+            .then((workspace) => {
+              if (!cancelled) {
+                setWorkspaceSnapshot(workspace);
+                setWorkspaceReadError(undefined);
+              }
+            })
+            .catch((error: unknown) => {
+              if (!cancelled) {
+                setWorkspaceReadError(error instanceof Error ? error.message : 'Unknown error');
+              }
+            });
           timer = window.setTimeout(refreshStatus, 1000);
         }
       });
@@ -73,6 +95,8 @@ export function DesktopApp() {
 
   const runtimeView = mapWorkspaceCoreConnectionToRuntimeView(connectionView);
   const statusBadge = mapWorkspaceCoreConnectionToStatusBadge(connectionView);
+  const workspaceLoaded = workspaceSnapshot !== undefined;
+  const selectedRun = workspaceSnapshot?.selectedRun;
 
   return (
     <main className="desktop-shell">
@@ -138,9 +162,24 @@ export function DesktopApp() {
 
         <AgentStatusStrip agents={desktopShellModel.statusStrip} />
 
-        {activeView === 'home' ? <HomeView runtimeView={runtimeView} /> : undefined}
-        {activeView === 'run-detail' ? <RunDetailView /> : undefined}
-        {activeView === 'artifact-review' ? <ArtifactReviewView /> : undefined}
+        {workspaceReadError === undefined ? undefined : (
+          <InlineAlert tone="warning" title="Workspace read failed">
+            {workspaceReadError}
+          </InlineAlert>
+        )}
+
+        {activeView === 'home' ? (
+          <HomeView
+            runtimeView={runtimeView}
+            {...(workspaceSnapshot === undefined ? {} : { workspaceSnapshot })}
+          />
+        ) : undefined}
+        {activeView === 'run-detail' ? (
+          <RunDetailView selectedRun={selectedRun} workspaceLoaded={workspaceLoaded} />
+        ) : undefined}
+        {activeView === 'artifact-review' ? (
+          <ArtifactReviewView selectedRun={selectedRun} workspaceLoaded={workspaceLoaded} />
+        ) : undefined}
         {activeView === 'settings' ? <SettingsView runtimeView={runtimeView} /> : undefined}
       </section>
     </main>
@@ -177,7 +216,19 @@ interface RuntimePanelProps {
   readonly runtimeView: WorkspaceCoreRuntimeViewModel;
 }
 
-function HomeView({ runtimeView }: RuntimePanelProps) {
+interface WorkspaceSnapshotPanelProps {
+  readonly workspaceSnapshot?: WorkspaceCoreReadSnapshot | undefined;
+}
+
+function HomeView({
+  runtimeView,
+  workspaceSnapshot,
+}: RuntimePanelProps & WorkspaceSnapshotPanelProps) {
+  const runCards =
+    workspaceSnapshot === undefined
+      ? desktopShellModel.pinnedRuns
+      : mapWorkspaceRunsToRunCards(workspaceSnapshot.runs);
+
   return (
     <div className="content-grid">
       <section className="content-stack">
@@ -188,7 +239,10 @@ function HomeView({ runtimeView }: RuntimePanelProps) {
         </section>
 
         <div className="run-list">
-          {desktopShellModel.pinnedRuns.map((run) => (
+          {workspaceSnapshot?.runs.length === 0 ? (
+            <EmptyWorkspaceDataCard title="No Workspace Core runs yet" />
+          ) : undefined}
+          {runCards.map((run) => (
             <RunCard key={run.runId} {...run} />
           ))}
         </div>
@@ -203,8 +257,27 @@ function HomeView({ runtimeView }: RuntimePanelProps) {
   );
 }
 
-function RunDetailView() {
-  const [run] = desktopShellModel.pinnedRuns;
+interface SelectedRunProps {
+  readonly selectedRun?: WorkspaceCoreReadSnapshot['selectedRun'];
+  readonly workspaceLoaded: boolean;
+}
+
+function RunDetailView({ selectedRun, workspaceLoaded }: SelectedRunProps) {
+  if (workspaceLoaded && selectedRun === undefined) {
+    return <EmptyWorkspaceDataCard title="No selected Workspace Core run yet" />;
+  }
+
+  const [fixtureRun] = desktopShellModel.pinnedRuns;
+  const run = selectedRun === undefined ? fixtureRun : mapWorkspaceRunsToRunCards([selectedRun])[0];
+  const evidence =
+    selectedRun === undefined
+      ? desktopShellModel.runDetail.evidence
+      : mapWorkspaceTraceToEvidence(selectedRun.trace);
+  const tasks =
+    selectedRun === undefined
+      ? desktopShellModel.runDetail.tasks
+      : mapWorkspaceTasksToTaskTree(selectedRun.tasks);
+  const selectedTaskId = tasks[0]?.id ?? desktopShellModel.runDetail.selectedTaskId;
 
   if (run === undefined) {
     return <InlineAlert tone="info">No selected run in the static fixture.</InlineAlert>;
@@ -214,13 +287,12 @@ function RunDetailView() {
     <div className="content-grid">
       <section className="content-stack">
         <RunCard {...run} />
-        <EvidenceTimeline items={desktopShellModel.runDetail.evidence} />
+        {evidence.length === 0 ? <EmptyWorkspaceDataCard title="No trace events yet" /> : undefined}
+        {evidence.length === 0 ? undefined : <EvidenceTimeline items={evidence} />}
       </section>
       <aside className="content-stack">
-        <TaskTree
-          items={desktopShellModel.runDetail.tasks}
-          selectedId={desktopShellModel.runDetail.selectedTaskId}
-        />
+        {tasks.length === 0 ? <EmptyWorkspaceDataCard title="No tasks yet" /> : undefined}
+        {tasks.length === 0 ? undefined : <TaskTree items={tasks} selectedId={selectedTaskId} />}
         <Card>
           <CardHeader>
             <CardTitle>Operator controls</CardTitle>
@@ -241,7 +313,19 @@ function RunDetailView() {
   );
 }
 
-function ArtifactReviewView() {
+function ArtifactReviewView({ selectedRun, workspaceLoaded }: SelectedRunProps) {
+  if (workspaceLoaded && selectedRun === undefined) {
+    return <EmptyWorkspaceDataCard title="No Workspace Core artifacts yet" />;
+  }
+
+  const artifacts =
+    selectedRun === undefined
+      ? desktopShellModel.artifactReview.artifacts
+      : mapWorkspaceArtifactsToArtifactCards(selectedRun.artifacts);
+  const artifactId = artifacts[0]?.artifactId ?? desktopShellModel.artifactReview.artifactId;
+  const title =
+    selectedRun === undefined ? desktopShellModel.artifactReview.title : 'Workspace artifacts';
+
   return (
     <div className="content-grid">
       <section className="content-stack">
@@ -250,13 +334,14 @@ function ArtifactReviewView() {
             { disabled: true, label: 'Approve export', tone: 'primary' },
             { disabled: true, label: 'Reject', tone: 'danger' },
           ]}
-          artifactId={desktopShellModel.artifactReview.artifactId}
+          artifactId={artifactId}
           note={desktopShellModel.artifactReview.note}
           reviewState="pending_review"
-          title={desktopShellModel.artifactReview.title}
+          title={title}
         />
         <div className="artifact-list">
-          {desktopShellModel.artifactReview.artifacts.map((artifact) => (
+          {artifacts.length === 0 ? <EmptyWorkspaceDataCard title="No artifacts yet" /> : undefined}
+          {artifacts.map((artifact) => (
             <ArtifactCard key={artifact.artifactId} {...artifact} />
           ))}
         </div>
@@ -280,6 +365,17 @@ function ArtifactReviewView() {
         </Card>
       </aside>
     </div>
+  );
+}
+
+function EmptyWorkspaceDataCard({ title }: { readonly title: string }) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>Workspace Core has no read-only data for this view yet.</CardDescription>
+      </CardHeader>
+    </Card>
   );
 }
 

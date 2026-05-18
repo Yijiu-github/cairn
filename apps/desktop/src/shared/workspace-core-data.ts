@@ -240,7 +240,7 @@ export const mapApiArtifactPayloadToPreview = (
 ): WorkspaceCoreArtifactPayloadPreview =>
   workspaceCoreArtifactPayloadPreviewSchema.parse({
     mediaType: payload.mediaType,
-    text: payload.text,
+    text: `${payload.mediaType} payload, ${String(payload.text.length)} chars`,
     truncated: payload.truncated,
   });
 

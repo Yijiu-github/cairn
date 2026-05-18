@@ -67,7 +67,7 @@ it('reads the first run detail, tasks, artifacts, trace, and artifact payload pr
         storage: 'redacted',
         payloadPreview: {
           mediaType: 'text/plain',
-          text: 'Patch summary preview',
+          text: expect.stringMatching(/^text\/plain payload, \d+ chars$/u) as unknown,
           truncated: false,
         },
       },
@@ -267,7 +267,7 @@ const responseByPath = (path: string, options: WorkspaceCoreFetchOptions): unkno
       return {
         artifactId: ids.artifact,
         mediaType: 'text/plain',
-        text: 'Patch summary preview',
+        text: 'Patch summary preview for /Users/alice/private/project/out.patch',
         truncated: false,
       };
     default:
