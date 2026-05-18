@@ -191,23 +191,27 @@ export class WorkspaceCoreReadClient {
     path: string,
     schema: ZodType<T>,
   ): Promise<T | undefined> {
-    const response = await this.fetch(new URL(path, connection.baseUrl), {
-      headers: {
-        authorization: `Bearer ${connection.token}`,
-      },
-      method: 'GET',
-    });
+    try {
+      const response = await this.fetch(new URL(path, connection.baseUrl), {
+        headers: {
+          authorization: `Bearer ${connection.token}`,
+        },
+        method: 'GET',
+      });
 
-    if (!response.ok) {
+      if (!response.ok) {
+        return undefined;
+      }
+
+      const parsed = schema.safeParse(await response.json());
+      if (!parsed.success) {
+        return undefined;
+      }
+
+      return parsed.data;
+    } catch {
       return undefined;
     }
-
-    const parsed = schema.safeParse(await response.json());
-    if (!parsed.success) {
-      return undefined;
-    }
-
-    return parsed.data;
   }
 }
 

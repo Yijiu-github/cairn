@@ -29,6 +29,7 @@ const snapshot = {
       updatedAt: '2026-05-18T12:03:00.000Z',
     },
   ],
+  sourceRoots: [],
   selectedRun: {
     runId: '01J000000000000000000000R0',
     status: 'succeeded',

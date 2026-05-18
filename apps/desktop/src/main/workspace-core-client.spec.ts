@@ -191,6 +191,35 @@ it('sanitizes arbitrary POSIX absolute SourceRoot display names', async () => {
   expect(serialized).not.toContain('/opt/cairn/project');
 });
 
+it('sanitizes Windows slash SourceRoot display names before exposing renderer snapshots', async () => {
+  const fetch = createWorkspaceCoreFetch({
+    sourceRootDisplayName: 'C:/Users/alice/private/project',
+  });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+  const serialized = JSON.stringify(snapshot);
+
+  expect(snapshot.sourceRoots).toEqual([
+    {
+      sourceRootId: ids.sourceRoot,
+      displayName: 'Source root',
+      kind: 'local_directory',
+      status: 'active',
+      includeGlobCount: 2,
+      excludeGlobCount: 3,
+      hasLastIndexedAt: true,
+      hasError: false,
+      createdAt: '2026-05-18T00:00:00.000Z',
+      updatedAt: '2026-05-18T00:04:00.000Z',
+    },
+  ]);
+  expect(serialized).not.toContain('C:/Users/alice/private/project');
+});
+
 it('keeps run snapshots when SourceRoot endpoint returns non-ok', async () => {
   const fetch = createWorkspaceCoreFetch({ failSourceRoots: true });
   const client = new WorkspaceCoreReadClient({
@@ -214,6 +243,34 @@ it('keeps run snapshots when SourceRoot endpoint returns non-ok', async () => {
 
 it('keeps run snapshots when SourceRoot schema is invalid', async () => {
   const fetch = createWorkspaceCoreFetch({ invalidSourceRootSchema: true });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+
+  expect(snapshot.runs).toHaveLength(1);
+  expect(snapshot.selectedRun?.runId).toBe(ids.run);
+  expect(snapshot.sourceRoots).toEqual([]);
+});
+
+it('keeps run snapshots when SourceRoot fetch rejects', async () => {
+  const fetch = createWorkspaceCoreFetch({ rejectSourceRoots: true });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+
+  expect(snapshot.runs).toHaveLength(1);
+  expect(snapshot.selectedRun?.runId).toBe(ids.run);
+  expect(snapshot.sourceRoots).toEqual([]);
+});
+
+it('keeps run snapshots when SourceRoot json parsing throws', async () => {
+  const fetch = createWorkspaceCoreFetch({ throwSourceRootJson: true });
   const client = new WorkspaceCoreReadClient({
     fetch: fetch.fetch,
     getConnection: () => createConnectedConnection(),
@@ -404,11 +461,13 @@ interface WorkspaceCoreFetchOptions {
   readonly failPayloadPreview?: boolean;
   readonly failSourceRoots?: boolean;
   readonly invalidSourceRootSchema?: boolean;
+  readonly rejectSourceRoots?: boolean;
   readonly runCount?: number;
   readonly sourceRootDisplayName?: string;
   readonly sourceRootError?: string;
   readonly taskFailureReason?: string;
   readonly taskStatus?: string;
+  readonly throwSourceRootJson?: boolean;
   readonly tracePayloadInline?: Record<string, unknown>;
 }
 
@@ -432,6 +491,10 @@ const createWorkspaceCoreFetch = (
     });
 
     const sourceRootsPath = `/v1/workspaces/${ids.workspace}/source-roots`;
+    if (options.rejectSourceRoots === true && parsed.pathname === sourceRootsPath) {
+      return Promise.reject(new Error('SourceRoot endpoint unavailable'));
+    }
+
     const ok =
       !(options.failPayloadPreview === true && parsed.pathname.endsWith('/payload')) &&
       !(options.failSourceRoots === true && parsed.pathname === sourceRootsPath);
@@ -444,7 +507,10 @@ const createWorkspaceCoreFetch = (
           : options.failSourceRoots === true && parsed.pathname === sourceRootsPath
             ? 503
             : 200,
-      json: () => Promise.resolve(responseByPath(parsed.pathname, options)),
+      json: () =>
+        options.throwSourceRootJson === true && parsed.pathname === sourceRootsPath
+          ? Promise.reject(new Error('Invalid SourceRoot JSON'))
+          : Promise.resolve(responseByPath(parsed.pathname, options)),
     });
   };
 

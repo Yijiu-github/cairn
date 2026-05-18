@@ -21,6 +21,7 @@ it('exposes only the sidecar status and restart allowlist', async () => {
           updatedAt: '2026-05-18T10:00:00.000Z',
         },
         runs: [],
+        sourceRoots: [],
         updatedAt: '2026-05-18T10:00:00.000Z',
       }),
   );
