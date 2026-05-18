@@ -568,7 +568,6 @@ Add a subsection under `Workspace Core runtime 选择` in `docs/engineering/loca
    CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR=.cairn/runtime \
    pnpm --filter @cairn/workspace-core dev
    ```
-````
 
 2. 在另一个终端创建 run、提交 agent run，并 drain runtime：
 
@@ -608,7 +607,6 @@ Add a subsection under `Workspace Core runtime 选择` in `docs/engineering/loca
      -H 'content-type: application/json' \
      -d '{"reason":"Manual cancel smoke."}'
    ```
-
 ````
 
 - [ ] **Step 2: Update runtime gateway README and status**
@@ -617,7 +615,7 @@ In `packages/runtime_gateway/README.md`, remove the payload resolver follow-up a
 
 ```md
 - 用真实长任务验证 Windows 下取消行为与 stdout JSONL 流式粒度，并记录手动 smoke 结果
-````
+```
 
 In `docs/STATUS.md`, add that Codex adapter can resolve Workspace Core runtime input artifacts, but keep real long-task smoke/manual verification as not a default CI guarantee.
 

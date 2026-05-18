@@ -13,6 +13,7 @@ Codex CLI adapter 最小生命周期实现。
 - 提供 Codex CLI `exec --json` 子进程封装、stdout JSONL 协议解析、stderr 收集与基础错误映射
 - 提供 `createCodexRuntimeAdapter`，把 Codex CLI 子进程封装为
   `RuntimeAdapter` 的 submit / stream / cancel / query 生命周期
+- 支持可选的 artifact payload resolver，用于把 Workspace Core 的 runtime input artifact 解析成实际 prompt
 
 ## 边界
 
@@ -21,7 +22,7 @@ Codex CLI adapter 最小生命周期实现。
 - 任务规划、结果综合与 operator 接管（属于 `@cairn/application`）
 - 数据库读写与 artifact 内容落盘（属于 `@cairn/storage` / Workspace Core）
 - 桌面系统能力桥接（属于 `@cairn/desktop-bridge`）
-- Workspace Core 的真实 Codex runtime 选择、artifact payload 解析与端到端调度
+- Workspace Core 的真实 Codex runtime 选择与端到端调度
 
 ## 使用
 
@@ -55,6 +56,5 @@ await adapter.submit({
 
 ## 后续
 
-- 补 artifact payload resolver，让 Codex adapter 不依赖 `options.prompt` 传入提示词
-- 用真实长任务验证 Windows 下取消行为与 stdout JSONL 流式粒度
+- 用真实长任务手动验证 Windows 下取消行为与 stdout JSONL 流式粒度，并记录 smoke 结果
 - 补 `docs/ops/install-guide.md` 与 `docs/ops/troubleshooting.md`

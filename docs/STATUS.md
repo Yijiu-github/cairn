@@ -1,7 +1,7 @@
 # 项目状态 / Project Status
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-17
+> 最后更新：2026-05-18
 > 目的：给人类与多 agent 协作提供当前事实基线，减少“我以为已经有 Desktop/Web”的误判。
 
 ---
@@ -43,7 +43,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - R1 run/task/agent-run HTTP 闭环：可创建 single-worker run，并通过 mock runtime 验证状态推进。
 - R1 runtime artifact/trace demo loop：可通过 `POST /v1/tasks/:taskId/agent-runs` 提交任务，落 bounded artifact payload refs，并通过 `GET /v1/artifacts/:artifactId/payload` 读取 payload text。
 - Runtime gateway factory：服务默认使用 mock runtime，也可通过 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 显式注入 Codex RuntimeAdapter。
-- Orchestration Control R1a API：pause / resume / cancel run、retry task、rerun、operator note 的最小 HTTP 接管面；取消仍是 application state change，尚未调用真实 runtime kill。
+- Runtime gateway hardening：Codex adapter 可解析 Workspace Core runtime input artifact payload；operator cancel 已能下沉到 runtime cancel，真实长任务 smoke 仍为手动步骤。
+- Orchestration Control R1a API：pause / resume / cancel run、retry task、rerun、operator note 的最小 HTTP 接管面。
 - SQLite application repository：服务启动可执行 domain 迁移，并用本地 SQLite 持久化 run/task/agent-run 状态。
 - Code Context R1a/R1b-a API：
   - 注册与列出 SourceRoot。
@@ -163,7 +164,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Desktop 真实 Workspace Core 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前仍保持静态 UI 壳，不接 sidecar）。
 - Artifact store 的真实文件内容写入、保留策略与导出。
 - 真实 Goal Planner 与 Planner 到多 Task DAG 的生成逻辑。
-- Codex adapter artifact payload resolver 与真实长任务 smoke 验证。
+- Codex adapter 手动真实长任务 smoke 验证与更完整的 payload / long-run 证据收集。
 - 真实 Runtime Gateway cancellation / kill、AgentRun retry、protected step approve/reject 与 operator control UI。
 - TraceEvent replay UI。
 - 代码上下文索引的文本搜索、symbol outline、import/export dependency edge。

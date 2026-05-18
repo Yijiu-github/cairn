@@ -40,6 +40,7 @@
 - **`@cairn/workspace-core`**：新增 Fastify 最小服务骨架，包含 `/health`、R1 run/task/agent-run HTTP 闭环、in-memory application ports 与 mock runtime 验证
 - **`@cairn/workspace-core`**：新增 SQLite application repository 适配器，服务启动时执行 domain 迁移并用 `.cairn/workspace-core.sqlite` 持久化 run/task/agent-run 状态
 - **`@cairn/workspace-core`**：新增 runtime gateway factory 与显式 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 启动开关，可把 Codex RuntimeAdapter 注入服务容器；默认仍为 mock runtime
+- **Codex runtime hardening**：Codex adapter 可解析 Workspace Core runtime input artifact payload，补充取消升级细节与手动真实 Codex smoke 指引；默认测试仍不依赖真实 Codex CLI
 - **Orchestration Control R1a**：新增 application 与 workspace-core 最小接管控制面，覆盖 pause / resume / cancel run、retry task、rerun 与 operator note，并写入 TraceEvent。
 - **`@cairn/ui`**：新增共享 UI 包工程校验基线，纳入 typecheck / lint / test，并补充公共导出 smoke 测试
 - **`@cairn/desktop`**：新增 Electron 最小 shell 骨架与静态 UI 壳视图，包含 Home / Run Detail / Artifact Review / Settings 四个静态视图、只读 preload identity bridge 与 preview-safe 默认隔离设置
