@@ -162,6 +162,35 @@ it('sanitizes unsafe SourceRoot display names before exposing renderer snapshots
   expect(serialized).not.toContain('sk-live-secret');
 });
 
+it('sanitizes arbitrary POSIX absolute SourceRoot display names', async () => {
+  const fetch = createWorkspaceCoreFetch({
+    sourceRootDisplayName: '/opt/cairn/project',
+  });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+  const serialized = JSON.stringify(snapshot);
+
+  expect(snapshot.sourceRoots).toEqual([
+    {
+      sourceRootId: ids.sourceRoot,
+      displayName: 'Source root',
+      kind: 'local_directory',
+      status: 'active',
+      includeGlobCount: 2,
+      excludeGlobCount: 3,
+      hasLastIndexedAt: true,
+      hasError: false,
+      createdAt: '2026-05-18T00:00:00.000Z',
+      updatedAt: '2026-05-18T00:04:00.000Z',
+    },
+  ]);
+  expect(serialized).not.toContain('/opt/cairn/project');
+});
+
 it('keeps run snapshots when SourceRoot endpoint returns non-ok', async () => {
   const fetch = createWorkspaceCoreFetch({ failSourceRoots: true });
   const client = new WorkspaceCoreReadClient({

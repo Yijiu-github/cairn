@@ -320,8 +320,7 @@ const containsSensitiveSourceRootLabelData = (label: string): boolean =>
   hostPattern.test(label);
 
 const uriPattern = /\b(?:file|https?|ssh):\/\//iu;
-const localPathPattern =
-  /(?:^|[\s"'=(])(?:~\/|\/(?:Users|home|private|var|tmp)\/|[A-Za-z]:\\|\\\\)/u;
+const localPathPattern = /(?:^|[\s"'=(])(?:~\/|\/(?!\/)[^\s"'<>|`$]+|[A-Za-z]:\\|\\\\)/u;
 const secretPattern =
   /\b(?:sk-[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|xox[baprs]-[A-Za-z0-9-]+|bearer|token|secret|api[_-]?key)\b/iu;
 const hostPattern =
