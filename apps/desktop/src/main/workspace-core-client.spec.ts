@@ -178,11 +178,50 @@ it('summarizes trace payload metadata without exposing inline payload values', a
 
   expect(traceEvent).toMatchObject({
     eventType: 'task.started',
-    payloadSummary: 'payload keys: cwd, payloadRef, token',
+    payloadSummary: 'payload keys: 3 redacted',
   });
   expect(serialized).not.toContain('/Users/alice/private/project');
   expect(serialized).not.toContain('sk-live-secret');
   expect(serialized).not.toContain('artifact-payload://workspace/run/artifact/out.patch');
+  expect(serialized).not.toContain('payloadRef');
+  expect(serialized).not.toContain('token');
+});
+
+it('summarizes task failure reasons without exposing raw failure text', async () => {
+  const fetch = createWorkspaceCoreFetch({
+    taskFailureReason: 'Failed in /Users/alice/private/project with sk-live-secret',
+    taskStatus: 'failed',
+  });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+  const serialized = JSON.stringify(snapshot);
+
+  expect(snapshot.selectedRun?.tasks[0]).toMatchObject({
+    failureSummary: 'Failure reason captured by Workspace Core.',
+    status: 'failed',
+  });
+  expect(serialized).not.toContain('/Users/alice/private/project');
+  expect(serialized).not.toContain('sk-live-secret');
+});
+
+it('keeps artifact metadata when a payload preview request fails', async () => {
+  const fetch = createWorkspaceCoreFetch({ failPayloadPreview: true });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+
+  const artifact = snapshot.selectedRun?.artifacts[0];
+  expect(artifact).toMatchObject({
+    artifactId: ids.artifact,
+  });
+  expect(artifact?.payloadPreview).toBeUndefined();
 });
 
 interface FetchCall {
@@ -207,6 +246,9 @@ const createConnectedConnection = (): WorkspaceCoreReadClientConnection => ({
 interface WorkspaceCoreFetchOptions {
   readonly artifactSensitivity?: string;
   readonly artifactUriOrPath?: string;
+  readonly failPayloadPreview?: boolean;
+  readonly taskFailureReason?: string;
+  readonly taskStatus?: string;
   readonly tracePayloadInline?: Record<string, unknown>;
 }
 
@@ -230,8 +272,9 @@ const createWorkspaceCoreFetch = (
     });
 
     return Promise.resolve({
-      ok: true,
-      status: 200,
+      ok: !(options.failPayloadPreview === true && parsed.pathname.endsWith('/payload')),
+      status:
+        options.failPayloadPreview === true && parsed.pathname.endsWith('/payload') ? 404 : 200,
       json: () => Promise.resolve(responseByPath(parsed.pathname, options)),
     });
   };
@@ -250,7 +293,7 @@ const responseByPath = (path: string, options: WorkspaceCoreFetchOptions): unkno
       return apiRun();
     case `/v1/runs/${ids.run}/tasks`:
       return {
-        items: [apiTask()],
+        items: [apiTask(options)],
         total: 1,
       };
     case `/v1/runs/${ids.run}/artifacts`:
@@ -290,20 +333,21 @@ const apiRun = () => ({
   updatedAt: '2026-05-18T00:01:00.000Z',
 });
 
-const apiTask = () => ({
+const apiTask = (options: WorkspaceCoreFetchOptions = {}) => ({
   taskId: ids.task,
   workspaceId: ids.workspace,
   orchestrationRunId: ids.run,
   taskKind: 'edit',
   title: 'Apply patch',
   brief: 'Update the target module.',
-  status: 'running',
+  status: options.taskStatus ?? 'running',
   priority: 50,
   attempt: 1,
   idempotencyKey: 'task-key',
   dependsOnTaskIds: [],
   contextRefs: [],
   artifactRefs: [ids.artifact],
+  ...(options.taskFailureReason === undefined ? {} : { failureReason: options.taskFailureReason }),
   createdAt: '2026-05-18T00:00:00.000Z',
   updatedAt: '2026-05-18T00:01:00.000Z',
 });

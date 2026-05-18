@@ -137,11 +137,15 @@ export class WorkspaceCoreReadClient {
             return undefined;
           }
 
-          const payload = await this.get(
+          const payload = await this.tryGet(
             connection,
             `/v1/artifacts/${encodeURIComponent(artifact.artifactId)}/payload`,
             apiWorkspaceCoreArtifactPayloadSchema,
           );
+          if (payload === undefined) {
+            return undefined;
+          }
+
           return [artifact.artifactId, mapApiArtifactPayloadToPreview(payload)] as const;
         },
       ),
@@ -164,6 +168,25 @@ export class WorkspaceCoreReadClient {
 
     if (!response.ok) {
       throw new Error(`Workspace Core read request failed with status ${String(response.status)}.`);
+    }
+
+    return schema.parse(await response.json());
+  }
+
+  private async tryGet<T>(
+    connection: ConnectedWorkspaceCoreReadClientConnection,
+    path: string,
+    schema: ZodType<T>,
+  ): Promise<T | undefined> {
+    const response = await this.fetch(new URL(path, connection.baseUrl), {
+      headers: {
+        authorization: `Bearer ${connection.token}`,
+      },
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      return undefined;
     }
 
     return schema.parse(await response.json());

@@ -106,7 +106,7 @@ export const workspaceCoreTaskViewSchema = z.object({
   attempt: z.number().int().nonnegative(),
   dependsOnTaskIds: z.array(z.string()),
   artifactRefs: z.array(z.string()),
-  failureReason: z.string().optional(),
+  failureSummary: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -196,7 +196,9 @@ export const mapApiTaskToView = (task: ApiWorkspaceCoreTask): WorkspaceCoreTaskV
     attempt: task.attempt,
     dependsOnTaskIds: task.dependsOnTaskIds,
     artifactRefs: task.artifactRefs,
-    ...(task.failureReason === undefined ? {} : { failureReason: task.failureReason }),
+    ...(task.failureReason === undefined
+      ? {}
+      : { failureSummary: 'Failure reason captured by Workspace Core.' }),
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
   });
@@ -245,10 +247,10 @@ export const mapApiArtifactPayloadToPreview = (
   });
 
 const summarizePayloadKeys = (payload: Record<string, unknown>): string => {
-  const keys = Object.keys(payload).sort((left, right) => left.localeCompare(right));
-  if (keys.length === 0) {
+  const keyCount = Object.keys(payload).length;
+  if (keyCount === 0) {
     return 'payload keys: none';
   }
 
-  return `payload keys: ${keys.join(', ')}`;
+  return `payload keys: ${String(keyCount)} redacted`;
 };
