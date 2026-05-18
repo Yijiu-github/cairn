@@ -45,6 +45,7 @@
 - **`@cairn/desktop`**：补齐 macOS packaging / signing / installer baseline，新增 `package:mac:dir` 与 `package:mac:dmg` 的显式命令约定，并统一 Apple notarization secret 命名为 `APPLE_APP_SPECIFIC_PASSWORD`
 - **`@cairn/desktop`**：新增开发态 Workspace Core sidecar bridge，main 进程启动 loopback sidecar 并注入 per-launch bearer token，preload 仅暴露 connection status / restart allowlist，renderer 显示真实连接状态但仍不接真实 run/task/artifact action。
 - **`@cairn/desktop`**：新增只读 Workspace data bridge，main 进程通过 bearer token 读取 Workspace Core run/task/artifact/trace snapshot，preload 仅暴露 `workspace.readSnapshot()`，renderer 可显示 sanitized 真实数据但仍不暴露 token、base URL、端口、本地路径或 raw artifact payload text。
+- **`@cairn/desktop`**：Settings 新增只读 SourceRoot metadata 视图，通过现有 `workspace.readSnapshot()` 展示 sanitized display name、kind、status、glob count、index/error flag 与时间戳；SourceRoot uri、raw error、metadata、本地路径和 mutation action 仍不暴露。
 - **`@cairn/workspace-core`**：新增可选 `CAIRN_WORKSPACE_CORE_AUTH_TOKEN`，配置后所有 HTTP 请求必须携带 bearer token。
 - 设计文档新增轻量代码上下文索引方案，明确 Cairn 自研 SourceRoot / CodeContextIndex / ContextPack 能力，不引入 GitNexus 依赖或许可证受限代码
 - **Code Context R1a**：新增 SourceRoot registry、最小 CodeIndexSnapshot 元数据、ContextPack manifest 契约、domain schema、application service 与 workspace-core API/SQLite 持久化基线

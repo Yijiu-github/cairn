@@ -5,7 +5,8 @@ Cairn Electron Desktop Shell.
 This first skeleton is intentionally preview-safe:
 
 - static renderer fixtures when Workspace Core is disconnected
-- dev-mode Workspace Core sidecar status and read-only run/task/artifact/trace snapshots
+- dev-mode Workspace Core sidecar status and read-only run/task/artifact/trace/source-root
+  snapshots
 - no live Workspace Core mutation actions
 - no filesystem reads or writes
 - local paths and payload text remain redacted or summarized by default
@@ -58,8 +59,11 @@ Use this checklist after `pnpm --filter @cairn/desktop dev`:
 - The app window opens with the Cairn title.
 - Navigation switches between Home / Inbox, Run Detail, Artifact Review, and Settings.
 - The sidebar still says preview-safe shell.
-- Workspace Core status and read-only run/task/artifact/trace snapshots are read through preload
-  allowlists and may show connected, starting, degraded, empty, or read-error states.
+- Workspace Core status and read-only run/task/artifact/trace/source-root snapshots are read
+  through preload allowlists and may show connected, starting, degraded, empty, or read-error
+  states.
+- Settings may show sanitized SourceRoot metadata, but folder approval, reindex, path reveal, and
+  export remain unavailable.
 - Operator controls remain disabled.
 - Artifact Review keeps local path language redacted or hidden.
 
@@ -74,7 +78,7 @@ preview fixtures:
   controls
 - **Artifact Review** — protected review panel, redacted artifact cards, and path exposure
   policy
-- **Settings** — read-only source-root and connection placeholders
+- **Settings** — read-only connection state and sanitized SourceRoot metadata
 
 Workspace Core integration is limited to a dev-mode sidecar lifecycle plus read-only snapshots.
 Future work must add bundled sidecar packaging and action-specific safety gates before any
