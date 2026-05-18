@@ -29,6 +29,21 @@ const apiRunSchema = z.object({
   updatedAt: z.string(),
 });
 
+const apiSourceRootSchema = z.object({
+  sourceRootId: z.string().min(1),
+  kind: z.string().min(1),
+  displayName: z.string().min(1),
+  uri: z.string().min(1),
+  status: z.string().min(1),
+  includeGlobs: z.array(z.string()),
+  excludeGlobs: z.array(z.string()),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  lastIndexedAt: z.string().optional(),
+  error: z.string().optional(),
+  metadata: z.record(z.unknown()).optional(),
+});
+
 const apiTaskSchema = z.object({
   taskId: z.string().min(1),
   parentTaskId: z.string().optional(),
@@ -96,6 +111,20 @@ export const workspaceCoreRunSummarySchema = z.object({
 });
 export type WorkspaceCoreRunSummary = z.infer<typeof workspaceCoreRunSummarySchema>;
 
+export const workspaceCoreSourceRootViewSchema = z.object({
+  sourceRootId: z.string(),
+  displayName: z.string(),
+  kind: z.string(),
+  status: z.string(),
+  includeGlobCount: z.number().int().nonnegative(),
+  excludeGlobCount: z.number().int().nonnegative(),
+  hasLastIndexedAt: z.boolean(),
+  hasError: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type WorkspaceCoreSourceRootView = z.infer<typeof workspaceCoreSourceRootViewSchema>;
+
 export const workspaceCoreTaskViewSchema = z.object({
   taskId: z.string(),
   parentTaskId: z.string().optional(),
@@ -146,6 +175,7 @@ export type WorkspaceCoreSelectedRun = z.infer<typeof workspaceCoreSelectedRunSc
 export const workspaceCoreReadSnapshotSchema = z.object({
   connection: workspaceCoreConnectionViewSchema,
   runs: z.array(workspaceCoreRunSummarySchema),
+  sourceRoots: z.array(workspaceCoreSourceRootViewSchema),
   selectedRun: workspaceCoreSelectedRunSchema.optional(),
   updatedAt: z.string(),
 });
@@ -153,12 +183,14 @@ export type WorkspaceCoreReadSnapshot = z.infer<typeof workspaceCoreReadSnapshot
 
 export const apiWorkspaceCoreRunListSchema = apiPaginatedSchema(apiRunSchema);
 export const apiWorkspaceCoreRunSchema = apiRunSchema;
+export const apiWorkspaceCoreSourceRootListSchema = apiPaginatedSchema(apiSourceRootSchema);
 export const apiWorkspaceCoreTaskListSchema = apiPaginatedSchema(apiTaskSchema);
 export const apiWorkspaceCoreArtifactListSchema = apiPaginatedSchema(apiArtifactSchema);
 export const apiWorkspaceCoreTraceListSchema = apiPaginatedSchema(apiTraceEventSchema);
 export const apiWorkspaceCoreArtifactPayloadSchema = apiArtifactPayloadSchema;
 
 export type ApiWorkspaceCoreRun = z.infer<typeof apiWorkspaceCoreRunSchema>;
+export type ApiWorkspaceCoreSourceRoot = z.infer<typeof apiSourceRootSchema>;
 export type ApiWorkspaceCoreTask = z.infer<typeof apiTaskSchema>;
 export type ApiWorkspaceCoreArtifact = z.infer<typeof apiArtifactSchema>;
 export type ApiWorkspaceCoreTraceEvent = z.infer<typeof apiTraceEventSchema>;
@@ -170,6 +202,7 @@ export const createDisconnectedWorkspaceCoreReadSnapshot = (
   workspaceCoreReadSnapshotSchema.parse({
     connection: sanitizeWorkspaceCoreConnection(connection),
     runs: [],
+    sourceRoots: [],
     updatedAt: new Date().toISOString(),
   });
 
@@ -183,6 +216,22 @@ export const mapApiRunToSummary = (run: ApiWorkspaceCoreRun): WorkspaceCoreRunSu
     ...(run.completionLevel === undefined ? {} : { completionLevel: run.completionLevel }),
     createdAt: run.createdAt,
     updatedAt: run.updatedAt,
+  });
+
+export const mapApiSourceRootToView = (
+  sourceRoot: ApiWorkspaceCoreSourceRoot,
+): WorkspaceCoreSourceRootView =>
+  workspaceCoreSourceRootViewSchema.parse({
+    sourceRootId: sourceRoot.sourceRootId,
+    displayName: sourceRoot.displayName,
+    kind: sourceRoot.kind,
+    status: sourceRoot.status,
+    includeGlobCount: sourceRoot.includeGlobs.length,
+    excludeGlobCount: sourceRoot.excludeGlobs.length,
+    hasLastIndexedAt: sourceRoot.lastIndexedAt !== undefined,
+    hasError: sourceRoot.error !== undefined,
+    createdAt: sourceRoot.createdAt,
+    updatedAt: sourceRoot.updatedAt,
   });
 
 export const mapApiTaskToView = (task: ApiWorkspaceCoreTask): WorkspaceCoreTaskView =>

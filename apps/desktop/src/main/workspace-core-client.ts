@@ -7,12 +7,14 @@ import {
   apiWorkspaceCoreArtifactPayloadSchema,
   apiWorkspaceCoreRunListSchema,
   apiWorkspaceCoreRunSchema,
+  apiWorkspaceCoreSourceRootListSchema,
   apiWorkspaceCoreTaskListSchema,
   apiWorkspaceCoreTraceListSchema,
   createDisconnectedWorkspaceCoreReadSnapshot,
   mapApiArtifactPayloadToPreview,
   mapApiArtifactToView,
   mapApiRunToSummary,
+  mapApiSourceRootToView,
   mapApiTaskToView,
   mapApiTraceEventToView,
   workspaceCoreReadSnapshotSchema,
@@ -70,18 +72,22 @@ export class WorkspaceCoreReadClient {
       return createDisconnectedWorkspaceCoreReadSnapshot(connection);
     }
 
-    const runsResponse = await this.get(
-      connection,
-      `/v1/workspaces/${encodeURIComponent(this.workspaceId)}/runs`,
-      apiWorkspaceCoreRunListSchema,
-    );
+    const workspacePath = `/v1/workspaces/${encodeURIComponent(this.workspaceId)}`;
+    const [runsResponse, sourceRootsResponse] = await Promise.all([
+      this.get(connection, `${workspacePath}/runs`, apiWorkspaceCoreRunListSchema),
+      this.get(connection, `${workspacePath}/source-roots`, apiWorkspaceCoreSourceRootListSchema),
+    ]);
     const runs = runsResponse.items.map((run) => mapApiRunToSummary(run));
+    const sourceRoots = sourceRootsResponse.items.map((sourceRoot) =>
+      mapApiSourceRootToView(sourceRoot),
+    );
     const firstRun = runs[0];
 
     if (firstRun === undefined) {
       return workspaceCoreReadSnapshotSchema.parse({
         connection: sanitizeWorkspaceCoreConnection(connection),
         runs,
+        sourceRoots,
         updatedAt: new Date().toISOString(),
       });
     }
@@ -119,6 +125,7 @@ export class WorkspaceCoreReadClient {
     return workspaceCoreReadSnapshotSchema.parse({
       connection: sanitizeWorkspaceCoreConnection(connection),
       runs,
+      sourceRoots,
       selectedRun,
       updatedAt: new Date().toISOString(),
     });

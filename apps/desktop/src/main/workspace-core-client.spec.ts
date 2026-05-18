@@ -19,6 +19,7 @@ const ids = {
   trace: '01J000000000000000000000Z0',
   traceEvent: '01J000000000000000000000V0',
   planningOutput: '01J000000000000000000000P0',
+  sourceRoot: '01J000000000000000000000S0',
 };
 
 it('lists workspace runs with bearer auth from the connected sidecar', async () => {
@@ -82,11 +83,69 @@ it('reads the first run detail, tasks, artifacts, trace, and artifact payload pr
   });
   expect(fetch.calls.map((call) => call.path)).toEqual([
     `/v1/workspaces/${ids.workspace}/runs`,
+    `/v1/workspaces/${ids.workspace}/source-roots`,
     `/v1/runs/${ids.run}`,
     `/v1/runs/${ids.run}/tasks`,
     `/v1/runs/${ids.run}/artifacts`,
     `/v1/runs/${ids.run}/trace`,
     `/v1/artifacts/${ids.artifact}/payload`,
+  ]);
+});
+
+it('reads SourceRoot summaries without exposing local source metadata', async () => {
+  const fetch = createWorkspaceCoreFetch({
+    sourceRootError: 'Index failed in /Users/alice/private/project with sk-live-secret',
+  });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+  const serialized = JSON.stringify(snapshot);
+
+  expect(fetch.calls.map((call) => call.path)).toContain(
+    `/v1/workspaces/${ids.workspace}/source-roots`,
+  );
+  expect(snapshot.sourceRoots).toEqual([
+    {
+      sourceRootId: ids.sourceRoot,
+      displayName: 'Cairn Workspace',
+      kind: 'local_directory',
+      status: 'error',
+      includeGlobCount: 2,
+      excludeGlobCount: 3,
+      hasLastIndexedAt: true,
+      hasError: true,
+      createdAt: '2026-05-18T00:00:00.000Z',
+      updatedAt: '2026-05-18T00:04:00.000Z',
+    },
+  ]);
+  expect(serialized).not.toContain('file:///Users/alice/private/project');
+  expect(serialized).not.toContain('/Users/alice/private/project');
+  expect(serialized).not.toContain('Index failed');
+  expect(serialized).not.toContain('sk-live-secret');
+  expect(serialized).not.toContain('metadata-token');
+  expect(serialized).not.toContain('launch-token');
+  expect(serialized).not.toContain('127.0.0.1');
+  expect(serialized).not.toContain('45321');
+});
+
+it('returns SourceRoot summaries when the workspace has no runs', async () => {
+  const fetch = createWorkspaceCoreFetch({ runCount: 0 });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+
+  expect(snapshot.runs).toEqual([]);
+  expect(snapshot.selectedRun).toBeUndefined();
+  expect(snapshot.sourceRoots).toHaveLength(1);
+  expect(fetch.calls.map((call) => call.path)).toEqual([
+    `/v1/workspaces/${ids.workspace}/runs`,
+    `/v1/workspaces/${ids.workspace}/source-roots`,
   ]);
 });
 
@@ -111,6 +170,7 @@ it('returns a disconnected snapshot without issuing HTTP requests when sidecar i
       state: 'disconnected',
     },
     runs: [],
+    sourceRoots: [],
   });
   expect(snapshot.selectedRun).toBeUndefined();
   expect(fetch.calls).toHaveLength(0);
@@ -247,6 +307,8 @@ interface WorkspaceCoreFetchOptions {
   readonly artifactSensitivity?: string;
   readonly artifactUriOrPath?: string;
   readonly failPayloadPreview?: boolean;
+  readonly runCount?: number;
+  readonly sourceRootError?: string;
   readonly taskFailureReason?: string;
   readonly taskStatus?: string;
   readonly tracePayloadInline?: Record<string, unknown>;
@@ -286,7 +348,12 @@ const responseByPath = (path: string, options: WorkspaceCoreFetchOptions): unkno
   switch (path) {
     case `/v1/workspaces/${ids.workspace}/runs`:
       return {
-        items: [apiRun()],
+        items: options.runCount === 0 ? [] : [apiRun()],
+        total: options.runCount === 0 ? 0 : 1,
+      };
+    case `/v1/workspaces/${ids.workspace}/source-roots`:
+      return {
+        items: [apiSourceRoot(options)],
         total: 1,
       };
     case `/v1/runs/${ids.run}`:
@@ -383,4 +450,23 @@ const apiTraceEvent = (payloadInline: Record<string, unknown> = { title: 'Apply 
   payloadInline,
   createdAt: '2026-05-18T00:03:00.000Z',
   traceId: ids.trace,
+});
+
+const apiSourceRoot = (options: WorkspaceCoreFetchOptions = {}) => ({
+  sourceRootId: ids.sourceRoot,
+  workspaceId: ids.workspace,
+  kind: 'local_directory',
+  displayName: 'Cairn Workspace',
+  uri: 'file:///Users/alice/private/project',
+  status: options.sourceRootError === undefined ? 'active' : 'error',
+  includeGlobs: ['src/**', 'README.md'],
+  excludeGlobs: ['node_modules/**', '.git/**', '.env*'],
+  createdAt: '2026-05-18T00:00:00.000Z',
+  updatedAt: '2026-05-18T00:04:00.000Z',
+  lastIndexedAt: '2026-05-18T00:03:00.000Z',
+  ...(options.sourceRootError === undefined ? {} : { error: options.sourceRootError }),
+  metadata: {
+    localPath: '/Users/alice/private/project',
+    token: 'metadata-token',
+  },
 });
