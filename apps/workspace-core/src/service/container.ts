@@ -58,6 +58,7 @@ export interface CreateDefaultWorkspaceCoreContainerOptions {
   bootstrapWorkspaceId?: string;
   bootstrapEventId?: string;
   artifactRootDir?: string;
+  artifactStore?: ArtifactStorePort;
   codeContextScanner?: CodeContextScannerPort;
   runtimeGateway?: RuntimeGatewayPort;
 }
@@ -81,7 +82,9 @@ export const createWorkspaceCoreContainer = (
   runtimeGateway: RuntimeGatewayPort,
   close?: () => void,
   scanner: CodeContextScannerPort = new LocalCodeIndexScanner(),
-  artifactStore: ArtifactStorePort = createLocalArtifactStore(DEFAULT_LOCAL_ARTIFACT_ROOT),
+  artifactStore: ArtifactStorePort = createWorkspaceCoreLocalArtifactStore(
+    DEFAULT_LOCAL_ARTIFACT_ROOT,
+  ),
 ): WorkspaceCoreContainer => {
   const clock = { now: () => new Date() };
   const ids = createUlidFactory();
@@ -140,18 +143,36 @@ export const createDefaultWorkspaceCoreContainer = (
   options: CreateDefaultWorkspaceCoreContainerOptions = {},
 ): WorkspaceCoreContainer => {
   if (options.databasePath === undefined) {
+    const artifactStore =
+      options.artifactStore ?? createWorkspaceCoreLocalArtifactStore(DEFAULT_LOCAL_ARTIFACT_ROOT);
+
     if (options.runtimeGateway !== undefined) {
-      return createInMemoryWorkspaceCoreContainerWithRuntime(
+      return createWorkspaceCoreContainer(
+        new InMemoryApplicationRepository(),
         options.runtimeGateway,
+        undefined,
         options.codeContextScanner,
+        artifactStore,
       );
     }
 
     if (options.codeContextScanner === undefined) {
-      return createInMemoryWorkspaceCoreContainer();
+      return createWorkspaceCoreContainer(
+        new InMemoryApplicationRepository(),
+        new MockRuntimeGatewayPort(),
+        undefined,
+        undefined,
+        artifactStore,
+      );
     }
 
-    return createInMemoryWorkspaceCoreContainerWithScanner(options.codeContextScanner);
+    return createWorkspaceCoreContainer(
+      new InMemoryApplicationRepository(),
+      new MockRuntimeGatewayPort(),
+      undefined,
+      options.codeContextScanner,
+      artifactStore,
+    );
   }
 
   const storage = openSqliteStorage({ databasePath: options.databasePath });
@@ -169,13 +190,17 @@ export const createDefaultWorkspaceCoreContainer = (
       storage.close();
     },
     options.codeContextScanner,
-    createLocalArtifactStore(
-      options.artifactRootDir ?? path.join(path.dirname(options.databasePath), '.cairn/artifacts'),
-    ),
+    options.artifactStore ??
+      createWorkspaceCoreLocalArtifactStore(
+        options.artifactRootDir ?? defaultArtifactRootDir(options.databasePath),
+      ),
   );
 };
 
-const createLocalArtifactStore = (rootDir: string): LocalArtifactStore =>
+export const defaultArtifactRootDir = (databasePath: string): string =>
+  path.join(path.dirname(databasePath), '.cairn/artifacts');
+
+export const createWorkspaceCoreLocalArtifactStore = (rootDir: string): LocalArtifactStore =>
   new LocalArtifactStore({
     rootDir,
     maxInlineBytes: DEFAULT_ARTIFACT_MAX_INLINE_BYTES,

@@ -15,6 +15,7 @@ import { RuntimeAdapterGatewayPort } from './runtime-adapter-gateway-port.js';
 
 import type { RuntimeGatewayPort } from '@cairn/application';
 import type { RuntimeAdapter, RuntimeLogger } from '@cairn/runtime-gateway';
+import type { CodexRuntimeAdapterOptions } from '@cairn/runtime-gateway/adapters/codex';
 
 export interface WorkspaceCoreRuntimeConfig {
   runtime: 'mock' | 'codex';
@@ -29,8 +30,9 @@ export interface WorkspaceCoreRuntimeGateway {
 }
 
 export interface WorkspaceCoreRuntimeGatewayFactoryOverrides {
-  createCodexAdapter?: () => RuntimeAdapter;
+  createCodexAdapter?: (options: CodexRuntimeAdapterOptions) => RuntimeAdapter;
   logger?: RuntimeLogger;
+  resolveArtifactPayload?: CodexRuntimeAdapterOptions['resolveArtifactPayload'];
 }
 
 const noopLogger: RuntimeLogger = {
@@ -56,12 +58,16 @@ export const createWorkspaceCoreRuntimeGateway = async (
     return { gateway: new MockRuntimeGatewayPort() };
   }
 
+  const codexOptions: CodexRuntimeAdapterOptions = {
+    ...(config.codexExecutable === undefined ? {} : { executable: config.codexExecutable }),
+    ...(config.codexSandboxMode === undefined ? {} : { sandboxMode: config.codexSandboxMode }),
+    ...(overrides.resolveArtifactPayload === undefined
+      ? {}
+      : { resolveArtifactPayload: overrides.resolveArtifactPayload }),
+  };
+
   const adapter =
-    overrides.createCodexAdapter?.() ??
-    createCodexRuntimeAdapter({
-      ...(config.codexExecutable === undefined ? {} : { executable: config.codexExecutable }),
-      ...(config.codexSandboxMode === undefined ? {} : { sandboxMode: config.codexSandboxMode }),
-    });
+    overrides.createCodexAdapter?.(codexOptions) ?? createCodexRuntimeAdapter(codexOptions);
 
   await mkdir(config.runtimeWorkdir, { recursive: true });
 

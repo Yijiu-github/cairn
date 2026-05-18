@@ -16,6 +16,7 @@ import type {
   AdapterSubmitAck,
 } from '@cairn/runtime-gateway';
 import type { AdapterStreamEvent } from '@cairn/runtime-gateway';
+import type { CodexRuntimeAdapterOptions } from '@cairn/runtime-gateway/adapters/codex';
 
 const tempDirectories: string[] = [];
 
@@ -139,6 +140,38 @@ describe('createWorkspaceCoreRuntimeGateway', () => {
 
     expect(existsSync(workdir)).toBe(true);
     expect(adapter.initContext?.workdir).toBe(workdir);
+
+    await runtime.close?.();
+  });
+
+  it('passes an artifact payload resolver to the Codex adapter factory', async () => {
+    const adapter = new RecordingRuntimeAdapter();
+    let receivedOptions: CodexRuntimeAdapterOptions | undefined;
+
+    const runtime = await createWorkspaceCoreRuntimeGateway(
+      {
+        runtime: 'codex',
+        runtimeWorkdir: '/tmp/cairn-runtime',
+      },
+      {
+        createCodexAdapter: (options) => {
+          receivedOptions = options;
+          return adapter;
+        },
+        resolveArtifactPayload: async () => {
+          await Promise.resolve();
+          return {
+            mediaType: 'application/json',
+            text: '{"prompt":"Hello from artifact"}',
+            truncated: false,
+          };
+        },
+      },
+    );
+
+    await expect(
+      receivedOptions?.resolveArtifactPayload?.({ artifactId: 'artifact:1' }),
+    ).resolves.toMatchObject({ text: '{"prompt":"Hello from artifact"}' });
 
     await runtime.close?.();
   });
