@@ -3,7 +3,13 @@ import { describe, expect, it } from 'vitest';
 
 import { VALID_ULIDS } from '../__fixtures__/valid-ulids.js';
 
-import { AgentRun, AgentRunStatus, AGENT_RUN_TERMINAL_STATUSES } from './agent-run.js';
+import {
+  AgentRun,
+  AgentRunStatus,
+  AGENT_RUN_TERMINAL_STATUSES,
+  AGENT_RUN_RETRY_SOURCE_STATUSES,
+  AgentRunRetrySourceStatus,
+} from './agent-run.js';
 
 const baseAgentRun = {
   runId: VALID_ULIDS.agentRun,
@@ -81,5 +87,15 @@ describe('AGENT_RUN_TERMINAL_STATUSES', () => {
       'timeout',
       'lost',
     ]);
+  });
+});
+
+describe('AgentRun retry boundary', () => {
+  it('allows retry only from failed/lost statuses', () => {
+    expect(AGENT_RUN_RETRY_SOURCE_STATUSES).toEqual(['failed', 'lost']);
+    expect(AgentRunRetrySourceStatus.safeParse('failed').success).toBe(true);
+    expect(AgentRunRetrySourceStatus.safeParse('lost').success).toBe(true);
+    expect(AgentRunRetrySourceStatus.safeParse('timeout').success).toBe(false);
+    expect(AgentRunRetrySourceStatus.safeParse('cancelled').success).toBe(false);
   });
 });

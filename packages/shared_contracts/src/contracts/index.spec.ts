@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
 
+import { AGENT_RUN_RETRY_SOURCE_STATUSES } from '../schemas/agent-run.js';
+
 import {
   rootContract,
   workspaceContract,
@@ -169,6 +171,11 @@ describe('operatorContract', () => {
     ] as const) {
       expect(operatorContract[op].path.startsWith('/v1/')).toBe(true);
     }
+  });
+
+  it('retryAgentRun allows retry only from failed/lost states', () => {
+    expect(AGENT_RUN_RETRY_SOURCE_STATUSES).toEqual(['failed', 'lost']);
+    expect(operatorContract.retryAgentRun.summary.toLowerCase()).toContain('failed/lost');
   });
 });
 
