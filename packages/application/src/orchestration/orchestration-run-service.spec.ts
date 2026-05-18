@@ -69,6 +69,8 @@ class RecordingRuntimeGateway implements RuntimeGatewayPort {
   readonly cancelled: { runId: AgentRunId; reason?: string }[] = [];
   events: AdapterStreamEvent[];
   submitError?: Error;
+  cancelError?: Error;
+  cancelAckOverride?: AdapterCancelAck;
 
   constructor(
     private readonly ack?: AdapterSubmitAck,
@@ -113,6 +115,12 @@ class RecordingRuntimeGateway implements RuntimeGatewayPort {
 
   cancel(runId: AgentRunId, reason?: string): Promise<AdapterCancelAck> {
     this.cancelled.push(reason === undefined ? { runId } : { runId, reason });
+    if (this.cancelError !== undefined) {
+      return Promise.reject(this.cancelError);
+    }
+    if (this.cancelAckOverride !== undefined) {
+      return Promise.resolve(this.cancelAckOverride);
+    }
     return Promise.resolve(
       reason === undefined ? { runId, cancelled: true } : { runId, cancelled: true, reason },
     );
@@ -760,6 +768,52 @@ describe('OrchestrationRunService', () => {
     expect(repository.listTraceEvents()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ eventType: 'run.cancelled', level: 'warn' }),
+      ]),
+    );
+  });
+
+  it('keeps cancel flow local when runtime cancel throws', async () => {
+    const { repository, runtimeGateway, service }: ReturnType<typeof createHarness> =
+      createHarness();
+    runtimeGateway.cancelError = new Error('runtime cancel unavailable');
+    await repository.createRunGraph({ run: createRunFixture(), tasks: [createTaskFixture()] });
+    await repository.createAgentRun(createAgentRunFixture());
+
+    await expect(
+      service.cancelRun({ runId: ids.run, reason: 'Operator stopped it.' }),
+    ).resolves.toMatchObject({ status: 'cancelled' });
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({
+      status: 'cancelled',
+    });
+    await expect(repository.getTask(ids.task)).resolves.toMatchObject({
+      status: 'cancelled',
+    });
+    await expect(repository.getAgentRun(ids.agentRun)).resolves.toMatchObject({
+      status: 'cancelled',
+    });
+  });
+
+  it('records a warning trace when runtime cancel is not acknowledged', async () => {
+    const { repository, runtimeGateway, service }: ReturnType<typeof createHarness> =
+      createHarness();
+    runtimeGateway.cancelAckOverride = {
+      runId: ids.agentRun,
+      cancelled: false,
+      reason: 'already_terminal',
+    };
+    await repository.createRunGraph({ run: createRunFixture(), tasks: [createTaskFixture()] });
+    await repository.createAgentRun(createAgentRunFixture());
+
+    await service.cancelRun({ runId: ids.run, reason: 'Operator stopped it.' });
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          eventType: 'agent_run.cancel_not_acknowledged',
+          level: 'warn',
+          payloadInline: expect.objectContaining({
+            reason: 'already_terminal',
+          }),
+        }),
       ]),
     );
   });
