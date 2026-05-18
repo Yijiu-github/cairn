@@ -130,7 +130,7 @@ export const workspaceCoreTraceEventViewSchema = z.object({
   traceEventId: z.string(),
   eventType: z.string(),
   level: z.enum(['debug', 'info', 'warn', 'error']),
-  payloadInline: z.record(z.unknown()).optional(),
+  payloadSummary: z.string().optional(),
   createdAt: z.string(),
   traceId: z.string(),
 });
@@ -228,7 +228,9 @@ export const mapApiTraceEventToView = (
     traceEventId: event.traceEventId,
     eventType: event.eventType,
     level: event.level,
-    ...(event.payloadInline === undefined ? {} : { payloadInline: event.payloadInline }),
+    ...(event.payloadInline === undefined
+      ? {}
+      : { payloadSummary: summarizePayloadKeys(event.payloadInline) }),
     createdAt: event.createdAt,
     traceId: event.traceId,
   });
@@ -241,3 +243,12 @@ export const mapApiArtifactPayloadToPreview = (
     text: payload.text,
     truncated: payload.truncated,
   });
+
+const summarizePayloadKeys = (payload: Record<string, unknown>): string => {
+  const keys = Object.keys(payload).sort((left, right) => left.localeCompare(right));
+  if (keys.length === 0) {
+    return 'payload keys: none';
+  }
+
+  return `payload keys: ${keys.join(', ')}`;
+};

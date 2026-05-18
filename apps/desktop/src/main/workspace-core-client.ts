@@ -133,7 +133,7 @@ export class WorkspaceCoreReadClient {
         async (
           artifact,
         ): Promise<readonly [string, WorkspaceCoreArtifactPayloadPreview] | undefined> => {
-          if (artifact.payloadRef === undefined) {
+          if (artifact.payloadRef === undefined || artifact.sensitivity !== 'none') {
             return undefined;
           }
 

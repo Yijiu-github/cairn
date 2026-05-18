@@ -117,7 +117,7 @@ it('returns a disconnected snapshot without issuing HTTP requests when sidecar i
 });
 
 it('does not expose local artifact paths or raw payload references in renderer snapshots', async () => {
-  const fetch = createWorkspaceCoreFetch();
+  const fetch = createWorkspaceCoreFetch({ artifactSensitivity: 'local_path' });
   const client = new WorkspaceCoreReadClient({
     fetch: fetch.fetch,
     getConnection: () => createConnectedConnection(),
@@ -134,6 +134,55 @@ it('does not expose local artifact paths or raw payload references in renderer s
   expect(serialized).not.toContain('launch-token');
   expect(serialized).not.toContain('127.0.0.1');
   expect(serialized).not.toContain('45321');
+});
+
+it('does not inline payload text for sensitive artifacts', async () => {
+  const fetch = createWorkspaceCoreFetch({ artifactSensitivity: 'secret_risk' });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+  const artifact = snapshot.selectedRun?.artifacts[0];
+  const serialized = JSON.stringify(snapshot);
+
+  expect(artifact).toMatchObject({
+    sensitivity: 'secret_risk',
+    storage: 'redacted',
+  });
+  expect(artifact?.payloadPreview).toBeUndefined();
+  expect(fetch.calls.map((call) => call.path)).not.toContain(
+    `/v1/artifacts/${ids.artifact}/payload`,
+  );
+  expect(serialized).not.toContain('sk-live-secret');
+  expect(serialized).not.toContain('/Users/alice/private/project/out.patch');
+});
+
+it('summarizes trace payload metadata without exposing inline payload values', async () => {
+  const fetch = createWorkspaceCoreFetch({
+    tracePayloadInline: {
+      cwd: '/Users/alice/private/project',
+      token: 'sk-live-secret',
+      payloadRef: 'artifact-payload://workspace/run/artifact/out.patch',
+    },
+  });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+  const traceEvent = snapshot.selectedRun?.trace[0];
+  const serialized = JSON.stringify(snapshot);
+
+  expect(traceEvent).toMatchObject({
+    eventType: 'task.started',
+    payloadSummary: 'payload keys: cwd, payloadRef, token',
+  });
+  expect(serialized).not.toContain('/Users/alice/private/project');
+  expect(serialized).not.toContain('sk-live-secret');
+  expect(serialized).not.toContain('artifact-payload://workspace/run/artifact/out.patch');
 });
 
 interface FetchCall {
@@ -155,7 +204,15 @@ const createConnectedConnection = (): WorkspaceCoreReadClientConnection => ({
   updatedAt: '2026-05-18T00:00:00.000Z',
 });
 
-const createWorkspaceCoreFetch = (): {
+interface WorkspaceCoreFetchOptions {
+  readonly artifactSensitivity?: string;
+  readonly artifactUriOrPath?: string;
+  readonly tracePayloadInline?: Record<string, unknown>;
+}
+
+const createWorkspaceCoreFetch = (
+  options: WorkspaceCoreFetchOptions = {},
+): {
   readonly calls: FetchCall[];
   readonly fetch: WorkspaceCoreReadClientFetch;
 } => {
@@ -175,14 +232,14 @@ const createWorkspaceCoreFetch = (): {
     return Promise.resolve({
       ok: true,
       status: 200,
-      json: () => Promise.resolve(responseByPath(parsed.pathname)),
+      json: () => Promise.resolve(responseByPath(parsed.pathname, options)),
     });
   };
 
   return { calls, fetch };
 };
 
-const responseByPath = (path: string): unknown => {
+const responseByPath = (path: string, options: WorkspaceCoreFetchOptions): unknown => {
   switch (path) {
     case `/v1/workspaces/${ids.workspace}/runs`:
       return {
@@ -198,12 +255,12 @@ const responseByPath = (path: string): unknown => {
       };
     case `/v1/runs/${ids.run}/artifacts`:
       return {
-        items: [apiArtifact()],
+        items: [apiArtifact(options)],
         total: 1,
       };
     case `/v1/runs/${ids.run}/trace`:
       return {
-        items: [apiTraceEvent()],
+        items: [apiTraceEvent(options.tracePayloadInline)],
         total: 1,
       };
     case `/v1/artifacts/${ids.artifact}/payload`:
@@ -251,7 +308,7 @@ const apiTask = () => ({
   updatedAt: '2026-05-18T00:01:00.000Z',
 });
 
-const apiArtifact = () => ({
+const apiArtifact = (options: WorkspaceCoreFetchOptions = {}) => ({
   artifactId: ids.artifact,
   workspaceId: ids.workspace,
   orchestrationRunId: ids.run,
@@ -260,18 +317,18 @@ const apiArtifact = () => ({
   artifactRole: 'output',
   kind: 'text',
   formatVersion: 'text.v1',
-  uriOrPath: '/Users/alice/private/project/out.patch',
+  uriOrPath: options.artifactUriOrPath ?? 'artifact-payload://workspace/run/artifact/out.patch',
   contentType: 'text/plain',
   sizeBytes: 128,
   payloadRef: 'artifact-payload://workspace/run/artifact/out.patch',
-  sensitivity: 'local_path',
+  sensitivity: options.artifactSensitivity ?? 'none',
   producerType: 'agent',
   producerId: ids.agentRun,
   visibility: 'workspace',
   createdAt: '2026-05-18T00:02:00.000Z',
 });
 
-const apiTraceEvent = () => ({
+const apiTraceEvent = (payloadInline: Record<string, unknown> = { title: 'Apply patch' }) => ({
   traceEventId: ids.traceEvent,
   workspaceId: ids.workspace,
   orchestrationRunId: ids.run,
@@ -279,9 +336,7 @@ const apiTraceEvent = () => ({
   runId: ids.agentRun,
   eventType: 'task.started',
   level: 'info',
-  payloadInline: {
-    title: 'Apply patch',
-  },
+  payloadInline,
   createdAt: '2026-05-18T00:03:00.000Z',
   traceId: ids.trace,
 });
