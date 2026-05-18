@@ -225,6 +225,24 @@ h2 {
   gap: 14px;
 }
 
+.source-root-card-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.source-root-card-content {
+  display: grid;
+  gap: 16px;
+}
+
+.source-root-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
 .empty-state-panel {
   align-items: center;
   background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);

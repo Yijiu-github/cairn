@@ -2,6 +2,7 @@
 import { expect, it } from 'vitest';
 
 import {
+  mapWorkspaceSourceRootsToSettingsItems,
   mapWorkspaceArtifactsToArtifactCards,
   mapWorkspaceRunsToRunCards,
   mapWorkspaceTasksToTaskTree,
@@ -29,7 +30,32 @@ const snapshot = {
       updatedAt: '2026-05-18T12:03:00.000Z',
     },
   ],
-  sourceRoots: [],
+  sourceRoots: [
+    {
+      sourceRootId: '01J000000000000000000000S0',
+      displayName: 'Cairn workspace',
+      kind: 'local_directory',
+      status: 'active',
+      includeGlobCount: 2,
+      excludeGlobCount: 3,
+      hasLastIndexedAt: true,
+      hasError: false,
+      createdAt: '2026-05-18T11:55:00.000Z',
+      updatedAt: '2026-05-18T12:01:00.000Z',
+    },
+    {
+      sourceRootId: '01J000000000000000000000S1',
+      displayName: 'Source root',
+      kind: 'remote_repository',
+      status: 'error',
+      includeGlobCount: 1,
+      excludeGlobCount: 0,
+      hasLastIndexedAt: false,
+      hasError: true,
+      createdAt: '2026-05-18T11:56:00.000Z',
+      updatedAt: '2026-05-18T12:02:00.000Z',
+    },
+  ],
   selectedRun: {
     runId: '01J000000000000000000000R0',
     status: 'succeeded',
@@ -99,6 +125,48 @@ it('maps workspace tasks into task tree items', () => {
       status: 'completed',
     }),
   ]);
+});
+
+it('maps workspace source roots into Settings metadata items', () => {
+  expect(mapWorkspaceSourceRootsToSettingsItems(snapshot.sourceRoots)).toEqual([
+    {
+      createdAt: '2026-05-18T11:55:00.000Z',
+      displayName: 'Cairn workspace',
+      excludeGlobCount: 3,
+      hasError: false,
+      hasLastIndexedAt: true,
+      includeGlobCount: 2,
+      indexed: true,
+      kind: 'local_directory',
+      sourceRootId: '01J000000000000000000000S0',
+      status: 'active',
+      updatedAt: '2026-05-18T12:01:00.000Z',
+    },
+    {
+      createdAt: '2026-05-18T11:56:00.000Z',
+      displayName: 'Source root',
+      excludeGlobCount: 0,
+      hasError: true,
+      hasLastIndexedAt: false,
+      includeGlobCount: 1,
+      indexed: false,
+      kind: 'remote_repository',
+      sourceRootId: '01J000000000000000000000S1',
+      status: 'error',
+      updatedAt: '2026-05-18T12:02:00.000Z',
+    },
+  ]);
+});
+
+it('keeps mapped source root Settings items free of raw local paths, URIs, tokens, and errors', () => {
+  const serialized = JSON.stringify(mapWorkspaceSourceRootsToSettingsItems(snapshot.sourceRoots));
+
+  expect(serialized).not.toContain('/Users/');
+  expect(serialized).not.toContain('file://');
+  expect(serialized).not.toContain('sk-live');
+  expect(serialized).not.toContain('/Users/taosiyu/Code/cairn');
+  expect(serialized).not.toContain('file:///Users/taosiyu/Code/cairn');
+  expect(serialized).not.toContain('raw scanner failed at /Users/taosiyu/Code/cairn with sk-live');
 });
 
 it('maps workspace artifacts into redacted artifact cards', () => {

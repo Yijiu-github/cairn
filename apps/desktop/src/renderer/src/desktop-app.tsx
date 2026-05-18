@@ -30,6 +30,7 @@ import { desktopShellModel } from './desktop-model';
 import {
   mapWorkspaceArtifactsToArtifactCards,
   mapWorkspaceRunsToRunCards,
+  mapWorkspaceSourceRootsToSettingsItems,
   mapWorkspaceTasksToTaskTree,
   mapWorkspaceTraceToEvidence,
 } from './workspace-snapshot-view';
@@ -180,7 +181,12 @@ export function DesktopApp() {
         {activeView === 'artifact-review' ? (
           <ArtifactReviewView selectedRun={selectedRun} workspaceLoaded={workspaceLoaded} />
         ) : undefined}
-        {activeView === 'settings' ? <SettingsView runtimeView={runtimeView} /> : undefined}
+        {activeView === 'settings' ? (
+          <SettingsView
+            runtimeView={runtimeView}
+            {...(workspaceSnapshot === undefined ? {} : { workspaceSnapshot })}
+          />
+        ) : undefined}
       </section>
     </main>
   );
@@ -379,47 +385,147 @@ function EmptyWorkspaceDataCard({ title }: { readonly title: string }) {
   );
 }
 
-function SettingsView({ runtimeView }: RuntimePanelProps) {
+function SettingsView({
+  runtimeView,
+  workspaceSnapshot,
+}: RuntimePanelProps & WorkspaceSnapshotPanelProps) {
+  const sourceRootItems =
+    workspaceSnapshot === undefined
+      ? []
+      : mapWorkspaceSourceRootsToSettingsItems(workspaceSnapshot.sourceRoots);
+
   return (
     <div className="content-grid">
       <section className="content-stack">
         <Card>
           <CardHeader>
-            <CardTitle>Source roots placeholder</CardTitle>
+            <CardTitle>
+              {workspaceSnapshot === undefined ? 'Source roots placeholder' : 'Source roots'}
+            </CardTitle>
             <CardDescription>
-              Settings are read-only until source-root contracts and explicit folder approval are
-              ready.
+              Settings are read-only. Folder approval, reindex, path reveal, and export controls are
+              unavailable in this preview-safe desktop shell.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <MetadataList
               items={[
                 { label: 'Workspace', value: desktopShellModel.workspace.label },
-                { label: 'Connection', value: 'static fixture' },
+                {
+                  label: 'Connection',
+                  value: workspaceSnapshot === undefined ? 'static fixture' : 'read-only snapshot',
+                },
+                { label: 'Source roots', value: String(sourceRootItems.length) },
                 { label: 'Bridge', value: window.cairnDesktop?.app.mode ?? 'unavailable' },
               ]}
             />
           </CardContent>
         </Card>
 
-        <Card variant="interactive">
-          <CardHeader>
-            <CardTitle>No source roots connected</CardTitle>
-            <CardDescription>
-              Future desktop builds should request explicit user approval before indexing any local
-              folder.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="empty-state-panel">
-              <span aria-hidden="true">⌁</span>
-              <p>Choose folder, index metadata, and reveal paths are intentionally unavailable.</p>
-            </div>
-          </CardContent>
-        </Card>
+        {workspaceSnapshot === undefined ? (
+          <Card variant="interactive">
+            <CardHeader>
+              <CardTitle>No live source roots loaded</CardTitle>
+              <CardDescription>
+                This placeholder stays preview-safe until Workspace Core provides a read-only
+                snapshot.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="empty-state-panel">
+                <span aria-hidden="true">⌁</span>
+                <p>
+                  Choose folder, reindex, path reveal, and export are intentionally unavailable.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : undefined}
+
+        {workspaceSnapshot !== undefined && sourceRootItems.length === 0 ? (
+          <Card variant="interactive">
+            <CardHeader>
+              <CardTitle>No source roots registered</CardTitle>
+              <CardDescription>
+                Workspace Core returned a live snapshot with no approved source roots.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="empty-state-panel">
+                <span aria-hidden="true">⌁</span>
+                <p>
+                  Folder approval, reindex, path reveal, and filesystem actions remain unavailable.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : undefined}
+
+        {sourceRootItems.map((sourceRoot) => (
+          <Card key={sourceRoot.sourceRootId}>
+            <CardHeader>
+              <div className="source-root-card-heading">
+                <div>
+                  <CardTitle>{sourceRoot.displayName}</CardTitle>
+                  <CardDescription>
+                    {sourceRoot.kind.replaceAll('_', ' ')} source root metadata only.
+                  </CardDescription>
+                </div>
+                <StatusBadge
+                  label={sourceRoot.status}
+                  tone={sourceRoot.hasError ? 'danger' : sourceRoot.indexed ? 'success' : 'info'}
+                  metadata={sourceRoot.indexed ? 'indexed' : 'not indexed'}
+                />
+              </div>
+            </CardHeader>
+            <CardContent className="source-root-card-content">
+              <MetadataList
+                items={[
+                  { label: 'Include globs', value: String(sourceRoot.includeGlobCount) },
+                  { label: 'Exclude globs', value: String(sourceRoot.excludeGlobCount) },
+                  {
+                    label: 'Last indexed',
+                    value: sourceRoot.hasLastIndexedAt ? 'present' : 'none',
+                  },
+                  { label: 'Error flag', value: sourceRoot.hasError ? 'present' : 'none' },
+                  { label: 'Created', value: sourceRoot.createdAt },
+                  { label: 'Updated', value: sourceRoot.updatedAt },
+                ]}
+              />
+              <div className="source-root-actions" aria-label="Unavailable source root actions">
+                <Button disabled variant="secondary">
+                  Approve folder
+                </Button>
+                <Button disabled variant="secondary">
+                  Reindex
+                </Button>
+                <Button disabled variant="secondary">
+                  Reveal path
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </section>
       <aside className="content-stack">
         <RuntimeHealthCard {...runtimeView} />
+        <Card>
+          <CardHeader>
+            <CardTitle>Source root safety</CardTitle>
+            <CardDescription>
+              Renderer settings only show sanitized metadata from workspace.readSnapshot().
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <MetadataList
+              items={[
+                { label: 'Folder picker', value: 'unavailable' },
+                { label: 'Reindex action', value: 'unavailable' },
+                { label: 'Path reveal/export', value: 'unavailable' },
+              ]}
+            />
+          </CardContent>
+        </Card>
         <NextSafeStepCard />
       </aside>
     </div>

@@ -3,6 +3,7 @@
 import type {
   WorkspaceCoreArtifactView,
   WorkspaceCoreRunSummary,
+  WorkspaceCoreSourceRootView,
   WorkspaceCoreTaskView,
   WorkspaceCoreTraceEventView,
 } from '../../shared/workspace-core-data.js';
@@ -12,6 +13,20 @@ import type {
   RunCardProps,
   TaskTreeItem,
 } from '@cairn/ui';
+
+export interface SourceRootSettingsItem {
+  readonly sourceRootId: string;
+  readonly displayName: string;
+  readonly kind: string;
+  readonly status: string;
+  readonly includeGlobCount: number;
+  readonly excludeGlobCount: number;
+  readonly hasLastIndexedAt: boolean;
+  readonly hasError: boolean;
+  readonly indexed: boolean;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
 
 export const mapWorkspaceRunsToRunCards = (
   runs: readonly WorkspaceCoreRunSummary[],
@@ -27,6 +42,23 @@ export const mapWorkspaceRunsToRunCards = (
     runId: run.runId,
     status: mapRunStatus(run.status),
     title: 'Workspace run',
+  }));
+
+export const mapWorkspaceSourceRootsToSettingsItems = (
+  sourceRoots: readonly WorkspaceCoreSourceRootView[],
+): readonly SourceRootSettingsItem[] =>
+  sourceRoots.map((sourceRoot) => ({
+    createdAt: sourceRoot.createdAt,
+    displayName: sourceRoot.displayName,
+    excludeGlobCount: sourceRoot.excludeGlobCount,
+    hasError: sourceRoot.hasError,
+    hasLastIndexedAt: sourceRoot.hasLastIndexedAt,
+    includeGlobCount: sourceRoot.includeGlobCount,
+    indexed: sourceRoot.hasLastIndexedAt && !sourceRoot.hasError,
+    kind: sourceRoot.kind,
+    sourceRootId: sourceRoot.sourceRootId,
+    status: sourceRoot.status,
+    updatedAt: sourceRoot.updatedAt,
   }));
 
 export const mapWorkspaceTasksToTaskTree = (
