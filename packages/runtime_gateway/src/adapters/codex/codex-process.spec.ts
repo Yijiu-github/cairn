@@ -165,6 +165,26 @@ describe('startCodexExec', () => {
     expect(child.killedSignals).toEqual(['SIGTERM', 'SIGKILL']);
   });
 
+  it('does not escalate to SIGKILL when the process closes during cancel grace', async () => {
+    const child = new FakeCodexChildProcess();
+    const controller = startCodexExec(
+      TEST_IDS.runId,
+      {
+        prompt: 'do work',
+        sandboxDir: 'C:/tmp/cairn',
+        finalArtifactRef: createTestArtifactRef(),
+        now,
+      },
+      { spawnProcess: createFakeSpawn(child, []), killGraceMs: 10 },
+    );
+
+    const cancel = controller.cancel('operator_cancelled');
+    child.close(null, 'SIGTERM');
+    await cancel;
+
+    expect(child.killedSignals).toEqual(['SIGTERM']);
+  });
+
   it('maps spawn errors to executable unavailable', async () => {
     const child = new FakeCodexChildProcess();
     const controller = startCodexExec(

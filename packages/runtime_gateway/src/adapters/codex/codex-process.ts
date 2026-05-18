@@ -98,6 +98,12 @@ export const startCodexExec = (
   let settled = false;
   let child: ChildProcessWithoutNullStreams;
   let timeout: NodeJS.Timeout | undefined;
+  let markClosed: () => void = () => {
+    return;
+  };
+  const closeObserved = new Promise<void>((resolve) => {
+    markClosed = resolve;
+  });
 
   const result = new Promise<CodexExecResult>((resolve) => {
     const finish = (exitCode: number | null, signal: NodeJS.Signals | null) => {
@@ -108,6 +114,7 @@ export const startCodexExec = (
       if (timeout !== undefined) {
         clearTimeout(timeout);
       }
+      markClosed();
 
       events.push(...parser.flush());
       const stderr = stderrChunks.join('');
@@ -159,6 +166,7 @@ export const startCodexExec = (
       if (timeout !== undefined) {
         clearTimeout(timeout);
       }
+      markClosed();
       const stderr = stderrChunks.join('');
       resolve({
         events: [
@@ -191,8 +199,13 @@ export const startCodexExec = (
       }
 
       child.kill('SIGTERM');
-      await delay(killGraceMs);
-      child.kill('SIGKILL');
+      const closedBeforeGrace = await Promise.race([
+        delay(killGraceMs).then(() => false),
+        closeObserved.then(() => true),
+      ]);
+      if (!closedBeforeGrace) {
+        child.kill('SIGKILL');
+      }
     },
     result,
   };
