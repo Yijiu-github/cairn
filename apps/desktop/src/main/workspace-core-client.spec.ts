@@ -131,6 +131,72 @@ it('reads SourceRoot summaries without exposing local source metadata', async ()
   expect(serialized).not.toContain('45321');
 });
 
+it('sanitizes unsafe SourceRoot display names before exposing renderer snapshots', async () => {
+  const fetch = createWorkspaceCoreFetch({
+    sourceRootDisplayName: '/Users/alice/private/project sk-live-secret',
+  });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+  const serialized = JSON.stringify(snapshot);
+
+  expect(snapshot.sourceRoots).toEqual([
+    {
+      sourceRootId: ids.sourceRoot,
+      displayName: 'Source root',
+      kind: 'local_directory',
+      status: 'active',
+      includeGlobCount: 2,
+      excludeGlobCount: 3,
+      hasLastIndexedAt: true,
+      hasError: false,
+      createdAt: '2026-05-18T00:00:00.000Z',
+      updatedAt: '2026-05-18T00:04:00.000Z',
+    },
+  ]);
+  expect(serialized).not.toContain('/Users/alice/private/project sk-live-secret');
+  expect(serialized).not.toContain('/Users/alice/private/project');
+  expect(serialized).not.toContain('sk-live-secret');
+});
+
+it('keeps run snapshots when SourceRoot endpoint returns non-ok', async () => {
+  const fetch = createWorkspaceCoreFetch({ failSourceRoots: true });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+
+  expect(snapshot.runs).toHaveLength(1);
+  expect(snapshot.selectedRun).toMatchObject({
+    runId: ids.run,
+    tasks: [
+      {
+        taskId: ids.task,
+      },
+    ],
+  });
+  expect(snapshot.sourceRoots).toEqual([]);
+});
+
+it('keeps run snapshots when SourceRoot schema is invalid', async () => {
+  const fetch = createWorkspaceCoreFetch({ invalidSourceRootSchema: true });
+  const client = new WorkspaceCoreReadClient({
+    fetch: fetch.fetch,
+    getConnection: () => createConnectedConnection(),
+  });
+
+  const snapshot = await client.readSnapshot();
+
+  expect(snapshot.runs).toHaveLength(1);
+  expect(snapshot.selectedRun?.runId).toBe(ids.run);
+  expect(snapshot.sourceRoots).toEqual([]);
+});
+
 it('returns SourceRoot summaries when the workspace has no runs', async () => {
   const fetch = createWorkspaceCoreFetch({ runCount: 0 });
   const client = new WorkspaceCoreReadClient({
@@ -307,7 +373,10 @@ interface WorkspaceCoreFetchOptions {
   readonly artifactSensitivity?: string;
   readonly artifactUriOrPath?: string;
   readonly failPayloadPreview?: boolean;
+  readonly failSourceRoots?: boolean;
+  readonly invalidSourceRootSchema?: boolean;
   readonly runCount?: number;
+  readonly sourceRootDisplayName?: string;
   readonly sourceRootError?: string;
   readonly taskFailureReason?: string;
   readonly taskStatus?: string;
@@ -333,10 +402,19 @@ const createWorkspaceCoreFetch = (
       url,
     });
 
+    const sourceRootsPath = `/v1/workspaces/${ids.workspace}/source-roots`;
+    const ok =
+      !(options.failPayloadPreview === true && parsed.pathname.endsWith('/payload')) &&
+      !(options.failSourceRoots === true && parsed.pathname === sourceRootsPath);
+
     return Promise.resolve({
-      ok: !(options.failPayloadPreview === true && parsed.pathname.endsWith('/payload')),
+      ok,
       status:
-        options.failPayloadPreview === true && parsed.pathname.endsWith('/payload') ? 404 : 200,
+        options.failPayloadPreview === true && parsed.pathname.endsWith('/payload')
+          ? 404
+          : options.failSourceRoots === true && parsed.pathname === sourceRootsPath
+            ? 503
+            : 200,
       json: () => Promise.resolve(responseByPath(parsed.pathname, options)),
     });
   };
@@ -352,6 +430,18 @@ const responseByPath = (path: string, options: WorkspaceCoreFetchOptions): unkno
         total: options.runCount === 0 ? 0 : 1,
       };
     case `/v1/workspaces/${ids.workspace}/source-roots`:
+      if (options.invalidSourceRootSchema === true) {
+        return {
+          items: [
+            {
+              sourceRootId: ids.sourceRoot,
+              displayName: 'Cairn Workspace',
+            },
+          ],
+          total: 1,
+        };
+      }
+
       return {
         items: [apiSourceRoot(options)],
         total: 1,
@@ -456,7 +546,7 @@ const apiSourceRoot = (options: WorkspaceCoreFetchOptions = {}) => ({
   sourceRootId: ids.sourceRoot,
   workspaceId: ids.workspace,
   kind: 'local_directory',
-  displayName: 'Cairn Workspace',
+  displayName: options.sourceRootDisplayName ?? 'Cairn Workspace',
   uri: 'file:///Users/alice/private/project',
   status: options.sourceRootError === undefined ? 'active' : 'error',
   includeGlobs: ['src/**', 'README.md'],

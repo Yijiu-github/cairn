@@ -73,12 +73,18 @@ export class WorkspaceCoreReadClient {
     }
 
     const workspacePath = `/v1/workspaces/${encodeURIComponent(this.workspaceId)}`;
-    const [runsResponse, sourceRootsResponse] = await Promise.all([
-      this.get(connection, `${workspacePath}/runs`, apiWorkspaceCoreRunListSchema),
-      this.get(connection, `${workspacePath}/source-roots`, apiWorkspaceCoreSourceRootListSchema),
-    ]);
+    const runsResponse = await this.get(
+      connection,
+      `${workspacePath}/runs`,
+      apiWorkspaceCoreRunListSchema,
+    );
+    const sourceRootsResponse = await this.tryGet(
+      connection,
+      `${workspacePath}/source-roots`,
+      apiWorkspaceCoreSourceRootListSchema,
+    );
     const runs = runsResponse.items.map((run) => mapApiRunToSummary(run));
-    const sourceRoots = sourceRootsResponse.items.map((sourceRoot) =>
+    const sourceRoots = (sourceRootsResponse?.items ?? []).map((sourceRoot) =>
       mapApiSourceRootToView(sourceRoot),
     );
     const firstRun = runs[0];
@@ -196,7 +202,12 @@ export class WorkspaceCoreReadClient {
       return undefined;
     }
 
-    return schema.parse(await response.json());
+    const parsed = schema.safeParse(await response.json());
+    if (!parsed.success) {
+      return undefined;
+    }
+
+    return parsed.data;
   }
 }
 

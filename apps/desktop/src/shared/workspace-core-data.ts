@@ -223,7 +223,7 @@ export const mapApiSourceRootToView = (
 ): WorkspaceCoreSourceRootView =>
   workspaceCoreSourceRootViewSchema.parse({
     sourceRootId: sourceRoot.sourceRootId,
-    displayName: sourceRoot.displayName,
+    displayName: sanitizeSourceRootDisplayName(sourceRoot.displayName),
     kind: sourceRoot.kind,
     status: sourceRoot.status,
     includeGlobCount: sourceRoot.includeGlobs.length,
@@ -303,3 +303,26 @@ const summarizePayloadKeys = (payload: Record<string, unknown>): string => {
 
   return `payload keys: ${String(keyCount)} redacted`;
 };
+
+const sanitizeSourceRootDisplayName = (displayName: string): string => {
+  const trimmed = displayName.trim();
+  if (trimmed.length === 0 || containsSensitiveSourceRootLabelData(trimmed)) {
+    return 'Source root';
+  }
+
+  return trimmed;
+};
+
+const containsSensitiveSourceRootLabelData = (label: string): boolean =>
+  uriPattern.test(label) ||
+  localPathPattern.test(label) ||
+  secretPattern.test(label) ||
+  hostPattern.test(label);
+
+const uriPattern = /\b(?:file|https?|ssh):\/\//iu;
+const localPathPattern =
+  /(?:^|[\s"'=(])(?:~\/|\/(?:Users|home|private|var|tmp)\/|[A-Za-z]:\\|\\\\)/u;
+const secretPattern =
+  /\b(?:sk-[A-Za-z0-9_-]+|gh[pousr]_[A-Za-z0-9_]+|xox[baprs]-[A-Za-z0-9-]+|bearer|token|secret|api[_-]?key)\b/iu;
+const hostPattern =
+  /\b(?:localhost|\d{1,3}(?:\.\d{1,3}){3}|[a-z0-9-]+(?:\.[a-z0-9-]+)+)(?::\d{2,5})?\b/iu;
