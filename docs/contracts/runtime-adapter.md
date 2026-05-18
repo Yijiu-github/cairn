@@ -313,11 +313,13 @@ Workspace Core 的 R1 demo-loop 通过 `POST /v1/tasks/:taskId/agent-runs` 提�
 - [ ] 起草 `packages/runtime_gateway/contracts/` 内的 Zod schema 草案
 - [x] 起草 mock adapter（仅用于测试）
 - [x] 起草 Codex CLI `exec --json` 进程封装与 JSONL parser
+- [x] 起草 Codex CLI RuntimeAdapter 生命周期封装
 - [ ] 起草 adapter 的"开发者手册"，供第三方 / 未来接入者参考
 
 ## 变更历史
 
 | 日期       | 变更                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-05-18 | 补充 Codex CLI RuntimeAdapter 生命周期封装状态                        |
 | 2026-05-18 | 补充 Runtime Adapter 作为通用连接能力的定位，明确第三方 endpoint 边界 |
 | 2026-05-14 | 初版 TypeScript 接口草案                                              |
