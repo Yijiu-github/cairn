@@ -15,7 +15,6 @@ import type {
 } from '@cairn/ui';
 
 export interface SourceRootSettingsItem {
-  readonly sourceRootId: string;
   readonly displayName: string;
   readonly kind: string;
   readonly status: string;
@@ -56,7 +55,6 @@ export const mapWorkspaceSourceRootsToSettingsItems = (
     includeGlobCount: sourceRoot.includeGlobCount,
     indexed: sourceRoot.hasLastIndexedAt && !sourceRoot.hasError,
     kind: sourceRoot.kind,
-    sourceRootId: sourceRoot.sourceRootId,
     status: sourceRoot.status,
     updatedAt: sourceRoot.updatedAt,
   }));

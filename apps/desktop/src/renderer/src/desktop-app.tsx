@@ -461,8 +461,10 @@ function SettingsView({
           </Card>
         ) : undefined}
 
-        {sourceRootItems.map((sourceRoot) => (
-          <Card key={sourceRoot.sourceRootId}>
+        {sourceRootItems.map((sourceRoot, index) => (
+          <Card
+            key={`${sourceRoot.displayName}-${sourceRoot.kind}-${sourceRoot.status}-${sourceRoot.updatedAt}-${String(index)}`}
+          >
             <CardHeader>
               <div className="source-root-card-heading">
                 <div>
