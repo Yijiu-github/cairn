@@ -12,6 +12,7 @@
     "preview": "electron-vite preview --skipBuild",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src electron.vite.config.ts",
+    "test": "vitest run",
     "build": "electron-vite build",
     "package": "electron-builder --dir -c.electronVersion=$(node -p \"require('electron/package.json').version\")",
     "package:mac:dir": "electron-builder --mac --dir -c.mac.identity=- -c.electronVersion=$(node -p \"require('electron/package.json').version\")",
@@ -34,6 +35,7 @@
     "electron-vite": "catalog:",
     "rimraf": "^6.0.1",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

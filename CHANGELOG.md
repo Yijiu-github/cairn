@@ -43,6 +43,8 @@
 - **`@cairn/desktop`**：新增 Electron 最小 shell 骨架与静态 UI 壳视图，包含 Home / Run Detail / Artifact Review / Settings 四个静态视图、只读 preload identity bridge 与 preview-safe 默认隔离设置
 - **`@cairn/desktop`**：补齐 macOS 本机开发闭环，新增 `dev:debug` / `preview` 脚本、preview-safe smoke 清单、调试端口说明与未签名开发态打包路径
 - **`@cairn/desktop`**：补齐 macOS packaging / signing / installer baseline，新增 `package:mac:dir` 与 `package:mac:dmg` 的显式命令约定，并统一 Apple notarization secret 命名为 `APPLE_APP_SPECIFIC_PASSWORD`
+- **`@cairn/desktop`**：新增开发态 Workspace Core sidecar bridge，main 进程启动 loopback sidecar 并注入 per-launch bearer token，preload 仅暴露 connection status / restart allowlist，renderer 显示真实连接状态但仍不接真实 run/task/artifact action。
+- **`@cairn/workspace-core`**：新增可选 `CAIRN_WORKSPACE_CORE_AUTH_TOKEN`，配置后所有 HTTP 请求必须携带 bearer token。
 - 设计文档新增轻量代码上下文索引方案，明确 Cairn 自研 SourceRoot / CodeContextIndex / ContextPack 能力，不引入 GitNexus 依赖或许可证受限代码
 - **Code Context R1a**：新增 SourceRoot registry、最小 CodeIndexSnapshot 元数据、ContextPack manifest 契约、domain schema、application service 与 workspace-core API/SQLite 持久化基线
 - **Code Context R1b-a**：新增手动 reindex 与本地文件清单快照，持久化 `code_index_files` 派生元数据并通过 workspace-core 查询最新索引

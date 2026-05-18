@@ -48,6 +48,7 @@ sidecar/native/
 *.cer
 
 # --- Local databases / artifacts ---
+.cairn/
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal

@@ -12,6 +12,7 @@ const config = readWorkspaceCoreConfig({
   CAIRN_WORKSPACE_CORE_DB_PATH: env['CAIRN_WORKSPACE_CORE_DB_PATH'],
   CAIRN_WORKSPACE_CORE_BOOTSTRAP_WORKSPACE_ID: env['CAIRN_WORKSPACE_CORE_BOOTSTRAP_WORKSPACE_ID'],
   CAIRN_WORKSPACE_CORE_BOOTSTRAP_EVENT_ID: env['CAIRN_WORKSPACE_CORE_BOOTSTRAP_EVENT_ID'],
+  CAIRN_WORKSPACE_CORE_AUTH_TOKEN: env['CAIRN_WORKSPACE_CORE_AUTH_TOKEN'],
 });
 
 const container = createDefaultWorkspaceCoreContainer({
@@ -22,6 +23,7 @@ const container = createDefaultWorkspaceCoreContainer({
 
 const app = await createWorkspaceCoreApp({
   container,
+  ...(config.authToken === undefined ? {} : { authToken: config.authToken }),
 });
 
 try {

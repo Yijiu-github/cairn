@@ -8,6 +8,7 @@ const WorkspaceCoreConfig = z.object({
   databasePath: z.string().min(1).default('.cairn/workspace-core.sqlite'),
   bootstrapWorkspaceId: z.string().min(1).default('01J000000000000000000000W0'),
   bootstrapEventId: z.string().min(1).default('01J000000000000000000000E0'),
+  authToken: z.string().min(1).optional(),
 });
 
 export interface WorkspaceCoreConfig {
@@ -16,15 +17,27 @@ export interface WorkspaceCoreConfig {
   databasePath: string;
   bootstrapWorkspaceId: string;
   bootstrapEventId: string;
+  authToken?: string;
 }
 
 export const readWorkspaceCoreConfig = (
   env: Record<string, string | undefined>,
-): WorkspaceCoreConfig =>
-  WorkspaceCoreConfig.parse({
+): WorkspaceCoreConfig => {
+  const parsed = WorkspaceCoreConfig.parse({
     host: env['CAIRN_WORKSPACE_CORE_HOST'],
     port: env['CAIRN_WORKSPACE_CORE_PORT'],
     databasePath: env['CAIRN_WORKSPACE_CORE_DB_PATH'],
     bootstrapWorkspaceId: env['CAIRN_WORKSPACE_CORE_BOOTSTRAP_WORKSPACE_ID'],
     bootstrapEventId: env['CAIRN_WORKSPACE_CORE_BOOTSTRAP_EVENT_ID'],
+    authToken: env['CAIRN_WORKSPACE_CORE_AUTH_TOKEN'],
   });
+
+  return {
+    host: parsed.host,
+    port: parsed.port,
+    databasePath: parsed.databasePath,
+    bootstrapWorkspaceId: parsed.bootstrapWorkspaceId,
+    bootstrapEventId: parsed.bootstrapEventId,
+    ...(parsed.authToken === undefined ? {} : { authToken: parsed.authToken }),
+  };
+};

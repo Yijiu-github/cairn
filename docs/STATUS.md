@@ -74,8 +74,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 ### Desktop Shell
 
 - `apps/desktop` 已提供 Electron 最小静态 shell 骨架。
-- 当前只包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及只读 preload identity bridge。
-- 当前不启动 Workspace Core sidecar，不接真实 IPC action，不读取或写入本地文件系统，不暴露真实本地路径。
+- 当前包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、开发态 Workspace Core sidecar 生命周期探活，以及只读 preload connection status / restart allowlist。
+- 当前不接真实 run/task/artifact IPC action，不读取或写入本地文件系统，不暴露真实本地路径。
 - 当前 renderer 默认安全基线为 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`。
 - macOS 本机开发闭环已补齐：可通过 `dev` / `dev:debug` / `build` / `package:mac:dir` 验证静态 shell、调试 main / renderer，并生成未签名开发态包。
 - macOS packaging baseline 已补上文档和显式命令：本地验证用 `package:mac:dir`，发布形态用 `package:mac:dmg`；release automation 仍未实现。
@@ -102,17 +102,17 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 ### 当前测试覆盖分布
 
-| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                 |
-| --------------------------- | ---------------- | -------------------------------------------------------- |
-| `packages/shared_contracts` | 12               | schema、contracts、WS events、ID / enum 基础             |
-| `packages/domain`           | 1                | 生成迁移与核心表结构                                     |
-| `packages/storage`          | 2                | SQLite connection 与迁移目录                             |
-| `packages/runtime_gateway`  | 3                | mock adapter、Codex protocol、Codex process wrapper      |
-| `packages/application`      | 3                | orchestration、planning output 与 code context service   |
-| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                  |
-| `apps/ui-preview`           | 0                | 当前以 typecheck / lint / production build 作为验证门禁  |
-| `apps/desktop`              | 0                | 当前以 typecheck / lint / production build 作为验证门禁  |
-| `apps/workspace-core`       | 3                | Fastify app、SQLite repository、local code index scanner |
+| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                                   |
+| --------------------------- | ---------------- | -------------------------------------------------------------------------- |
+| `packages/shared_contracts` | 12               | schema、contracts、WS events、ID / enum 基础                               |
+| `packages/domain`           | 1                | 生成迁移与核心表结构                                                       |
+| `packages/storage`          | 2                | SQLite connection 与迁移目录                                               |
+| `packages/runtime_gateway`  | 3                | mock adapter、Codex protocol、Codex process wrapper                        |
+| `packages/application`      | 3                | orchestration、planning output 与 code context service                     |
+| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                    |
+| `apps/ui-preview`           | 0                | 当前以 typecheck / lint / production build 作为验证门禁                    |
+| `apps/desktop`              | 3                | Sidecar manager、preload allowlist 与 renderer status 映射                 |
+| `apps/workspace-core`       | 4                | Fastify app、SQLite repository、local code index scanner 与 artifact store |
 
 ### 本地环境注意事项
 
@@ -150,6 +150,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
 - `apps/desktop`：Electron 最小静态 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、只读 preload identity bridge，以及 preview-safe 默认隔离设置。
+- `apps/desktop` Desktop sidecar bridge：开发态 main 进程可启动 loopback Workspace Core sidecar，使用 per-launch bearer token 探活，并通过 preload allowlist 暴露只读 connection status / restart。
 - `apps/desktop` macOS 本机开发闭环：补齐调试脚本、preview-safe smoke 清单、开发态构建和未签名本机打包说明。
 
 ---
@@ -160,8 +161,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `apps/web` React Web Shell。
 - UI preview 不是 Web Shell，不能假设已有远程 workspace 控制台。
-- Desktop sidecar 生命周期管理、loopback token、完整 preload / contextBridge allowlist。
-- Desktop 真实 Workspace Core 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前仍保持静态 UI 壳，不接 sidecar）。
+- 打包态 Desktop bundled Workspace Core sidecar。
+- Desktop 真实 Workspace Core 数据接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前仍保持静态 UI 壳，只接 connection status）。
 - Artifact store 的真实文件内容写入、保留策略与导出。
 - 真实 Goal Planner 与 Planner 到多 Task DAG 的生成逻辑。
 - Runtime Gateway 接入真实 Codex CLI 任务的端到端 workspace-core 流程。
@@ -182,7 +183,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 1. **战略文档刷新**：更新 README、positioning、roadmap，并新增 competitive positioning 文档。
 2. **Planning Output API slice**：为 Workspace Core 增加 PlanningOutput 读取接口，只读返回现有 application/storage 数据，不实现真实 Planner。
 3. **R1 demo-loop 收口**：补齐 runtime submit、bounded artifact payload read、trace replay 说明与 smoke note。
-4. **Desktop Shell 静态壳收口**：继续补视觉与信息架构收口、空状态、响应式与可访问性，不接真实 sidecar。
+4. **Desktop Shell 静态壳收口**：继续补视觉与信息架构收口、空状态、响应式与可访问性，并保留开发态 sidecar bridge 的只读边界。
 5. **验证门禁**：保持 `pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build` 通过。
 
 ### Week of 2026-05-25
@@ -207,7 +208,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 ## 7. 协作提醒
 
 - 开始任何任务前先读 `AGENTS.md`、产品边界、术语表、主设计文档和任务相关文档。
-- 不要引用尚未创建的 `apps/web/src`；`apps/desktop/src` 当前仅有静态 shell 骨架，不能假设已接入 Workspace Core 或 sidecar。
+- 不要引用尚未创建的 `apps/web/src`；`apps/desktop/src` 当前仍以静态 shell 为主，但开发态已可读取 Workspace Core connection status，不要假设已接入真实 run/task/artifact 数据。
 - UI 主线可能有其他 agent 并行开发，改 UI 文档或 `packages/ui` 前先看 `git status` 与相关 diff。
 - 重大更新、接口、状态机、安全边界、数据模型、迁移策略必须同步相关 docs 与 `CHANGELOG.md`。
 - 外部项目只作为参考雷达，详见 [`reference/external-project-radar.md`](reference/external-project-radar.md)。

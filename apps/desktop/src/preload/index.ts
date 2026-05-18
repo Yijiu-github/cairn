@@ -1,18 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-import { contextBridge } from 'electron';
+import { contextBridge, ipcRenderer } from 'electron';
 
-export interface CairnDesktopBridge {
-  readonly app: {
-    readonly mode: 'static-preview';
-    readonly name: 'Cairn Desktop';
-  };
-}
+import { workspaceCoreConnectionViewSchema } from '../shared/workspace-core-connection.js';
 
-const bridge: CairnDesktopBridge = {
-  app: {
-    mode: 'static-preview',
-    name: 'Cairn Desktop',
-  },
-};
+import { createCairnDesktopBridge } from './bridge.js';
+
+const bridge = createCairnDesktopBridge(async (channel) =>
+  workspaceCoreConnectionViewSchema.parse(await ipcRenderer.invoke(channel)),
+);
 
 contextBridge.exposeInMainWorld('cairnDesktop', bridge);

@@ -32,6 +32,7 @@ import type { ZodError } from 'zod';
 
 export interface CreateWorkspaceCoreAppOptions {
   container: WorkspaceCoreContainer;
+  authToken?: string;
   logger?: boolean;
 }
 
@@ -222,6 +223,23 @@ export const createWorkspaceCoreApp = async (
   });
 
   await app.register(sensible);
+
+  const authToken = options.authToken;
+  if (authToken !== undefined) {
+    app.addHook('onRequest', async (request, reply) => {
+      const authorization = request.headers.authorization;
+      if (authorization === `Bearer ${authToken}`) {
+        return;
+      }
+
+      return reply.code(401).send({
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'Missing or invalid workspace-core bearer token.',
+        },
+      });
+    });
+  }
 
   app.get('/health', () => ({
     ok: true,

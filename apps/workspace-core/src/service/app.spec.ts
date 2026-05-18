@@ -90,6 +90,58 @@ describe('workspace-core app', () => {
     }
   });
 
+  it('requires bearer auth when a sidecar token is configured', async () => {
+    const app = await createWorkspaceCoreApp({
+      authToken: 'launch-token',
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const missingToken = await app.inject({ method: 'GET', url: '/health' });
+      expect(missingToken.statusCode).toBe(401);
+      expect(missingToken.json()).toMatchObject({
+        error: {
+          code: 'UNAUTHORIZED',
+        },
+      });
+
+      const invalidToken = await app.inject({
+        headers: { authorization: 'Bearer wrong-token' },
+        method: 'GET',
+        url: '/health',
+      });
+      expect(invalidToken.statusCode).toBe(401);
+
+      const authorized = await app.inject({
+        headers: { authorization: 'Bearer launch-token' },
+        method: 'GET',
+        url: '/health',
+      });
+      expect(authorized.statusCode).toBe(200);
+      expect(authorized.json()).toEqual({
+        ok: true,
+        service: 'workspace-core',
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('accepts missing bearer auth when no sidecar token is configured', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const response = await app.inject({ method: 'GET', url: '/health' });
+      expect(response.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  });
+
   it('creates and reads a single-worker run', async () => {
     const app = await createWorkspaceCoreApp({
       container: createDefaultWorkspaceCoreContainer(),

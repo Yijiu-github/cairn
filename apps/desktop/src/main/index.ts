@@ -1,14 +1,48 @@
 // SPDX-License-Identifier: Apache-2.0
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { cwd, env, platform } from 'node:process';
 
 import { is } from '@electron-toolkit/utils';
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 
-// Electron main process is the platform boundary. The repository-wide config
-// package does not exist yet, so the desktop entry point keeps these two direct
-// process reads local to window bootstrap only.
-// eslint-disable-next-line no-restricted-globals, no-restricted-syntax
-const rendererDevServerUrl = process.env['ELECTRON_RENDERER_URL'];
+import { sanitizeWorkspaceCoreConnection } from '../shared/workspace-core-connection.js';
+
+import { WorkspaceCoreSidecarManager } from './workspace-core-sidecar.js';
+
+const rendererDevServerUrl = env['ELECTRON_RENDERER_URL'];
+
+const sidecarFetch = async (
+  input: string | URL,
+  init?: {
+    readonly headers?: Record<string, string>;
+    readonly signal?: AbortSignal;
+  },
+) => {
+  const response = await fetch(input, init);
+  return {
+    ok: response.ok,
+    status: response.status,
+  };
+};
+
+const sidecarManager = new WorkspaceCoreSidecarManager({
+  databasePath:
+    env['CAIRN_WORKSPACE_CORE_DB_PATH'] ?? join(tmpdir(), 'cairn-workspace-core.sqlite'),
+  fetch: sidecarFetch,
+  mode: is.dev ? 'development' : 'packaged',
+  workspaceRootDir: cwd(),
+});
+
+ipcMain.handle('cairn:sidecar:get-connection-status', () => {
+  const snapshot = sidecarManager.getStatus();
+  return sanitizeWorkspaceCoreConnection(snapshot);
+});
+
+ipcMain.handle('cairn:sidecar:restart', async () => {
+  const snapshot = await sidecarManager.restart();
+  return sanitizeWorkspaceCoreConnection(snapshot);
+});
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -49,6 +83,8 @@ await app.whenReady();
 
 app.setAppUserModelId('io.cairn.app');
 
+void sidecarManager.start();
+
 createMainWindow();
 
 app.on('activate', () => {
@@ -58,8 +94,12 @@ app.on('activate', () => {
 });
 
 app.on('window-all-closed', () => {
-  // eslint-disable-next-line no-restricted-globals
-  if (process.platform !== 'darwin') {
+  if (platform !== 'darwin') {
+    void sidecarManager.stop();
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  void sidecarManager.stop();
 });

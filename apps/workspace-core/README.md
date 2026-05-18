@@ -21,5 +21,7 @@ Environment variables:
 - `CAIRN_WORKSPACE_CORE_HOST` (default `127.0.0.1`)
 - `CAIRN_WORKSPACE_CORE_PORT` (default `4321`)
 - `CAIRN_WORKSPACE_CORE_DB_PATH` (default `.cairn/workspace-core.sqlite`)
+- `CAIRN_WORKSPACE_CORE_AUTH_TOKEN` (optional; when set, every request must send
+  `Authorization: Bearer <token>`)
 - `CAIRN_WORKSPACE_CORE_BOOTSTRAP_WORKSPACE_ID`
 - `CAIRN_WORKSPACE_CORE_BOOTSTRAP_EVENT_ID`

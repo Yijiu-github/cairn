@@ -37,19 +37,21 @@ cp .env.example .env
 # 当前已启动的是 workspace-core 最小服务
 pnpm --filter @cairn/workspace-core dev
 
-# 当前 desktop 是 Electron 最小 shell 骨架，暂不接 workspace-core sidecar
+# 当前 desktop 是 Electron shell 骨架，可在开发态启动 workspace-core sidecar 并显示只读状态
 pnpm --filter @cairn/desktop dev
 
 # Web 应用创建后再补齐：
 # pnpm --filter @cairn/web dev
 ```
 
-> ⚠️ 目前 `apps/desktop` 是最小 shell 骨架：renderer 使用静态 fixtures，preload 只暴露只读 identity bridge，尚未启动或连接本地 workspace-core sidecar。`apps/web` 尚未创建。
+> ⚠️ 目前 `apps/desktop` 仍是 shell 骨架：renderer 的 run / artifact / settings 内容仍使用静态
+> fixtures，preload 只暴露 Workspace Core connection status / restart allowlist，不暴露真实
+> run/task/artifact action、文件系统能力或本地路径。`apps/web` 尚未创建。
 
 ### macOS Desktop 本机开发闭环
 
-这条路径只验证当前 Electron 静态 shell，不代表 Desktop 已经接入 Workspace Core
-sidecar。
+这条路径验证当前 Electron shell、开发态 Workspace Core sidecar 探活与只读 preload 状态桥。
+它仍不代表 Desktop 已经接入真实 run/task/artifact 数据。
 
 1. 检查本机依赖：
 
@@ -76,10 +78,7 @@ sidecar。
 3. 分开启动当前可用的开发入口：
 
    ```bash
-   # 终端 1：Workspace Core 最小服务，默认 mock runtime
-   pnpm --filter @cairn/workspace-core dev
-
-   # 终端 2：Electron Desktop 静态 shell
+   # Electron Desktop shell；开发态会由 main 进程启动本地 workspace-core sidecar
    pnpm --filter @cairn/desktop dev
 
    # 可选：浏览器里的 UI preview
@@ -87,14 +86,14 @@ sidecar。
    ```
 
    `pnpm dev` 当前会让 Turborepo 运行所有已存在 workspace 的 `dev` task；它不会创建
-   Web app，也不会让 Desktop 自动启动或连接 Workspace Core sidecar。调试 Desktop
-   时优先使用上面的分开启动方式。
+   Web app。调试 Desktop 时优先使用上面的分开启动方式。
 
 4. Desktop Shell smoke 清单：
    - Electron 窗口标题为 Cairn。
    - 左侧可在 Home / Inbox、Run Detail、Artifact Review、Settings 间切换。
    - Sidebar 显示 preview-safe shell。
-   - 顶部 Workspace Core 状态仍为 not connected。
+   - 顶部 Workspace Core 状态来自 preload allowlist，开发态可显示 connected / starting /
+     failed；打包态当前显示 degraded。
    - Operator controls 保持 disabled。
    - Artifact Review 中本地路径语言保持 redacted / hidden。
 
@@ -229,7 +228,12 @@ Main 进程通过 `127.0.0.1:9229` 附加调试；Renderer DevTools 可在 Elect
 
 ### Sidecar 与 Main 通信
 
-尚未实现。当前 Desktop 不启动 Workspace Core sidecar，也没有 loopback inspector。
+当前 Desktop main 在开发态通过 `pnpm --filter @cairn/workspace-core start` 启动本地
+Workspace Core sidecar，绑定 `127.0.0.1:<ephemeral-port>`，并为本次启动生成
+`CAIRN_WORKSPACE_CORE_AUTH_TOKEN`。preload 只暴露 connection status / restart allowlist；
+renderer 不接收 token、端口、文件路径或进程句柄。
+
+打包态尚未内置 Workspace Core sidecar binary，因此会返回 degraded 状态。
 
 ## 10. 常见问题
 

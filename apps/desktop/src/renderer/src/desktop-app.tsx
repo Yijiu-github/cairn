@@ -21,17 +21,58 @@ import {
   TaskTree,
 } from '@cairn/ui';
 
+import {
+  mapWorkspaceCoreConnectionToRuntimeView,
+  mapWorkspaceCoreConnectionToStatusBadge,
+} from '../../shared/workspace-core-connection.js';
+
 import { desktopShellModel } from './desktop-model';
 
 import type { DesktopView } from './desktop-model';
+import type {
+  WorkspaceCoreConnectionView,
+  WorkspaceCoreRuntimeViewModel,
+} from '../../shared/workspace-core-connection';
 
 export function DesktopApp() {
   const [activeView, setActiveView] = useState<DesktopView>(() => readStoredView());
   const bridgeLabel = useMemo(() => window.cairnDesktop?.app.name ?? 'Cairn Desktop', []);
+  const [connectionView, setConnectionView] = useState<WorkspaceCoreConnectionView>(() => ({
+    detail: 'Workspace Core status is unavailable in static preview mode.',
+    mode: 'packaged',
+    state: 'not_started',
+    updatedAt: new Date().toISOString(),
+  }));
 
   useEffect(() => {
     window.localStorage.setItem('cairn.desktop.activeView', activeView);
   }, [activeView]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timer: number | undefined;
+
+    const refreshStatus = (): void => {
+      void window.cairnDesktop?.sidecar.getConnectionStatus().then((snapshot) => {
+        if (!cancelled) {
+          setConnectionView(snapshot);
+          timer = window.setTimeout(refreshStatus, 1000);
+        }
+      });
+    };
+
+    refreshStatus();
+
+    return () => {
+      cancelled = true;
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
+    };
+  }, []);
+
+  const runtimeView = mapWorkspaceCoreConnectionToRuntimeView(connectionView);
+  const statusBadge = mapWorkspaceCoreConnectionToStatusBadge(connectionView);
 
   return (
     <main className="desktop-shell">
@@ -62,8 +103,9 @@ export function DesktopApp() {
         </nav>
 
         <InlineAlert tone="warning" title="Preview-safe shell">
-          This desktop build uses static fixtures only. It does not start Workspace Core or expose
-          local paths.
+          This desktop build uses static fixtures for run and artifact views, but the development
+          shell can show Workspace Core connection status through a read-only allowlist. It still
+          does not expose live actions or local paths.
         </InlineAlert>
 
         <div className="sidebar-footer" aria-label="Shell metadata">
@@ -82,7 +124,11 @@ export function DesktopApp() {
           <div className="top-bar-actions">
             <div className="shell-status-row" aria-label="Shell status">
               <StatusBadge label="Preview-safe" tone="success" metadata="static" />
-              <StatusBadge label="Workspace Core" tone="neutral" metadata="not connected" />
+              <StatusBadge
+                label={statusBadge.label}
+                tone={statusBadge.tone}
+                metadata={statusBadge.metadata}
+              />
             </div>
             <Button disabled variant="secondary">
               Connect Workspace Core
@@ -92,10 +138,10 @@ export function DesktopApp() {
 
         <AgentStatusStrip agents={desktopShellModel.statusStrip} />
 
-        {activeView === 'home' ? <HomeView /> : undefined}
+        {activeView === 'home' ? <HomeView runtimeView={runtimeView} /> : undefined}
         {activeView === 'run-detail' ? <RunDetailView /> : undefined}
         {activeView === 'artifact-review' ? <ArtifactReviewView /> : undefined}
-        {activeView === 'settings' ? <SettingsView /> : undefined}
+        {activeView === 'settings' ? <SettingsView runtimeView={runtimeView} /> : undefined}
       </section>
     </main>
   );
@@ -127,7 +173,11 @@ function readStoredView(): DesktopView {
   return 'home';
 }
 
-function HomeView() {
+interface RuntimePanelProps {
+  readonly runtimeView: WorkspaceCoreRuntimeViewModel;
+}
+
+function HomeView({ runtimeView }: RuntimePanelProps) {
   return (
     <div className="content-grid">
       <section className="content-stack">
@@ -145,7 +195,7 @@ function HomeView() {
       </section>
 
       <aside className="content-stack">
-        <RuntimeHealthCard {...desktopShellModel.runtime} />
+        <RuntimeHealthCard {...runtimeView} />
         <SafetyDefaultsCard />
         <NextSafeStepCard />
       </aside>
@@ -233,7 +283,7 @@ function ArtifactReviewView() {
   );
 }
 
-function SettingsView() {
+function SettingsView({ runtimeView }: RuntimePanelProps) {
   return (
     <div className="content-grid">
       <section className="content-stack">
@@ -273,7 +323,7 @@ function SettingsView() {
         </Card>
       </section>
       <aside className="content-stack">
-        <RuntimeHealthCard {...desktopShellModel.runtime} />
+        <RuntimeHealthCard {...runtimeView} />
         <NextSafeStepCard />
       </aside>
     </div>
