@@ -155,6 +155,115 @@ describe('createCodexRuntimeAdapter', () => {
     await adapter.shutdown();
   });
 
+  it('resolves runtime input artifact payloads into the Codex prompt', async () => {
+    const child = new FakeCodexChildProcess();
+    const calls: SpawnCall[] = [];
+    const adapter = createCodexRuntimeAdapter({
+      spawnProcess: (command, args, options) => {
+        calls.push({ command, args, options });
+        return child.asChildProcess();
+      },
+      resolveArtifactPayload: async (artifactRef) => {
+        await Promise.resolve();
+        expect(artifactRef).toEqual(createTestArtifactRef());
+        return {
+          mediaType: 'application/json',
+          text: JSON.stringify({
+            prompt: 'Summarize the staged runtime input.',
+            taskId: 'task:1',
+            orchestrationRunId: 'run:1',
+          }),
+          truncated: false,
+        };
+      },
+      now,
+      killGraceMs: 0,
+    });
+    await adapter.init(createTestAdapterContext());
+
+    await adapter.submit(createTestSubmitRequest());
+
+    expect(calls[0]?.args).toContain('Summarize the staged runtime input.');
+    child.close(0);
+    await adapter.shutdown();
+  });
+
+  it('keeps explicit prompt options ahead of artifact payload resolution', async () => {
+    const child = new FakeCodexChildProcess();
+    const calls: SpawnCall[] = [];
+    const adapter = createCodexRuntimeAdapter({
+      spawnProcess: (command, args, options) => {
+        calls.push({ command, args, options });
+        return child.asChildProcess();
+      },
+      resolveArtifactPayload: async () => {
+        await Promise.resolve();
+        throw new Error('resolver should not be called for explicit prompts');
+      },
+      now,
+      killGraceMs: 0,
+    });
+    await adapter.init(createTestAdapterContext());
+
+    await adapter.submit(
+      createTestSubmitRequest({ options: { prompt: 'Use the explicit prompt.' } }),
+    );
+
+    expect(calls[0]?.args).toContain('Use the explicit prompt.');
+    child.close(0);
+    await adapter.shutdown();
+  });
+
+  it('falls back to plain text payloads when the artifact is not runtime-input JSON', async () => {
+    const child = new FakeCodexChildProcess();
+    const calls: SpawnCall[] = [];
+    const adapter = createCodexRuntimeAdapter({
+      spawnProcess: (command, args, options) => {
+        calls.push({ command, args, options });
+        return child.asChildProcess();
+      },
+      resolveArtifactPayload: async () => {
+        await Promise.resolve();
+        return { mediaType: 'text/plain', text: 'Plain prompt from artifact.', truncated: false };
+      },
+      now,
+      killGraceMs: 0,
+    });
+    await adapter.init(createTestAdapterContext());
+
+    await adapter.submit(createTestSubmitRequest());
+
+    expect(calls[0]?.args).toContain('Plain prompt from artifact.');
+    child.close(0);
+    await adapter.shutdown();
+  });
+
+  it('falls back to artifact references when payload resolution fails', async () => {
+    const child = new FakeCodexChildProcess();
+    const calls: SpawnCall[] = [];
+    const adapter = createCodexRuntimeAdapter({
+      spawnProcess: (command, args, options) => {
+        calls.push({ command, args, options });
+        return child.asChildProcess();
+      },
+      resolveArtifactPayload: async () => {
+        await Promise.resolve();
+        throw new Error('payload store unavailable');
+      },
+      now,
+      killGraceMs: 0,
+    });
+    await adapter.init(createTestAdapterContext());
+
+    await adapter.submit(createTestSubmitRequest());
+
+    expect(calls[0]?.args).toContain(
+      `Run Cairn AgentRun ${TEST_IDS.runId} with these input artifact references:\n- memory://artifact/input`,
+    );
+    child.close(0);
+    await adapter.shutdown();
+  });
+
   it('cancels an in-flight Codex process and reports cancelled status', async () => {
     const child = new FakeCodexChildProcess();
     const adapter = createCodexRuntimeAdapter({

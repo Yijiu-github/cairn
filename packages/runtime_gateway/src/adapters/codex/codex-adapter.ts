@@ -38,7 +38,18 @@ export interface CodexRuntimeAdapterOptions extends StartCodexExecOptions {
   env?: Record<string, string>;
   now?: () => number;
   capabilities?: Partial<CapabilityProfile>;
+  resolveArtifactPayload?: ArtifactPayloadResolver;
 }
+
+export interface ResolvedArtifactPayload {
+  mediaType: 'text/plain' | 'application/json';
+  text: string;
+  truncated: boolean;
+}
+
+export type ArtifactPayloadResolver = (
+  artifactRef: ArtifactRef,
+) => Promise<ResolvedArtifactPayload | undefined>;
 
 interface CodexRunState {
   request: AdapterSubmitRequest;
@@ -66,7 +77,39 @@ const readStringOption = (
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 };
 
-const toPrompt = (request: AdapterSubmitRequest): string => {
+const promptFromPayload = (text: string): string | undefined => {
+  const parsed = safeParseRuntimeInput(text);
+  if (parsed !== undefined) {
+    return parsed;
+  }
+
+  const trimmed = text.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+};
+
+const safeParseRuntimeInput = (text: string): string | undefined => {
+  try {
+    const value: unknown = JSON.parse(text);
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      'prompt' in value &&
+      typeof value.prompt === 'string' &&
+      value.prompt.length > 0
+    ) {
+      return value.prompt;
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
+};
+
+const toPrompt = async (
+  request: AdapterSubmitRequest,
+  resolveArtifactPayload: ArtifactPayloadResolver | undefined,
+): Promise<string> => {
   const prompt =
     readStringOption(request.options, 'prompt') ??
     readStringOption(request.options, 'inlinePrompt') ??
@@ -74,6 +117,19 @@ const toPrompt = (request: AdapterSubmitRequest): string => {
 
   if (prompt !== undefined) {
     return prompt;
+  }
+
+  const firstInput = request.inputs[0];
+  if (firstInput !== undefined && resolveArtifactPayload !== undefined) {
+    try {
+      const payload = await resolveArtifactPayload(firstInput);
+      const resolvedPrompt = payload === undefined ? undefined : promptFromPayload(payload.text);
+      if (resolvedPrompt !== undefined) {
+        return resolvedPrompt;
+      }
+    } catch {
+      // Keep deterministic fallback behavior when artifact payload resolution is unavailable.
+    }
   }
 
   if (request.inputs.length === 0) {
@@ -234,10 +290,11 @@ export const createCodexRuntimeAdapter = (
         (isSandboxMode(requestSandboxMode) ? requestSandboxMode : undefined) ??
         (isSandboxMode(configSandboxMode) ? configSandboxMode : undefined) ??
         options.sandboxMode;
+      const prompt = await toPrompt(request, options.resolveArtifactPayload);
       const controller = startCodexExec(
         request.runId,
         {
-          prompt: toPrompt(request),
+          prompt,
           sandboxDir: ctx.workdir,
           finalArtifactRef: getFinalArtifactRef(request),
           ...(options.executable === undefined ? {} : { executable: options.executable }),
