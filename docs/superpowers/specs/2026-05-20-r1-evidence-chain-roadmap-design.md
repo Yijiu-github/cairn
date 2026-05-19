@@ -164,12 +164,12 @@ Out of scope:
 
 R1 should be executed as four phases:
 
-| Phase | Milestones | Target output | Acceptance signal |
-| --- | --- | --- | --- |
-| Phase 1: Baseline cleanup | M0 | Collaboration model, verification gates, and roadmap stabilized | Future work is not blocked by old role assumptions or missing verification setup |
-| Phase 2: Core loop | M1 + M2 | Real Codex execution plus artifact and trace evidence | API or CLI smoke can demonstrate a real run end to end |
-| Phase 3: Operator loop | M3 | Minimal operator controls affect real lifecycle | Operator actions change state and leave evidence |
-| Phase 4: Desktop delivery | M4 + M5 | Desktop observation console and pre-release hardening | Electron can complete the R1 main path and packaging is reproducible |
+| Phase                     | Milestones | Target output                                                   | Acceptance signal                                                                |
+| ------------------------- | ---------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Phase 1: Baseline cleanup | M0         | Collaboration model, verification gates, and roadmap stabilized | Future work is not blocked by old role assumptions or missing verification setup |
+| Phase 2: Core loop        | M1 + M2    | Real Codex execution plus artifact and trace evidence           | API or CLI smoke can demonstrate a real run end to end                           |
+| Phase 3: Operator loop    | M3         | Minimal operator controls affect real lifecycle                 | Operator actions change state and leave evidence                                 |
+| Phase 4: Desktop delivery | M4 + M5    | Desktop observation console and pre-release hardening           | Electron can complete the R1 main path and packaging is reproducible             |
 
 Suggested cadence:
 
@@ -217,15 +217,15 @@ R1 does not include:
 
 ## 8. Risks and Fallbacks
 
-| Risk | Impact | Fallback |
-| --- | --- | --- |
-| Codex CLI real long tasks are unstable | M1-M2 may block Desktop integration | R1 supports a documented short-task smoke path first |
-| Artifact store scope expands into file versioning | M2 may sprawl | Keep R1 to bounded payloads, metadata, refs, and local storage boundaries |
-| Trace replay becomes a UI-heavy effort | M2 or M4 may slow down | Ship read APIs and a simple timeline before advanced inspector work |
-| Operator control becomes an approval system | M3 may violate product boundaries | Limit R1 to cancel, retry, rerun, and note |
-| Desktop bridge exposes too much local power | Security baseline may erode | Every preload API must map to Workspace Core semantics |
-| Signing and packaging slow down the release | M5 may block feedback | Use an internal unsigned alpha if needed, while tracking formal signing requirements |
-| Two-person context is lost between milestones | Decisions and risks become implicit | Update status, changelog, or design docs as part of each milestone |
+| Risk                                              | Impact                              | Fallback                                                                             |
+| ------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------ |
+| Codex CLI real long tasks are unstable            | M1-M2 may block Desktop integration | R1 supports a documented short-task smoke path first                                 |
+| Artifact store scope expands into file versioning | M2 may sprawl                       | Keep R1 to bounded payloads, metadata, refs, and local storage boundaries            |
+| Trace replay becomes a UI-heavy effort            | M2 or M4 may slow down              | Ship read APIs and a simple timeline before advanced inspector work                  |
+| Operator control becomes an approval system       | M3 may violate product boundaries   | Limit R1 to cancel, retry, rerun, and note                                           |
+| Desktop bridge exposes too much local power       | Security baseline may erode         | Every preload API must map to Workspace Core semantics                               |
+| Signing and packaging slow down the release       | M5 may block feedback               | Use an internal unsigned alpha if needed, while tracking formal signing requirements |
+| Two-person context is lost between milestones     | Decisions and risks become implicit | Update status, changelog, or design docs as part of each milestone                   |
 
 If time is constrained, preserve this priority order:
 
