@@ -74,58 +74,114 @@ pnpm --filter @cairn/workspace-core dev
 | `CAIRN_WORKSPACE_CORE_CODEX_EXECUTABLE`   | `codex`          | 自定义 Codex CLI 可执行文件路径                        |
 | `CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE` | `read-only`      | `read-only` / `workspace-write` / `danger-full-access` |
 
-### 手动 Codex runtime smoke
+### Manual Codex Runtime Smoke (Opt-In)
 
-这不是默认 CI 门禁；只在本机已安装并登录 Codex CLI 时执行。
+This smoke is a manual evidence step only. It is not part of default `pnpm test` or CI, and must
+not weaken or replace automated mock / fixture coverage.
 
-1. 启动 Workspace Core：
+Run it only on a machine with Codex CLI installed and user-configured credentials. The example task
+and prompt below use synthetic smoke text only. Do not paste real credentials, repository secrets,
+customer data, or business task content into these commands or prompts.
+
+1. Start Workspace Core with the Codex runtime adapter:
 
    ```bash
    CAIRN_WORKSPACE_CORE_RUNTIME=codex \
-   CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR=.cairn/runtime \
+   CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR=.cairn/runtime/codex-smoke \
+   CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE=read-only \
    pnpm --filter @cairn/workspace-core dev
    ```
 
-2. 在另一个终端创建 run：
+2. In another terminal, set the local API base URL. If the server was started with auth enabled,
+   set only the header shape shown here and replace the placeholder with a local dev token.
 
    ```bash
-   curl -sS -X POST http://127.0.0.1:3000/v1/workspaces/01HZZZZZZZZZZZZZZZZZZZZZW0/runs \
+   export CAIRN_BASE_URL=http://127.0.0.1:3000
+
+   # Optional shape only; do not paste real shared credentials into docs or chat.
+   export CAIRN_AUTH_HEADER='Authorization: Bearer <local-dev-token>'
+   ```
+
+   If auth is not enabled, leave `CAIRN_AUTH_HEADER` unset and use the commands as written.
+
+3. Create a single-worker run:
+
+   ```bash
+   curl -sS -X POST "$CAIRN_BASE_URL/v1/workspaces/01HZZZZZZZZZZZZZZZZZZZZZW0/runs" \
+     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
      -H 'content-type: application/json' \
-     -d '{"originEventId":"01HZZZZZZZZZZZZZZZZZZZZZE0","task":{"taskKind":"analysis","title":"Codex smoke","brief":"Return the exact text CAIRN_SMOKE_OK."}}'
+     -d '{"originEventId":"01HZZZZZZZZZZZZZZZZZZZZZE0","task":{"taskKind":"analysis","title":"Codex smoke","brief":"Synthetic manual smoke only."}}' \
+     | tee /tmp/cairn-codex-smoke-run.json
    ```
 
-3. 用返回的 `orchestrationRunId` 查询 task，再提交 agent run：
+4. Extract `runId` and `taskId` with `jq`:
 
    ```bash
-   curl -sS http://127.0.0.1:3000/v1/runs/<runId>/tasks
+   export CAIRN_RUN_ID="$(jq -r '.orchestrationRunId' /tmp/cairn-codex-smoke-run.json)"
 
-   curl -sS -X POST http://127.0.0.1:3000/v1/tasks/<taskId>/agent-runs \
+   curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/tasks" \
+     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     | tee /tmp/cairn-codex-smoke-tasks.json
+
+   export CAIRN_TASK_ID="$(jq -r '.items[0].taskId' /tmp/cairn-codex-smoke-tasks.json)"
+   ```
+
+   Without `jq`, open `/tmp/cairn-codex-smoke-run.json` and copy `orchestrationRunId` into
+   `CAIRN_RUN_ID`, then open `/tmp/cairn-codex-smoke-tasks.json` and copy the first
+   `items[0].taskId` into `CAIRN_TASK_ID`.
+
+5. Submit an AgentRun with the exact synthetic prompt:
+
+   ```bash
+   curl -sS -X POST "$CAIRN_BASE_URL/v1/tasks/$CAIRN_TASK_ID/agent-runs" \
+     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
      -H 'content-type: application/json' \
-     -d '{"runtimeType":"codex","model":"default","prompt":"Return exactly: CAIRN_SMOKE_OK"}'
+     -d '{"runtimeType":"codex","model":"default","prompt":"Reply with exactly: Cairn smoke ok"}' \
+     | tee /tmp/cairn-codex-smoke-agent-run.json
    ```
 
-4. 用返回的 `agentRunId` drain runtime：
+6. Extract `agentRunId` with `jq`:
 
    ```bash
-   curl -sS -X POST http://127.0.0.1:3000/v1/agent-runs/<agentRunId>/drain-runtime \
+   export CAIRN_AGENT_RUN_ID="$(jq -r '.agentRunId' /tmp/cairn-codex-smoke-agent-run.json)"
+   ```
+
+   Without `jq`, open `/tmp/cairn-codex-smoke-agent-run.json` and copy `agentRunId` into
+   `CAIRN_AGENT_RUN_ID`.
+
+7. Drain runtime events into Workspace Core state:
+
+   ```bash
+   curl -sS -X POST "$CAIRN_BASE_URL/v1/agent-runs/$CAIRN_AGENT_RUN_ID/drain-runtime" \
+     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
      -H 'content-type: application/json' \
-     -d '{}'
+     -d '{}' \
+     | tee /tmp/cairn-codex-smoke-drain.json
    ```
 
-5. 验证 artifact payload：
+8. Read final AgentRun, Task, and OrchestrationRun state:
 
    ```bash
-   curl -sS http://127.0.0.1:3000/v1/runs/<runId>/artifacts
-   curl -sS http://127.0.0.1:3000/v1/artifacts/<artifactId>/payload
+   curl -sS "$CAIRN_BASE_URL/v1/agent-runs/$CAIRN_AGENT_RUN_ID" \
+     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     | tee /tmp/cairn-codex-smoke-final-agent-run.json
+
+   curl -sS "$CAIRN_BASE_URL/v1/tasks/$CAIRN_TASK_ID" \
+     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     | tee /tmp/cairn-codex-smoke-final-task.json
+
+   curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID" \
+     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     | tee /tmp/cairn-codex-smoke-final-run.json
    ```
 
-6. 可选取消 smoke：提交一个更长的 prompt 后，在另一个终端执行：
+Expected result: AgentRun, Task, and OrchestrationRun all reach `succeeded`. Provider run id and
+runtime logs may also be visible where the Codex CLI adapter and local Codex version support them.
 
-   ```bash
-   curl -sS -X POST http://127.0.0.1:3000/v1/runs/<runId>/cancel \
-     -H 'content-type: application/json' \
-     -d '{"reason":"Manual cancel smoke."}'
-   ```
+If Codex CLI is missing, credentials are unavailable, or the runtime exits non-zero, record the
+result as manual smoke evidence with the command, timestamp, and sanitized error summary. Do not add
+real credentials or business content to the evidence, and do not weaken automated tests to make the
+manual smoke pass.
 
 ## 4. 数据库
 
