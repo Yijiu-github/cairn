@@ -92,23 +92,30 @@ customer data, or business task content into these commands or prompts.
    pnpm --filter @cairn/workspace-core dev
    ```
 
-2. In another terminal, set the local API base URL. If the server was started with auth enabled,
-   set only the header shape shown here and replace the placeholder with a local dev token.
+2. In another terminal, set the local API base URL and optional auth args. The default Workspace
+   Core port is `4321`. If the server was started with auth enabled, set only a local dev token
+   value and keep real shared credentials out of docs and chat.
 
    ```bash
-   export CAIRN_BASE_URL=http://127.0.0.1:3000
+   export CAIRN_BASE_URL="${CAIRN_BASE_URL:-http://127.0.0.1:4321}"
 
-   # Optional shape only; do not paste real shared credentials into docs or chat.
-   export CAIRN_AUTH_HEADER='Authorization: Bearer <local-dev-token>'
+   # Optional: set only when Workspace Core was started with auth enabled.
+   # Do not paste real shared credentials into docs or chat.
+   # export CAIRN_AUTH_TOKEN='local-dev-token'
+
+   CAIRN_CURL_AUTH_ARGS=()
+   if [ -n "${CAIRN_AUTH_TOKEN:-}" ]; then
+     CAIRN_CURL_AUTH_ARGS=(-H "Authorization: Bearer $CAIRN_AUTH_TOKEN")
+   fi
    ```
 
-   If auth is not enabled, leave `CAIRN_AUTH_HEADER` unset and use the commands as written.
+   If auth is not enabled, leave `CAIRN_AUTH_TOKEN` unset and use the commands as written.
 
 3. Create a single-worker run:
 
    ```bash
    curl -sS -X POST "$CAIRN_BASE_URL/v1/workspaces/01HZZZZZZZZZZZZZZZZZZZZZW0/runs" \
-     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     "${CAIRN_CURL_AUTH_ARGS[@]}" \
      -H 'content-type: application/json' \
      -d '{"originEventId":"01HZZZZZZZZZZZZZZZZZZZZZE0","task":{"taskKind":"analysis","title":"Codex smoke","brief":"Synthetic manual smoke only."}}' \
      | tee /tmp/cairn-codex-smoke-run.json
@@ -120,7 +127,7 @@ customer data, or business task content into these commands or prompts.
    export CAIRN_RUN_ID="$(jq -r '.orchestrationRunId' /tmp/cairn-codex-smoke-run.json)"
 
    curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/tasks" \
-     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     "${CAIRN_CURL_AUTH_ARGS[@]}" \
      | tee /tmp/cairn-codex-smoke-tasks.json
 
    export CAIRN_TASK_ID="$(jq -r '.items[0].taskId' /tmp/cairn-codex-smoke-tasks.json)"
@@ -134,7 +141,7 @@ customer data, or business task content into these commands or prompts.
 
    ```bash
    curl -sS -X POST "$CAIRN_BASE_URL/v1/tasks/$CAIRN_TASK_ID/agent-runs" \
-     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     "${CAIRN_CURL_AUTH_ARGS[@]}" \
      -H 'content-type: application/json' \
      -d '{"runtimeType":"codex","model":"default","prompt":"Reply with exactly: Cairn smoke ok"}' \
      | tee /tmp/cairn-codex-smoke-agent-run.json
@@ -153,7 +160,7 @@ customer data, or business task content into these commands or prompts.
 
    ```bash
    curl -sS -X POST "$CAIRN_BASE_URL/v1/agent-runs/$CAIRN_AGENT_RUN_ID/drain-runtime" \
-     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     "${CAIRN_CURL_AUTH_ARGS[@]}" \
      -H 'content-type: application/json' \
      -d '{}' \
      | tee /tmp/cairn-codex-smoke-drain.json
@@ -163,15 +170,15 @@ customer data, or business task content into these commands or prompts.
 
    ```bash
    curl -sS "$CAIRN_BASE_URL/v1/agent-runs/$CAIRN_AGENT_RUN_ID" \
-     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     "${CAIRN_CURL_AUTH_ARGS[@]}" \
      | tee /tmp/cairn-codex-smoke-final-agent-run.json
 
    curl -sS "$CAIRN_BASE_URL/v1/tasks/$CAIRN_TASK_ID" \
-     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     "${CAIRN_CURL_AUTH_ARGS[@]}" \
      | tee /tmp/cairn-codex-smoke-final-task.json
 
    curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID" \
-     ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+     "${CAIRN_CURL_AUTH_ARGS[@]}" \
      | tee /tmp/cairn-codex-smoke-final-run.json
    ```
 
