@@ -1,7 +1,7 @@
 # 领域模型 / Domain Model
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-14
+> 最后更新：2026-05-17
 > 来源：[`设计文档V0.1.0.md §12`](设计文档V0.1.0.md) 抽出并扩展
 > 上游术语：见 [`../reference/glossary.md`](../reference/glossary.md)
 
@@ -13,6 +13,8 @@
 - 所有执行对象**必须有状态枚举**
 - 所有可重试执行**必须记录 `attempt`**
 - 错误归因必须能**分层到：编排 / 任务 / 执行 / 产物**
+- 用户可见 Artifact **必须可追溯、可审阅、可复用性可判断**
+- Handoff Queue 可以先作为 projection，但每个 queue item 必须能追到源对象与 TraceEvent
 - `workspace_id` 是**所有核心对象的一级边界字段**
 
 ## 1. 对象关系总图
@@ -119,25 +121,25 @@ Workspace
 
 **一次完整编排执行**，产品最重要的一等对象之一。
 
-| 字段                   | 类型                                                   | 必填 | 说明                                           |
-| ---------------------- | ------------------------------------------------------ | ---- | ---------------------------------------------- |
-| `orchestration_run_id` | `string`                                               | ✅   |                                                |
-| `workspace_id`         | `string`                                               | ✅   |                                                |
-| `conversation_id`      | `string`                                               | ⛔   |                                                |
-| `origin_event_id`      | `string`                                               | ✅   | 触发的 event                                   |
-| `status`               | `enum`（见下）                                         | ✅   |                                                |
-| `execution_mode`       | `enum: direct_answer \| single_worker \| multi_worker` | ✅   | 首发三种                                       |
-| `planner_output_ref`   | `string`                                               | ⛔   | Planning Artifact id，见下文 Goal Planner 输出 |
-| `synthesis_output_ref` | `string`                                               | ⛔   |                                                |
-| `final_response_ref`   | `string`                                               | ⛔   |                                                |
-| `has_partial_failures` | `bool`                                                 | ✅   |                                                |
-| `result_completeness`  | `enum: complete \| partial \| empty`                   | ✅   |                                                |
-| `completion_level`     | `enum: full \| degraded \| failed`                     | ✅   |                                                |
-| `started_at`           | `timestamp`                                            | ⛔   |                                                |
-| `finished_at`          | `timestamp`                                            | ⛔   |                                                |
-| `error_code`           | `string`                                               | ⛔   |                                                |
-| `error_message`        | `text`                                                 | ⛔   |                                                |
-| `trace_id`             | `string`                                               | ✅   | 贯穿一切的关联 id                              |
+| 字段                   | 类型                                                   | 必填 | 说明                                        |
+| ---------------------- | ------------------------------------------------------ | ---- | ------------------------------------------- |
+| `orchestration_run_id` | `string`                                               | ✅   |                                             |
+| `workspace_id`         | `string`                                               | ✅   |                                             |
+| `conversation_id`      | `string`                                               | ⛔   |                                             |
+| `origin_event_id`      | `string`                                               | ✅   | 触发的 event                                |
+| `status`               | `enum`（见下）                                         | ✅   |                                             |
+| `execution_mode`       | `enum: direct_answer \| single_worker \| multi_worker` | ✅   | 首发三种                                    |
+| `planner_output_ref`   | `string`                                               | ⛔   | PlanningOutput id，见下文 Goal Planner 输出 |
+| `synthesis_output_ref` | `string`                                               | ⛔   |                                             |
+| `final_response_ref`   | `string`                                               | ⛔   |                                             |
+| `has_partial_failures` | `bool`                                                 | ✅   |                                             |
+| `result_completeness`  | `enum: complete \| partial \| empty`                   | ✅   |                                             |
+| `completion_level`     | `enum: full \| degraded \| failed`                     | ✅   |                                             |
+| `started_at`           | `timestamp`                                            | ⛔   |                                             |
+| `finished_at`          | `timestamp`                                            | ⛔   |                                             |
+| `error_code`           | `string`                                               | ⛔   |                                             |
+| `error_message`        | `text`                                                 | ⛔   |                                             |
+| `trace_id`             | `string`                                               | ✅   | 贯穿一切的关联 id                           |
 
 **状态枚举（与 state-machines.md 同步）**：
 
@@ -147,20 +149,31 @@ Workspace
 
 ### Goal Planner 输出
 
-`planner_output_ref` 指向一次 planning artifact。它用于解释本轮 run 为什么这样拆分、哪些前置条件已满足、哪里被阻塞，以及下一轮是否需要 replan。
+`planner_output_ref` 指向独立的 `PlanningOutputId`。它用于解释本轮 run 为什么这样拆分、哪些前置条件已满足、哪里被阻塞，以及下一轮是否需要 replan。
 
 R1 只要求 planning 输出是可回放、可审计的结构化说明，不做复杂 workflow builder 或拖拽编辑器。
 
-建议最小结构：
+### PlanningOutput
+
+PlanningOutput 是 Goal Planner 的一等领域对象，不是普通 Artifact。它保存 action tree、preconditions、blocked reason、replan reason 与 ContextPack 引用，用于解释本轮 run 为什么这样规划。
+
+PlanningOutput 状态为 `pending` / `ready` / `blocked` / `failed`；`ready`、`blocked`、`failed` 为终态，终态后不可修改。PlanningOutput 不驱动 Task / AgentRun 状态推进，实际执行仍以 Task DAG 为准。
+
+最小结构：
 
 ```ts
 interface PlanningOutput {
+  planningOutputId: string;
+  workspaceId: string;
+  orchestrationRunId: string;
+  status: 'pending' | 'ready' | 'blocked' | 'failed';
   actionTree: PlanningActionNode[];
   preconditions: PlanningPrecondition[];
   blockedReason?: PlanningBlockedReason;
   replanReason?: PlanningReplanReason;
   contextPackRefs: string[];
   createdAt: string;
+  updatedAt: string;
 }
 
 interface PlanningActionNode {
@@ -202,7 +215,7 @@ interface PlanningReplanReason {
 - `preconditions` 必须能引用 evidence / ContextPack / TraceEvent / Artifact，不能只写模型猜测。
 - `blockedReason` 用于 UI 和 Operator 判断是否要补充输入、批准受保护动作或取消本轮 run。
 - `replanReason` 只描述“为什么新开一轮重新规划”，不允许在同一 OrchestrationRun 内大规模改图。
-- planning artifact 里的大内容或源码片段仍通过引用保存，不能把 ContextPack 内容直接塞进 JSON。
+- PlanningOutput 里的大内容或源码片段仍通过引用保存，不能把 ContextPack 内容直接塞进 JSON。
 
 ---
 
@@ -277,29 +290,73 @@ OrchestrationRun 内的一个**子任务节点**。
 
 执行过程中的**产出**。
 
-| 字段                   | 类型                                                            | 必填 | 说明              |
-| ---------------------- | --------------------------------------------------------------- | ---- | ----------------- |
-| `artifact_id`          | `string`                                                        | ✅   |                   |
-| `workspace_id`         | `string`                                                        | ✅   |                   |
-| `orchestration_run_id` | `string`                                                        | ⛔   |                   |
-| `task_id`              | `string`                                                        | ⛔   |                   |
-| `run_id`               | `string`                                                        | ⛔   |                   |
-| `artifact_role`        | `enum: input \| intermediate \| output \| summary \| trace`     | ✅   |                   |
-| `kind`                 | `enum: text \| patch \| log \| file_snapshot \| json \| binary` | ✅   |                   |
-| `format_version`       | `string`                                                        | ✅   | 内容格式版本      |
-| `uri_or_path`          | `string`                                                        | ✅   | 本地路径或 S3 URI |
-| `content_type`         | `string`                                                        | ⛔   | MIME              |
-| `size_bytes`           | `int`                                                           | ⛔   |                   |
-| `producer_type`        | `enum: human \| agent \| system`                                | ✅   |                   |
-| `producer_id`          | `string`                                                        | ⛔   |                   |
-| `visibility`           | `enum: public \| operator_only \| debug`                        | ✅   |                   |
-| `created_at`           | `timestamp`                                                     | ✅   |                   |
+| 字段                     | 类型                                                            | 必填 | 说明                                     |
+| ------------------------ | --------------------------------------------------------------- | ---- | ---------------------------------------- |
+| `artifact_id`            | `string`                                                        | ✅   |                                          |
+| `workspace_id`           | `string`                                                        | ✅   |                                          |
+| `orchestration_run_id`   | `string`                                                        | ⛔   |                                          |
+| `task_id`                | `string`                                                        | ⛔   |                                          |
+| `run_id`                 | `string`                                                        | ⛔   |                                          |
+| `artifact_role`          | `enum: input \| intermediate \| output \| summary \| trace`     | ✅   |                                          |
+| `kind`                   | `enum: text \| patch \| log \| file_snapshot \| json \| binary` | ✅   |                                          |
+| `format_version`         | `string`                                                        | ✅   | 内容格式版本                             |
+| `uri_or_path`            | `string`                                                        | ✅   | 本地路径或 S3 URI                        |
+| `content_type`           | `string`                                                        | ⛔   | MIME                                     |
+| `size_bytes`             | `int`                                                           | ⛔   |                                          |
+| `producer_type`          | `enum: human \| agent \| system`                                | ✅   |                                          |
+| `producer_id`            | `string`                                                        | ⛔   |                                          |
+| `visibility`             | `enum: public \| operator_only \| debug`                        | ✅   |                                          |
+| `review_state`           | `enum: unreviewed \| accepted \| rejected \| superseded`        | ✅   | 默认 `unreviewed`                        |
+| `owner_type`             | `enum: human \| agent \| system`                                | ✅   | 谁负责后续交接                           |
+| `source_input_refs`      | `jsonb (string[])`                                              | ⛔   | 输入 artifact / 文件引用                 |
+| `verification_refs`      | `jsonb (string[])`                                              | ⛔   | test log / screenshot / CI / review note |
+| `reuse_policy`           | `enum: reusable \| run_local \| sensitive \| expired`           | ✅   | 默认 `run_local`                         |
+| `supersedes_artifact_id` | `string`                                                        | ⛔   | 新版本取代旧产物                         |
+| `created_at`             | `timestamp`                                                     | ✅   |                                          |
 
 **存储原则**：
 
 - DB 存元数据
 - 内容存文件系统（本地）或 S3 兼容存储（远程）
 - 大文件（> N MB，N 待定）必须落对象存储而非 DB
+- 用户可见 Artifact 不允许成为“孤儿文件”：至少要能追到 `orchestration_run_id`、`task_id` 或 `run_id` 之一
+- `verification_refs` 指向的验证产物也必须是 Artifact，不允许只写自由文本结论
+
+### 9.1 Artifact 作为交接物
+
+Artifact Detail 必须能回答四个问题：
+
+1. **谁生成**：`producer_type` / `producer_id` / `run_id`。
+2. **基于什么生成**：`source_input_refs`。
+3. **是否验证过**：`verification_refs` 与对应 artifact 的状态。
+4. **是否可复用**：`reuse_policy`。
+
+`review_state` 的语义：
+
+| 状态         | 含义                               |
+| ------------ | ---------------------------------- |
+| `unreviewed` | 尚无人类或系统确认                 |
+| `accepted`   | 已被接受，可作为后续上下文或交付物 |
+| `rejected`   | 已被拒绝，不应默认复用             |
+| `superseded` | 已被新 artifact 取代               |
+
+### 9.2 Handoff Queue Projection
+
+Handoff Queue 是 UI / application 层的**待处理投影**，R1 可以由 Task、AgentRun、Artifact、Runtime/Core health 与 TraceEvent 派生，不要求立刻持久化为独立表。
+
+最小字段：
+
+| 字段              | 类型                                                                                          | 说明                                               |
+| ----------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `handoff_item_id` | `string`                                                                                      | projection id，可由源对象 id + reason 生成         |
+| `workspace_id`    | `string`                                                                                      | 一级边界                                           |
+| `source_type`     | `enum: run \| task \| agent_run \| artifact \| runtime \| core`                               | 来源对象类型                                       |
+| `source_id`       | `string`                                                                                      | 来源对象 id                                        |
+| `reason`          | `enum: protected_action \| failed_task \| review_artifact \| runtime_issue \| ambiguous_plan` | 阻塞 / 待处理原因                                  |
+| `primary_action`  | `string`                                                                                      | 推荐主操作，如 `approve_once` / `retry` / `accept` |
+| `effect`          | `enum: applies_now \| applies_next \| records_only`                                           | 提交后影响范围                                     |
+| `trace_event_id`  | `string`                                                                                      | 触发该 queue item 的事件                           |
+| `created_at`      | `timestamp`                                                                                   | 等待时长计算基准                                   |
 
 ---
 
@@ -434,10 +491,11 @@ R1a 先落地轻量代码上下文索引的元数据基线，不扫描真实文�
 
 ## 变更历史
 
-| 日期       | 变更                                                |
-| ---------- | --------------------------------------------------- |
-| 2026-05-15 | 补充 Goal Planner planning artifact 输出草案        |
-| 2026-05-15 | 明确 ContextPack item 可保存片段行号与 token 估算   |
-| 2026-05-15 | 补充 CodeIndexFile 文件清单对象                     |
-| 2026-05-15 | 补充轻量代码上下文索引 R1a 领域对象                 |
-| 2026-05-14 | 初版，从 V0.1.0 §12 抽出并补充 heartbeat/lease 字段 |
+| 日期       | 变更                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| 2026-05-17 | 补充 Artifact review/provenance/reuse 字段与 Handoff Queue projection |
+| 2026-05-15 | 补充 Goal Planner planning artifact 输出草案                          |
+| 2026-05-15 | 明确 ContextPack item 可保存片段行号与 token 估算                     |
+| 2026-05-15 | 补充 CodeIndexFile 文件清单对象                                       |
+| 2026-05-15 | 补充轻量代码上下文索引 R1a 领域对象                                   |
+| 2026-05-14 | 初版，从 V0.1.0 §12 抽出并补充 heartbeat/lease 字段                   |

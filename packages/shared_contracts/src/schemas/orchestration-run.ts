@@ -17,6 +17,7 @@ import {
   ConversationId,
   EventId,
   ArtifactId,
+  PlanningOutputId,
   TraceId,
 } from './ids.js';
 
@@ -67,7 +68,7 @@ export const OrchestrationRun = z.object({
   originEventId: EventId,
   status: OrchestrationRunStatus,
   executionMode: ExecutionMode,
-  plannerOutputRef: ArtifactId.optional(),
+  plannerOutputRef: PlanningOutputId.optional(),
   synthesisOutputRef: ArtifactId.optional(),
   finalResponseRef: ArtifactId.optional(),
   hasPartialFailures: z.boolean(),

@@ -12,6 +12,7 @@ export * from './conversations';
 export * from './events';
 export * from './messages';
 export * from './orchestration-runs';
+export * from './planning-outputs';
 export * from './tasks';
 export * from './trace-events';
 export * from './workspaces';

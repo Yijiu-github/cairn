@@ -51,6 +51,54 @@ export const runDetailTasks = [
   },
 ];
 
+export const runDetailPlanningOutput = {
+  id: 'plan_01JDEMOHOME0000000000001',
+  status: 'blocked' as const,
+  summary:
+    'Goal Planner 已把 Run Detail 拆成信息架构、受保护动作说明、预览构建和视觉验收四个动作；当前阻塞在截图确认。',
+  blockedReason: '需要 operator 确认是否继续写入 UI preview 页面与样式文件。',
+  preconditions: [
+    {
+      label: '产品边界',
+      status: 'satisfied' as const,
+      detail: '仅更新静态 UI preview，不创建 Desktop / Web Shell。',
+    },
+    {
+      label: '数据来源',
+      status: 'satisfied' as const,
+      detail: '使用 mock PlanningOutput，不连接 Workspace Core。',
+    },
+    {
+      label: '视觉验收',
+      status: 'pending' as const,
+      detail: '需要在 production build 后截图确认信息密度。',
+    },
+  ],
+  actions: [
+    {
+      id: 'inspect_current_run_detail',
+      title: 'Inspect current Run Detail',
+      intent: '确认现有任务树、证据链和产物卡片的布局入口。',
+      status: 'completed' as const,
+      dependsOn: [],
+    },
+    {
+      id: 'add_planning_panel',
+      title: 'Add PlanningOutput panel',
+      intent: '展示 summary、blocked reason、preconditions 和 action tree。',
+      status: 'running' as const,
+      dependsOn: ['inspect_current_run_detail'],
+    },
+    {
+      id: 'capture_preview',
+      title: 'Capture preview evidence',
+      intent: '构建 UI preview 并为后续 Desktop Shell 保留验收参考。',
+      status: 'blocked' as const,
+      dependsOn: ['add_planning_panel'],
+    },
+  ],
+};
+
 export const runDetailEvidenceItems = [
   {
     id: 'evidence_read_rules',

@@ -1,7 +1,7 @@
 # 术语表 / Glossary
 
 > 状态：🟡 Draft  
-> 最后更新：2026-05-14  
+> 最后更新：2026-05-18
 > 目的：统一项目内所有文档与代码使用的核心术语，避免歧义。
 
 本术语表只收录**项目专属或有歧义**的术语。通用工程术语（如 HTTP / WebSocket / SQL）不收录。
@@ -24,13 +24,17 @@
 | [Message](#message)                             | 一条消息                               | 领域 |
 | [OrchestrationRun](#orchestrationrun)           | 一次完整编排执行                       | 领域 |
 | [Task](#task)                                   | 编排中的一个子任务                     | 领域 |
-| [AgentRun](#agentrun)                           | 一次具体的 agent 执行                  | 领域 |
+| [AgentRun](#agentrun)                           | 一次具体 runtime 调用执行记录          | 领域 |
 | [Artifact](#artifact)                           | 执行产物                               | 领域 |
 | [TraceEvent](#traceevent)                       | 一条可观察事件                         | 领域 |
-| [Supervisor](#supervisor)                       | 主 agent，统筹编排                     | 角色 |
-| [Worker](#worker)                               | 子任务执行 agent                       | 角色 |
+| [Evidence Chain](#evidence-chain)               | 产物、验证与事件之间的证据链           | 概念 |
+| [Inspector](#inspector)                         | 解释 run 状态与失败原因的观察界面      | 界面 |
+| [Handoff Queue](#handoff-queue)                 | 等待人类处理的交接队列                 | 机制 |
+| [Supervisor](#supervisor)                       | 统筹编排的主控角色                     | 角色 |
+| [Worker](#worker)                               | 执行子任务的工作角色                   | 角色 |
 | [Operator](#operator)                           | 接管系统的人类                         | 角色 |
 | [Runtime Gateway](#runtime-gateway)             | 执行总线                               | 系统 |
+| [Runtime Control Plane](#runtime-control-plane) | 组织外部 runtime 执行的控制面          | 概念 |
 | [Runtime Adapter](#runtime-adapter)             | 接入具体 runtime 的适配层              | 系统 |
 | [SourceRoot](#sourceroot)                       | 用户授权给 Workspace 使用的代码根目录  | 系统 |
 | [CodeContextIndex](#codecontextindex)           | SourceRoot 的派生代码上下文索引        | 系统 |
@@ -123,7 +127,7 @@ OrchestrationRun 内部的一个**子任务**。Task 之间可以有依赖关系
 
 ### AgentRun
 
-**一次具体的 agent 调用执行**。一个 Task 在重试场景下可能产生多次 AgentRun（`attempt` 字段累计）。
+**一次具体的 runtime 调用执行**。一个 Task 在重试场景下可能产生多次 AgentRun（`attempt` 字段累计）。AgentRun 是领域记录，不代表 Cairn 内置了一个新的模型 agent。
 
 ### Artifact
 
@@ -145,13 +149,34 @@ OrchestrationRun 内部的一个**子任务**。Task 之间可以有依赖关系
 - 失败归因
 - Replay 回放
 
+### Evidence Chain
+
+证据链。把一个用户可见结果追溯到：输入 artifact / task / agent run / trace event / verification artifact / human review。
+
+Cairn 中的 evidence chain 主要由 Artifact 元数据、TraceEvent 与 Inspector 共同呈现。
+
+### Inspector
+
+Run Detail 中解释“为什么现在是这样”的观察界面。它不是普通日志面板，至少需要支持：
+
+- Timeline：按时间看 TraceEvent。
+- Causality：从 artifact / failure 反查上游对象。
+- First failure：定位第一处失败或分歧点。
+- Cost & latency：查看耗时、token、重试次数等成本信号。
+
+### Handoff Queue
+
+等待人类处理的交接队列。它只放需要判断或动作的项目，例如 protected action、failed task、review artifact、runtime issue、ambiguous plan。
+
+Handoff Queue 可以先作为 projection，由 Task / AgentRun / Artifact / Runtime health / TraceEvent 派生；每个 queue item 必须能追到源对象。
+
 ---
 
 ## 角色
 
 ### Supervisor
 
-主 agent。负责：
+编排角色，不是内置模型身份。负责：
 
 1. Mode Decision（决定执行模式）
 2. Task Planning（拆分任务）
@@ -161,7 +186,7 @@ OrchestrationRun 内部的一个**子任务**。Task 之间可以有依赖关系
 
 ### Worker
 
-执行具体子任务的 agent。一个 OrchestrationRun 内可能并行多个 Worker。
+执行具体子任务的角色。一个 OrchestrationRun 内可能并行多个 Worker；具体生成与工具执行由 Runtime Adapter 连接的 Codex / Claude Code / 本地模型等 runtime 完成。
 
 ### Operator
 
@@ -179,9 +204,13 @@ OrchestrationRun 内部的一个**子任务**。Task 之间可以有依赖关系
 
 对应代码包：`packages/runtime_gateway`。
 
+### Runtime Control Plane
+
+Cairn 对外部或本地 runtime 的组织与控制层。Codex / Claude Code / 本地模型负责生成与执行；Cairn 负责把这些执行组织成可观察、可接管、可验证、可回放、可复用的 run / artifact / trace。
+
 ### Runtime Adapter
 
-具体 runtime（如 Codex、Claude、本地模型等）的适配层。实现统一的 `RuntimeAdapter` 接口。
+具体 runtime（如 Codex、Claude、本地模型、OpenAI-compatible endpoint 等）的适配层。实现统一的 `RuntimeAdapter` 接口。它是通用连接能力，不等同于对某个 provider 或第三方 endpoint 的官方背书。
 
 接口规范见 [`../contracts/runtime-adapter.md`](../contracts/runtime-adapter.md)。
 
@@ -271,7 +300,7 @@ OrchestrationRun 在分配 Task 给 Worker 时会参考 Capability Profile。
 
 为了避免混淆，以下术语在本项目内**不使用**或**有特定限制含义**：
 
-- ❌ **Agent**（单独使用，太泛）→ 使用 Supervisor / Worker / AgentRun
+- ❌ **Agent**（单独使用，太泛）→ 使用 Supervisor / Worker / AgentRun，并说明它们是编排角色或执行记录，不是内置模型身份
 - ❌ **Task Graph Editor / Workflow Builder** → 不在产品范围
 - ❌ **Marketplace** → 不在产品范围
 - ❌ **Tenant**（多租户）→ 当前不做企业多租户
@@ -281,8 +310,10 @@ OrchestrationRun 在分配 Task 给 Worker 时会参考 Capability Profile。
 
 ## 变更记录
 
-| 日期       | 变更                                                  |
-| ---------- | ----------------------------------------------------- |
-| 2026-05-15 | 新增 Goal Planner 术语                                |
-| 2026-05-15 | 新增 SourceRoot / CodeContextIndex / ContextPack 术语 |
-| 2026-05-14 | 术语表初版，对齐设计文档 V0.1.0                       |
+| 日期       | 变更                                                            |
+| ---------- | --------------------------------------------------------------- |
+| 2026-05-18 | 补充 Runtime Control Plane、AgentRun / Supervisor / Worker 边界 |
+| 2026-05-17 | 新增 Evidence Chain / Inspector / Handoff Queue 术语            |
+| 2026-05-15 | 新增 Goal Planner 术语                                          |
+| 2026-05-15 | 新增 SourceRoot / CodeContextIndex / ContextPack 术语           |
+| 2026-05-14 | 术语表初版，对齐设计文档 V0.1.0                                 |

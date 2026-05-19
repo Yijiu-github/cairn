@@ -1,14 +1,14 @@
 # 隐私声明 / Privacy Statement
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-14  
+> 状态：🟡 Draft
+> 最后更新：2026-05-18
 > 注意：本声明不构成正式法律建议。商业发布前请咨询律师。
 
 ---
 
 ## 1. 我们的承诺
 
-Cairn 是 **本地优先 + 自托管** 的多 Agent 协作工作台。我们承诺：
+Cairn 是 **本地优先 + 自托管** 的 AI 工程工作台与 runtime 控制面。我们承诺：
 
 - **业务内容（task、message、artifact）默认只存储在你的本机**
 - **凭据（API key / token）由系统级安全存储管理**，不上报
@@ -93,11 +93,13 @@ Cairn 是 **本地优先 + 自托管** 的多 Agent 协作工作台。我们承�
 
 ## 7. 第三方服务
 
-Cairn 会调用你**主动配置**的第三方 AI provider（如 OpenAI、Anthropic）。这些调用：
+Cairn 会调用你**主动配置**的第三方 AI provider 或 runtime endpoint（如 OpenAI、Anthropic、本地 Ollama、用户自配 OpenAI-compatible endpoint）。这些调用：
 
 - 直接从你的机器或自建 server 发出（不经过我们）
-- 受第三方 provider 的隐私政策约束
+- 受第三方 provider 或 endpoint 运营者的隐私政策与服务条款约束
 - 我们不接触你发送给第三方的内容
+
+如果你配置自定义 OpenAI-compatible endpoint，Cairn 只提供通用连接能力，不内置、不推荐、不背书任何具体第三方反代 / 转 API 服务；该 endpoint 的隐私、稳定性、计费与合规风险由你自行评估。详见 [`data-locality.md`](data-locality.md#41-用户自配-endpoint-的责任边界重要)。
 
 ## 8. 联系我们
 
@@ -112,14 +114,15 @@ Cairn 会调用你**主动配置**的第三方 AI provider（如 OpenAI、Anthro
 - 提前 30 天通过应用内通知告知
 - 在 [`CHANGELOG.md`](../../CHANGELOG.md) 记录
 
-## 10. 待办
+## 10. 变更历史
+
+| 日期       | 变更                                           |
+| ---------- | ---------------------------------------------- |
+| 2026-05-18 | 补充自定义 OpenAI-compatible endpoint 责任边界 |
+| 2026-05-14 | 初版                                           |
+
+## 11. 待办
 
 - [ ] 与 [`../design/telemetry-and-privacy.md`](../design/telemetry-and-privacy.md) 同步技术细节
 - [ ] 起草英文版（如计划国际化）
 - [ ] 商业发布前请律师 review
-
-## 变更历史
-
-| 日期       | 变更 |
-| ---------- | ---- |
-| 2026-05-14 | 初版 |

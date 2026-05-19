@@ -57,7 +57,9 @@
     "deps:knip": "knip",
     "deps:notices": "license-checker-rseidelsohn --production --csv --excludePrivatePackages > docs/legal/third-party-notices.csv",
     "//—— Git Hooks ——": "",
-    "prepare": "husky"
+    "prepare": "husky",
+    "standards:check": "node scripts/standards-check.mjs",
+    "standards:check:test": "node --test scripts/standards-check.spec.mjs"
   },
   "devDependencies": {
     "@commitlint/cli": "catalog:",

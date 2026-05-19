@@ -1,7 +1,7 @@
 # Runtime Adapter 契约
 
-> 状态：🟡 Draft  
-> 最后更新：2026-05-14  
+> 状态：🟡 Draft
+> 最后更新：2026-05-18
 > 关联：ADR-0004、`../design/domain-model.md`、`../design/state-machines.md`
 
 ---
@@ -12,13 +12,14 @@
 
 - 上游：`packages/runtime_gateway`
 - 下游：具体 runtime（CLI 子进程 / HTTP API / 本地 SDK）
-- 定位：**通用运行时接入层**。它负责把不同 runtime 统一成同一套执行契约，而不是为某个单独的第三方桥接项目编写专属产品逻辑。
+- 定位：**通用运行时接入层**。它负责把不同 runtime 统一成同一套执行契约，是 Cairn runtime 控制面和证据层的下游连接能力，而不是为某个单独的第三方桥接项目编写专属产品逻辑，也不构成对具体 provider 或 endpoint 的官方背书。
 
 Runtime Adapter **只负责执行**，不负责：
 
 - 任务规划（属于 Supervisor）
 - 状态持久化（属于 Workspace Core）
 - Operator 接管（属于 application 层）
+- 对第三方 endpoint 的隐私、稳定性、计费或服务条款合规做保证
 
 ## 2. 接口契约（TypeScript 草案）
 
@@ -243,6 +244,10 @@ packages/runtime_gateway/src/adapters/codex/
 └─ codex-errors.ts
 ```
 
+### R1 demo-loop smoke flow
+
+Workspace Core 的 R1 demo-loop 通过 `POST /v1/tasks/:taskId/agent-runs` 提交任务，并在 drain 后通过 `GET /v1/artifacts/:artifactId/payload` 读取 bounded payload text；adapter 只提供执行与流式事件，不直接写数据库或落 artifact 文件。
+
 ### Release 2 候选（尚未承诺，按优先级）
 
 #### 1. Generic OpenAI-Compatible Adapter（强烈推荐 R2 首位）
@@ -264,7 +269,9 @@ packages/runtime_gateway/src/adapters/codex/
 | 行为                                                                                    | 立场    |
 | --------------------------------------------------------------------------------------- | ------- |
 | 用户填任意符合 OpenAI 协议的 base URL                                                   | ✅ 支持 |
+| 覆盖本地推理引擎、官方兼容接口、用户自建兼容网关                                        | ✅ 支持 |
 | 内置 / 推荐 / 教学任何具体"订阅转 API"项目（如 sub2api / chat2api / gpt4free / cpa 等） | ❌ 不做 |
+| 把某个第三方 endpoint 标成官方集成、推荐服务或合规背书                                  | ❌ 不做 |
 | UI 配置自定义 endpoint 时显示警告                                                       | ✅ 强制 |
 
 理由与免责见 [`../legal/data-locality.md` §"用户自配 endpoint 的责任边界"](../legal/data-locality.md)。
@@ -310,6 +317,7 @@ packages/runtime_gateway/src/adapters/codex/
 
 ## 变更历史
 
-| 日期       | 变更                     |
-| ---------- | ------------------------ |
-| 2026-05-14 | 初版 TypeScript 接口草案 |
+| 日期       | 变更                                                                  |
+| ---------- | --------------------------------------------------------------------- |
+| 2026-05-18 | 补充 Runtime Adapter 作为通用连接能力的定位，明确第三方 endpoint 边界 |
+| 2026-05-14 | 初版 TypeScript 接口草案                                              |
