@@ -5,7 +5,7 @@
     "outDir": "out",
     "jsx": "react-jsx",
     "tsBuildInfoFile": ".turbo/tsbuildinfo",
-    "types": ["node", "react", "react-dom", "vite/client"]
+    "types": ["node", "react", "react-dom", "vite/client", "vitest/globals"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "electron.vite.config.ts"],
   "exclude": ["node_modules", "out", "dist", "release"]

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
+import { timingSafeEqual } from 'node:crypto';
 
 import sensible from '@fastify/sensible';
 import Fastify from 'fastify';
@@ -31,6 +32,7 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodError } from 'zod';
 
 export interface CreateWorkspaceCoreAppOptions {
+  authToken?: string | undefined;
   container: WorkspaceCoreContainer;
   logger?: boolean;
 }
@@ -52,6 +54,32 @@ const toApiError = (code: string, message: string, issues?: ZodError['issues']) 
         }),
   },
 });
+
+const toBearerToken = (authorization: unknown): string | undefined => {
+  if (typeof authorization !== 'string') {
+    return undefined;
+  }
+
+  const [scheme, token] = authorization.split(' ');
+  if (scheme !== 'Bearer' || token === undefined || token.length === 0) {
+    return undefined;
+  }
+
+  return token;
+};
+
+const tokenEquals = (actual: string | undefined, expected: string): boolean => {
+  if (actual === undefined) {
+    return false;
+  }
+
+  const actualBuffer = Buffer.from(actual);
+  const expectedBuffer = Buffer.from(expected);
+
+  return (
+    actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer)
+  );
+};
 
 const isApplicationError = (error: unknown): error is ApplicationError =>
   typeof error === 'object' &&
@@ -222,6 +250,18 @@ export const createWorkspaceCoreApp = async (
   });
 
   await app.register(sensible);
+
+  if (options.authToken !== undefined) {
+    const expectedAuthToken = options.authToken;
+    app.addHook('onRequest', async (request, reply) => {
+      const token = toBearerToken(request.headers.authorization);
+      if (!tokenEquals(token, expectedAuthToken)) {
+        return reply.code(401).send(toApiError('UNAUTHORIZED', 'Missing or invalid bearer token.'));
+      }
+
+      return undefined;
+    });
+  }
 
   app.get('/health', () => ({
     ok: true,

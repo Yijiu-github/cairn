@@ -10,6 +10,7 @@ const WorkspaceCoreConfig = z.object({
   bootstrapEventId: z.string().min(1).default('01J000000000000000000000E0'),
   runtime: z.enum(['mock', 'codex']).default('mock'),
   runtimeWorkdir: z.string().min(1).default('.cairn/runtime'),
+  authToken: z.string().min(1).optional(),
   codexExecutable: z.string().min(1).optional(),
   codexSandboxMode: z.enum(['read-only', 'workspace-write', 'danger-full-access']).optional(),
 });
@@ -22,6 +23,7 @@ export interface WorkspaceCoreConfig {
   bootstrapEventId: string;
   runtime: 'mock' | 'codex';
   runtimeWorkdir: string;
+  authToken?: string | undefined;
   codexExecutable?: string | undefined;
   codexSandboxMode?: 'read-only' | 'workspace-write' | 'danger-full-access' | undefined;
 }
@@ -37,6 +39,7 @@ export const readWorkspaceCoreConfig = (
     bootstrapEventId: env['CAIRN_WORKSPACE_CORE_BOOTSTRAP_EVENT_ID'],
     runtime: env['CAIRN_WORKSPACE_CORE_RUNTIME'],
     runtimeWorkdir: env['CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR'],
+    authToken: env['CAIRN_WORKSPACE_CORE_AUTH_TOKEN'],
     codexExecutable: env['CAIRN_WORKSPACE_CORE_CODEX_EXECUTABLE'],
     codexSandboxMode: env['CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE'],
   });

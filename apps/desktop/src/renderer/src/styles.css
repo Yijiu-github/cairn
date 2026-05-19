@@ -225,6 +225,13 @@ h2 {
   gap: 14px;
 }
 
+.card-title-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+}
+
 .empty-state-panel {
   align-items: center;
   background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
@@ -237,6 +244,16 @@ h2 {
   line-height: 1.6;
   padding: 28px;
   text-align: center;
+}
+
+.empty-state-panel.compact {
+  padding: 18px;
+}
+
+.empty-state-panel.compact span {
+  font-size: 18px;
+  height: 40px;
+  width: 40px;
 }
 
 .empty-state-panel span {

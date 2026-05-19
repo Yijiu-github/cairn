@@ -95,6 +95,39 @@ describe('workspace-core app', () => {
     }
   });
 
+  it('requires bearer auth when an auth token is configured', async () => {
+    const app = await createWorkspaceCoreApp({
+      authToken: 'desktop-launch-token',
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const missingAuthResponse = await app.inject({ method: 'GET', url: '/health' });
+      expect(missingAuthResponse.statusCode).toBe(401);
+
+      const wrongAuthResponse = await app.inject({
+        headers: { authorization: 'Bearer wrong-token' },
+        method: 'GET',
+        url: '/health',
+      });
+      expect(wrongAuthResponse.statusCode).toBe(401);
+
+      const authorizedResponse = await app.inject({
+        headers: { authorization: 'Bearer desktop-launch-token' },
+        method: 'GET',
+        url: '/health',
+      });
+      expect(authorizedResponse.statusCode).toBe(200);
+      expect(authorizedResponse.json()).toEqual({
+        ok: true,
+        service: 'workspace-core',
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
   it('creates and reads a single-worker run', async () => {
     const app = await createWorkspaceCoreApp({
       container: createDefaultWorkspaceCoreContainer(),

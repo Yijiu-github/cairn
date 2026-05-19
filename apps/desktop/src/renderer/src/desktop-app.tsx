@@ -27,11 +27,59 @@ import type { DesktopView } from './desktop-model';
 
 export function DesktopApp() {
   const [activeView, setActiveView] = useState<DesktopView>(() => readStoredView());
+  const [workspaceCoreStatus, setWorkspaceCoreStatus] =
+    useState<
+      Awaited<ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['getStatus']>>
+    >();
+  const [smokeResult, setSmokeResult] =
+    useState<
+      Awaited<ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['runMockSmoke']>>
+    >();
+  const [workspaceCoreBusy, setWorkspaceCoreBusy] = useState(false);
+  const [workspaceCoreError, setWorkspaceCoreError] = useState<string>();
   const bridgeLabel = useMemo(() => window.cairnDesktop?.app.name ?? 'Cairn Desktop', []);
 
   useEffect(() => {
     window.localStorage.setItem('cairn.desktop.activeView', activeView);
   }, [activeView]);
+
+  useEffect(() => {
+    void refreshWorkspaceCoreStatus();
+  }, []);
+
+  async function refreshWorkspaceCoreStatus() {
+    if (window.cairnDesktop?.workspaceCore === undefined) {
+      return;
+    }
+
+    setWorkspaceCoreBusy(true);
+    setWorkspaceCoreError(undefined);
+    try {
+      setWorkspaceCoreStatus(await window.cairnDesktop.workspaceCore.getStatus());
+    } catch (error) {
+      setWorkspaceCoreError(toErrorMessage(error));
+    } finally {
+      setWorkspaceCoreBusy(false);
+    }
+  }
+
+  async function runMockSmoke() {
+    if (window.cairnDesktop?.workspaceCore === undefined) {
+      return;
+    }
+
+    setWorkspaceCoreBusy(true);
+    setWorkspaceCoreError(undefined);
+    try {
+      const result = await window.cairnDesktop.workspaceCore.runMockSmoke();
+      setSmokeResult(result);
+      setWorkspaceCoreStatus(await window.cairnDesktop.workspaceCore.getStatus());
+    } catch (error) {
+      setWorkspaceCoreError(toErrorMessage(error));
+    } finally {
+      setWorkspaceCoreBusy(false);
+    }
+  }
 
   return (
     <main className="desktop-shell">
@@ -62,8 +110,8 @@ export function DesktopApp() {
         </nav>
 
         <InlineAlert tone="warning" title="Preview-safe shell">
-          This desktop build uses static fixtures only. It does not start Workspace Core or expose
-          local paths.
+          This desktop build starts a local Workspace Core sidecar for a bounded mock smoke path. It
+          still does not expose local paths or arbitrary system actions.
         </InlineAlert>
 
         <div className="sidebar-footer" aria-label="Shell metadata">
@@ -82,17 +130,36 @@ export function DesktopApp() {
           <div className="top-bar-actions">
             <div className="shell-status-row" aria-label="Shell status">
               <StatusBadge label="Preview-safe" tone="success" metadata="static" />
-              <StatusBadge label="Workspace Core" tone="neutral" metadata="not connected" />
+              <StatusBadge
+                label="Workspace Core"
+                metadata={workspaceCoreStatus?.state ?? 'checking'}
+                tone={toStatusTone(workspaceCoreStatus?.state)}
+              />
             </div>
-            <Button disabled variant="secondary">
-              Connect Workspace Core
+            <Button
+              disabled={window.cairnDesktop?.workspaceCore === undefined}
+              loading={workspaceCoreBusy}
+              onClick={() => {
+                void refreshWorkspaceCoreStatus();
+              }}
+              variant="secondary"
+            >
+              Refresh Core
             </Button>
           </div>
         </header>
 
         <AgentStatusStrip agents={desktopShellModel.statusStrip} />
 
-        {activeView === 'home' ? <HomeView /> : undefined}
+        {activeView === 'home' ? (
+          <HomeView
+            onRunMockSmoke={runMockSmoke}
+            smokeResult={smokeResult}
+            status={workspaceCoreStatus}
+            statusError={workspaceCoreError}
+            statusLoading={workspaceCoreBusy}
+          />
+        ) : undefined}
         {activeView === 'run-detail' ? <RunDetailView /> : undefined}
         {activeView === 'artifact-review' ? <ArtifactReviewView /> : undefined}
         {activeView === 'settings' ? <SettingsView /> : undefined}
@@ -107,6 +174,14 @@ const viewTitle: Record<DesktopView, string> = {
   'run-detail': 'Run Detail',
   'settings': 'Source Roots / Settings',
 };
+
+type WorkspaceCoreStatus = Awaited<
+  ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['getStatus']>
+>;
+
+type WorkspaceCoreSmokeResult = Awaited<
+  ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['runMockSmoke']>
+>;
 
 function readStoredView(): DesktopView {
   if (typeof window === 'undefined') {
@@ -127,10 +202,32 @@ function readStoredView(): DesktopView {
   return 'home';
 }
 
-function HomeView() {
+interface HomeViewProps {
+  readonly onRunMockSmoke: () => Promise<void>;
+  readonly smokeResult?: WorkspaceCoreSmokeResult | undefined;
+  readonly status?: WorkspaceCoreStatus | undefined;
+  readonly statusError?: string | undefined;
+  readonly statusLoading: boolean;
+}
+
+function HomeView({
+  onRunMockSmoke,
+  smokeResult,
+  status,
+  statusError,
+  statusLoading,
+}: HomeViewProps) {
   return (
     <div className="content-grid">
       <section className="content-stack">
+        <WorkspaceCorePanel
+          onRunMockSmoke={onRunMockSmoke}
+          smokeResult={smokeResult}
+          status={status}
+          statusError={statusError}
+          statusLoading={statusLoading}
+        />
+
         <section className="content-stack" aria-label="Handoff inbox">
           {desktopShellModel.handoffs.map((handoff) => (
             <HandoffQueueItem key={`${handoff.sourceLabel}-${handoff.title}`} {...handoff} />
@@ -150,6 +247,96 @@ function HomeView() {
         <NextSafeStepCard />
       </aside>
     </div>
+  );
+}
+
+interface WorkspaceCorePanelProps {
+  readonly onRunMockSmoke: () => Promise<void>;
+  readonly smokeResult?: WorkspaceCoreSmokeResult | undefined;
+  readonly status?: WorkspaceCoreStatus | undefined;
+  readonly statusError?: string | undefined;
+  readonly statusLoading: boolean;
+}
+
+function WorkspaceCorePanel({
+  onRunMockSmoke,
+  smokeResult,
+  status,
+  statusError,
+  statusLoading,
+}: WorkspaceCorePanelProps) {
+  const coreAvailable = window.cairnDesktop?.workspaceCore !== undefined;
+  const isHealthy = status?.state === 'healthy';
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="card-title-row">
+          <div>
+            <CardTitle>Workspace Core sidecar</CardTitle>
+            <CardDescription>
+              Local loopback sidecar with a per-launch token and bounded mock runtime smoke.
+            </CardDescription>
+          </div>
+          <StatusBadge
+            label={status?.service ?? 'workspace-core'}
+            metadata={status?.state ?? 'checking'}
+            tone={toStatusTone(status?.state)}
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="content-stack">
+        {statusError === undefined ? undefined : (
+          <InlineAlert tone="danger" title="Workspace Core action failed">
+            {statusError}
+          </InlineAlert>
+        )}
+
+        <MetadataList
+          items={[
+            { label: 'Connection', value: status?.baseUrl ?? 'checking sidecar' },
+            { label: 'Process', value: status?.pid ?? 'pending' },
+            { label: 'Last error', value: status?.lastError ?? 'none' },
+            { label: 'Runtime', value: 'mock adapter' },
+          ]}
+        />
+
+        <div className="button-row">
+          <Button
+            disabled={!coreAvailable || !isHealthy}
+            loading={statusLoading}
+            onClick={() => {
+              void onRunMockSmoke();
+            }}
+          >
+            Run Mock Smoke
+          </Button>
+        </div>
+
+        {smokeResult === undefined ? (
+          <div className="empty-state-panel compact">
+            <span aria-hidden="true">✓</span>
+            <p>
+              Run the bounded smoke path to create a Workspace Core run and read artifacts/trace.
+            </p>
+          </div>
+        ) : (
+          <MetadataList
+            items={[
+              { label: 'Run', value: `${smokeResult.runId} · ${smokeResult.runStatus}` },
+              { label: 'Task', value: `${smokeResult.taskId} · ${smokeResult.taskStatus}` },
+              { label: 'AgentRuns', value: smokeResult.agentRunStatuses.join(', ') },
+              {
+                label: 'Artifacts',
+                value: `${smokeResult.artifactCount.toString()} · ${smokeResult.artifactRoles.join(', ')}`,
+              },
+              { label: 'Trace events', value: smokeResult.traceCount },
+              { label: 'Final response', value: smokeResult.finalResponseRef ?? 'none' },
+            ]}
+          />
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -322,4 +509,30 @@ function SafetyDefaultsCard() {
       </CardContent>
     </Card>
   );
+}
+
+function toStatusTone(
+  state: WorkspaceCoreStatus['state'] | undefined,
+): 'neutral' | 'info' | 'success' | 'warning' | 'danger' {
+  if (state === 'healthy') {
+    return 'success';
+  }
+
+  if (state === 'starting' || state === undefined) {
+    return 'info';
+  }
+
+  if (state === 'stopping' || state === 'stopped') {
+    return 'warning';
+  }
+
+  return 'danger';
+}
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'Unknown desktop bridge error.';
 }
