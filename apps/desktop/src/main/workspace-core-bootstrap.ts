@@ -23,7 +23,13 @@ export interface WriteWorkspaceCoreDiagnosticFileOptions {
 }
 
 export interface WriteDesktopSmokeSignalFileOptions {
-  readonly event: 'main-window-created' | 'main-window-ready-to-show' | 'main-process-loaded';
+  readonly event:
+    | 'main-process-after-app-ready'
+    | 'main-process-after-bootstrap'
+    | 'main-process-after-port-allocation'
+    | 'main-process-loaded'
+    | 'main-window-created'
+    | 'main-window-ready-to-show';
   readonly now?: Date | undefined;
   readonly path: string;
 }

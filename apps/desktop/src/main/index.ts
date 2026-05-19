@@ -18,7 +18,10 @@ import {
   createWorkspaceCoreSidecarConfig,
 } from './workspace-core-sidecar.js';
 
+import type { WriteDesktopSmokeSignalFileOptions } from './workspace-core-bootstrap.js';
 import type { WorkspaceCoreSidecarStatus } from './workspace-core-sidecar.js';
+
+type DesktopSmokeSignalEvent = WriteDesktopSmokeSignalFileOptions['event'];
 
 // Electron main process is the platform boundary. The repository-wide config
 // package does not exist yet, so the desktop entry point keeps these two direct
@@ -70,9 +73,7 @@ function createMainWindow(): BrowserWindow {
   return window;
 }
 
-function writeDesktopSmokeSignal(
-  event: 'main-window-created' | 'main-window-ready-to-show' | 'main-process-loaded',
-): void {
+function writeDesktopSmokeSignal(event: DesktopSmokeSignalEvent): void {
   if (desktopWindowSmokeSignalPath === undefined) {
     return;
   }
@@ -122,37 +123,59 @@ function reportWorkspaceCoreStartupFailure(status: WorkspaceCoreSidecarStatus): 
   });
 }
 
-await app.whenReady();
-
 app.setAppUserModelId('io.cairn.app');
 
-const workspaceCoreAuthToken = randomBytes(32).toString('hex');
-const workspaceCoreSidecar = new WorkspaceCoreSidecarManager(
-  createWorkspaceCoreSidecarConfig({
-    authToken: workspaceCoreAuthToken,
-    baseEnv: mainProcessEnv,
-    nodeExecutable: resolveNodeExecutable(),
-    port: await findFreeLoopbackPort(),
-    repoRoot: join(__dirname, '../../../..'),
-    userDataPath: app.getPath('userData'),
-  }),
-);
-bootstrapDesktopMain({
-  createMainWindow,
-  registerWorkspaceCoreIpcHandlers: () => {
-    registerWorkspaceCoreIpcHandlers(workspaceCoreSidecar, workspaceCoreAuthToken);
-  },
-  reportWorkspaceCoreStartupFailure,
-  startWorkspaceCoreSidecar: () => workspaceCoreSidecar.start(),
-  writeWorkspaceCoreDiagnostic: (status) =>
-    writeWorkspaceCoreDiagnosticFile({
-      status,
-      userDataPath: app.getPath('userData'),
-    }),
-});
+let workspaceCoreSidecar: WorkspaceCoreSidecarManager | undefined;
+
+// Electron's app readiness can stall when the main ESM module is held open by
+// top-level await. Keep startup detached so module evaluation can finish first.
+// eslint-disable-next-line unicorn/prefer-top-level-await
+void startDesktopMain();
+
+async function startDesktopMain(): Promise<void> {
+  try {
+    await app.whenReady();
+    writeDesktopSmokeSignal('main-process-after-app-ready');
+
+    const workspaceCoreAuthToken = randomBytes(32).toString('hex');
+    const workspaceCorePort = await findFreeLoopbackPort();
+    writeDesktopSmokeSignal('main-process-after-port-allocation');
+
+    const sidecar = new WorkspaceCoreSidecarManager(
+      createWorkspaceCoreSidecarConfig({
+        authToken: workspaceCoreAuthToken,
+        baseEnv: mainProcessEnv,
+        nodeExecutable: resolveNodeExecutable(),
+        port: workspaceCorePort,
+        repoRoot: join(__dirname, '../../../..'),
+        userDataPath: app.getPath('userData'),
+      }),
+    );
+    workspaceCoreSidecar = sidecar;
+
+    bootstrapDesktopMain({
+      createMainWindow,
+      registerWorkspaceCoreIpcHandlers: () => {
+        registerWorkspaceCoreIpcHandlers(sidecar, workspaceCoreAuthToken);
+      },
+      reportWorkspaceCoreStartupFailure,
+      startWorkspaceCoreSidecar: () => sidecar.start(),
+      writeWorkspaceCoreDiagnostic: (status) =>
+        writeWorkspaceCoreDiagnosticFile({
+          status,
+          userDataPath: app.getPath('userData'),
+        }),
+    });
+    writeDesktopSmokeSignal('main-process-after-bootstrap');
+  } catch (error) {
+    console.error('Desktop main startup failed.', {
+      error: error instanceof Error ? error.message : 'unknown error',
+    });
+  }
+}
 
 app.on('before-quit', () => {
-  void workspaceCoreSidecar.stop();
+  void workspaceCoreSidecar?.stop();
 });
 
 app.on('activate', () => {

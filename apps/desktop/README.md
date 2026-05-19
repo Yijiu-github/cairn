@@ -45,10 +45,13 @@ The current bridge is intentionally small:
   summary.
 - Startup writes a non-secret diagnostic snapshot to
   `<userData>/diagnostics/workspace-core-sidecar.json`.
+- The main process intentionally avoids top-level `await app.whenReady()`; Electron ESM startup can
+  stall app readiness when module evaluation stays suspended.
 
 Known limits:
 
 - The sidecar command is a development wiring that runs `tsx src/server.ts` from
   `apps/workspace-core`; packaged production sidecar bundling is not done yet.
 - The verified automated smoke covers desktop bootstrap order, the sidecar manager, and the
-  Workspace Core HTTP path. Electron window-level smoke is still a follow-up item.
+  Workspace Core HTTP path. Manual Electron window-level smoke reaches `ready-to-show`; automated
+  Electron e2e remains a follow-up item.
