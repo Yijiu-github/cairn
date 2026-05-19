@@ -178,9 +178,9 @@ it('maps a deterministic Codex short-task stream into a terminal adapter snapsho
   child.stdoutJson({
     type: 'item.completed',
     item: {
-      type: 'message',
-      role: 'assistant',
-      content: [{ type: 'output_text', text: 'Cairn smoke ok' }],
+      id: 'item_short_task',
+      type: 'agent_message',
+      text: 'Cairn smoke ok',
     },
   });
   child.close(0);
@@ -192,7 +192,7 @@ it('maps a deterministic Codex short-task stream into a terminal adapter snapsho
     }),
     expect.objectContaining({
       type: 'token',
-      text: 'Cairn smoke ok',
+      delta: 'Cairn smoke ok',
     }),
     expect.objectContaining({
       type: 'succeeded',
@@ -279,8 +279,10 @@ Expected: commit contains only files changed for the deterministic Codex smoke s
 
 - [ ] **Step 1: Add or refine factory proof for Codex runtime selection**
 
-In `apps/workspace-core/src/runtime/runtime-gateway-factory.spec.ts`, ensure there is a test with
-this assertion shape. Use the current `RecordingRuntimeAdapter` helper if it already exists.
+In `apps/workspace-core/src/runtime/runtime-gateway-factory.spec.ts`, first look for an equivalent
+Codex runtime selection test. If it already exists, extend only the missing assertions instead of
+adding a duplicate test. The assertion shape should prove the configured `codex` runtime initializes
+and wraps a `RuntimeAdapter`. Use the current `RecordingRuntimeAdapter` helper if it already exists.
 
 ```ts
 it('selects a Codex RuntimeAdapter-backed gateway when configured', async () => {
@@ -365,10 +367,12 @@ Expected: mock remains the default branch and no route handler imports a concret
 
 - [ ] **Step 4: Add route-level submit/drain proof through a RuntimeAdapter-backed gateway**
 
-In `apps/workspace-core/src/service/app.spec.ts`, add or refine one test that injects a deterministic
-`RuntimeAdapter` through `new RuntimeAdapterGatewayPort(adapter)`, submits through
-`POST /v1/tasks/:taskId/agent-runs`, drains through `POST /v1/agent-runs/:agentRunId/drain-runtime`,
-and reads final state through existing GET routes.
+In `apps/workspace-core/src/service/app.spec.ts`, first look for an equivalent RuntimeAdapter-backed
+submit/drain route test. If it already exists, extend only the missing assertions instead of adding a
+duplicate test. The proof must inject a deterministic `RuntimeAdapter` through
+`new RuntimeAdapterGatewayPort(adapter)`, submit through `POST /v1/tasks/:taskId/agent-runs`, drain
+through `POST /v1/agent-runs/:agentRunId/drain-runtime`, and read final state through existing GET
+routes.
 
 ```ts
 it('updates AgentRun, Task, and Run state from a RuntimeAdapter-backed stream', async () => {
@@ -488,11 +492,14 @@ of adding a duplicate section.
 - [ ] **Step 2: Add or refine the opt-in manual smoke procedure**
 
 In `docs/engineering/local-dev-setup.md`, add a section with this content shape, adjusted to the
-current surrounding language:
+current surrounding language. The resulting section must include copy-pastable HTTP examples, not
+only prose. Commands must not include real credentials or business task content.
 
 - Heading: `### Manual Codex Runtime Smoke (Opt-In)`
 - Intro: this smoke is not part of default `pnpm test` or CI, and should run only on a machine with
-  Codex CLI installed and user-configured credentials.
+  Codex CLI installed and user-configured credentials. State that all example prompts use synthetic
+  smoke text, and that users must not paste real credentials, repository secrets, customer data, or
+  business task content into the smoke commands.
 - Step 1: start Workspace Core with explicit Codex runtime selection:
 
   ```bash
@@ -502,9 +509,96 @@ current surrounding language:
   pnpm --filter @cairn/workspace-core dev
   ```
 
-- Step 2: in another terminal, create a single-worker run, list its task, submit an AgentRun, and
-  drain the runtime stream through the HTTP API. Use the existing bearer token setup if the local
-  server was started with auth enabled.
+- Step 2: in another terminal, set base URL and the optional auth header:
+
+  ```bash
+  export CAIRN_BASE_URL="${CAIRN_BASE_URL:-http://127.0.0.1:4321}"
+
+  # Optional: set only when Workspace Core was started with CAIRN_WORKSPACE_CORE_AUTH_TOKEN.
+  export CAIRN_AUTH_HEADER="${CAIRN_AUTH_HEADER:-}"
+  # Example shape only; do not paste real tokens into committed docs or issue reports:
+  # export CAIRN_AUTH_HEADER="Authorization: Bearer local-dev-token"
+  ```
+
+- Step 3: create a single-worker run and extract `runId` with `jq`:
+
+  ```bash
+  export CAIRN_WORKSPACE_ID="${CAIRN_WORKSPACE_ID:-01J000000000000000000000W0}"
+  export CAIRN_ORIGIN_EVENT_ID="${CAIRN_ORIGIN_EVENT_ID:-01J000000000000000000000E0}"
+
+  RUN_RESPONSE="$(
+    curl -sS -X POST "$CAIRN_BASE_URL/v1/workspaces/$CAIRN_WORKSPACE_ID/runs" \
+      ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+      -H 'content-type: application/json' \
+      -d "$(
+        jq -nc --arg originEventId "$CAIRN_ORIGIN_EVENT_ID" '{
+          originEventId: $originEventId,
+          task: {
+            taskKind: "analysis",
+            title: "Codex smoke",
+            brief: "Run a synthetic Codex smoke prompt."
+          }
+        }'
+      )"
+  )"
+  export CAIRN_RUN_ID="$(printf '%s' "$RUN_RESPONSE" | jq -r '.orchestrationRunId')"
+  printf 'runId=%s\n' "$CAIRN_RUN_ID"
+  ```
+
+- Step 4: list run tasks and extract `taskId` with `jq`:
+
+  ```bash
+  TASKS_RESPONSE="$(
+    curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/tasks" \
+      ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"}
+  )"
+  export CAIRN_TASK_ID="$(printf '%s' "$TASKS_RESPONSE" | jq -r '.items[0].taskId')"
+  printf 'taskId=%s\n' "$CAIRN_TASK_ID"
+  ```
+
+- Step 5: submit an AgentRun with the exact prompt `Reply with exactly: Cairn smoke ok`, then extract
+  `agentRunId` with `jq`:
+
+  ```bash
+  AGENT_RUN_RESPONSE="$(
+    curl -sS -X POST "$CAIRN_BASE_URL/v1/tasks/$CAIRN_TASK_ID/agent-runs" \
+      ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+      -H 'content-type: application/json' \
+      -d '{
+        "runtimeType": "codex",
+        "model": "default",
+        "prompt": "Reply with exactly: Cairn smoke ok"
+      }'
+  )"
+  export CAIRN_AGENT_RUN_ID="$(printf '%s' "$AGENT_RUN_RESPONSE" | jq -r '.agentRunId')"
+  printf 'agentRunId=%s\n' "$CAIRN_AGENT_RUN_ID"
+  ```
+
+- Step 6: drain runtime:
+
+  ```bash
+  curl -sS -X POST "$CAIRN_BASE_URL/v1/agent-runs/$CAIRN_AGENT_RUN_ID/drain-runtime" \
+    ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} \
+    -H 'content-type: application/json' \
+    -d '{}' | jq
+  ```
+
+- Step 7: read final AgentRun, Task, and OrchestrationRun state:
+
+  ```bash
+  curl -sS "$CAIRN_BASE_URL/v1/agent-runs/$CAIRN_AGENT_RUN_ID" \
+    ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} | jq '{runId, status, providerRunId, outputRef, error}'
+
+  curl -sS "$CAIRN_BASE_URL/v1/tasks/$CAIRN_TASK_ID" \
+    ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} | jq '{taskId, status, artifactRefs}'
+
+  curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID" \
+    ${CAIRN_AUTH_HEADER:+-H "$CAIRN_AUTH_HEADER"} | jq '{orchestrationRunId, status, finalResponseRef, error}'
+  ```
+
+- Alternative without `jq`: if `jq` is unavailable, document that the user can save each response to
+  a `.json` file and copy the `orchestrationRunId`, first `items[0].taskId`, and `agentRunId` fields
+  manually into `CAIRN_RUN_ID`, `CAIRN_TASK_ID`, and `CAIRN_AGENT_RUN_ID` before continuing.
 - Expected result: the AgentRun, Task, and OrchestrationRun reach `succeeded` for a short prompt such
   as `Reply with exactly: Cairn smoke ok`. Runtime stdout/stderr and provider run id should be
   visible in local logs or returned state where currently supported.
