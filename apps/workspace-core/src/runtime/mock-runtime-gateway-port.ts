@@ -35,6 +35,11 @@ export class MockRuntimeGatewayPort implements RuntimeGatewayPort {
         };
         yield { type: 'heartbeat', at: Date.parse('2026-05-14T01:00:02.500Z') };
         yield {
+          type: 'token',
+          at: Date.parse('2026-05-14T01:00:02.750Z'),
+          delta: 'mock response',
+        };
+        yield {
           type: 'succeeded',
           at: Date.parse('2026-05-14T01:00:03.000Z'),
           finalArtifactRef,

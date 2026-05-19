@@ -235,7 +235,7 @@ describe('workspace-core app', () => {
       expect(runResponse.json()).toMatchObject({
         orchestrationRunId: runId,
         status: 'succeeded',
-        finalResponseRef: expect.stringContaining('artifact:') as unknown,
+        finalResponseRef: expect.stringMatching(/^[0-9A-HJKMNP-TV-Z]{26}$/) as unknown,
       });
     } finally {
       await app.close();

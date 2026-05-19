@@ -107,6 +107,66 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
     }
   });
 
+  it('submits runtime work with prompt artifacts using SQLite foreign keys', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+
+    const repository = openRepository(databasePath);
+
+    try {
+      const created = await repository.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Runtime submit',
+          brief: 'Verify runtime input artifacts keep SQLite referential integrity.',
+        },
+      });
+
+      const submitted = await repository.container.orchestrationRuns.submitTaskToRuntime({
+        taskId: created.task.taskId,
+        runtimeType: 'codex',
+        model: 'default',
+        prompt: 'Say hello.',
+      });
+
+      await expect(
+        repository.container.repository.getAgentRun(submitted.agentRun.runId),
+      ).resolves.toMatchObject({
+        runId: submitted.agentRun.runId,
+        inputRef: expect.any(String) as unknown,
+      });
+      await expect(
+        repository.container.repository.listArtifactsByRun(created.run.orchestrationRunId),
+      ).resolves.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            artifactRole: 'input',
+            runId: submitted.agentRun.runId,
+          }),
+        ]),
+      );
+
+      await expect(
+        repository.container.orchestrationRuns.drainAgentRunRuntime({
+          agentRunId: submitted.agentRun.runId,
+        }),
+      ).resolves.toMatchObject({
+        agentRunId: submitted.agentRun.runId,
+      });
+      await expect(
+        repository.container.repository.getRun(created.run.orchestrationRunId),
+      ).resolves.toMatchObject({
+        status: 'succeeded',
+        finalResponseRef: expect.stringMatching(/^[0-9A-HJKMNP-TV-Z]{26}$/) as unknown,
+      });
+    } finally {
+      repository.close();
+    }
+  });
+
   it('persists SourceRoots and ContextPack manifests across repository instances', async () => {
     const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
     tempDirectories.push(directory);

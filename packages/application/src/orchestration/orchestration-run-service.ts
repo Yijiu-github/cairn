@@ -255,11 +255,11 @@ export class OrchestrationRunService {
     };
     const runtimeInputs = [...(input.inputs ?? [])];
     const agentRunId = this.ids.agentRunId();
+    let promptArtifact: RuntimeArtifactMetadata | undefined;
     if (input.prompt !== undefined) {
-      const promptArtifact = await this.createRuntimeInputArtifact(
+      promptArtifact = await this.createRuntimeInputArtifact(
         runningRun,
         dispatchedTask,
-        agentRunId,
         input.prompt,
         now,
       );
@@ -288,6 +288,9 @@ export class OrchestrationRunService {
     await this.repository.updateRun(runningRun);
     await this.repository.updateTask(dispatchedTask);
     await this.repository.createAgentRun(agentRun);
+    if (promptArtifact !== undefined) {
+      await this.repository.updateArtifact({ ...promptArtifact, runId: agentRun.runId });
+    }
     await this.appendTrace(runningRun, dispatchedTask, agentRun, 'task.dispatched', 'info', {
       runtimeType: input.runtimeType,
     });
@@ -1026,7 +1029,6 @@ export class OrchestrationRunService {
   private async createRuntimeInputArtifact(
     run: OrchestrationRun,
     task: Task,
-    agentRunId: AgentRunId,
     prompt: string,
     now: string,
   ): Promise<RuntimeArtifactMetadata> {
@@ -1051,7 +1053,6 @@ export class OrchestrationRunService {
       workspaceId: task.workspaceId,
       orchestrationRunId: task.orchestrationRunId,
       taskId: task.taskId,
-      runId: agentRunId,
       artifactRole: 'input',
       kind: 'log',
       formatVersion: 'runtime-input.v1',

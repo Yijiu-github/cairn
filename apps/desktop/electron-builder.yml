@@ -1,6 +1,7 @@
 appId: io.cairn.app
 productName: Cairn
 copyright: Copyright © 2026 Cairn
+electronVersion: 33.4.11
 files:
   - out/**
 directories:
