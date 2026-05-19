@@ -1,7 +1,7 @@
 # 项目状态 / Project Status
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-19
+> 最后更新：2026-05-20
 > 目的：给人类与多 agent 协作提供当前事实基线，减少“我以为已经有 Desktop/Web”的误判。
 > 协作口径：自 2026-05-20 起，Cairn 当前按产品裁剪人 + Codex 两方推进；旧的白霓 / 海棠固定角色分工不再作为项目计划依据。
 
@@ -45,6 +45,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - R1 runtime artifact/trace demo loop：可通过 `POST /v1/tasks/:taskId/agent-runs` 提交任务，落 bounded artifact payload refs，并通过 `GET /v1/artifacts/:artifactId/payload` 读取 payload text。
 - Runtime gateway factory：服务默认使用 mock runtime，也可通过 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 显式注入 Codex RuntimeAdapter。
 - Runtime gateway hardening：Codex adapter 可解析 Workspace Core runtime input artifact payload；operator cancel 已能下沉到 runtime cancel，真实长任务 smoke 仍为手动步骤。
+- Runtime Gateway / Workspace Core M1 real-runtime loop：Codex adapter 确定性短任务 smoke 与 RuntimeAdapter-backed Workspace Core submit/drain 终态证明已有自动化测试覆盖；真实 Codex CLI smoke 仍是 opt-in 手动步骤，不进入默认 CI。
 - Orchestration Control R1a API：pause / resume / cancel run、retry task、rerun、operator note 的最小 HTTP 接管面。
 - SQLite application repository：服务启动可执行 domain 迁移，并用本地 SQLite 持久化 run/task/agent-run 状态。
 - Code Context R1a/R1b-a API：
@@ -118,7 +119,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 | `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                                                                   |
 | `apps/ui-preview`           | 0                | 当前以 typecheck / lint / production build 作为验证门禁                                                                   |
 | `apps/desktop`              | 4                | main module 非阻塞加载、bootstrap 顺序、sidecar manager、Workspace Core mock smoke client；另以 typecheck/lint/build 验证 |
-| `apps/workspace-core`       | 4                | Fastify app、config、SQLite repository、local code index scanner                                                          |
+| `apps/workspace-core`       | 6                | Fastify app、config、SQLite repository、runtime gateway factory、local artifact store、local code index scanner           |
 
 ### 本地环境注意事项
 
@@ -152,6 +153,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Planning Output Model：`planner_output_ref` 指向独立 PlanningOutput，支持 action tree、preconditions、blocked reason、replan reason 的 schema / storage / application 闭环，并保留 TraceEvent 镜像。
 - Planning Output read API：Workspace Core 提供 `GET /v1/runs/:runId/planning-output`。
 - Runtime Drain Slice：Workspace Core 可把 submitted AgentRun 的 AdapterStreamEvent 应用回 run/task/agent-run 状态，并已有 RuntimeAdapter-backed gateway 注入测试。
+- M1 real-runtime loop：Codex adapter 确定性短任务 smoke 与 Workspace Core RuntimeAdapter-backed submit/drain 证明都在自动化测试内；真实 Codex CLI smoke 已文档化为 opt-in 手动流程。
 - Artifact / Trace Read API：Workspace Core 提供 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口。
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
@@ -169,7 +171,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Desktop 真实 Workspace Core UI 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前只有 bounded mock smoke 摘要，不是完整产品数据面）。
 - Artifact store 的真实文件内容写入、保留策略与导出。
 - 真实 Goal Planner 与 Planner 到多 Task DAG 的生成逻辑。
-- Codex adapter 手动真实长任务 smoke 验证与更完整的 payload / long-run 证据收集。
+- 真实 Codex CLI 手动 smoke 执行结果记录，以及更完整的 payload / long-run 证据收集。
 - 真实 Runtime Gateway cancellation / kill、AgentRun retry、protected step approve/reject 与 operator control UI。
 - TraceEvent replay UI。
 - 代码上下文索引的文本搜索、symbol outline、import/export dependency edge。
@@ -196,7 +198,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 目标：推进 R1 控制台护城河，优先把 Codex runtime 真实闭环和 Artifact / Trace 基线接近可演示状态。
 
-1. **Runtime Gateway 真实闭环**：将 Codex CLI adapter 接入 workspace-core 的实际执行路径，形成可观测 AgentRun 流。
+1. **Runtime Gateway 真实闭环**：在 M1 自动化证据基础上，继续收集真实 Codex CLI opt-in smoke 证据，并完善可观测 AgentRun 流。
 2. **Artifact / Trace 基线**：明确 artifact store 的文件边界、payload 引用、TraceEvent replay 输入格式。
 3. **Operator control polish**：补齐取消、runtime kill、失败映射与重试路径的最小真实行为。
 4. **Desktop Shell 接入准备**：在当前 Electron 静态骨架上，等待 Workspace Core、Codex adapter、Artifact / Trace 基线稳定后，再接 sidecar 管理、preload allowlist 与真实数据。
@@ -225,6 +227,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 | 日期       | 变更                                                            |
 | ---------- | --------------------------------------------------------------- |
+| 2026-05-20 | 更新 M1 Runtime Gateway / Workspace Core 真实运行时闭环状态     |
 | 2026-05-19 | 更新 `apps/desktop` 最小 Workspace Core dev sidecar bridge 状态 |
 | 2026-05-17 | 新增 `apps/desktop` Electron 最小静态 shell 骨架状态说明        |
 | 2026-05-16 | 补充 UI preview、Node 26 验证观察项与工程体检同步建议           |

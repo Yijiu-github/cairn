@@ -64,6 +64,7 @@
 - **UI Preview Planning Output**：Run Detail preview 新增静态 PlanningOutput 展示，覆盖 planning summary、blocked reason、preconditions 与 action tree。
 - **Runtime Drain Slice**：新增显式 runtime stream drain 路径，Workspace Core 可把 submitted AgentRun 的 AdapterStreamEvent 应用回 run/task/agent-run 状态，为 Codex CLI 真实闭环铺路。
 - **Runtime Drain Slice**：补充 RuntimeAdapter-backed gateway 注入测试，验证 Workspace Core submit/drain API 可走统一 RuntimeAdapter 事件流。
+- **M1 real runtime loop**：确认 Codex adapter 确定性短任务 smoke，强化 Workspace Core RuntimeAdapter-backed submit/drain 终态证明，并补充可复制的手动 Codex smoke 文档；真实 Codex CLI 仍为 opt-in 手动验证，不进入默认 CI。
 - **Runtime Artifact/Trace Demo Loop**：新增 Task runtime submit、bounded artifact payload reference/read、runtime output artifact metadata 与 TraceEvent replay source 闭环。
 - **Artifact / Trace Read API**：Workspace Core 实现 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口，供 Run Detail / Replay UI 消费。
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
