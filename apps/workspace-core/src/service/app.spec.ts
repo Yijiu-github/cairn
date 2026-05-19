@@ -2,6 +2,11 @@
 
 import { describe, expect, it } from 'vitest';
 
+import { createMockRuntimeAdapter } from '@cairn/runtime-gateway/adapters/mock';
+
+import { MockRuntimeGatewayPort } from '../runtime/mock-runtime-gateway-port.js';
+import { RuntimeAdapterGatewayPort } from '../runtime/runtime-adapter-gateway-port.js';
+
 import { createWorkspaceCoreApp } from './app.js';
 import { createDefaultWorkspaceCoreContainer } from './container.js';
 
@@ -234,6 +239,70 @@ describe('workspace-core app', () => {
       });
     } finally {
       await app.close();
+    }
+  });
+
+  it('drains runtime events through a RuntimeAdapter-backed gateway port', async () => {
+    const runtimeAdapter = createMockRuntimeAdapter({ clock: () => 1_715_654_400_000 });
+    await runtimeAdapter.init({
+      workdir: '/tmp/cairn-runtime-adapter-gateway-test',
+      config: {},
+      secrets: {
+        async get() {
+          await Promise.resolve();
+          return undefined;
+        },
+      },
+      logger: {
+        debug() {
+          return;
+        },
+        info() {
+          return;
+        },
+        warn() {
+          return;
+        },
+        error() {
+          return;
+        },
+      },
+    });
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer({
+        runtimeGateway: new RuntimeAdapterGatewayPort(runtimeAdapter),
+      }),
+      logger: false,
+    });
+
+    try {
+      const { runId, taskId } = await createSubmittedRun(app);
+      const agentRunsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}/agent-runs`,
+      });
+      const agentRun = first(agentRunsResponse.json<{ items: { runId: string }[] }>().items);
+
+      const drainResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/agent-runs/${agentRun.runId}/drain-runtime`,
+        payload: {},
+      });
+
+      expect(drainResponse.statusCode).toBe(202);
+      expect(drainResponse.json()).toMatchObject({
+        agentRunId: agentRun.runId,
+        eventCount: 5,
+      });
+
+      const runResponse = await app.inject({ method: 'GET', url: `/v1/runs/${runId}` });
+      expect(runResponse.json()).toMatchObject({
+        orchestrationRunId: runId,
+        status: 'succeeded',
+      });
+    } finally {
+      await app.close();
+      await runtimeAdapter.shutdown();
     }
   });
 
@@ -832,6 +901,36 @@ describe('workspace-core app', () => {
         status: 'cancelled',
         error: { code: 'CANCELLED_BY_OPERATOR' },
       });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('dispatches runtime cancel when cancelling a submitted run through the operator route', async () => {
+    const runtimeGateway = new MockRuntimeGatewayPort();
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer({ runtimeGateway }),
+      logger: false,
+    });
+
+    try {
+      const { runId, taskId } = await createSubmittedRun(app);
+      const agentRunsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}/agent-runs`,
+      });
+      const agentRun = first(agentRunsResponse.json<{ items: { runId: string }[] }>().items);
+
+      const cancelResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/cancel`,
+        payload: { reason: 'Operator stopped it.' },
+      });
+
+      expect(cancelResponse.statusCode).toBe(200);
+      expect(runtimeGateway.cancelled).toEqual([
+        { runId: agentRun.runId, reason: 'Operator stopped it.' },
+      ]);
     } finally {
       await app.close();
     }

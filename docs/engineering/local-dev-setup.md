@@ -46,6 +46,84 @@ pnpm --filter @cairn/desktop dev
 
 > ⚠️ 目前 `apps/desktop` 是最小 shell 骨架：renderer 使用静态 fixtures，preload 只暴露只读 identity bridge，尚未启动或连接本地 workspace-core sidecar。`apps/web` 尚未创建。
 
+### Workspace Core runtime 选择
+
+默认 runtime 是 mock，不需要本机安装 Codex CLI：
+
+```bash
+pnpm --filter @cairn/workspace-core dev
+```
+
+如要显式启用 Codex CLI adapter：
+
+```bash
+CAIRN_WORKSPACE_CORE_RUNTIME=codex \
+CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR=.cairn/runtime \
+pnpm --filter @cairn/workspace-core dev
+```
+
+可选变量：
+
+| 变量                                      | 默认值           | 说明                                                   |
+| ----------------------------------------- | ---------------- | ------------------------------------------------------ |
+| `CAIRN_WORKSPACE_CORE_RUNTIME`            | `mock`           | `mock` 或 `codex`                                      |
+| `CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR`    | `.cairn/runtime` | Codex CLI adapter 的受控工作目录                       |
+| `CAIRN_WORKSPACE_CORE_CODEX_EXECUTABLE`   | `codex`          | 自定义 Codex CLI 可执行文件路径                        |
+| `CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE` | `read-only`      | `read-only` / `workspace-write` / `danger-full-access` |
+
+### 手动 Codex runtime smoke
+
+这不是默认 CI 门禁；只在本机已安装并登录 Codex CLI 时执行。
+
+1. 启动 Workspace Core：
+
+   ```bash
+   CAIRN_WORKSPACE_CORE_RUNTIME=codex \
+   CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR=.cairn/runtime \
+   pnpm --filter @cairn/workspace-core dev
+   ```
+
+2. 在另一个终端创建 run：
+
+   ```bash
+   curl -sS -X POST http://127.0.0.1:3000/v1/workspaces/01HZZZZZZZZZZZZZZZZZZZZZW0/runs \
+     -H 'content-type: application/json' \
+     -d '{"originEventId":"01HZZZZZZZZZZZZZZZZZZZZZE0","task":{"taskKind":"analysis","title":"Codex smoke","brief":"Return the exact text CAIRN_SMOKE_OK."}}'
+   ```
+
+3. 用返回的 `orchestrationRunId` 查询 task，再提交 agent run：
+
+   ```bash
+   curl -sS http://127.0.0.1:3000/v1/runs/<runId>/tasks
+
+   curl -sS -X POST http://127.0.0.1:3000/v1/tasks/<taskId>/agent-runs \
+     -H 'content-type: application/json' \
+     -d '{"runtimeType":"codex","model":"default","prompt":"Return exactly: CAIRN_SMOKE_OK"}'
+   ```
+
+4. 用返回的 `agentRunId` drain runtime：
+
+   ```bash
+   curl -sS -X POST http://127.0.0.1:3000/v1/agent-runs/<agentRunId>/drain-runtime \
+     -H 'content-type: application/json' \
+     -d '{}'
+   ```
+
+5. 验证 artifact payload：
+
+   ```bash
+   curl -sS http://127.0.0.1:3000/v1/runs/<runId>/artifacts
+   curl -sS http://127.0.0.1:3000/v1/artifacts/<artifactId>/payload
+   ```
+
+6. 可选取消 smoke：提交一个更长的 prompt 后，在另一个终端执行：
+
+   ```bash
+   curl -sS -X POST http://127.0.0.1:3000/v1/runs/<runId>/cancel \
+     -H 'content-type: application/json' \
+     -d '{"reason":"Manual cancel smoke."}'
+   ```
+
 ## 4. 数据库
 
 ### 本地 SQLite（默认）

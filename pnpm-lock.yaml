@@ -283,6 +283,9 @@ importers:
 
   apps/workspace-core:
     dependencies:
+      '@cairn/runtime-gateway':
+        specifier: workspace:*
+        version: link:../../packages/runtime_gateway
       '@fastify/sensible':
         specifier: 'catalog:'
         version: 6.0.4

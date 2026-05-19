@@ -1,6 +1,8 @@
 # @cairn/runtime-gateway
 
-Runtime Gateway 是 Cairn 连接具体 agent runtime 的执行总线。当前包先落 `RuntimeAdapter` 契约、错误归一化、mock adapter 与 conformance 测试辅助，真实 Codex CLI adapter 会在 Spike S5 验证后接入。
+Runtime Gateway 是 Cairn 连接具体 agent runtime 的执行总线。当前包先落
+`RuntimeAdapter` 契约、错误归一化、mock adapter、conformance 测试辅助与
+Codex CLI adapter 最小生命周期实现。
 
 ## 当前范围
 
@@ -9,6 +11,9 @@ Runtime Gateway 是 Cairn 连接具体 agent runtime 的执行总线。当前包
 - 提供 `createMockRuntimeAdapter`，用于无真实 runtime 的单元测试
 - 提供 `defineRuntimeAdapterConformanceSuite`，让未来 Codex / Claude / OpenAI-compatible adapter 复用同一套契约测试
 - 提供 Codex CLI `exec --json` 子进程封装、stdout JSONL 协议解析、stderr 收集与基础错误映射
+- 提供 `createCodexRuntimeAdapter`，把 Codex CLI 子进程封装为
+  `RuntimeAdapter` 的 submit / stream / cancel / query 生命周期
+- 支持可选的 artifact payload resolver，用于把 Workspace Core 的 runtime input artifact 解析成实际 prompt
 
 ## 边界
 
@@ -17,7 +22,7 @@ Runtime Gateway 是 Cairn 连接具体 agent runtime 的执行总线。当前包
 - 任务规划、结果综合与 operator 接管（属于 `@cairn/application`）
 - 数据库读写与 artifact 内容落盘（属于 `@cairn/storage` / Workspace Core）
 - 桌面系统能力桥接（属于 `@cairn/desktop-bridge`）
-- 完整 Codex RuntimeAdapter 生命周期编排（后续在 `codex-adapter.ts` 实现）
+- Workspace Core 的真实 Codex runtime 选择与端到端调度
 
 ## 使用
 
@@ -33,9 +38,23 @@ for await (const event of adapter.stream(request.runId)) {
 }
 ```
 
+Codex CLI adapter 的最小用法：
+
+```ts
+import { createCodexRuntimeAdapter } from '@cairn/runtime-gateway/adapters/codex';
+
+const adapter = createCodexRuntimeAdapter();
+await adapter.init({ workdir: '/tmp/cairn-run', config: {}, secrets, logger });
+await adapter.submit({
+  runId: 'agent-run-id',
+  model: 'gpt-5.5',
+  inputs: [{ artifactId: 'input-artifact-id' }],
+  traceId: 'trace-id',
+  options: { prompt: 'Summarize this workspace.' },
+});
+```
+
 ## 后续
 
-- 将 `codex-process.ts` 接入 `codex-adapter.ts`，实现完整 RuntimeAdapter
-- 用真实长任务验证 Windows 下取消行为与 stdout JSONL 流式粒度
-- 让真实 adapter 通过 conformance suite
+- 用真实长任务手动验证 Windows 下取消行为与 stdout JSONL 流式粒度，并记录 smoke 结果
 - 补 `docs/ops/install-guide.md` 与 `docs/ops/troubleshooting.md`

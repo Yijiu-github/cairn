@@ -35,9 +35,12 @@
 - **`@cairn/runtime-gateway`**：新增 RuntimeAdapter 契约、错误归一化、mock adapter 与 adapter conformance 测试基线
 - **`@cairn/runtime-gateway`**：新增 Codex CLI `exec --json` JSONL 协议解析、基础错误映射与 S5 spike 记录
 - **`@cairn/runtime-gateway`**：新增 Codex CLI 子进程封装，支持 stdout JSONL 流式解析、stderr 收集、非零退出映射与取消升级 kill
+- **`@cairn/runtime-gateway`**：新增 `createCodexRuntimeAdapter`，把 Codex CLI 子进程封装为 RuntimeAdapter 的 submit / stream / cancel / query 生命周期
 - **`@cairn/application`**：新增应用层编排基线，包含 run/task/agentRun repository 端口、Runtime Gateway 提交端口、single-worker run 创建、adapter event 状态推进与终态不变量测试
 - **`@cairn/workspace-core`**：新增 Fastify 最小服务骨架，包含 `/health`、R1 run/task/agent-run HTTP 闭环、in-memory application ports 与 mock runtime 验证
 - **`@cairn/workspace-core`**：新增 SQLite application repository 适配器，服务启动时执行 domain 迁移并用 `.cairn/workspace-core.sqlite` 持久化 run/task/agent-run 状态
+- **`@cairn/workspace-core`**：新增 runtime gateway factory 与显式 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 启动开关，可把 Codex RuntimeAdapter 注入服务容器；默认仍为 mock runtime
+- **Codex runtime hardening**：Codex adapter 可解析 Workspace Core runtime input artifact payload，补充取消升级细节与手动真实 Codex smoke 指引；默认测试仍不依赖真实 Codex CLI
 - **Orchestration Control R1a**：新增 application 与 workspace-core 最小接管控制面，覆盖 pause / resume / cancel run、retry task、rerun 与 operator note，并写入 TraceEvent。
 - **`@cairn/ui`**：新增共享 UI 包工程校验基线，纳入 typecheck / lint / test，并补充公共导出 smoke 测试
 - **`@cairn/desktop`**：新增 Electron 最小 shell 骨架与静态 UI 壳视图，包含 Home / Run Detail / Artifact Review / Settings 四个静态视图、只读 preload identity bridge 与 preview-safe 默认隔离设置
@@ -57,6 +60,7 @@
 - **Planning Output API**：新增 `GET /v1/runs/:runId/planning-output` 只读接口，供 UI / Desktop Shell 查看现有 PlanningOutput。
 - **UI Preview Planning Output**：Run Detail preview 新增静态 PlanningOutput 展示，覆盖 planning summary、blocked reason、preconditions 与 action tree。
 - **Runtime Drain Slice**：新增显式 runtime stream drain 路径，Workspace Core 可把 submitted AgentRun 的 AdapterStreamEvent 应用回 run/task/agent-run 状态，为 Codex CLI 真实闭环铺路。
+- **Runtime Drain Slice**：补充 RuntimeAdapter-backed gateway 注入测试，验证 Workspace Core submit/drain API 可走统一 RuntimeAdapter 事件流。
 - **Runtime Artifact/Trace Demo Loop**：新增 Task runtime submit、bounded artifact payload reference/read、runtime output artifact metadata 与 TraceEvent replay source 闭环。
 - **Artifact / Trace Read API**：Workspace Core 实现 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口，供 Run Detail / Replay UI 消费。
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
