@@ -75,6 +75,7 @@
 - Git 提交规范调整为 **中英双语标题，中文在前、英文在后**，并补充 `commit-msg` + `commitlint` 校验
 - Git 工作流统一 `develop` 为日常集成分支，并补充远程短分支清理、agent 分支、release / hotfix 回灌规则
 - 设计主线从「Web 优先」升级为「共享核心 + 双外壳 + 可本地运行 + 可远程扩展」
+- R1 执行路线调整为证据链优先，并将当前协作模型收口为产品裁剪人 + Codex 两方推进；UI、QA 与文档验证纳入每个里程碑完成定义。
 - `package.json` 的 `license` 字段从 `SEE LICENSE IN LICENSE` 改为 `Apache-2.0`
 - **`@cairn/storage`**：升级 `better-sqlite3` catalog 至 `^12.10.0`，本机 Node 24.14.0 下可安装 native binding 并执行 SQLite 测试
 - `coding-standards.md` 对齐当前 TypeScript、ESLint、Prettier、commitlint 与人工 review gate 状态

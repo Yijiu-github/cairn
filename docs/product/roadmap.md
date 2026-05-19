@@ -23,6 +23,8 @@
 - 本地工作区可启动 embedded workspace core
 - 能完成单用户复杂工程任务的规划、执行、结果回传、回放与沉淀
 
+当前执行路线采用证据链优先：先打通 Workspace Core + Codex RuntimeAdapter + Artifact / Trace + Operator control 的真实闭环，再把 Desktop Shell 接到真实 Core 数据面，最后做 0.1.0 预发布硬化。
+
 ### 必须交付
 
 | 项                                                                                                                                          | 状态    |

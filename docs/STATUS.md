@@ -3,6 +3,7 @@
 > 状态：🟡 Draft
 > 最后更新：2026-05-19
 > 目的：给人类与多 agent 协作提供当前事实基线，减少“我以为已经有 Desktop/Web”的误判。
+> 协作口径：自 2026-05-20 起，Cairn 当前按产品裁剪人 + Codex 两方推进；旧的白霓 / 海棠固定角色分工不再作为项目计划依据。
 
 ---
 
@@ -178,6 +179,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 ---
 
 ## 6. 近期主线
+
+当前 R1 主线按证据链优先推进：Workspace Core 真实 Run 生命周期 -> Codex RuntimeAdapter 可观测执行 -> Artifact / Trace 证据层 -> Operator control -> Desktop 真实观察台 -> 0.1.0 预发布硬化。
 
 ### Week of 2026-05-18
 
