@@ -328,10 +328,60 @@ describe('workspace-core app', () => {
         eventCount: 5,
       });
 
+      const agentRunResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/agent-runs/${agentRun.runId}`,
+      });
+      const drainedAgentRun = agentRunResponse.json<{
+        runId: string;
+        status: string;
+        providerRunId?: string;
+        outputRef?: string;
+      }>();
+      expect(drainedAgentRun).toMatchObject({
+        runId: agentRun.runId,
+        status: 'succeeded',
+        providerRunId: `mock:${agentRun.runId}`,
+        outputRef: expect.stringMatching(/^[0-9A-HJKMNP-TV-Z]{26}$/) as unknown,
+      });
+
+      const taskResponse = await app.inject({ method: 'GET', url: `/v1/tasks/${taskId}` });
+      const drainedTask = taskResponse.json<{
+        taskId: string;
+        status: string;
+        artifactRefs: string[];
+      }>();
+      expect(drainedTask).toMatchObject({
+        taskId,
+        status: 'succeeded',
+        artifactRefs: [drainedAgentRun.outputRef],
+      });
+
       const runResponse = await app.inject({ method: 'GET', url: `/v1/runs/${runId}` });
-      expect(runResponse.json()).toMatchObject({
+      const drainedRun = runResponse.json<{
+        orchestrationRunId: string;
+        status: string;
+        finalResponseRef?: string;
+      }>();
+      expect(drainedRun).toMatchObject({
         orchestrationRunId: runId,
         status: 'succeeded',
+        finalResponseRef: drainedAgentRun.outputRef,
+      });
+
+      const artifactsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/artifacts`,
+      });
+      expect(artifactsResponse.json()).toMatchObject({
+        items: expect.arrayContaining([
+          expect.objectContaining({
+            artifactId: drainedAgentRun.outputRef,
+            artifactRole: 'output',
+            producerId: agentRun.runId,
+            payloadRef: expect.stringMatching(/^artifact-payload:\/\//u) as unknown,
+          }),
+        ]) as unknown,
       });
     } finally {
       await app.close();
