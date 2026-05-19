@@ -1,7 +1,7 @@
 # 本地开发环境 / Local Dev Setup
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-15
+> 最后更新：2026-05-19
 > 目标读者：新协作者、第一次拉代码的人
 
 ---
@@ -37,14 +37,17 @@ cp .env.example .env
 # 当前已启动的是 workspace-core 最小服务
 pnpm --filter @cairn/workspace-core dev
 
-# 当前 desktop 是 Electron 最小 shell 骨架，暂不接 workspace-core sidecar
+# 当前 desktop 是 Electron 最小 shell 骨架，开发态会后台启动 workspace-core sidecar
 pnpm --filter @cairn/desktop dev
 
 # Web 应用创建后再补齐：
 # pnpm --filter @cairn/web dev
 ```
 
-> ⚠️ 目前 `apps/desktop` 是最小 shell 骨架：renderer 使用静态 fixtures，preload 只暴露只读 identity bridge，尚未启动或连接本地 workspace-core sidecar。`apps/web` 尚未创建。
+> ⚠️ 目前 `apps/desktop` 是最小 shell 骨架：renderer 仍以静态 fixtures 为主，preload
+> 只暴露 Workspace Core status / bounded mock smoke allowlist。开发态 sidecar bridge 已可启动
+> 本地 Workspace Core，但生产 sidecar 打包、真实 runtime UI 和 operator action 仍未完成。
+> `apps/web` 尚未创建。
 
 ### Workspace Core runtime 选择
 

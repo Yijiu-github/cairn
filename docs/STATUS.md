@@ -78,10 +78,11 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `apps/desktop` 已提供 Electron 最小 shell 骨架。
 - 当前包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
-- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar；preload 只暴露 `workspaceCore.getStatus()` 与 `workspaceCore.runMockSmoke()` 两个 allowlist API。
+- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 只暴露 `workspaceCore.getStatus()` 与 `workspaceCore.runMockSmoke()` 两个 allowlist API。
 - Renderer 可显示 Core 状态，并触发 bounded mock smoke：create run、list task、submit mock AgentRun、drain runtime、读取 run/task/artifact/trace 摘要。
+- 启动会写入不含 token 的 sidecar 诊断快照：`<userData>/diagnostics/workspace-core-sidecar.json`。
 - 当前不读取或写入用户本地文件系统，不暴露真实本地路径，不提供 operator action。
-- 自动化验证已覆盖 sidecar manager 与 Workspace Core HTTP smoke；Electron window-level smoke 仍需后续补齐。
+- 自动化验证已覆盖 Desktop bootstrap 顺序、sidecar manager 与 Workspace Core HTTP smoke；Electron window-level smoke 仍需后续补齐。
 - 当前 renderer 默认安全基线为 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`。
 
 ---
@@ -106,17 +107,17 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 ### 当前测试覆盖分布
 
-| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                                          |
-| --------------------------- | ---------------- | --------------------------------------------------------------------------------- |
-| `packages/shared_contracts` | 12               | schema、contracts、WS events、ID / enum 基础                                      |
-| `packages/domain`           | 1                | 生成迁移与核心表结构                                                              |
-| `packages/storage`          | 2                | SQLite connection 与迁移目录                                                      |
-| `packages/runtime_gateway`  | 4                | mock adapter、Codex protocol、Codex process wrapper、Codex RuntimeAdapter         |
-| `packages/application`      | 3                | orchestration、planning output 与 code context service                            |
-| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                           |
-| `apps/ui-preview`           | 0                | 当前以 typecheck / lint / production build 作为验证门禁                           |
-| `apps/desktop`              | 2                | sidecar manager、Workspace Core mock smoke client；另以 typecheck/lint/build 验证 |
-| `apps/workspace-core`       | 4                | Fastify app、config、SQLite repository、local code index scanner                  |
+| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                                                          |
+| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------- |
+| `packages/shared_contracts` | 12               | schema、contracts、WS events、ID / enum 基础                                                      |
+| `packages/domain`           | 1                | 生成迁移与核心表结构                                                                              |
+| `packages/storage`          | 2                | SQLite connection 与迁移目录                                                                      |
+| `packages/runtime_gateway`  | 4                | mock adapter、Codex protocol、Codex process wrapper、Codex RuntimeAdapter                         |
+| `packages/application`      | 3                | orchestration、planning output 与 code context service                                            |
+| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                                           |
+| `apps/ui-preview`           | 0                | 当前以 typecheck / lint / production build 作为验证门禁                                           |
+| `apps/desktop`              | 3                | bootstrap 顺序、sidecar manager、Workspace Core mock smoke client；另以 typecheck/lint/build 验证 |
+| `apps/workspace-core`       | 4                | Fastify app、config、SQLite repository、local code index scanner                                  |
 
 ### 本地环境注意事项
 

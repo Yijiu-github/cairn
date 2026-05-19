@@ -7,11 +7,18 @@ import { join } from 'node:path';
 import { is } from '@electron-toolkit/utils';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 
+import {
+  bootstrapDesktopMain,
+  writeDesktopSmokeSignalFile,
+  writeWorkspaceCoreDiagnosticFile,
+} from './workspace-core-bootstrap.js';
 import { runWorkspaceCoreMockSmoke } from './workspace-core-client.js';
 import {
   WorkspaceCoreSidecarManager,
   createWorkspaceCoreSidecarConfig,
 } from './workspace-core-sidecar.js';
+
+import type { WorkspaceCoreSidecarStatus } from './workspace-core-sidecar.js';
 
 // Electron main process is the platform boundary. The repository-wide config
 // package does not exist yet, so the desktop entry point keeps these two direct
@@ -20,6 +27,10 @@ import {
 const rendererDevServerUrl = process.env['ELECTRON_RENDERER_URL'];
 // eslint-disable-next-line no-restricted-globals, no-restricted-syntax
 const mainProcessEnv = process.env;
+// eslint-disable-next-line no-restricted-globals, no-restricted-syntax
+const desktopWindowSmokeSignalPath = process.env['CAIRN_DESKTOP_WINDOW_SMOKE_SIGNAL_PATH'];
+
+writeDesktopSmokeSignal('main-process-loaded');
 
 function createMainWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -32,13 +43,16 @@ function createMainWindow(): BrowserWindow {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, '../preload/index.mjs'),
       sandbox: true,
     },
     width: 1280,
   });
 
+  writeDesktopSmokeSignal('main-window-created');
+
   window.on('ready-to-show', () => {
+    writeDesktopSmokeSignal('main-window-ready-to-show');
     window.show();
   });
 
@@ -54,6 +68,24 @@ function createMainWindow(): BrowserWindow {
   }
 
   return window;
+}
+
+function writeDesktopSmokeSignal(
+  event: 'main-window-created' | 'main-window-ready-to-show' | 'main-process-loaded',
+): void {
+  if (desktopWindowSmokeSignalPath === undefined) {
+    return;
+  }
+
+  void writeDesktopSmokeSignalFile({
+    event,
+    path: desktopWindowSmokeSignalPath,
+  }).catch((error: unknown) => {
+    console.error('Desktop smoke signal write failed.', {
+      error: error instanceof Error ? error.message : 'unknown error',
+      path: desktopWindowSmokeSignalPath,
+    });
+  });
 }
 
 function registerWorkspaceCoreIpcHandlers(
@@ -81,6 +113,15 @@ function registerWorkspaceCoreIpcHandlers(
   });
 }
 
+function reportWorkspaceCoreStartupFailure(status: WorkspaceCoreSidecarStatus): void {
+  console.error('Workspace Core sidecar failed to become healthy.', {
+    baseUrl: status.baseUrl,
+    lastError: status.lastError,
+    pid: status.pid,
+    state: status.state,
+  });
+}
+
 await app.whenReady();
 
 app.setAppUserModelId('io.cairn.app');
@@ -96,18 +137,19 @@ const workspaceCoreSidecar = new WorkspaceCoreSidecarManager(
     userDataPath: app.getPath('userData'),
   }),
 );
-registerWorkspaceCoreIpcHandlers(workspaceCoreSidecar, workspaceCoreAuthToken);
-const initialWorkspaceCoreStatus = await workspaceCoreSidecar.start();
-if (initialWorkspaceCoreStatus.state !== 'healthy') {
-  console.error('Workspace Core sidecar failed to become healthy.', {
-    baseUrl: initialWorkspaceCoreStatus.baseUrl,
-    lastError: initialWorkspaceCoreStatus.lastError,
-    pid: initialWorkspaceCoreStatus.pid,
-    state: initialWorkspaceCoreStatus.state,
-  });
-}
-
-createMainWindow();
+bootstrapDesktopMain({
+  createMainWindow,
+  registerWorkspaceCoreIpcHandlers: () => {
+    registerWorkspaceCoreIpcHandlers(workspaceCoreSidecar, workspaceCoreAuthToken);
+  },
+  reportWorkspaceCoreStartupFailure,
+  startWorkspaceCoreSidecar: () => workspaceCoreSidecar.start(),
+  writeWorkspaceCoreDiagnostic: (status) =>
+    writeWorkspaceCoreDiagnosticFile({
+      status,
+      userDataPath: app.getPath('userData'),
+    }),
+});
 
 app.on('before-quit', () => {
   void workspaceCoreSidecar.stop();
@@ -138,15 +180,13 @@ async function findFreeLoopbackPort(): Promise<number> {
       const address = server.address();
       if (typeof address === 'object' && address !== null) {
         const port = address.port;
-        server.close(() => {
-          resolve(port);
-        });
+        server.close();
+        resolve(port);
         return;
       }
 
-      server.close(() => {
-        reject(new Error('Failed to allocate a Workspace Core sidecar port.'));
-      });
+      server.close();
+      reject(new Error('Failed to allocate a Workspace Core sidecar port.'));
     });
   });
 }

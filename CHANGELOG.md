@@ -45,6 +45,7 @@
 - **`@cairn/ui`**：新增共享 UI 包工程校验基线，纳入 typecheck / lint / test，并补充公共导出 smoke 测试
 - **`@cairn/desktop`**：新增 Electron 最小 shell 骨架与静态 UI 壳视图，包含 Home / Run Detail / Artifact Review / Settings 四个静态视图、只读 preload identity bridge 与 preview-safe 默认隔离设置
 - **`@cairn/desktop`**：新增最小 Workspace Core dev sidecar bridge，包含 per-launch bearer token、Core status allowlist、bounded mock smoke IPC、renderer Core 状态面板，以及 sidecar manager / smoke client 单元测试
+- **`@cairn/desktop`**：新增非阻塞 Desktop bootstrap 与无密钥 sidecar 诊断快照，窗口创建不再等待 Workspace Core 健康检查完成
 - 设计文档新增轻量代码上下文索引方案，明确 Cairn 自研 SourceRoot / CodeContextIndex / ContextPack 能力，不引入 GitNexus 依赖或许可证受限代码
 - **Code Context R1a**：新增 SourceRoot registry、最小 CodeIndexSnapshot 元数据、ContextPack manifest 契约、domain schema、application service 与 workspace-core API/SQLite 持久化基线
 - **Code Context R1b-a**：新增手动 reindex 与本地文件清单快照，持久化 `code_index_files` 派生元数据并通过 workspace-core 查询最新索引
