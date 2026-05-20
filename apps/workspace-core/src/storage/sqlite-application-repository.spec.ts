@@ -566,6 +566,61 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
     }
   });
 
+  it('preserves append order for TraceEvents with identical timestamps', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+    let createdRunId: OrchestrationRunId;
+
+    const repository = openRepository(databasePath);
+
+    try {
+      const created = await repository.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Trace ordering',
+          brief: 'Verify stable trace ordering.',
+        },
+      });
+      createdRunId = created.run.orchestrationRunId;
+
+      for (const [traceEventId, eventType] of [
+        ['01J000000000000000000000T3' as TraceEventId, 'agent_run.cancel_requested'],
+        ['01J000000000000000000000T1' as TraceEventId, 'agent_run.cancel_acknowledged'],
+        ['01J000000000000000000000T2' as TraceEventId, 'run.cancelled'],
+      ] as const) {
+        await repository.container.repository.appendTraceEvent({
+          traceEventId,
+          workspaceId: ids.workspace,
+          orchestrationRunId: createdRunId,
+          eventType,
+          level: eventType === 'run.cancelled' ? 'warn' : 'info',
+          payloadInline: {},
+          createdAt: '2026-05-20T00:00:00.000Z',
+          traceId: created.run.traceId,
+        });
+      }
+
+      const traceEvents = await repository.container.repository.listTraceEventsByRun(createdRunId);
+
+      const cancelEvidence = traceEvents.filter((event) =>
+        ['agent_run.cancel_requested', 'agent_run.cancel_acknowledged', 'run.cancelled'].includes(
+          event.eventType,
+        ),
+      );
+
+      expect(cancelEvidence.map((event) => event.eventType)).toEqual([
+        'agent_run.cancel_requested',
+        'agent_run.cancel_acknowledged',
+        'run.cancelled',
+      ]);
+    } finally {
+      repository.close();
+    }
+  });
+
   it('updates Artifact metadata across repository instances', async () => {
     const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
     tempDirectories.push(directory);

@@ -204,11 +204,12 @@ export class SqliteApplicationRepository implements ApplicationRepository {
   }
 
   listTraceEventsByRun(orchestrationRunId: OrchestrationRunId): Promise<TraceEvent[]> {
+    // Same-millisecond traces must replay in append order; rowid is the SQLite insert-order tie-breaker.
     const rows = this.db
       .select()
       .from(traceEvents)
       .where(eq(traceEvents.orchestrationRunId, orchestrationRunId))
-      .orderBy(asc(traceEvents.createdAt))
+      .orderBy(asc(traceEvents.createdAt), asc(sql.raw('trace_events.rowid')))
       .all();
     return Promise.resolve(rows.map(fromTraceEventRow));
   }

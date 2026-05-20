@@ -1188,6 +1188,17 @@ describe('workspace-core app', () => {
           }),
         ]),
       );
+      expect(
+        replay.traceEvents
+          .filter((event) =>
+            [
+              'agent_run.cancel_requested',
+              'agent_run.cancel_acknowledged',
+              'run.cancelled',
+            ].includes(event.eventType),
+          )
+          .map((event) => event.eventType),
+      ).toEqual(['agent_run.cancel_requested', 'agent_run.cancel_acknowledged', 'run.cancelled']);
       expect(replay.inspector).toMatchObject({
         status: 'cancelled',
         warningEventCount: 1,
