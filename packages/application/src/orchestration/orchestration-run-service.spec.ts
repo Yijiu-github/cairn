@@ -927,6 +927,18 @@ describe('OrchestrationRunService', () => {
     );
   });
 
+  it('rejects retry task when the parent run is terminal', async () => {
+    const { repository, service }: ReturnType<typeof createHarness> = createHarness();
+    await repository.createRunGraph({
+      run: createRunFixture({ status: 'failed' }),
+      tasks: [createTaskFixture({ status: 'failed' })],
+    });
+
+    await expect(service.retryTask({ taskId: ids.task })).rejects.toMatchObject({
+      code: 'ORCHESTRATION_RUN_TERMINAL',
+    });
+  });
+
   it('creates a queued single-worker rerun with previous run and task evidence', async () => {
     const { repository, service }: ReturnType<typeof createHarness> = createHarness({
       runIds: [ids.rerun],
