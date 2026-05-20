@@ -11,6 +11,7 @@ import { createWorkspaceCoreApp } from './app.js';
 import { createDefaultWorkspaceCoreContainer } from './container.js';
 
 import type { CodeContextScannerPort } from '@cairn/application';
+import type { AgentRunId } from '@cairn/shared-contracts/schemas';
 
 const ids = {
   workspace: '01HZZZZZZZZZZZZZZZZZZZZZW0',
@@ -74,6 +75,20 @@ const createSubmittedRun = async (app: Awaited<ReturnType<typeof createWorkspace
 
   return { runId: run.orchestrationRunId, taskId: task.taskId };
 };
+
+interface ReplayTraceEvent {
+  eventType: string;
+  level: 'debug' | 'info' | 'warn' | 'error';
+  payloadInline?: Record<string, unknown>;
+}
+
+interface ReplaySourceResponse {
+  traceEvents: ReplayTraceEvent[];
+  inspector: {
+    status: string;
+    warningEventCount: number;
+  };
+}
 
 describe('workspace-core app', () => {
   it('serves health status', async () => {
@@ -1116,7 +1131,7 @@ describe('workspace-core app', () => {
     }
   });
 
-  it('dispatches runtime cancel when cancelling a submitted run through the operator route', async () => {
+  it('exposes acknowledged operator cancel evidence through replay source', async () => {
     const runtimeGateway = new MockRuntimeGatewayPort();
     const app = await createWorkspaceCoreApp({
       container: createDefaultWorkspaceCoreContainer({ runtimeGateway }),
@@ -1136,11 +1151,157 @@ describe('workspace-core app', () => {
         url: `/v1/runs/${runId}/cancel`,
         payload: { reason: 'Operator stopped it.' },
       });
-
       expect(cancelResponse.statusCode).toBe(200);
       expect(runtimeGateway.cancelled).toEqual([
         { runId: agentRun.runId, reason: 'Operator stopped it.' },
       ]);
+
+      const replayResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/replay-source`,
+      });
+      expect(replayResponse.statusCode).toBe(200);
+      const replay = replayResponse.json<ReplaySourceResponse>();
+
+      expect(replay.traceEvents).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            eventType: 'agent_run.cancel_requested',
+            level: 'info',
+            payloadInline: {
+              reason: 'Operator stopped it.',
+              agentRunId: agentRun.runId,
+            },
+          }),
+          expect.objectContaining({
+            eventType: 'agent_run.cancel_acknowledged',
+            level: 'info',
+            payloadInline: {
+              reason: 'Operator stopped it.',
+              agentRunId: agentRun.runId,
+            },
+          }),
+          expect.objectContaining({
+            eventType: 'run.cancelled',
+            level: 'warn',
+            payloadInline: { reason: 'Operator stopped it.' },
+          }),
+        ]),
+      );
+      expect(replay.inspector).toMatchObject({
+        status: 'cancelled',
+        warningEventCount: 1,
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('exposes runtime cancel not-acknowledged evidence through replay source', async () => {
+    const runtimeGateway = new MockRuntimeGatewayPort();
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer({ runtimeGateway }),
+      logger: false,
+    });
+
+    try {
+      const { runId, taskId } = await createSubmittedRun(app);
+      const agentRunsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}/agent-runs`,
+      });
+      const agentRun = first(agentRunsResponse.json<{ items: { runId: AgentRunId }[] }>().items);
+      runtimeGateway.cancelAckOverride = {
+        runId: agentRun.runId,
+        cancelled: false,
+        reason: 'already_terminal',
+      };
+
+      const cancelResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/cancel`,
+        payload: { reason: 'Operator stopped it.' },
+      });
+      expect(cancelResponse.statusCode).toBe(200);
+
+      const replayResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/replay-source`,
+      });
+      expect(replayResponse.statusCode).toBe(200);
+      const replay = replayResponse.json<ReplaySourceResponse>();
+
+      expect(replay.traceEvents).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            eventType: 'agent_run.cancel_not_acknowledged',
+            level: 'warn',
+            payloadInline: {
+              reason: 'Operator stopped it.',
+              agentRunId: agentRun.runId,
+              runtimeReason: 'already_terminal',
+            },
+          }),
+          expect.objectContaining({ eventType: 'run.cancelled', level: 'warn' }),
+        ]),
+      );
+      expect(replay.inspector).toMatchObject({
+        status: 'cancelled',
+        warningEventCount: 2,
+      });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('exposes runtime cancel dispatch failure evidence through replay source', async () => {
+    const runtimeGateway = new MockRuntimeGatewayPort();
+    runtimeGateway.cancelError = new Error('runtime cancel unavailable');
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer({ runtimeGateway }),
+      logger: false,
+    });
+
+    try {
+      const { runId, taskId } = await createSubmittedRun(app);
+      const agentRunsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}/agent-runs`,
+      });
+      const agentRun = first(agentRunsResponse.json<{ items: { runId: string }[] }>().items);
+
+      const cancelResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/runs/${runId}/cancel`,
+        payload: { reason: 'Operator stopped it.' },
+      });
+      expect(cancelResponse.statusCode).toBe(200);
+
+      const replayResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/replay-source`,
+      });
+      expect(replayResponse.statusCode).toBe(200);
+      const replay = replayResponse.json<ReplaySourceResponse>();
+
+      expect(replay.traceEvents).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            eventType: 'agent_run.cancel_dispatch_failed',
+            level: 'warn',
+            payloadInline: {
+              reason: 'Operator stopped it.',
+              agentRunId: agentRun.runId,
+              message: 'runtime cancel unavailable',
+            },
+          }),
+          expect.objectContaining({ eventType: 'run.cancelled', level: 'warn' }),
+        ]),
+      );
+      expect(replay.inspector).toMatchObject({
+        status: 'cancelled',
+        warningEventCount: 2,
+      });
     } finally {
       await app.close();
     }

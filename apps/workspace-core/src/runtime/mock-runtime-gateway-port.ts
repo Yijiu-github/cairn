@@ -12,6 +12,8 @@ import type { AgentRunId, ArtifactRef } from '@cairn/shared-contracts/schemas';
 export class MockRuntimeGatewayPort implements RuntimeGatewayPort {
   readonly submissions: AdapterSubmitRequest[] = [];
   readonly cancelled: { runId: AgentRunId; reason?: string }[] = [];
+  cancelAckOverride?: AdapterCancelAck;
+  cancelError?: Error;
 
   submit(request: AdapterSubmitRequest): Promise<AdapterSubmitAck> {
     this.submissions.push(request);
@@ -50,6 +52,12 @@ export class MockRuntimeGatewayPort implements RuntimeGatewayPort {
 
   cancel(runId: AgentRunId, reason?: string): Promise<AdapterCancelAck> {
     this.cancelled.push(reason === undefined ? { runId } : { runId, reason });
+    if (this.cancelError !== undefined) {
+      return Promise.reject(this.cancelError);
+    }
+    if (this.cancelAckOverride !== undefined) {
+      return Promise.resolve(this.cancelAckOverride);
+    }
     return Promise.resolve(
       reason === undefined ? { runId, cancelled: true } : { runId, cancelled: true, reason },
     );
