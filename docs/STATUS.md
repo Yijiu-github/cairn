@@ -82,8 +82,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `apps/desktop` 已提供 Electron 最小 shell 骨架。
 - 当前包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
-- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 只暴露 `workspaceCore.getStatus()` 与 `workspaceCore.runMockSmoke()` 两个 allowlist API。
-- Renderer 可显示 Core 状态，并触发 bounded mock smoke：create run、list task、submit mock AgentRun、drain runtime、读取 run/task/artifact/trace 摘要。
+- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runMockSmoke()` 与只读 `workspaceCore.getRunReplaySource(runId)` allowlist API。
+- Renderer 可显示 Core 状态，并触发 bounded mock smoke：create run、list task、submit mock AgentRun、drain runtime、读取 run/task/artifact/trace 摘要；Run Detail 可用 mock smoke 生成的 run id 读取 Workspace Core sanitized replay source，并展示 run/task/agent-run/artifact/trace/inspector 摘要。
 - 启动会写入不含 token 的 sidecar 诊断快照：`<userData>/diagnostics/workspace-core-sidecar.json`。
 - 当前不读取或写入用户本地文件系统，不暴露真实本地路径，不提供 operator action。
 - 自动化验证已覆盖 Desktop bootstrap 顺序、main module 非阻塞加载、sidecar manager 与 Workspace Core HTTP smoke；手动 Electron window-level smoke 已到 `ready-to-show`，自动 e2e 仍需后续补齐。
@@ -161,7 +161,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Local Artifact Store M2：本地 payload 写入采用同目录临时文件 + rename，payload ref 保持 opaque 且不暴露本地路径。
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
-- `apps/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、最小 Workspace Core dev sidecar bridge、bounded mock smoke allowlist，以及 preview-safe 默认隔离设置。
+- `apps/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、最小 Workspace Core dev sidecar bridge、bounded mock smoke allowlist、只读 replay-source bridge，以及 preview-safe 默认隔离设置。
 
 ---
 
@@ -172,7 +172,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `apps/web` React Web Shell。
 - UI preview 不是 Web Shell，不能假设已有远程 workspace 控制台。
 - Desktop 生产 sidecar 打包、签名后内嵌启动、window-level smoke 与完整 preload / contextBridge allowlist。
-- Desktop 真实 Workspace Core UI 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前只有 bounded mock smoke 摘要，不是完整产品数据面）。
+- Desktop 完整真实 Workspace Core UI 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前已有 bounded mock smoke 与只读 replay-source 摘要，不是完整产品数据面）。
+- Desktop operator action UI、artifact payload viewer、run 列表 / 选择器与本地路径 reveal。
 - Artifact store 的导出、清理/retention、hash 校验与更完整 review metadata。
 - 真实 Goal Planner 与 Planner 到多 Task DAG 的生成逻辑。
 - 真实 Codex CLI 手动 smoke 执行结果记录，以及更完整的 payload / long-run 证据收集。
@@ -231,6 +232,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 | 日期       | 变更                                                            |
 | ---------- | --------------------------------------------------------------- |
+| 2026-05-20 | 更新 M4a Desktop observer prep 状态                             |
 | 2026-05-20 | 更新 M3 Operator Control evidence polish 状态                   |
 | 2026-05-20 | 更新 M1 Runtime Gateway / Workspace Core 真实运行时闭环状态     |
 | 2026-05-19 | 更新 `apps/desktop` 最小 Workspace Core dev sidecar bridge 状态 |

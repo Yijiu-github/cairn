@@ -48,6 +48,7 @@
 - **`@cairn/desktop`**：新增最小 Workspace Core dev sidecar bridge，包含 per-launch bearer token、Core status allowlist、bounded mock smoke IPC、renderer Core 状态面板，以及 sidecar manager / smoke client 单元测试
 - **`@cairn/desktop`**：新增非阻塞 Desktop bootstrap 与无密钥 sidecar 诊断快照，窗口创建不再等待 Workspace Core 健康检查完成
 - **`@cairn/desktop`**：修复 Electron ESM 主入口顶层 `await app.whenReady()` 导致真实窗口 smoke 卡住的问题，并补充 main module 非阻塞加载回归测试
+- **M4a Desktop observer prep**：Desktop preload 新增只读 replay-source bridge，可通过 mock smoke 生成的 run id 读取真实 Workspace Core evidence 并在 Run Detail 展示摘要；operator action、artifact payload 正文和本地路径 reveal 仍未开放。
 - 设计文档新增轻量代码上下文索引方案，明确 Cairn 自研 SourceRoot / CodeContextIndex / ContextPack 能力，不引入 GitNexus 依赖或许可证受限代码
 - **Code Context R1a**：新增 SourceRoot registry、最小 CodeIndexSnapshot 元数据、ContextPack manifest 契约、domain schema、application service 与 workspace-core API/SQLite 持久化基线
 - **Code Context R1b-a**：新增手动 reindex 与本地文件清单快照，持久化 `code_index_files` 派生元数据并通过 workspace-core 查询最新索引

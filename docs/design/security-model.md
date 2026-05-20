@@ -59,6 +59,17 @@ new BrowserWindow({
 - 不直接暴露 Node 原生对象
 - 文档化用途与权限边界
 
+当前 Desktop Shell 的 Workspace Core allowlist 仅包含：
+
+- `workspaceCore.getStatus()`：读取 sidecar 健康状态，不返回 token。
+- `workspaceCore.runMockSmoke()`：触发 bounded mock runtime smoke，由 Main process 持有
+  sidecar token 并调用固定 Workspace Core endpoint。
+- `workspaceCore.getRunReplaySource(runId)`：只读读取 Workspace Core 已清洗的
+  `RunReplaySource`；renderer 只能传 run id，不能传 base URL、token 或任意 endpoint。
+
+Operator action、artifact payload 正文、本地路径 reveal 与文件系统能力仍需后续显式
+allowlist、用户确认与错误恢复设计。
+
 ## 4. 桌面能力暴露规则
 
 | 能力                      | 默认                | 说明                                   |
@@ -80,7 +91,7 @@ new BrowserWindow({
 Workspace Core 监听 `127.0.0.1:<port>`，必须满足：
 
 1. **Loopback 绑定**：不监听非 loopback 地址
-2. **Per-launch token**：每次启动生成临时 token，仅传给 Renderer 与 Desktop Bridge
+2. **Per-launch token**：每次启动生成临时 token，仅由 Electron Main / Desktop Bridge 持有
 3. **Token 注入**：所有请求必须携带 `Authorization: Bearer <token>`
 4. **CSRF / Origin 校验**：拒绝非本地 origin
 5. **WebSocket 升级**：握手时校验 token，断线重连重发
