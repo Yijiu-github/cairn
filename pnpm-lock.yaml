@@ -209,6 +209,9 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@cairn/shared-contracts':
+        specifier: workspace:*
+        version: link:../../packages/shared_contracts
       '@cairn/ui':
         specifier: workspace:*
         version: link:../../packages/ui

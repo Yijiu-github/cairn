@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { runWorkspaceCoreMockSmoke } from './workspace-core-client.js';
+import {
+  getWorkspaceCoreRunReplaySource,
+  runWorkspaceCoreMockSmoke,
+} from './workspace-core-client.js';
 
 describe('workspace-core client', () => {
   it('runs the bounded mock smoke flow through fixed Workspace Core endpoints', async () => {
@@ -143,6 +146,109 @@ describe('workspace-core client', () => {
         title: 'Desktop mock smoke',
       },
     });
+  });
+
+  it('reads run replay source through the fixed Workspace Core endpoint', async () => {
+    const requests: { authorization?: string | undefined; method: string; url: string }[] = [];
+    const fetchImpl: typeof fetch = async (url, init) => {
+      const requestUrl = toRequestUrl(url);
+      requests.push({
+        authorization:
+          init?.headers instanceof Headers
+            ? (init.headers.get('authorization') ?? undefined)
+            : (init?.headers as Record<string, string> | undefined)?.authorization,
+        method: init?.method ?? 'GET',
+        url: requestUrl,
+      });
+
+      if (
+        requestUrl === 'http://127.0.0.1:51324/v1/runs/01J000000000000000000000R0/replay-source'
+      ) {
+        await Promise.resolve();
+        return jsonResponse(200, {
+          agentRuns: [],
+          artifacts: [],
+          inspector: {
+            agentRunCount: 0,
+            artifactCount: 0,
+            errorEventCount: 0,
+            status: 'running',
+            taskCount: 1,
+            traceEventCount: 1,
+            warningEventCount: 0,
+          },
+          run: {
+            createdAt: '2026-05-20T00:00:00.000Z',
+            executionMode: 'single_worker',
+            orchestrationRunId: '01J000000000000000000000R0',
+            status: 'running',
+            traceId: '01J000000000000000000000T0',
+            triggerType: 'manual',
+            updatedAt: '2026-05-20T00:00:00.000Z',
+            workspaceId: '01J000000000000000000000W0',
+          },
+          tasks: [
+            {
+              attempt: 0,
+              createdAt: '2026-05-20T00:00:00.000Z',
+              status: 'running',
+              taskId: '01J000000000000000000000K0',
+              taskKind: 'custom',
+              title: 'Desktop observer smoke',
+              updatedAt: '2026-05-20T00:00:00.000Z',
+              workspaceId: '01J000000000000000000000W0',
+            },
+          ],
+          traceEvents: [
+            {
+              createdAt: '2026-05-20T00:00:00.000Z',
+              eventType: 'run.queued',
+              level: 'info',
+              payload: {},
+              traceEventId: '01J000000000000000000000V0',
+              traceId: '01J000000000000000000000T0',
+              workspaceId: '01J000000000000000000000W0',
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected URL ${requestUrl}`);
+    };
+
+    const result = await getWorkspaceCoreRunReplaySource({
+      authToken: 'desktop-launch-token',
+      baseUrl: 'http://127.0.0.1:51324',
+      fetch: fetchImpl,
+      runId: '01J000000000000000000000R0',
+    });
+
+    expect(result.inspector).toMatchObject({
+      status: 'running',
+      taskCount: 1,
+      traceEventCount: 1,
+    });
+    expect(requests).toEqual([
+      {
+        authorization: 'Bearer desktop-launch-token',
+        method: 'GET',
+        url: 'http://127.0.0.1:51324/v1/runs/01J000000000000000000000R0/replay-source',
+      },
+    ]);
+  });
+
+  it('rejects invalid replay source run ids before calling Workspace Core', async () => {
+    const fetchImpl = vi.fn<typeof fetch>();
+
+    await expect(
+      getWorkspaceCoreRunReplaySource({
+        authToken: 'desktop-launch-token',
+        baseUrl: 'http://127.0.0.1:51324',
+        fetch: fetchImpl,
+        runId: '../not-a-run',
+      }),
+    ).rejects.toThrow('Invalid Workspace Core run id.');
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 });
 

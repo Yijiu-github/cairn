@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
+import { OrchestrationRunId } from '@cairn/shared-contracts';
+
+import type { RunReplaySource } from '@cairn/shared-contracts';
 
 export interface WorkspaceCoreMockSmokeResult {
   readonly runId: string;
@@ -18,6 +21,13 @@ export interface RunWorkspaceCoreMockSmokeOptions {
   readonly fetch?: typeof fetch | undefined;
   readonly workspaceId?: string | undefined;
   readonly originEventId?: string | undefined;
+}
+
+export interface GetWorkspaceCoreRunReplaySourceOptions {
+  readonly authToken: string;
+  readonly baseUrl: string;
+  readonly fetch?: typeof fetch | undefined;
+  readonly runId: string;
 }
 
 interface CreateRunResponse {
@@ -149,6 +159,20 @@ export const runWorkspaceCoreMockSmoke = async (
     taskStatus: latestTask.status,
     traceCount: trace.items.length,
   };
+};
+
+export const getWorkspaceCoreRunReplaySource = async (
+  options: GetWorkspaceCoreRunReplaySourceOptions,
+): Promise<RunReplaySource> => {
+  const runId = OrchestrationRunId.safeParse(options.runId);
+  if (!runId.success) {
+    throw new Error('Invalid Workspace Core run id.');
+  }
+
+  return requestJson<RunReplaySource>(options.fetch ?? fetch, options, {
+    method: 'GET',
+    path: `/v1/runs/${runId.data}/replay-source`,
+  });
 };
 
 type RequestMethod = 'GET' | 'POST';
