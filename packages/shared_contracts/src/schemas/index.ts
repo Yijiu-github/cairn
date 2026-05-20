@@ -15,4 +15,5 @@ export * from './task.js';
 export * from './agent-run.js';
 export * from './artifact.js';
 export * from './trace-event.js';
+export * from './run-replay-source.js';
 export * from './code-context.js';

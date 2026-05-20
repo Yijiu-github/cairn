@@ -27,6 +27,7 @@ import {
   ExecutionMode,
 } from '../schemas/orchestration-run.js';
 import { PlanningOutput } from '../schemas/planning-output.js';
+import { RunReplaySource } from '../schemas/run-replay-source.js';
 import { Task, TaskKind, TaskStatus } from '../schemas/task.js';
 import { TraceEvent } from '../schemas/trace-event.js';
 
@@ -122,6 +123,17 @@ export const runContract = c.router(
       summary: 'Get a single orchestration run',
       responses: {
         200: OrchestrationRun,
+        ...commonErrorResponses,
+      },
+    },
+
+    getRunReplaySource: {
+      method: 'GET',
+      path: '/runs/:runId/replay-source',
+      pathParams: z.object({ runId: OrchestrationRunId }),
+      summary: 'Get run replay source for inspector reconstruction',
+      responses: {
+        200: RunReplaySource,
         ...commonErrorResponses,
       },
     },
