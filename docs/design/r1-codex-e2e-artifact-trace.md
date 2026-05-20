@@ -222,6 +222,13 @@ R1 创建 artifact 时必须写入这些默认值：
 6. 将 artifact id 加入 `Task.artifact_refs`；最终输出同时写 `AgentRun.output_ref` 与 `OrchestrationRun.final_response_ref`。
 7. 为用户可见 artifact 写入 `review_state` / `owner_type` / `source_input_refs` / `verification_refs` / `reuse_policy` 默认值。
 
+### 5.4.1 M2 Local Artifact Payload Boundary
+
+M2 的本地 artifact payload 写入采用同目录临时文件 + rename，避免 DB/API 指向半写入文件。
+`artifact-payload://...` 仍是 opaque reference，不是本地路径；读取端只接受安全 segment，拒绝绝对路径、空 segment 与路径穿越。
+
+R1/M2 默认保留 payload 文件。hash 校验、导出、清理与 retention API 留到后续里程碑。
+
 ### 5.5 ArtifactStorePort 扩展
 
 现有 `ArtifactStorePort.registerRuntimeArtifact()` 只登记 descriptor。R1 E2E 需要补齐内容写入端口：
@@ -312,6 +319,14 @@ Run Detail 的 replay 数据源：
 
 Replay 渲染层只接受 TraceEvent 序列和懒加载 Artifact，不调用 runtime，不提交新 task。
 
+以上五个 endpoint 仍作为可组合的只读 baseline API；M2 在其上新增首选的 Inspector 聚合入口。
+
+### 6.5 M2 Replay Source API
+
+M2 新增 `GET /v1/runs/:runId/replay-source` 作为 Run Detail Inspector 的证据包入口。它聚合 OrchestrationRun、Task、AgentRun、Artifact metadata、TraceEvent timeline 与轻量 inspector 摘要，用于从已有 TraceEvent / Artifact 重建视图。
+
+Replay Source 不调用 RuntimeAdapter，不提交新 Task，不重新执行 Codex，也不内联 artifact 正文。Artifact 内容仍通过 `GET /v1/artifacts/:artifactId/payload` 懒加载。
+
 ---
 
 ## 7. Workspace Core API baseline 与剩余缺口
@@ -325,6 +340,7 @@ Replay 渲染层只接受 TraceEvent 序列和懒加载 Artifact，不调用 run
 - `GET /v1/artifacts/:artifactId`
 - `GET /v1/artifacts/:artifactId/payload`
 - `GET /v1/runs/:runId/trace`
+- `GET /v1/runs/:runId/replay-source`
 - `GET /v1/workspaces/:workspaceId/handoff-items`（可先由现有对象实时投影，不要求 R1 独立持久化）
 
 R1 剩余重点不再是补齐 artifact / trace 读 API，而是把这些已落地 endpoint 接到真实 Codex runtime drain 与 Run Detail / Replay 消费路径上。

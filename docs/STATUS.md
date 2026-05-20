@@ -43,6 +43,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `GET /health` 健康检查。
 - R1 run/task/agent-run HTTP 闭环：可创建 single-worker run，并通过 mock runtime 验证状态推进。
 - R1 runtime artifact/trace demo loop：可通过 `POST /v1/tasks/:taskId/agent-runs` 提交任务，落 bounded artifact payload refs，并通过 `GET /v1/artifacts/:artifactId/payload` 读取 payload text。
+- Artifact / Trace M2 operational status：Workspace Core 当前可通过 `GET /v1/runs/:runId/replay-source` 提供 Inspector-ready 聚合证据包；artifact payload 仍通过 bounded payload API 懒加载。
+- Local Artifact Store M2：本地 payload 写入采用同目录临时文件 + rename，payload ref 保持 opaque 且不暴露本地路径。
 - Runtime gateway factory：服务默认使用 mock runtime，也可通过 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 显式注入 Codex RuntimeAdapter。
 - Runtime gateway hardening：Codex adapter 可解析 Workspace Core runtime input artifact payload；operator cancel 已能下沉到 runtime cancel，真实长任务 smoke 仍为手动步骤。
 - Runtime Gateway / Workspace Core M1 real-runtime loop：Codex adapter 确定性短任务 smoke 与 RuntimeAdapter-backed Workspace Core submit/drain 终态证明已有自动化测试覆盖；真实 Codex CLI smoke 仍是 opt-in 手动步骤，不进入默认 CI。
@@ -154,7 +156,9 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Planning Output read API：Workspace Core 提供 `GET /v1/runs/:runId/planning-output`。
 - Runtime Drain Slice：Workspace Core 可把 submitted AgentRun 的 AdapterStreamEvent 应用回 run/task/agent-run 状态，并已有 RuntimeAdapter-backed gateway 注入测试。
 - M1 real-runtime loop：Codex adapter 确定性短任务 smoke 与 Workspace Core RuntimeAdapter-backed submit/drain 证明都在自动化测试内；真实 Codex CLI smoke 已文档化为 opt-in 手动流程。
-- Artifact / Trace Read API：Workspace Core 提供 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口。
+- Artifact / Trace Read API：Workspace Core 提供 Artifact metadata、bounded artifact payload 与 run trace timeline/read 只读接口。
+- Artifact / Trace Replay Source M2 milestone：Workspace Core 已落地 `GET /v1/runs/:runId/replay-source`，聚合 run/task/agent-run/artifact metadata/trace timeline 与轻量 Inspector 摘要。
+- Local Artifact Store M2：本地 payload 写入采用同目录临时文件 + rename，payload ref 保持 opaque 且不暴露本地路径。
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
 - `apps/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、最小 Workspace Core dev sidecar bridge、bounded mock smoke allowlist，以及 preview-safe 默认隔离设置。
@@ -169,7 +173,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - UI preview 不是 Web Shell，不能假设已有远程 workspace 控制台。
 - Desktop 生产 sidecar 打包、签名后内嵌启动、window-level smoke 与完整 preload / contextBridge allowlist。
 - Desktop 真实 Workspace Core UI 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前只有 bounded mock smoke 摘要，不是完整产品数据面）。
-- Artifact store 的真实文件内容写入、保留策略与导出。
+- Artifact store 的导出、清理/retention、hash 校验与更完整 review metadata。
 - 真实 Goal Planner 与 Planner 到多 Task DAG 的生成逻辑。
 - 真实 Codex CLI 手动 smoke 执行结果记录，以及更完整的 payload / long-run 证据收集。
 - 真实 Runtime Gateway cancellation / kill、AgentRun retry、protected step approve/reject 与 operator control UI。

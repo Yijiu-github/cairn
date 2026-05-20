@@ -66,7 +66,8 @@
 - **Runtime Drain Slice**：补充 RuntimeAdapter-backed gateway 注入测试，验证 Workspace Core submit/drain API 可走统一 RuntimeAdapter 事件流。
 - **M1 real runtime loop**：确认 Codex adapter 确定性短任务 smoke，强化 Workspace Core RuntimeAdapter-backed submit/drain 终态证明，并补充可复制的手动 Codex smoke 文档；真实 Codex CLI 仍为 opt-in 手动验证，不进入默认 CI。
 - **Runtime Artifact/Trace Demo Loop**：新增 Task runtime submit、bounded artifact payload reference/read、runtime output artifact metadata 与 TraceEvent replay source 闭环。
-- **Artifact / Trace Read API**：Workspace Core 实现 Artifact metadata、bounded artifact payload 与 TraceEvent replay source 只读接口，供 Run Detail / Replay UI 消费。
+- **Artifact / Trace Read API**：Workspace Core 实现 Artifact metadata、bounded artifact payload 与 TraceEvent timeline/read 只读接口，供 Run Detail / Replay UI 消费。
+- **M2 Artifact / Trace evidence**：新增 `GET /v1/runs/:runId/replay-source` Inspector-ready Run Replay Source 设计与实现，聚合 run/task/agent-run/artifact metadata/trace timeline 与轻量摘要，供后续 Run Detail / Desktop 观察台消费。
 - 新增工程规范补强文档体系：命名约定、模块边界、review gates 与 standards automation 路线；其中 `docs/engineering/review-gates.md` 覆盖风险分级、验证命令、文档同步与 review 输出模板
 - 新增非阻塞 `pnpm run standards:check`，用于检查跨包相对导入、internal 导入、模块边界与 package exports 漂移
 - 设计文档新增 R1 Codex E2E + Artifact / Trace 最小闭环，明确 Workspace Core、Codex CLI adapter、ArtifactStore 与 TraceEvent 的端到端验收边界
@@ -92,6 +93,7 @@
 - `.npmrc`：默认 `node-linker` 改为 `hoisted`，避免 Windows 上 `pnpm install` 出现 `ERR_PNPM_ENOENT`（`@ts-rest/core` 依赖链内嵌套 `@types/node` 重命名失败）
 - `pnpm run check`：全仓 Prettier 对齐，并修正少量 markdownlint（代码围栏语言、裸 URL、围栏前后空行）
 - **`@cairn/storage`**：修复 SQLite 迁移 runner 在 `better-sqlite3@12` 下把 `PRAGMA` 与 DDL 合并为多 statement 执行的问题，并保留 Drizzle migration journal 记录以避免重复迁移
+- **Local Artifact Store**：本地 payload 写入改为同目录临时文件 + rename，避免读取到半写入 artifact payload。
 
 ---
 
