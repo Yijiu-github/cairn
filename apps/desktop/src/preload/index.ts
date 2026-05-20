@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 import type { WorkspaceCoreMockSmokeResult } from '../main/workspace-core-client.js';
 import type { WorkspaceCoreSidecarStatus } from '../main/workspace-core-sidecar.js';
+import type { RunReplaySource } from '@cairn/shared-contracts';
 
 export interface CairnDesktopBridge {
   readonly app: {
@@ -10,6 +11,7 @@ export interface CairnDesktopBridge {
     readonly name: 'Cairn Desktop';
   };
   readonly workspaceCore: {
+    readonly getRunReplaySource: (runId: string) => Promise<RunReplaySource>;
     readonly getStatus: () => Promise<WorkspaceCoreSidecarStatus>;
     readonly runMockSmoke: () => Promise<WorkspaceCoreMockSmokeResult>;
   };
@@ -21,6 +23,8 @@ const bridge: CairnDesktopBridge = {
     name: 'Cairn Desktop',
   },
   workspaceCore: {
+    getRunReplaySource: (runId) =>
+      ipcRenderer.invoke('workspace-core:get-run-replay-source', runId) as Promise<RunReplaySource>,
     getStatus: () =>
       ipcRenderer.invoke('workspace-core:get-status') as Promise<WorkspaceCoreSidecarStatus>,
     runMockSmoke: () =>

@@ -3,6 +3,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import type { BootstrapDesktopMainOptions } from './workspace-core-bootstrap.js';
+
 const desktopHarness = vi.hoisted(() => {
   let resolveWhenReady: (() => void) | undefined;
   const whenReady = new Promise<void>((resolve) => {
@@ -17,12 +19,15 @@ const desktopHarness = vi.hoisted(() => {
       setAppUserModelId: vi.fn(),
       whenReady: vi.fn(() => whenReady),
     },
-    bootstrapDesktopMain: vi.fn(() => ({
+    bootstrapDesktopMain: vi.fn((_: BootstrapDesktopMainOptions) => ({
       sidecarStartup: Promise.resolve({
         baseUrl: 'http://127.0.0.1:4321',
-        state: 'healthy',
+        state: 'healthy' as const,
       }),
     })),
+    ipcMain: {
+      handle: vi.fn(),
+    },
     releaseWhenReady: () => {
       resolveWhenReady?.();
     },
@@ -56,9 +61,7 @@ vi.mock('electron', () => ({
     }
   },
   app: desktopHarness.app,
-  ipcMain: {
-    handle: vi.fn(),
-  },
+  ipcMain: desktopHarness.ipcMain,
   shell: {
     openExternal: vi.fn(),
   },
@@ -96,6 +99,22 @@ describe('desktop main startup', () => {
     await waitFor(() => desktopHarness.bootstrapDesktopMain.mock.calls.length === 1);
 
     expect(desktopHarness.bootstrapDesktopMain).toHaveBeenCalledTimes(1);
+    const bootstrapOptions = desktopHarness.bootstrapDesktopMain.mock.calls[0]?.[0];
+    expect(bootstrapOptions).toBeDefined();
+    bootstrapOptions?.registerWorkspaceCoreIpcHandlers();
+
+    expect(desktopHarness.ipcMain.handle).toHaveBeenCalledWith(
+      'workspace-core:get-status',
+      expect.any(Function),
+    );
+    expect(desktopHarness.ipcMain.handle).toHaveBeenCalledWith(
+      'workspace-core:run-mock-smoke',
+      expect.any(Function),
+    );
+    expect(desktopHarness.ipcMain.handle).toHaveBeenCalledWith(
+      'workspace-core:get-run-replay-source',
+      expect.any(Function),
+    );
   });
 });
 

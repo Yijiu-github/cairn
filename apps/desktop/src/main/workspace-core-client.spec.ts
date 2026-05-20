@@ -156,7 +156,7 @@ describe('workspace-core client', () => {
         authorization:
           init?.headers instanceof Headers
             ? (init.headers.get('authorization') ?? undefined)
-            : (init?.headers as Record<string, string> | undefined)?.authorization,
+            : (init?.headers as Record<string, string> | undefined)?.['authorization'],
         method: init?.method ?? 'GET',
         url: requestUrl,
       });

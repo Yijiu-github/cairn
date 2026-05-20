@@ -12,7 +12,10 @@ import {
   writeDesktopSmokeSignalFile,
   writeWorkspaceCoreDiagnosticFile,
 } from './workspace-core-bootstrap.js';
-import { runWorkspaceCoreMockSmoke } from './workspace-core-client.js';
+import {
+  getWorkspaceCoreRunReplaySource,
+  runWorkspaceCoreMockSmoke,
+} from './workspace-core-client.js';
 import {
   WorkspaceCoreSidecarManager,
   createWorkspaceCoreSidecarConfig,
@@ -89,6 +92,21 @@ function writeDesktopSmokeSignal(event: DesktopSmokeSignalEvent): void {
   });
 }
 
+async function getHealthyWorkspaceCoreStatus(
+  workspaceCoreSidecar: WorkspaceCoreSidecarManager,
+): Promise<WorkspaceCoreSidecarStatus> {
+  const status =
+    workspaceCoreSidecar.getStatus().state === 'healthy'
+      ? workspaceCoreSidecar.getStatus()
+      : await workspaceCoreSidecar.start();
+
+  if (status.state !== 'healthy') {
+    throw new Error(status.lastError ?? 'Workspace Core sidecar is not healthy.');
+  }
+
+  return status;
+}
+
 function registerWorkspaceCoreIpcHandlers(
   workspaceCoreSidecar: WorkspaceCoreSidecarManager,
   workspaceCoreAuthToken: string,
@@ -98,18 +116,25 @@ function registerWorkspaceCoreIpcHandlers(
   });
 
   ipcMain.handle('workspace-core:run-mock-smoke', async () => {
-    const status =
-      workspaceCoreSidecar.getStatus().state === 'healthy'
-        ? workspaceCoreSidecar.getStatus()
-        : await workspaceCoreSidecar.start();
-
-    if (status.state !== 'healthy') {
-      throw new Error(status.lastError ?? 'Workspace Core sidecar is not healthy.');
-    }
+    const status = await getHealthyWorkspaceCoreStatus(workspaceCoreSidecar);
 
     return runWorkspaceCoreMockSmoke({
       authToken: workspaceCoreAuthToken,
       baseUrl: status.baseUrl,
+    });
+  });
+
+  ipcMain.handle('workspace-core:get-run-replay-source', async (_event, runId: unknown) => {
+    if (typeof runId !== 'string') {
+      throw new Error('Invalid Workspace Core run id.');
+    }
+
+    const status = await getHealthyWorkspaceCoreStatus(workspaceCoreSidecar);
+
+    return getWorkspaceCoreRunReplaySource({
+      authToken: workspaceCoreAuthToken,
+      baseUrl: status.baseUrl,
+      runId,
     });
   });
 }
