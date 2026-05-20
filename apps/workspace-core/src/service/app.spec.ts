@@ -426,6 +426,133 @@ describe('workspace-core app', () => {
     }
   });
 
+  it('returns an Inspector-ready replay source after runtime drain', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const { runId, taskId } = await createSubmittedRun(app);
+      const agentRunsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/tasks/${taskId}/agent-runs`,
+      });
+      const agentRun = first(agentRunsResponse.json<{ items: { runId: string }[] }>().items);
+
+      const drainResponse = await app.inject({
+        method: 'POST',
+        url: `/v1/agent-runs/${agentRun.runId}/drain-runtime`,
+        payload: {},
+      });
+      expect(drainResponse.statusCode).toBe(202);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/replay-source`,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const body = response.json<{
+        run: { orchestrationRunId: string; status: string; finalResponseRef?: string };
+        tasks: { taskId: string }[];
+        agentRuns: { runId: string; taskId: string; outputRef?: string }[];
+        artifacts: { artifactId: string; uriOrPath: string; payloadRef?: string }[];
+        traceEvents: {
+          traceEventId: string;
+          eventType: string;
+          level: string;
+          createdAt: string;
+        }[];
+        inspector: {
+          status: string;
+          taskCount: number;
+          agentRunCount: number;
+          artifactCount: number;
+          traceEventCount: number;
+          errorEventCount: number;
+          warningEventCount: number;
+          finalArtifactId?: string;
+          startedAt?: string;
+          completedAt?: string;
+          durationMs?: number;
+        };
+      }>();
+
+      expect(body.run).toMatchObject({
+        orchestrationRunId: runId,
+        status: 'succeeded',
+      });
+      expect(body.tasks).toHaveLength(1);
+      expect(body.tasks[0]).toMatchObject({ taskId });
+      expect(body.agentRuns).toEqual([expect.objectContaining({ runId: agentRun.runId, taskId })]);
+      expect(body.artifacts).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            artifactId: body.run.finalResponseRef,
+            uriOrPath: expect.stringMatching(/^artifact-payload:\/\//u) as unknown,
+            payloadRef: expect.stringMatching(/^artifact-payload:\/\//u) as unknown,
+          }),
+        ]),
+      );
+      expect(body.traceEvents.map((event) => event.eventType)).toContain('run.succeeded');
+      expect(body.traceEvents.map((event) => event.createdAt)).toEqual(
+        body.traceEvents.map((event) => event.createdAt).toSorted(),
+      );
+      expect(body.inspector).toMatchObject({
+        status: 'succeeded',
+        taskCount: 1,
+        agentRunCount: 1,
+        artifactCount: body.artifacts.length,
+        traceEventCount: body.traceEvents.length,
+        errorEventCount: 0,
+        warningEventCount: 0,
+        finalArtifactId: body.run.finalResponseRef,
+      });
+      expect(JSON.stringify(body)).not.toContain('/Users/');
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 400 for invalid replay source run ids', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/runs/not-a-ulid/replay-source',
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json()).toMatchObject({ error: { code: 'BAD_REQUEST' } });
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 404 when replay source run is missing', async () => {
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer(),
+      logger: false,
+    });
+
+    try {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/v1/runs/01HZZZZZZZZZZZZZZZZZZZZZF1/replay-source',
+      });
+
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toMatchObject({ error: { code: 'NOT_FOUND' } });
+    } finally {
+      await app.close();
+    }
+  });
+
   it('returns 404 when parent run or task is missing for list routes', async () => {
     const app = await createWorkspaceCoreApp({
       container: createDefaultWorkspaceCoreContainer(),

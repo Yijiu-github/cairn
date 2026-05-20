@@ -27,7 +27,14 @@ import {
 
 import type { WorkspaceCoreContainer } from './container.js';
 import type { ApplicationError, CreateSingleWorkerRunInput } from '@cairn/application';
-import type { Artifact } from '@cairn/shared-contracts/schemas';
+import type {
+  AgentRun,
+  Artifact,
+  OrchestrationRun,
+  RunReplayInspector,
+  Task,
+  TraceEvent,
+} from '@cairn/shared-contracts/schemas';
 import type { FastifyInstance } from 'fastify';
 import type { ZodError } from 'zod';
 
@@ -178,6 +185,13 @@ const ListArtifactsQuery = z.object({
   cursor: z.string().optional(),
 });
 
+const TERMINAL_RUN_STATUSES: readonly OrchestrationRun['status'][] = [
+  'succeeded',
+  'failed',
+  'cancelled',
+  'timeout',
+];
+
 const paginateItems = <T>(items: T[], limit: number) => ({
   items: items.slice(0, limit),
   nextCursor: items.length > limit ? String(limit) : undefined,
@@ -205,6 +219,71 @@ const sanitizeArtifactForResponse = (artifact: Artifact): Artifact => ({
   visibility: artifact.visibility,
   createdAt: artifact.createdAt,
 });
+
+const isFailureTraceEvent = (event: TraceEvent): boolean =>
+  event.level === 'error' ||
+  event.eventType.endsWith('.failed') ||
+  event.eventType.endsWith('.timeout') ||
+  event.eventType.endsWith('.cancelled');
+
+const toEpochMillis = (iso: string | undefined): number | undefined => {
+  if (iso === undefined) {
+    return undefined;
+  }
+
+  const time = Date.parse(iso);
+  return Number.isNaN(time) ? undefined : time;
+};
+
+const maybeDurationMs = (
+  startedAt: string | undefined,
+  completedAt: string | undefined,
+): number | undefined => {
+  const started = toEpochMillis(startedAt);
+  const completed = toEpochMillis(completedAt);
+
+  if (started === undefined || completed === undefined || completed < started) {
+    return undefined;
+  }
+
+  return completed - started;
+};
+
+const createRunReplayInspector = (
+  run: OrchestrationRun,
+  tasks: readonly Task[],
+  agentRuns: readonly AgentRun[],
+  artifacts: readonly Artifact[],
+  traceEvents: readonly TraceEvent[],
+): RunReplayInspector => {
+  const firstFailure = traceEvents.find(isFailureTraceEvent);
+  const fallbackFinalArtifact = artifacts.find((artifact) => artifact.artifactRole === 'output');
+  const finalArtifactId = run.finalResponseRef ?? fallbackFinalArtifact?.artifactId;
+  const isTerminalRun = TERMINAL_RUN_STATUSES.includes(run.status);
+  const startedAt = run.startedAt ?? traceEvents[0]?.createdAt;
+  const completedAt = run.finishedAt ?? (isTerminalRun ? traceEvents.at(-1)?.createdAt : undefined);
+  const durationMs = maybeDurationMs(startedAt, completedAt);
+
+  return {
+    status: run.status,
+    taskCount: tasks.length,
+    agentRunCount: agentRuns.length,
+    artifactCount: artifacts.length,
+    traceEventCount: traceEvents.length,
+    errorEventCount: traceEvents.filter((event) => event.level === 'error').length,
+    warningEventCount: traceEvents.filter((event) => event.level === 'warn').length,
+    ...(finalArtifactId === undefined ? {} : { finalArtifactId }),
+    ...(firstFailure === undefined
+      ? {}
+      : {
+          firstFailureEventId: firstFailure.traceEventId,
+          firstFailureEventType: firstFailure.eventType,
+        }),
+    ...(startedAt === undefined ? {} : { startedAt }),
+    ...(completedAt === undefined ? {} : { completedAt }),
+    ...(durationMs === undefined ? {} : { durationMs }),
+  };
+};
 
 const toApplicationHttpCode = (
   status: 404 | 409 | 500 | 503,
@@ -531,6 +610,39 @@ export const createWorkspaceCoreApp = async (
     }
 
     return reply.send(run);
+  });
+
+  app.get('/v1/runs/:runId/replay-source', async (request, reply) => {
+    const runId = OrchestrationRunId.safeParse(
+      (request.params as Record<string, unknown>)['runId'],
+    );
+    if (!runId.success) {
+      return reply.code(400).send(toApiError('BAD_REQUEST', 'Invalid run id.', runId.error.issues));
+    }
+
+    const run = await options.container.repository.getRun(runId.data);
+    if (run === undefined) {
+      return reply.code(404).send(toApiError('NOT_FOUND', 'Run not found.'));
+    }
+
+    const tasks = await options.container.repository.listTasksByRun(runId.data);
+    const agentRuns = (
+      await Promise.all(
+        tasks.map((task) => options.container.repository.listAgentRunsByTask(task.taskId)),
+      )
+    ).flat();
+    const artifacts = await options.container.repository.listArtifactsByRun(runId.data);
+    const traceEvents = await options.container.repository.listTraceEventsByRun(runId.data);
+    const sanitizedArtifacts = artifacts.map((artifact) => sanitizeArtifactForResponse(artifact));
+
+    return reply.send({
+      run,
+      tasks,
+      agentRuns,
+      artifacts: sanitizedArtifacts,
+      traceEvents,
+      inspector: createRunReplayInspector(run, tasks, agentRuns, sanitizedArtifacts, traceEvents),
+    });
   });
 
   app.get('/v1/runs/:runId/artifacts', async (request, reply) => {
