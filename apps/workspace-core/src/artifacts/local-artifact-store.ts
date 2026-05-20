@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import type {
@@ -34,8 +34,20 @@ export class LocalArtifactStore implements ArtifactStorePort {
     const storedBytes = Buffer.from(truncatedText, 'utf8');
     const truncated = storedBytes.byteLength < Buffer.byteLength(input.text, 'utf8');
 
-    await mkdir(path.dirname(absolutePath), { recursive: true });
-    await writeFile(absolutePath, storedBytes);
+    const directory = path.dirname(absolutePath);
+    const temporaryPath = path.join(
+      directory,
+      `.${path.basename(absolutePath)}.${String(Date.now())}.${Math.random().toString(36).slice(2)}.tmp`,
+    );
+
+    await mkdir(directory, { recursive: true });
+    try {
+      await writeFile(temporaryPath, storedBytes);
+      await rename(temporaryPath, absolutePath);
+    } catch (error) {
+      await rm(temporaryPath, { force: true });
+      throw error;
+    }
 
     return {
       payloadRef: `${PAYLOAD_REF_PREFIX}${relativePath}`,
