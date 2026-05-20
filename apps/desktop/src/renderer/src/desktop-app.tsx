@@ -24,6 +24,15 @@ import {
 import { desktopShellModel } from './desktop-model';
 
 import type { DesktopView } from './desktop-model';
+import type { RunReplaySource } from '@cairn/shared-contracts';
+import type {
+  CairnEvidenceTone,
+  CairnRunStatus,
+  CairnTaskStatus,
+  EvidenceTimelineItem,
+  RunCardProps,
+  TaskTreeItem,
+} from '@cairn/ui';
 
 export function DesktopApp() {
   const [activeView, setActiveView] = useState<DesktopView>(() => readStoredView());
@@ -35,6 +44,10 @@ export function DesktopApp() {
     useState<
       Awaited<ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['runMockSmoke']>>
     >();
+  const [observedRunId, setObservedRunId] = useState<string>();
+  const [runReplaySource, setRunReplaySource] = useState<RunReplaySource>();
+  const [runReplayLoading, setRunReplayLoading] = useState(false);
+  const [runReplayError, setRunReplayError] = useState<string>();
   const [workspaceCoreBusy, setWorkspaceCoreBusy] = useState(false);
   const [workspaceCoreError, setWorkspaceCoreError] = useState<string>();
   const bridgeLabel = useMemo(() => window.cairnDesktop?.app.name ?? 'Cairn Desktop', []);
@@ -73,11 +86,30 @@ export function DesktopApp() {
     try {
       const result = await window.cairnDesktop.workspaceCore.runMockSmoke();
       setSmokeResult(result);
+      setObservedRunId(result.runId);
+      await loadRunReplaySource(result.runId);
       setWorkspaceCoreStatus(await window.cairnDesktop.workspaceCore.getStatus());
     } catch (error) {
       setWorkspaceCoreError(toErrorMessage(error));
     } finally {
       setWorkspaceCoreBusy(false);
+    }
+  }
+
+  async function loadRunReplaySource(runId: string) {
+    if (window.cairnDesktop?.workspaceCore === undefined) {
+      return;
+    }
+
+    setRunReplayLoading(true);
+    setRunReplayError(undefined);
+    try {
+      setRunReplaySource(await window.cairnDesktop.workspaceCore.getRunReplaySource(runId));
+      setWorkspaceCoreStatus(await window.cairnDesktop.workspaceCore.getStatus());
+    } catch (error) {
+      setRunReplayError(toErrorMessage(error));
+    } finally {
+      setRunReplayLoading(false);
     }
   }
 
@@ -160,7 +192,15 @@ export function DesktopApp() {
             statusLoading={workspaceCoreBusy}
           />
         ) : undefined}
-        {activeView === 'run-detail' ? <RunDetailView /> : undefined}
+        {activeView === 'run-detail' ? (
+          <RunDetailView
+            observedRunId={observedRunId}
+            onRefreshReplay={loadRunReplaySource}
+            replayError={runReplayError}
+            replayLoading={runReplayLoading}
+            replaySource={runReplaySource}
+          />
+        ) : undefined}
         {activeView === 'artifact-review' ? <ArtifactReviewView /> : undefined}
         {activeView === 'settings' ? <SettingsView /> : undefined}
       </section>
@@ -340,30 +380,79 @@ function WorkspaceCorePanel({
   );
 }
 
-function RunDetailView() {
-  const [run] = desktopShellModel.pinnedRuns;
+interface RunDetailViewProps {
+  readonly observedRunId?: string | undefined;
+  readonly onRefreshReplay: (runId: string) => Promise<void>;
+  readonly replayError?: string | undefined;
+  readonly replayLoading: boolean;
+  readonly replaySource?: RunReplaySource | undefined;
+}
+
+function RunDetailView({
+  observedRunId,
+  onRefreshReplay,
+  replayError,
+  replayLoading,
+  replaySource,
+}: RunDetailViewProps) {
+  const staticRun = desktopShellModel.pinnedRuns[0];
+  const run = replaySource === undefined ? staticRun : toRunCardProps(replaySource);
+  const timelineItems =
+    replaySource === undefined
+      ? desktopShellModel.runDetail.evidence
+      : toEvidenceTimelineItems(replaySource);
+  const taskItems =
+    replaySource === undefined ? desktopShellModel.runDetail.tasks : toTaskTreeItems(replaySource);
+  const selectedTaskId =
+    replaySource?.tasks[0]?.taskId ?? desktopShellModel.runDetail.selectedTaskId;
 
   if (run === undefined) {
-    return <InlineAlert tone="info">No selected run in the static fixture.</InlineAlert>;
+    return <InlineAlert tone="info">No selected run is available.</InlineAlert>;
   }
 
   return (
     <div className="content-grid">
       <section className="content-stack">
+        {replayError === undefined ? undefined : (
+          <InlineAlert tone="danger" title="Run evidence failed to load">
+            {replayError}
+          </InlineAlert>
+        )}
+        {replaySource === undefined ? (
+          <InlineAlert tone="info" title="Static Run Detail fallback">
+            Run the bounded smoke path from Home to load real Workspace Core replay evidence.
+          </InlineAlert>
+        ) : (
+          <InlineAlert tone="success" title="Live replay source">
+            Showing sanitized Workspace Core evidence for {replaySource.run.orchestrationRunId}.
+          </InlineAlert>
+        )}
         <RunCard {...run} />
-        <EvidenceTimeline items={desktopShellModel.runDetail.evidence} />
+        <EvidenceTimeline items={timelineItems} />
       </section>
       <aside className="content-stack">
-        <TaskTree
-          items={desktopShellModel.runDetail.tasks}
-          selectedId={desktopShellModel.runDetail.selectedTaskId}
-        />
+        <TaskTree items={taskItems} selectedId={selectedTaskId} />
+        {replaySource === undefined ? undefined : (
+          <ReplayInspectorCard replaySource={replaySource} />
+        )}
         <Card>
           <CardHeader>
             <CardTitle>Operator controls</CardTitle>
             <CardDescription>Disabled until explicit IPC and safety gates exist.</CardDescription>
           </CardHeader>
           <CardContent className="button-row">
+            <Button
+              disabled={observedRunId === undefined}
+              loading={replayLoading}
+              onClick={() => {
+                if (observedRunId !== undefined) {
+                  void onRefreshReplay(observedRunId);
+                }
+              }}
+              variant="secondary"
+            >
+              Refresh Evidence
+            </Button>
             <Button disabled>Approve</Button>
             <Button disabled variant="warning">
               Pause
@@ -375,6 +464,35 @@ function RunDetailView() {
         </Card>
       </aside>
     </div>
+  );
+}
+
+function ReplayInspectorCard({ replaySource }: { readonly replaySource: RunReplaySource }) {
+  const inspector = replaySource.inspector;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Replay inspector</CardTitle>
+        <CardDescription>
+          Read-only summary derived from Workspace Core replay source.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <MetadataList
+          items={[
+            { label: 'Tasks', value: inspector.taskCount },
+            { label: 'Agent runs', value: inspector.agentRunCount },
+            { label: 'Artifacts', value: inspector.artifactCount },
+            { label: 'Trace events', value: inspector.traceEventCount },
+            { label: 'Warnings', value: inspector.warningEventCount },
+            { label: 'Errors', value: inspector.errorEventCount },
+            { label: 'First failure', value: inspector.firstFailureEventType ?? 'none' },
+            { label: 'Final artifact', value: inspector.finalArtifactId ?? 'none' },
+          ]}
+        />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -501,7 +619,7 @@ function SafetyDefaultsCard() {
       <CardContent>
         <MetadataList
           items={[
-            { label: 'Live data fetching', value: 'disabled' },
+            { label: 'Replay evidence', value: 'read-only' },
             { label: 'Real IPC actions', value: 'disabled' },
             { label: 'Local path reveal', value: 'redacted by default' },
           ]}
@@ -509,6 +627,133 @@ function SafetyDefaultsCard() {
       </CardContent>
     </Card>
   );
+}
+
+function toRunCardProps(replaySource: RunReplaySource): RunCardProps {
+  return {
+    agentLabel: 'Workspace Core',
+    description: `Replay source contains ${replaySource.tasks.length.toString()} task(s), ${replaySource.artifacts.length.toString()} artifact(s), and ${replaySource.traceEvents.length.toString()} trace event(s).`,
+    metrics: [
+      { label: 'Tasks', value: replaySource.inspector.taskCount },
+      { label: 'Artifacts', value: replaySource.inspector.artifactCount },
+      { label: 'Trace', value: replaySource.inspector.traceEventCount },
+    ],
+    progress: toRunProgress(replaySource.run.status),
+    runId: replaySource.run.orchestrationRunId,
+    status: toCairnRunStatus(replaySource.run.status),
+    title: `Workspace Core run · ${replaySource.run.status}`,
+  };
+}
+
+function toTaskTreeItems(replaySource: RunReplaySource): readonly TaskTreeItem[] {
+  return replaySource.tasks.map((task) => ({
+    attempt: task.attempt,
+    id: task.taskId,
+    label: task.title,
+    metadata: task.taskKind,
+    status: toCairnTaskStatus(task.status),
+  }));
+}
+
+function toEvidenceTimelineItems(replaySource: RunReplaySource): readonly EvidenceTimelineItem[] {
+  return replaySource.traceEvents.map((event) => ({
+    description: `${event.level} · ${event.traceEventId}`,
+    id: event.traceEventId,
+    metadata: `trace ${event.traceId}`,
+    time: formatTraceTime(event.createdAt),
+    title: event.eventType,
+    tone: toEvidenceTone(event.level),
+  }));
+}
+
+function toCairnRunStatus(status: RunReplaySource['run']['status']): CairnRunStatus {
+  if (status === 'succeeded') {
+    return 'completed';
+  }
+
+  if (status === 'queued') {
+    return 'idle';
+  }
+
+  if (status === 'planning' || status === 'running' || status === 'synthesizing') {
+    return 'running';
+  }
+
+  if (status === 'paused') {
+    return 'blocked';
+  }
+
+  if (status === 'cancelled') {
+    return 'cancelled';
+  }
+
+  return 'failed';
+}
+
+function toCairnTaskStatus(status: RunReplaySource['tasks'][number]['status']): CairnTaskStatus {
+  if (status === 'succeeded') {
+    return 'completed';
+  }
+
+  if (status === 'pending' || status === 'ready') {
+    return 'todo';
+  }
+
+  if (status === 'dispatched' || status === 'running') {
+    return 'running';
+  }
+
+  if (status === 'cancelled' || status === 'skipped') {
+    return 'cancelled';
+  }
+
+  return 'failed';
+}
+
+function toRunProgress(status: RunReplaySource['run']['status']): number {
+  if (
+    status === 'succeeded' ||
+    status === 'failed' ||
+    status === 'cancelled' ||
+    status === 'timeout'
+  ) {
+    return 100;
+  }
+
+  if (status === 'running' || status === 'synthesizing') {
+    return 65;
+  }
+
+  if (status === 'planning') {
+    return 25;
+  }
+
+  return 10;
+}
+
+function toEvidenceTone(level: RunReplaySource['traceEvents'][number]['level']): CairnEvidenceTone {
+  if (level === 'error') {
+    return 'danger';
+  }
+
+  if (level === 'warn') {
+    return 'warning';
+  }
+
+  if (level === 'debug') {
+    return 'neutral';
+  }
+
+  return 'info';
+}
+
+function formatTraceTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function toStatusTone(
