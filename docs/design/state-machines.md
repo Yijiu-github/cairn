@@ -1,7 +1,7 @@
 # 状态机 / State Machines
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-17
+> 最后更新：2026-05-20
 > 来源：[`设计文档V0.1.0.md §11`](设计文档V0.1.0.md) 抽出并扩展
 > 上游术语：见 [`../reference/glossary.md`](../reference/glossary.md)
 
@@ -171,6 +171,25 @@ cancelled   cancelled  cancelled/timeout │
 | `applies_now`  | 立即影响当前调度                     | approve once、reject、cancel、retry now              |
 | `applies_next` | 作为下一次 planning / retry 的上下文 | add instruction then retry、调整 acceptance criteria |
 | `records_only` | 只沉淀 decision / note，不改变调度   | 记录人工观察、标记需后续复盘                         |
+
+### 5.1 Operator cancel evidence
+
+Operator cancel 是本地状态收束动作，同时对 runtime cancel 进行 best-effort 派发。对每个非终态 AgentRun，Workspace Core 必须写入以下 TraceEvent：
+
+| EventType                           | Level  | 触发时机                    | payload                                 |
+| ----------------------------------- | ------ | --------------------------- | --------------------------------------- |
+| `agent_run.cancel_requested`        | `info` | 调用 Runtime Gateway 前     | `reason`、`agentRunId`                  |
+| `agent_run.cancel_acknowledged`     | `info` | runtime 返回 `cancelled`    | `reason`、`agentRunId`                  |
+| `agent_run.cancel_not_acknowledged` | `warn` | runtime 返回未确认取消      | `reason`、`agentRunId`、`runtimeReason` |
+| `agent_run.cancel_dispatch_failed`  | `warn` | runtime cancel 派发抛错     | `reason`、`agentRunId`、`message`       |
+| `run.cancelled`                     | `warn` | 本地 run 收束为 `cancelled` | `reason`                                |
+
+runtime cancel 失败或未确认不阻止本地 run / task / agent-run 进入 `cancelled`。终态 AgentRun 不再派发 runtime cancel，也不写 agent-run cancel evidence。
+
+Retry / rerun 恢复证据必须保持语义分离：
+
+- `task.retry_requested`：payload 包含 `previousAttempt`、`newAttempt`，以及可选 `reason`。
+- `run.rerun_created`：payload 包含 `previousRunId`、`previousTaskId`、`replan`，以及可选 `operatorNote`。
 
 Handoff Queue 只展示需要人类处理的动作，不允许把纯信息流都塞入队列；每个 queue item 必须能追到源对象与 TraceEvent。
 

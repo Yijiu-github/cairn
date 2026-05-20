@@ -48,7 +48,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Runtime gateway factory：服务默认使用 mock runtime，也可通过 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 显式注入 Codex RuntimeAdapter。
 - Runtime gateway hardening：Codex adapter 可解析 Workspace Core runtime input artifact payload；operator cancel 已能下沉到 runtime cancel，真实长任务 smoke 仍为手动步骤。
 - Runtime Gateway / Workspace Core M1 real-runtime loop：Codex adapter 确定性短任务 smoke 与 RuntimeAdapter-backed Workspace Core submit/drain 终态证明已有自动化测试覆盖；真实 Codex CLI smoke 仍是 opt-in 手动步骤，不进入默认 CI。
-- Orchestration Control R1a API：pause / resume / cancel run、retry task、rerun、operator note 的最小 HTTP 接管面。
+- Orchestration Control R1a/M3 evidence API：pause / resume / cancel run、retry task、rerun、operator note 的最小 HTTP 接管面；cancel / retry / rerun 已补齐 TraceEvent evidence，并可通过 run trace / replay-source 读取。
 - SQLite application repository：服务启动可执行 domain 迁移，并用本地 SQLite 持久化 run/task/agent-run 状态。
 - Code Context R1a/R1b-a API：
   - 注册与列出 SourceRoot。
@@ -145,7 +145,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `@cairn/runtime-gateway`：RuntimeAdapter 契约、mock adapter、Codex CLI adapter 生命周期基线。
 - `@cairn/application`：single-worker orchestration、planning output 与 code context service。
 - `@cairn/workspace-core`：最小服务、SQLite 持久化、code context R1a/R1b-a API 与显式 Codex runtime gateway factory。
-- Orchestration Control R1a：`@cairn/application` 与 `@cairn/workspace-core` 支持最小 operator control plane，覆盖 pause / resume / cancel / retry task / rerun 与 operator note。
+- Orchestration Control R1a/M3 evidence：`@cairn/application` 与 `@cairn/workspace-core` 支持最小 operator control plane，覆盖 pause / resume / cancel / retry task / rerun 与 operator note；取消链路记录 runtime requested / acknowledged / warning evidence，retry / rerun 记录最小恢复证据。
 - Code Context R1a/R1b-a：
   - SourceRoot registry。
   - 本地文件清单 reindex。
@@ -231,6 +231,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 | 日期       | 变更                                                            |
 | ---------- | --------------------------------------------------------------- |
+| 2026-05-20 | 更新 M3 Operator Control evidence polish 状态                   |
 | 2026-05-20 | 更新 M1 Runtime Gateway / Workspace Core 真实运行时闭环状态     |
 | 2026-05-19 | 更新 `apps/desktop` 最小 Workspace Core dev sidecar bridge 状态 |
 | 2026-05-17 | 新增 `apps/desktop` Electron 最小静态 shell 骨架状态说明        |

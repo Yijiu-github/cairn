@@ -18,6 +18,7 @@
 
 ### Added
 
+- **M3 Operator Control evidence polish**：补齐 operator cancel 的 runtime requested / acknowledged / not-acknowledged / dispatch-failed TraceEvent 证据，并为 retry / rerun trace 增加最小恢复路径 payload。
 - 新增战略定位刷新说明，明确 Cairn 以个人本地工作台切入，长期聚焦小团队 Agent 工程控制台，并通过 runtime-neutral control plane 接入 Codex / Claude 等官方 agent 工具。
 - 项目正式命名为 **Cairn**，仓库根目录改名为 `cairn-workspace/`
 - 设计文档 V0.1.0 落位 `docs/design/`
