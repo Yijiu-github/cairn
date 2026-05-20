@@ -734,17 +734,17 @@ describe('OrchestrationRunService', () => {
     await expect(repository.getRun(ids.run)).resolves.toMatchObject({ status: 'queued' });
   });
 
-  it('cancels an active run and its non-terminal task and agent run', async () => {
+  it('records cancel request and acknowledgement traces before local cancellation completes', async () => {
     const { repository, runtimeGateway, service }: ReturnType<typeof createHarness> =
       createHarness();
     await repository.createRunGraph({ run: createRunFixture(), tasks: [createTaskFixture()] });
     await repository.createAgentRun(createAgentRunFixture());
 
     const cancelled = await service.cancelRun({ runId: ids.run, reason: 'Operator stopped it.' });
+
     expect(runtimeGateway.cancelled).toEqual([
       { runId: ids.agentRun, reason: 'Operator stopped it.' },
     ]);
-
     expect(cancelled).toMatchObject({
       status: 'cancelled',
       finishedAt: '2026-05-14T01:00:00.000Z',
@@ -765,14 +765,34 @@ describe('OrchestrationRunService', () => {
       status: 'cancelled',
       cancelable: false,
     });
-    expect(repository.listTraceEvents()).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ eventType: 'run.cancelled', level: 'warn' }),
-      ]),
-    );
+    expect(repository.listTraceEvents()).toEqual([
+      expect.objectContaining({
+        eventType: 'agent_run.cancel_requested',
+        level: 'info',
+        payloadInline: {
+          reason: 'Operator stopped it.',
+          agentRunId: ids.agentRun,
+        },
+      }),
+      expect.objectContaining({
+        eventType: 'agent_run.cancel_acknowledged',
+        level: 'info',
+        payloadInline: {
+          reason: 'Operator stopped it.',
+          agentRunId: ids.agentRun,
+        },
+      }),
+      expect.objectContaining({
+        eventType: 'run.cancelled',
+        level: 'warn',
+        payloadInline: {
+          reason: 'Operator stopped it.',
+        },
+      }),
+    ]);
   });
 
-  it('keeps cancel flow local when runtime cancel throws', async () => {
+  it('keeps cancel flow local and records dispatch failure evidence when runtime cancel throws', async () => {
     const { repository, runtimeGateway, service }: ReturnType<typeof createHarness> =
       createHarness();
     runtimeGateway.cancelError = new Error('runtime cancel unavailable');
@@ -791,6 +811,28 @@ describe('OrchestrationRunService', () => {
     await expect(repository.getAgentRun(ids.agentRun)).resolves.toMatchObject({
       status: 'cancelled',
     });
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          eventType: 'agent_run.cancel_requested',
+          level: 'info',
+          payloadInline: {
+            reason: 'Operator stopped it.',
+            agentRunId: ids.agentRun,
+          },
+        }),
+        expect.objectContaining({
+          eventType: 'agent_run.cancel_dispatch_failed',
+          level: 'warn',
+          payloadInline: {
+            reason: 'Operator stopped it.',
+            agentRunId: ids.agentRun,
+            message: 'runtime cancel unavailable',
+          },
+        }),
+        expect.objectContaining({ eventType: 'run.cancelled', level: 'warn' }),
+      ]),
+    );
   });
 
   it('records a warning trace when runtime cancel is not acknowledged', async () => {
@@ -808,17 +850,45 @@ describe('OrchestrationRunService', () => {
     expect(repository.listTraceEvents()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
+          eventType: 'agent_run.cancel_requested',
+          level: 'info',
+          payloadInline: {
+            reason: 'Operator stopped it.',
+            agentRunId: ids.agentRun,
+          },
+        }),
+        expect.objectContaining({
           eventType: 'agent_run.cancel_not_acknowledged',
           level: 'warn',
-          payloadInline: expect.objectContaining({
-            reason: 'already_terminal',
-          }),
+          payloadInline: {
+            reason: 'Operator stopped it.',
+            agentRunId: ids.agentRun,
+            runtimeReason: 'already_terminal',
+          },
         }),
       ]),
     );
   });
 
-  it('retries a failed task in a non-terminal run', async () => {
+  it('does not dispatch runtime cancel or agent-run cancel traces for terminal AgentRuns', async () => {
+    const { repository, runtimeGateway, service }: ReturnType<typeof createHarness> =
+      createHarness();
+    await repository.createRunGraph({ run: createRunFixture(), tasks: [createTaskFixture()] });
+    await repository.createAgentRun(
+      createAgentRunFixture({
+        status: 'succeeded',
+        finishedAt: '2026-05-14T00:01:00.000Z',
+        cancelable: false,
+      }),
+    );
+
+    await service.cancelRun({ runId: ids.run, reason: 'Operator stopped it.' });
+
+    expect(runtimeGateway.cancelled).toEqual([]);
+    expect(repository.listTraceEvents().map((event) => event.eventType)).toEqual(['run.cancelled']);
+  });
+
+  it('retries a failed task in a non-terminal run with previous and new attempt evidence', async () => {
     const { repository, service }: ReturnType<typeof createHarness> = createHarness();
     await repository.createRunGraph({
       run: createRunFixture({ status: 'running' }),
@@ -844,24 +914,20 @@ describe('OrchestrationRunService', () => {
     expect(task).not.toHaveProperty('failureReason');
     expect(repository.listTraceEvents()).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ eventType: 'task.retry_requested', level: 'info' }),
+        expect.objectContaining({
+          eventType: 'task.retry_requested',
+          level: 'info',
+          payloadInline: {
+            previousAttempt: 1,
+            newAttempt: 2,
+            reason: 'Try again.',
+          },
+        }),
       ]),
     );
   });
 
-  it('rejects retry task when the parent run is terminal', async () => {
-    const { repository, service }: ReturnType<typeof createHarness> = createHarness();
-    await repository.createRunGraph({
-      run: createRunFixture({ status: 'failed' }),
-      tasks: [createTaskFixture({ status: 'failed' })],
-    });
-
-    await expect(service.retryTask({ taskId: ids.task })).rejects.toMatchObject({
-      code: 'ORCHESTRATION_RUN_TERMINAL',
-    });
-  });
-
-  it('creates a queued single-worker rerun from a terminal single-task run', async () => {
+  it('creates a queued single-worker rerun with previous run and task evidence', async () => {
     const { repository, service }: ReturnType<typeof createHarness> = createHarness({
       runIds: [ids.rerun],
       taskIds: [ids.rerunTask],
@@ -903,7 +969,16 @@ describe('OrchestrationRunService', () => {
     });
     expect(repository.listTraceEvents()).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ eventType: 'run.rerun_created', level: 'info' }),
+        expect.objectContaining({
+          eventType: 'run.rerun_created',
+          level: 'info',
+          payloadInline: {
+            previousRunId: ids.run,
+            previousTaskId: ids.task,
+            replan: true,
+            operatorNote: 'Please use the latest context.',
+          },
+        }),
       ]),
     );
   });

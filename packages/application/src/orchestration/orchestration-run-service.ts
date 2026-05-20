@@ -492,9 +492,32 @@ export class OrchestrationRunService {
       const agentRuns = await this.repository.listAgentRunsByTask(task.taskId);
       for (const agentRun of agentRuns) {
         if (!isAgentRunTerminal(agentRun.status)) {
+          await this.appendTrace(
+            cancelledRun,
+            task,
+            agentRun,
+            'agent_run.cancel_requested',
+            'info',
+            {
+              reason,
+              agentRunId: agentRun.runId,
+            },
+          );
           try {
             const cancelAck = await this.runtimeGateway.cancel(agentRun.runId, reason);
-            if (!cancelAck.cancelled) {
+            if (cancelAck.cancelled) {
+              await this.appendTrace(
+                cancelledRun,
+                task,
+                agentRun,
+                'agent_run.cancel_acknowledged',
+                'info',
+                {
+                  reason,
+                  agentRunId: agentRun.runId,
+                },
+              );
+            } else {
               await this.appendTrace(
                 cancelledRun,
                 task,
@@ -502,7 +525,9 @@ export class OrchestrationRunService {
                 'agent_run.cancel_not_acknowledged',
                 'warn',
                 {
-                  reason: cancelAck.reason ?? 'cancel_not_acknowledged',
+                  reason,
+                  agentRunId: agentRun.runId,
+                  runtimeReason: cancelAck.reason ?? 'cancel_not_acknowledged',
                 },
               );
             }
@@ -514,6 +539,8 @@ export class OrchestrationRunService {
               'agent_run.cancel_dispatch_failed',
               'warn',
               {
+                reason,
+                agentRunId: agentRun.runId,
                 message: this.toErrorMessage(cancelError),
               },
             );
@@ -551,7 +578,8 @@ export class OrchestrationRunService {
     }
 
     const now = toIso(this.clock.now());
-    const newAttempt = task.attempt + 1;
+    const previousAttempt = task.attempt;
+    const newAttempt = previousAttempt + 1;
     const retriedTask: Task = {
       ...task,
       status: 'ready',
@@ -563,6 +591,7 @@ export class OrchestrationRunService {
 
     await this.repository.updateTask(retriedTask);
     await this.appendTrace(run, retriedTask, undefined, 'task.retry_requested', 'info', {
+      previousAttempt,
       newAttempt,
       ...(input.reason === undefined ? {} : { reason: input.reason }),
     });
@@ -615,6 +644,7 @@ export class OrchestrationRunService {
 
     await this.appendTrace(created.run, created.task, undefined, 'run.rerun_created', 'info', {
       previousRunId: previousRun.orchestrationRunId,
+      previousTaskId: previousTask.taskId,
       replan: input.replan ?? false,
       ...(input.operatorNote === undefined ? {} : { operatorNote: input.operatorNote }),
     });
