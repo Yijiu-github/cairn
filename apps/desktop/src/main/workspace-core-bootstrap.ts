@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { mkdir, rename, writeFile } from 'node:fs/promises';
+import { basename, dirname, join } from 'node:path';
 
 import type { WorkspaceCoreSidecarStatus } from './workspace-core-sidecar.js';
 
@@ -73,10 +74,12 @@ export const writeWorkspaceCoreDiagnosticFile = async (
 export const writeDesktopSmokeSignalFile = async (
   options: WriteDesktopSmokeSignalFileOptions,
 ): Promise<void> => {
-  await mkdir(dirname(options.path), { recursive: true });
+  const targetDir = dirname(options.path);
+  const tempPath = join(targetDir, `.${basename(options.path)}.${randomUUID()}.tmp`);
+  await mkdir(targetDir, { recursive: true });
 
   await writeFile(
-    options.path,
+    tempPath,
     `${JSON.stringify(
       {
         event: options.event,
@@ -87,6 +90,7 @@ export const writeDesktopSmokeSignalFile = async (
     )}\n`,
     'utf8',
   );
+  await rename(tempPath, options.path);
 };
 
 const toErrorMessage = (error: unknown): string =>

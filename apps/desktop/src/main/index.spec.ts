@@ -132,7 +132,7 @@ vi.mock('@electron-toolkit/utils', () => ({
 
 vi.mock('./workspace-core-bootstrap.js', () => ({
   bootstrapDesktopMain: desktopHarness.bootstrapDesktopMain,
-  writeDesktopSmokeSignalFile: vi.fn(),
+  writeDesktopSmokeSignalFile: vi.fn(() => Promise.resolve()),
   writeWorkspaceCoreDiagnosticFile: vi.fn(),
 }));
 
@@ -839,6 +839,27 @@ describe('desktop main startup', () => {
     );
     expect(browserWindowInstance?.options?.webPreferences?.preload).not.toMatch(/\.mjs$/u);
   });
+
+  it('quits after the configured window smoke event is written', async () => {
+    vi.stubEnv('CAIRN_DESKTOP_WINDOW_SMOKE_SIGNAL_PATH', '/tmp/cairn-window-smoke.json');
+    vi.stubEnv('CAIRN_DESKTOP_WINDOW_SMOKE_EXIT_AFTER_EVENT', 'main-window-created');
+
+    desktopHarness.releaseWhenReady();
+    await import('./index.js');
+    await waitFor(() => desktopHarness.bootstrapDesktopMain.mock.calls.length === 1);
+
+    const createMainWindowFn =
+      desktopHarness.bootstrapDesktopMain.mock.calls[0]?.[0]?.createMainWindow;
+    expect(createMainWindowFn).toBeDefined();
+    if (createMainWindowFn === undefined) {
+      throw new Error('Expected createMainWindow to be registered.');
+    }
+
+    createMainWindowFn();
+    await waitFor(() => desktopHarness.app.quit.mock.calls.length === 1);
+
+    expect(desktopHarness.app.quit).toHaveBeenCalledTimes(1);
+  });
 });
 
 function createRunReplaySourceFixture(overrides: Partial<RunReplaySource> = {}): RunReplaySource {
@@ -949,8 +970,8 @@ function createOrchestrationRunFixture(
   };
 }
 
-async function waitFor(assertion: () => boolean): Promise<void> {
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+async function waitFor(assertion: () => boolean, describeFailure?: () => string): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt += 1) {
     if (assertion()) {
       return;
     }
@@ -958,7 +979,12 @@ async function waitFor(assertion: () => boolean): Promise<void> {
     await delay(10);
   }
 
-  throw new Error('Timed out waiting for desktop main startup.');
+  const detail = describeFailure?.();
+  throw new Error(
+    detail === undefined
+      ? 'Timed out waiting for desktop main startup.'
+      : `Timed out waiting for desktop main startup. ${detail}`,
+  );
 }
 
 async function loadIpcHandlers(): Promise<Record<string, (...args: unknown[]) => unknown>> {

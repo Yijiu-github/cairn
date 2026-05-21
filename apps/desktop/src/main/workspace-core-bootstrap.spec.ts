@@ -183,6 +183,31 @@ describe('desktop main Workspace Core bootstrap', () => {
     });
     expect(signal).not.toContain('desktop-launch-token');
   });
+
+  it('keeps the desktop smoke signal parseable when it is overwritten', async () => {
+    const signalPath = join(
+      await mkdtemp(join(tmpdir(), 'cairn-desktop-window-smoke-')),
+      'window-ready.json',
+    );
+
+    await writeDesktopSmokeSignalFile({
+      event: 'main-process-after-app-ready',
+      now: new Date('2026-05-19T04:40:00.000Z'),
+      path: signalPath,
+    });
+    await writeDesktopSmokeSignalFile({
+      event: 'main-window-ready-to-show',
+      now: new Date('2026-05-19T04:41:00.000Z'),
+      path: signalPath,
+    });
+
+    const signal = await readFile(signalPath, 'utf8');
+
+    expect(JSON.parse(signal)).toEqual({
+      event: 'main-window-ready-to-show',
+      recordedAt: '2026-05-19T04:41:00.000Z',
+    });
+  });
 });
 
 interface Deferred<T> {

@@ -1,7 +1,7 @@
 # 测试策略 / Testing Strategy
 
 > 状态：🟡 Draft  
-> 最后更新：2026-05-20
+> 最后更新：2026-05-22
 
 ---
 
@@ -89,6 +89,9 @@
 - `pnpm test`
 - `pnpm --filter @cairn/ui-preview build`
 - `pnpm --filter @cairn/desktop build`
+- `pnpm --filter @cairn/desktop test:e2e` 可作为 Desktop 最小窗口级 smoke：它会 build
+  Desktop，启动真实 Electron 进程，等待 `main-window-ready-to-show` signal，再由脚本终止进程收尾；当前只覆盖默认 mock sidecar
+  窗口启动，不代表完整产品 E2E 或真实 Codex 自动化。
 
 手动 gate：触发一条真实 Codex 短任务 run，确认终态、replay evidence、Desktop 最小观察壳与最小 operator action 口径；未执行的步骤必须记录原因。
 
@@ -144,7 +147,8 @@
 ### 内部试用与 CI 的边界
 
 - 真实 Codex CLI smoke 不进入默认 CI
-- Desktop 当前内部试用通过标准仍允许“自动化通过 + 手动真实 smoke 记录”
+- Desktop 当前内部试用通过标准仍允许“自动化通过 + 手动真实 smoke 记录”；已新增的
+  `@cairn/desktop test:e2e` 只覆盖 mock sidecar window-level smoke
 - 已记录过一次 Desktop window-level Codex-backed smoke 成功；如果后续结论只来自手动步骤，仍必须明确标注，不得伪装为自动化覆盖
 
 ## 10. 测试反例（不要做的事）
@@ -167,5 +171,6 @@
 
 | 日期       | 变更                                           |
 | ---------- | ---------------------------------------------- |
+| 2026-05-22 | 补充 Desktop mock sidecar window-level smoke   |
 | 2026-05-20 | 补充第一轮内部试用 gate、手动 smoke 与 CI 边界 |
 | 2026-05-14 | 初版                                           |

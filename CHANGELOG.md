@@ -19,6 +19,7 @@
 ### Added
 
 - 新增第一轮内部开发者试用文档基线：`docs/ops/internal-trial-runbook.md` 统一记录 scope、smoke path、failure triage、known limits 与 gate，明确它不是外部 alpha、installer、signing、notarization 或 `apps/web` 验证。
+- Desktop 新增 `pnpm --filter @cairn/desktop test:e2e` 最小窗口级 smoke：构建 Electron shell，启动真实 Electron 进程，等待 `main-window-ready-to-show` signal，再由脚本终止进程收尾；当前覆盖默认 mock sidecar 路径，不把真实 Codex 纳入默认自动化。
 - Desktop 已记录一次 Codex-backed internal-trial 手动 smoke 成功，可读回同一条 run 的 replay evidence、bounded payload text 与 operator note；自动 e2e 仍是后续工作。
 - 收口静态预览数据中的旧固定协作角色名，改为中性 preview label，避免继续传播已废止的计划口径。
 - **M3 Operator Control evidence polish**：补齐 operator cancel 的 runtime requested / acknowledged / not-acknowledged / dispatch-failed TraceEvent 证据，并为 retry / rerun trace 增加最小恢复路径 payload。

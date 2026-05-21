@@ -64,6 +64,8 @@ const rendererDevServerUrl = process.env['ELECTRON_RENDERER_URL'];
 const mainProcessEnv = process.env;
 // eslint-disable-next-line no-restricted-globals, no-restricted-syntax
 const desktopWindowSmokeSignalPath = process.env['CAIRN_DESKTOP_WINDOW_SMOKE_SIGNAL_PATH'];
+// eslint-disable-next-line no-restricted-globals, no-restricted-syntax
+const desktopWindowSmokeExitAfterEvent = process.env['CAIRN_DESKTOP_WINDOW_SMOKE_EXIT_AFTER_EVENT'];
 
 writeDesktopSmokeSignal('main-process-loaded');
 
@@ -124,12 +126,18 @@ function writeDesktopSmokeSignal(event: DesktopSmokeSignalEvent): void {
   void writeDesktopSmokeSignalFile({
     event,
     path: desktopWindowSmokeSignalPath,
-  }).catch((error: unknown) => {
-    console.error('Desktop smoke signal write failed.', {
-      error: error instanceof Error ? error.message : 'unknown error',
-      path: desktopWindowSmokeSignalPath,
+  })
+    .then(() => {
+      if (event === desktopWindowSmokeExitAfterEvent) {
+        app.quit();
+      }
+    })
+    .catch((error: unknown) => {
+      console.error('Desktop smoke signal write failed.', {
+        error: error instanceof Error ? error.message : 'unknown error',
+        path: desktopWindowSmokeSignalPath,
+      });
     });
-  });
 }
 
 async function getHealthyWorkspaceCoreStatus(

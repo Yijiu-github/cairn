@@ -58,8 +58,10 @@ Known limits:
 - The sidecar command is a development wiring that runs `tsx src/server.ts` from
   `apps/workspace-core`; packaged production sidecar bundling is not done yet.
 - Automated tests cover desktop bootstrap order, the sidecar manager, and the Workspace Core HTTP
-  path. A Codex-backed window-level internal-trial smoke has been verified manually; automated
-  Electron e2e remains a follow-up item.
+  path. `pnpm --filter @cairn/desktop test:e2e` now builds the shell and runs a minimal
+  window-level Electron smoke against the default mock sidecar path. A Codex-backed window-level
+  internal-trial smoke has also been verified manually, but real Codex remains opt-in and outside
+  default CI.
 - Artifact payload preview is read-only and fetched by opaque artifact id through Workspace Core; it
   does not reveal local paths, expose arbitrary filesystem access, or implement a full Artifact
   workspace.
