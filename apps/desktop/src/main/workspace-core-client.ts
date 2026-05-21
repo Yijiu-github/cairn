@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
-import { OrchestrationRunId } from '@cairn/shared-contracts';
+import { z } from 'zod';
 
-import type { RunReplaySource } from '@cairn/shared-contracts';
+import {
+  ArtifactId,
+  artifactPayloadResponseSchema,
+  OrchestrationRunId,
+  RunReplaySource as RunReplaySourceSchema,
+} from '@cairn/shared-contracts';
 
-export interface WorkspaceCoreMockSmokeResult {
+import type { ArtifactPayloadResponse, RunReplaySource } from '@cairn/shared-contracts';
+
+export interface WorkspaceCoreInternalTrialResult {
   readonly runId: string;
   readonly runStatus: string;
   readonly taskId: string;
@@ -15,7 +22,7 @@ export interface WorkspaceCoreMockSmokeResult {
   readonly finalResponseRef?: string | undefined;
 }
 
-export interface RunWorkspaceCoreMockSmokeOptions {
+export interface RunWorkspaceCoreInternalTrialOptions {
   readonly authToken: string;
   readonly baseUrl: string;
   readonly fetch?: typeof fetch | undefined;
@@ -28,6 +35,13 @@ export interface GetWorkspaceCoreRunReplaySourceOptions {
   readonly baseUrl: string;
   readonly fetch?: typeof fetch | undefined;
   readonly runId: string;
+}
+
+export interface GetWorkspaceCoreArtifactPayloadOptions {
+  readonly artifactId: string;
+  readonly authToken: string;
+  readonly baseUrl: string;
+  readonly fetch?: typeof fetch | undefined;
 }
 
 interface CreateRunResponse {
@@ -78,74 +92,199 @@ interface TraceListResponse {
 }
 
 interface TraceResponse {
-  readonly eventId: string;
+  readonly traceEventId: string;
 }
 
 const DEFAULT_WORKSPACE_ID = '01J000000000000000000000W0';
 const DEFAULT_ORIGIN_EVENT_ID = '01J000000000000000000000E0';
 
-export const runWorkspaceCoreMockSmoke = async (
-  options: RunWorkspaceCoreMockSmokeOptions,
-): Promise<WorkspaceCoreMockSmokeResult> => {
+const createRunResponseSchema = z.object({
+  orchestrationRunId: z.string().min(1),
+  status: z.string().min(1),
+});
+
+const taskResponseSchema = z.object({
+  taskId: z.string().min(1),
+  status: z.string().min(1),
+});
+
+const taskListResponseSchema = z.object({
+  items: z.array(taskResponseSchema),
+});
+
+const submitAgentRunResponseSchema = z.object({
+  agentRunId: z.string().min(1),
+  status: z.string().min(1),
+});
+
+const agentRunResponseSchema = z.object({
+  runId: z.string().min(1),
+  status: z.string().min(1),
+});
+
+const agentRunListResponseSchema = z.object({
+  items: z.array(agentRunResponseSchema),
+});
+
+const runResponseSchema = z.object({
+  orchestrationRunId: z.string().min(1),
+  status: z.string().min(1),
+  finalResponseRef: z.string().min(1).optional(),
+});
+
+const artifactResponseSchema = z.object({
+  artifactId: z.string().min(1),
+  artifactRole: z.string().min(1),
+});
+
+const artifactListResponseSchema = z.object({
+  items: z.array(artifactResponseSchema),
+});
+
+const traceResponseSchema = z.object({
+  traceEventId: z.string().min(1),
+});
+
+const traceListResponseSchema = z.object({
+  items: z.array(traceResponseSchema),
+});
+
+/**
+ * Validates and normalizes a Desktop trial run id before main/preload code
+ * forwards it to Workspace Core.
+ */
+export const parseWorkspaceCoreRunId = (runId: string): string => {
+  const parsedRunId = OrchestrationRunId.safeParse(runId);
+  if (!parsedRunId.success) {
+    throw new Error('Invalid Workspace Core run id.');
+  }
+
+  return parsedRunId.data;
+};
+
+/**
+ * Validates and normalizes a Desktop artifact id before main/preload code
+ * forwards it to Workspace Core.
+ */
+export const parseWorkspaceCoreArtifactId = (artifactId: string): string => {
+  const parsedArtifactId = ArtifactId.safeParse(artifactId);
+  if (!parsedArtifactId.success) {
+    throw new Error('Invalid Workspace Core artifact id.');
+  }
+
+  return parsedArtifactId.data;
+};
+
+export const runWorkspaceCoreInternalTrial = async (
+  options: RunWorkspaceCoreInternalTrialOptions,
+): Promise<WorkspaceCoreInternalTrialResult> => {
   const fetchImpl = options.fetch ?? fetch;
   const workspaceId = options.workspaceId ?? DEFAULT_WORKSPACE_ID;
   const originEventId = options.originEventId ?? DEFAULT_ORIGIN_EVENT_ID;
 
-  const createdRun = await requestJson<CreateRunResponse>(fetchImpl, options, {
-    body: {
-      originEventId,
-      task: {
-        brief: 'Exercise the Desktop to Workspace Core mock runtime path.',
-        taskKind: 'custom',
-        title: 'Desktop mock smoke',
+  const createdRun = await requestJson<CreateRunResponse>(
+    fetchImpl,
+    options,
+    {
+      body: {
+        originEventId,
+        task: {
+          brief: 'Exercise the Cairn Desktop internal-trial run path.',
+          taskKind: 'custom',
+          title: 'Desktop internal trial',
+        },
       },
+      method: 'POST',
+      path: `/v1/workspaces/${workspaceId}/runs`,
     },
-    method: 'POST',
-    path: `/v1/workspaces/${workspaceId}/runs`,
-  });
-  const tasks = await requestJson<TaskListResponse>(fetchImpl, options, {
-    method: 'GET',
-    path: `/v1/runs/${createdRun.orchestrationRunId}/tasks`,
-  });
+    createRunResponseSchema,
+  );
+  const tasks = await requestJson<TaskListResponse>(
+    fetchImpl,
+    options,
+    {
+      method: 'GET',
+      path: `/v1/runs/${createdRun.orchestrationRunId}/tasks`,
+    },
+    taskListResponseSchema,
+  );
   const task = first(tasks.items, 'Workspace Core did not create a smoke task.');
 
-  const submittedAgentRun = await requestJson<SubmitAgentRunResponse>(fetchImpl, options, {
-    body: {
-      model: 'default',
-      prompt: 'Run the Cairn Desktop mock smoke path.',
-      runtimeType: 'codex',
+  const submittedAgentRun = await requestJson<SubmitAgentRunResponse>(
+    fetchImpl,
+    options,
+    {
+      body: {
+        model: 'default',
+        prompt: 'Reply with exactly: Cairn internal trial ok',
+        runtimeType: 'codex',
+      },
+      method: 'POST',
+      path: `/v1/tasks/${task.taskId}/agent-runs`,
     },
-    method: 'POST',
-    path: `/v1/tasks/${task.taskId}/agent-runs`,
-  });
+    submitAgentRunResponseSchema,
+  );
 
-  await requestJson(fetchImpl, options, {
-    body: {},
-    method: 'POST',
-    path: `/v1/agent-runs/${submittedAgentRun.agentRunId}/drain-runtime`,
-  });
+  await requestJson(
+    fetchImpl,
+    options,
+    {
+      body: {},
+      method: 'POST',
+      path: `/v1/agent-runs/${submittedAgentRun.agentRunId}/drain-runtime`,
+    },
+    z.object({
+      agentRunId: z.string().min(1),
+      eventCount: z.number().int().nonnegative(),
+    }),
+  );
 
   const [run, latestTask, agentRuns, artifacts, trace] = await Promise.all([
-    requestJson<RunResponse>(fetchImpl, options, {
-      method: 'GET',
-      path: `/v1/runs/${createdRun.orchestrationRunId}`,
-    }),
-    requestJson<TaskResponse>(fetchImpl, options, {
-      method: 'GET',
-      path: `/v1/tasks/${task.taskId}`,
-    }),
-    requestJson<AgentRunListResponse>(fetchImpl, options, {
-      method: 'GET',
-      path: `/v1/tasks/${task.taskId}/agent-runs`,
-    }),
-    requestJson<ArtifactListResponse>(fetchImpl, options, {
-      method: 'GET',
-      path: `/v1/runs/${createdRun.orchestrationRunId}/artifacts`,
-    }),
-    requestJson<TraceListResponse>(fetchImpl, options, {
-      method: 'GET',
-      path: `/v1/runs/${createdRun.orchestrationRunId}/trace?limit=50`,
-    }),
+    requestJson<RunResponse>(
+      fetchImpl,
+      options,
+      {
+        method: 'GET',
+        path: `/v1/runs/${createdRun.orchestrationRunId}`,
+      },
+      runResponseSchema,
+    ),
+    requestJson<TaskResponse>(
+      fetchImpl,
+      options,
+      {
+        method: 'GET',
+        path: `/v1/tasks/${task.taskId}`,
+      },
+      taskResponseSchema,
+    ),
+    requestJson<AgentRunListResponse>(
+      fetchImpl,
+      options,
+      {
+        method: 'GET',
+        path: `/v1/tasks/${task.taskId}/agent-runs`,
+      },
+      agentRunListResponseSchema,
+    ),
+    requestJson<ArtifactListResponse>(
+      fetchImpl,
+      options,
+      {
+        method: 'GET',
+        path: `/v1/runs/${createdRun.orchestrationRunId}/artifacts`,
+      },
+      artifactListResponseSchema,
+    ),
+    requestJson<TraceListResponse>(
+      fetchImpl,
+      options,
+      {
+        method: 'GET',
+        path: `/v1/runs/${createdRun.orchestrationRunId}/trace?limit=50`,
+      },
+      traceListResponseSchema,
+    ),
   ]);
 
   return {
@@ -164,15 +303,36 @@ export const runWorkspaceCoreMockSmoke = async (
 export const getWorkspaceCoreRunReplaySource = async (
   options: GetWorkspaceCoreRunReplaySourceOptions,
 ): Promise<RunReplaySource> => {
-  const runId = OrchestrationRunId.safeParse(options.runId);
-  if (!runId.success) {
-    throw new Error('Invalid Workspace Core run id.');
+  const runId = parseWorkspaceCoreRunId(options.runId);
+  const payload = await requestJson(options.fetch ?? fetch, options, {
+    method: 'GET',
+    path: `/v1/runs/${runId}/replay-source`,
+  });
+  const parsed = RunReplaySourceSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error('Workspace Core returned an invalid replay source payload.');
   }
 
-  return requestJson<RunReplaySource>(options.fetch ?? fetch, options, {
+  return parsed.data;
+};
+
+export const getWorkspaceCoreArtifactPayload = async (
+  options: GetWorkspaceCoreArtifactPayloadOptions,
+): Promise<ArtifactPayloadResponse> => {
+  const artifactId = parseWorkspaceCoreArtifactId(options.artifactId);
+
+  const payload = await requestJson(options.fetch ?? fetch, options, {
     method: 'GET',
-    path: `/v1/runs/${runId.data}/replay-source`,
+    path: `/v1/artifacts/${artifactId}/payload`,
   });
+  const parsed = artifactPayloadResponseSchema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error(
+      `Workspace Core returned an invalid response payload for GET /v1/artifacts/${artifactId}/payload.`,
+    );
+  }
+
+  return parsed.data;
 };
 
 type RequestMethod = 'GET' | 'POST';
@@ -185,8 +345,9 @@ interface RequestJsonOptions {
 
 const requestJson = async <T = unknown>(
   fetchImpl: typeof fetch,
-  runtime: Pick<RunWorkspaceCoreMockSmokeOptions, 'authToken' | 'baseUrl'>,
+  runtime: Pick<RunWorkspaceCoreInternalTrialOptions, 'authToken' | 'baseUrl'>,
   request: RequestJsonOptions,
+  schema?: z.ZodType<T>,
 ): Promise<T> => {
   const init: RequestInit = {
     headers: {
@@ -207,7 +368,19 @@ const requestJson = async <T = unknown>(
     );
   }
 
-  return (await response.json()) as T;
+  const payload: unknown = await response.json();
+  if (schema === undefined) {
+    return payload as T;
+  }
+
+  const parsed = schema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error(
+      `Workspace Core returned an invalid response payload for ${request.method} ${request.path}.`,
+    );
+  }
+
+  return parsed.data;
 };
 
 const first = <T>(items: readonly T[], message: string): T => {

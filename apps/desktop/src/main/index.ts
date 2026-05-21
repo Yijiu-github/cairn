@@ -6,6 +6,9 @@ import { join } from 'node:path';
 
 import { is } from '@electron-toolkit/utils';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
+import { z } from 'zod';
+
+import { OrchestrationRun, TaskId } from '@cairn/shared-contracts/schemas';
 
 import {
   bootstrapDesktopMain,
@@ -13,8 +16,11 @@ import {
   writeWorkspaceCoreDiagnosticFile,
 } from './workspace-core-bootstrap.js';
 import {
+  getWorkspaceCoreArtifactPayload,
   getWorkspaceCoreRunReplaySource,
-  runWorkspaceCoreMockSmoke,
+  parseWorkspaceCoreArtifactId,
+  parseWorkspaceCoreRunId,
+  runWorkspaceCoreInternalTrial,
 } from './workspace-core-client.js';
 import {
   WorkspaceCoreSidecarManager,
@@ -25,6 +31,29 @@ import type { WriteDesktopSmokeSignalFileOptions } from './workspace-core-bootst
 import type { WorkspaceCoreSidecarStatus } from './workspace-core-sidecar.js';
 
 type DesktopSmokeSignalEvent = WriteDesktopSmokeSignalFileOptions['event'];
+
+export interface DesktopWorkspaceCoreStatus {
+  readonly state: WorkspaceCoreSidecarStatus['state'];
+  readonly connectionLabel: 'local sidecar';
+  readonly runtime?: WorkspaceCoreSidecarStatus['runtime'];
+  readonly pid?: number | undefined;
+  readonly service?: WorkspaceCoreSidecarStatus['service'];
+  readonly lastError?: string | undefined;
+}
+
+const OPERATOR_REASON_MAX_LENGTH = 1000;
+const OPERATOR_NOTE_MAX_LENGTH = 4000;
+const WORKSPACE_CORE_ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_]*$/u;
+
+const workspaceCoreRetryTaskResponseSchema = z.object({
+  newAttempt: z.number().int().nonnegative(),
+  taskId: TaskId,
+});
+
+const workspaceCoreOperatorNoteResponseSchema = z.object({
+  messageId: z.string().min(1),
+  traceEventId: z.string().min(1),
+});
 
 // Electron main process is the platform boundary. The repository-wide config
 // package does not exist yet, so the desktop entry point keeps these two direct
@@ -49,7 +78,7 @@ function createMainWindow(): BrowserWindow {
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: join(__dirname, '../preload/index.mjs'),
+      preload: join(__dirname, '../preload/index.js'),
       sandbox: true,
     },
     width: 1280,
@@ -63,7 +92,9 @@ function createMainWindow(): BrowserWindow {
   });
 
   window.webContents.setWindowOpenHandler(({ url }) => {
-    void shell.openExternal(url);
+    if (isAllowedExternalUrl(url)) {
+      void shell.openExternal(url);
+    }
     return { action: 'deny' };
   });
 
@@ -74,6 +105,15 @@ function createMainWindow(): BrowserWindow {
   }
 
   return window;
+}
+
+function isAllowedExternalUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
 }
 
 function writeDesktopSmokeSignal(event: DesktopSmokeSignalEvent): void {
@@ -101,10 +141,33 @@ async function getHealthyWorkspaceCoreStatus(
       : await workspaceCoreSidecar.start();
 
   if (status.state !== 'healthy') {
-    throw new Error(status.lastError ?? 'Workspace Core sidecar is not healthy.');
+    throw new Error(formatWorkspaceCoreSidecarHealthError(status.lastError));
   }
 
   return status;
+}
+
+function formatWorkspaceCoreSidecarHealthError(lastError: string | undefined): string {
+  if (lastError === undefined || lastError.trim().length === 0) {
+    return 'Workspace Core sidecar is not healthy.';
+  }
+
+  return redactWorkspaceCoreBridgeMessage(lastError);
+}
+
+function sanitizeWorkspaceCoreSidecarStatus(
+  status: WorkspaceCoreSidecarStatus,
+): DesktopWorkspaceCoreStatus {
+  return {
+    connectionLabel: 'local sidecar',
+    ...(status.lastError === undefined
+      ? {}
+      : { lastError: redactWorkspaceCoreBridgeMessage(status.lastError) }),
+    ...(status.pid === undefined ? {} : { pid: status.pid }),
+    ...(status.runtime === undefined ? {} : { runtime: status.runtime }),
+    ...(status.service === undefined ? {} : { service: status.service }),
+    state: status.state,
+  };
 }
 
 function registerWorkspaceCoreIpcHandlers(
@@ -112,13 +175,13 @@ function registerWorkspaceCoreIpcHandlers(
   workspaceCoreAuthToken: string,
 ): void {
   ipcMain.handle('workspace-core:get-status', async () => {
-    return workspaceCoreSidecar.checkHealth();
+    return sanitizeWorkspaceCoreSidecarStatus(await workspaceCoreSidecar.checkHealth());
   });
 
-  ipcMain.handle('workspace-core:run-mock-smoke', async () => {
+  ipcMain.handle('workspace-core:run-internal-trial', async () => {
     const status = await getHealthyWorkspaceCoreStatus(workspaceCoreSidecar);
 
-    return runWorkspaceCoreMockSmoke({
+    return runWorkspaceCoreInternalTrial({
       authToken: workspaceCoreAuthToken,
       baseUrl: status.baseUrl,
     });
@@ -129,14 +192,269 @@ function registerWorkspaceCoreIpcHandlers(
       throw new Error('Invalid Workspace Core run id.');
     }
 
+    const normalizedRunId = parseWorkspaceCoreRunId(runId);
     const status = await getHealthyWorkspaceCoreStatus(workspaceCoreSidecar);
 
     return getWorkspaceCoreRunReplaySource({
       authToken: workspaceCoreAuthToken,
       baseUrl: status.baseUrl,
-      runId,
+      runId: normalizedRunId,
     });
   });
+
+  ipcMain.handle('workspace-core:get-artifact-payload', async (_event, artifactId: unknown) => {
+    if (typeof artifactId !== 'string') {
+      throw new Error('Invalid Workspace Core artifact id.');
+    }
+
+    const normalizedArtifactId = parseWorkspaceCoreArtifactId(artifactId);
+    const status = await getHealthyWorkspaceCoreStatus(workspaceCoreSidecar);
+
+    return getWorkspaceCoreArtifactPayload({
+      artifactId: normalizedArtifactId,
+      authToken: workspaceCoreAuthToken,
+      baseUrl: status.baseUrl,
+    });
+  });
+
+  ipcMain.handle('workspace-core:cancel-run', async (_event, runId: unknown, reason?: unknown) => {
+    if (typeof runId !== 'string') {
+      throw new Error('Invalid Workspace Core run id.');
+    }
+
+    if (reason !== undefined && typeof reason !== 'string') {
+      throw new Error('Invalid cancel reason.');
+    }
+    if (typeof reason === 'string' && reason.length > OPERATOR_REASON_MAX_LENGTH) {
+      throw new Error('Cancel reason must be 1000 characters or fewer.');
+    }
+
+    const normalizedRunId = parseWorkspaceCoreRunId(runId);
+    const status = await getHealthyWorkspaceCoreStatus(workspaceCoreSidecar);
+
+    return requestWorkspaceCoreJson({
+      authToken: workspaceCoreAuthToken,
+      baseUrl: status.baseUrl,
+      body: reason === undefined ? {} : { reason },
+      method: 'POST',
+      path: `/v1/runs/${normalizedRunId}/cancel`,
+      responseSchema: OrchestrationRun,
+    });
+  });
+
+  ipcMain.handle('workspace-core:retry-task', async (_event, taskId: unknown, reason?: unknown) => {
+    if (typeof taskId !== 'string') {
+      throw new Error('Invalid Workspace Core task id.');
+    }
+
+    if (reason !== undefined && typeof reason !== 'string') {
+      throw new Error('Invalid retry reason.');
+    }
+    if (typeof reason === 'string' && reason.length > OPERATOR_REASON_MAX_LENGTH) {
+      throw new Error('Retry reason must be 1000 characters or fewer.');
+    }
+
+    const parsedTaskId = TaskId.safeParse(taskId);
+    if (!parsedTaskId.success) {
+      throw new Error('Invalid Workspace Core task id.');
+    }
+
+    const status = await getHealthyWorkspaceCoreStatus(workspaceCoreSidecar);
+
+    return requestWorkspaceCoreJson({
+      authToken: workspaceCoreAuthToken,
+      baseUrl: status.baseUrl,
+      body: reason === undefined ? {} : { reason },
+      method: 'POST',
+      path: `/v1/tasks/${parsedTaskId.data}/retry`,
+      responseSchema: workspaceCoreRetryTaskResponseSchema,
+    });
+  });
+
+  ipcMain.handle('workspace-core:rerun', async (_event, runId: unknown, options: unknown = {}) => {
+    if (typeof runId !== 'string') {
+      throw new Error('Invalid Workspace Core run id.');
+    }
+
+    if (typeof options !== 'object' || options === null || Array.isArray(options)) {
+      throw new Error('Invalid rerun options.');
+    }
+
+    const normalizedRunId = parseWorkspaceCoreRunId(runId);
+    const { operatorNote, replan } = options as Record<string, unknown>;
+    if (operatorNote !== undefined && typeof operatorNote !== 'string') {
+      throw new Error('Invalid rerun operator note.');
+    }
+    if (typeof operatorNote === 'string' && operatorNote.trim().length === 0) {
+      throw new Error('Rerun operator note must be a non-empty string.');
+    }
+    if (typeof operatorNote === 'string' && operatorNote.length > OPERATOR_NOTE_MAX_LENGTH) {
+      throw new Error('Rerun operator note must be 4000 characters or fewer.');
+    }
+    if (replan !== undefined && typeof replan !== 'boolean') {
+      throw new Error('Invalid rerun replan flag.');
+    }
+
+    const status = await getHealthyWorkspaceCoreStatus(workspaceCoreSidecar);
+
+    return requestWorkspaceCoreJson({
+      authToken: workspaceCoreAuthToken,
+      baseUrl: status.baseUrl,
+      body: {
+        ...(operatorNote === undefined ? {} : { operatorNote }),
+        ...(replan === undefined ? {} : { replan }),
+      },
+      method: 'POST',
+      path: `/v1/runs/${normalizedRunId}/rerun`,
+      responseSchema: OrchestrationRun,
+    });
+  });
+
+  ipcMain.handle(
+    'workspace-core:add-operator-note',
+    async (_event, runId: unknown, options: unknown) => {
+      if (typeof runId !== 'string') {
+        throw new Error('Invalid Workspace Core run id.');
+      }
+
+      if (typeof options !== 'object' || options === null || Array.isArray(options)) {
+        throw new Error('Invalid operator note payload.');
+      }
+
+      const normalizedRunId = parseWorkspaceCoreRunId(runId);
+      const { note, visibility } = options as Record<string, unknown>;
+      if (typeof note !== 'string' || note.trim().length === 0) {
+        throw new Error('Operator note must be a non-empty string.');
+      }
+      if (note.length > OPERATOR_NOTE_MAX_LENGTH) {
+        throw new Error('Operator note must be 4000 characters or fewer.');
+      }
+      if (visibility !== undefined && visibility !== 'operator_only' && visibility !== 'public') {
+        throw new Error('Invalid operator note visibility.');
+      }
+
+      const status = await getHealthyWorkspaceCoreStatus(workspaceCoreSidecar);
+
+      return requestWorkspaceCoreJson({
+        authToken: workspaceCoreAuthToken,
+        baseUrl: status.baseUrl,
+        body: {
+          note,
+          visibility: visibility ?? 'operator_only',
+        },
+        method: 'POST',
+        path: `/v1/runs/${normalizedRunId}/notes`,
+        responseSchema: workspaceCoreOperatorNoteResponseSchema,
+      });
+    },
+  );
+}
+
+async function requestWorkspaceCoreJson<T>(input: {
+  readonly authToken: string;
+  readonly baseUrl: string;
+  readonly body?: unknown;
+  readonly method: 'GET' | 'POST';
+  readonly path: string;
+  readonly responseSchema?: z.ZodType<T>;
+}): Promise<T> {
+  const init: RequestInit = {
+    headers: {
+      authorization: `Bearer ${input.authToken}`,
+      ...(input.body === undefined ? {} : { 'content-type': 'application/json' }),
+    },
+    method: input.method,
+  };
+
+  if (input.body !== undefined) {
+    init.body = JSON.stringify(input.body);
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${input.baseUrl}${input.path}`, init);
+  } catch (error) {
+    throw new Error(formatWorkspaceCoreTransportError(error));
+  }
+
+  const payload = (await response.json().catch(() => undefined)) as
+    | { error?: { code?: string; message?: string } }
+    | undefined;
+
+  if (!response.ok) {
+    const message = payload?.error?.message;
+    const code = normalizeWorkspaceCoreErrorCode(payload?.error?.code);
+    const redactedMessage =
+      message === undefined ? undefined : redactWorkspaceCoreBridgeMessage(message);
+    throw new Error(formatWorkspaceCoreActionError(response.status, code, redactedMessage));
+  }
+
+  if (input.responseSchema === undefined) {
+    return payload as T;
+  }
+
+  const parsedPayload = input.responseSchema.safeParse(payload);
+  if (!parsedPayload.success) {
+    throw new Error(
+      `Workspace Core returned an invalid response payload for ${input.method} ${input.path}.`,
+    );
+  }
+
+  return parsedPayload.data;
+}
+
+function formatWorkspaceCoreActionError(
+  status: number,
+  code: string | undefined,
+  message: string | undefined,
+): string {
+  if (code === undefined) {
+    return message ?? `Workspace Core request failed with ${status.toString()}.`;
+  }
+
+  return `${code}: ${message ?? 'Workspace Core action failed.'}`;
+}
+
+function formatWorkspaceCoreTransportError(error: unknown): string {
+  const message =
+    error instanceof Error && error.message.trim().length > 0
+      ? redactWorkspaceCoreBridgeMessage(error.message)
+      : 'unknown transport error';
+
+  return `Workspace Core request failed before receiving a response: ${message}`;
+}
+
+function normalizeWorkspaceCoreErrorCode(code: string | undefined): string | undefined {
+  const trimmedCode = code?.trim();
+  if (trimmedCode === undefined || trimmedCode.length === 0) {
+    return undefined;
+  }
+
+  return WORKSPACE_CORE_ERROR_CODE_PATTERN.test(trimmedCode) ? trimmedCode : 'WORKSPACE_CORE_ERROR';
+}
+
+function redactWorkspaceCoreBridgeMessage(message: string): string {
+  const redactedUrls = message.replace(/\bhttps?:\/\/[^\s"'<>]+/giu, '<redacted>');
+  const redactedPaths = redactedUrls
+    .replace(/(?:[A-Za-z]:)?\/(?:[^/\s]+\/)*[^/\s]+/gu, '<redacted>')
+    .replace(/\\(?:[^\\\s]+\\)*[^\\\s]+/gu, '<redacted>');
+  const redactedSecrets = redactedPaths
+    .replace(/\b(Bearer)\s+[A-Za-z0-9._~+/=-]+\b/giu, '$1 <redacted>')
+    .replace(
+      /\b([A-Z0-9_]*TOKEN[A-Z0-9_]*|[A-Z0-9_]{3,})=([^\s]+)/giu,
+      (_match: string, key: string) => `${key}=<redacted>`,
+    );
+
+  return trimWorkspaceCoreBridgeMessage(redactedSecrets);
+}
+
+function trimWorkspaceCoreBridgeMessage(message: string): string {
+  const normalized = message.trim();
+  if (normalized.length <= 2000) {
+    return normalized;
+  }
+
+  return normalized.slice(-2000);
 }
 
 function reportWorkspaceCoreStartupFailure(status: WorkspaceCoreSidecarStatus): void {

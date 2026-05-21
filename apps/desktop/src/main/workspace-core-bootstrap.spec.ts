@@ -29,6 +29,7 @@ describe('desktop main Workspace Core bootstrap', () => {
         events.push('start-sidecar');
         return Promise.resolve({
           baseUrl: 'http://127.0.0.1:4321',
+          runtime: 'mock',
           state: 'healthy',
         });
       },
@@ -93,6 +94,7 @@ describe('desktop main Workspace Core bootstrap', () => {
         Promise.resolve({
           baseUrl: 'http://127.0.0.1:4321',
           pid: 12_345,
+          runtime: 'mock',
           service: 'workspace-core',
           state: 'healthy',
         }),
@@ -137,6 +139,7 @@ describe('desktop main Workspace Core bootstrap', () => {
         baseUrl: 'http://127.0.0.1:4321',
         lastError: 'Workspace Core did not become healthy before the startup timeout.',
         pid: 12_345,
+        runtime: 'codex',
         service: 'workspace-core',
         state: 'unhealthy',
       },
@@ -152,6 +155,7 @@ describe('desktop main Workspace Core bootstrap', () => {
       baseUrl: 'http://127.0.0.1:4321',
       lastError: 'Workspace Core did not become healthy before the startup timeout.',
       pid: 12_345,
+      runtime: 'codex',
       recordedAt: '2026-05-19T04:30:00.000Z',
       service: 'workspace-core',
       state: 'unhealthy',

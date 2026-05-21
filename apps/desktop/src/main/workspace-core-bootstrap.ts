@@ -59,6 +59,7 @@ export const writeWorkspaceCoreDiagnosticFile = async (
         lastError: options.status.lastError,
         pid: options.status.pid,
         recordedAt: (options.now ?? new Date()).toISOString(),
+        runtime: options.status.runtime,
         service: options.status.service,
         state: options.status.state,
       },
@@ -113,6 +114,7 @@ const startWorkspaceCoreSidecar = async (
       baseUrl: status.baseUrl,
       lastError: `Workspace Core diagnostic write failed: ${toErrorMessage(error)}`,
       pid: status.pid,
+      runtime: status.runtime,
       state: 'unhealthy',
     });
   }

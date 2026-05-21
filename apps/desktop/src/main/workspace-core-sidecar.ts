@@ -18,6 +18,7 @@ export type WorkspaceCoreSidecarState =
 export interface WorkspaceCoreSidecarStatus {
   readonly state: WorkspaceCoreSidecarState;
   readonly baseUrl: string;
+  readonly runtime?: 'mock' | 'codex' | undefined;
   readonly pid?: number | undefined;
   readonly service?: 'workspace-core' | undefined;
   readonly lastError?: string | undefined;
@@ -29,6 +30,7 @@ export interface WorkspaceCoreSidecarConfig {
   readonly cwd: string;
   readonly env: Readonly<Record<string, string>>;
   readonly baseUrl: string;
+  readonly runtime: 'mock' | 'codex';
   readonly authToken: string;
   readonly healthTimeoutMs: number;
   readonly healthRequestTimeoutMs: number;
@@ -81,6 +83,25 @@ const DEFAULT_HEALTH_REQUEST_TIMEOUT_MS = 750;
 const DEFAULT_HEALTH_POLL_INTERVAL_MS = 250;
 const DEFAULT_STOP_TIMEOUT_MS = 3000;
 
+const readDesktopSidecarRuntime = (
+  env: Readonly<Record<string, string | undefined>>,
+): 'mock' | 'codex' => {
+  return env['CAIRN_DESKTOP_SIDECAR_RUNTIME'] === 'codex' ? 'codex' : 'mock';
+};
+
+const readDesktopSidecarRuntimeWorkdir = (
+  env: Readonly<Record<string, string | undefined>>,
+  userDataPath: string,
+  runtime: 'mock' | 'codex',
+): string => {
+  const configured = env['CAIRN_DESKTOP_SIDECAR_RUNTIME_WORKDIR'];
+  if (configured !== undefined && configured.length > 0) {
+    return configured;
+  }
+
+  return path.join(userDataPath, 'runtime', runtime);
+};
+
 export const createWorkspaceCoreSidecarConfig = (
   options: CreateWorkspaceCoreSidecarConfigOptions,
 ): WorkspaceCoreSidecarConfig => {
@@ -92,9 +113,9 @@ export const createWorkspaceCoreSidecarConfig = (
     'local',
     'workspace-core.sqlite',
   );
-  const runtimeWorkdir = path.join(options.userDataPath, 'runtime', 'mock');
-
   const env = compactEnv(options.baseEnv ?? {});
+  const runtime = readDesktopSidecarRuntime(env);
+  const runtimeWorkdir = readDesktopSidecarRuntimeWorkdir(env, options.userDataPath, runtime);
   const workspaceCoreCwd = path.join(options.repoRoot, 'apps', 'workspace-core');
 
   return {
@@ -109,10 +130,22 @@ export const createWorkspaceCoreSidecarConfig = (
       CAIRN_WORKSPACE_CORE_DB_PATH: databasePath,
       CAIRN_WORKSPACE_CORE_HOST: '127.0.0.1',
       CAIRN_WORKSPACE_CORE_PORT: port.toString(),
-      CAIRN_WORKSPACE_CORE_RUNTIME: 'mock',
+      CAIRN_WORKSPACE_CORE_RUNTIME: runtime,
       CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR: runtimeWorkdir,
+      ...(env['CAIRN_DESKTOP_SIDECAR_CODEX_EXECUTABLE'] === undefined
+        ? {}
+        : {
+            CAIRN_WORKSPACE_CORE_CODEX_EXECUTABLE: env['CAIRN_DESKTOP_SIDECAR_CODEX_EXECUTABLE'],
+          }),
+      ...(env['CAIRN_DESKTOP_SIDECAR_CODEX_SANDBOX_MODE'] === undefined
+        ? {}
+        : {
+            CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE:
+              env['CAIRN_DESKTOP_SIDECAR_CODEX_SANDBOX_MODE'],
+          }),
       PATH: withDesktopPath(env['PATH']),
     },
+    runtime,
     healthPollIntervalMs: DEFAULT_HEALTH_POLL_INTERVAL_MS,
     healthRequestTimeoutMs: DEFAULT_HEALTH_REQUEST_TIMEOUT_MS,
     healthTimeoutMs: DEFAULT_HEALTH_TIMEOUT_MS,
@@ -124,6 +157,7 @@ export class WorkspaceCoreSidecarManager {
   private child: WorkspaceCoreSidecarChild | undefined;
   private lastChildError: string | undefined;
   private lastExit: { code: number | null; signal: NodeJS.Signals | null } | undefined;
+  private startupPromise: Promise<WorkspaceCoreSidecarStatus> | undefined;
   private stderrTail = '';
   private status: WorkspaceCoreSidecarStatus;
   private readonly fetchImpl: typeof fetch;
@@ -141,6 +175,7 @@ export class WorkspaceCoreSidecarManager {
     this.spawnProcess = dependencies.spawnProcess ?? defaultSpawnProcess;
     this.status = {
       baseUrl: config.baseUrl,
+      runtime: config.runtime,
       state: 'stopped',
     };
   }
@@ -150,12 +185,17 @@ export class WorkspaceCoreSidecarManager {
   }
 
   public async start(): Promise<WorkspaceCoreSidecarStatus> {
+    if (this.startupPromise !== undefined) {
+      return this.startupPromise;
+    }
+
     if (this.child !== undefined) {
       return this.checkHealth();
     }
 
     this.status = {
       baseUrl: this.config.baseUrl,
+      runtime: this.config.runtime,
       state: 'starting',
     };
     const child = this.spawnProcess(this.config.command, this.config.args, {
@@ -167,14 +207,17 @@ export class WorkspaceCoreSidecarManager {
     this.lastExit = undefined;
     this.stderrTail = '';
     child.stderr?.on('data', (chunk: Buffer | string) => {
-      this.stderrTail = trimDiagnosticTail(`${this.stderrTail}${chunk.toString()}`);
+      this.stderrTail = formatDiagnosticMessage(`${this.stderrTail}${chunk.toString()}`);
     });
     child.once('error', (error) => {
       this.lastChildError = error.message;
       this.lastExit = { code: null, signal: null };
       this.status = {
         baseUrl: this.config.baseUrl,
-        lastError: `Workspace Core sidecar failed to start: ${error.message}`,
+        lastError: formatDiagnosticMessage(
+          `Workspace Core sidecar failed to start: ${error.message}`,
+        ),
+        runtime: this.config.runtime,
         state: 'exited',
       };
       this.child = undefined;
@@ -182,6 +225,7 @@ export class WorkspaceCoreSidecarManager {
     this.status = {
       baseUrl: this.config.baseUrl,
       pid: child.pid,
+      runtime: this.config.runtime,
       state: 'starting',
     };
 
@@ -191,13 +235,18 @@ export class WorkspaceCoreSidecarManager {
         this.status = {
           baseUrl: this.config.baseUrl,
           lastError: this.toExitDiagnostic(code, signal),
+          runtime: this.config.runtime,
           state: 'exited',
         };
       }
       this.child = undefined;
     });
 
-    return this.waitForHealthy();
+    this.startupPromise = this.waitForHealthy().finally(() => {
+      this.startupPromise = undefined;
+    });
+
+    return this.startupPromise;
   }
 
   public async checkHealth(): Promise<WorkspaceCoreSidecarStatus> {
@@ -207,8 +256,11 @@ export class WorkspaceCoreSidecarManager {
       if (!response.ok) {
         this.status = {
           baseUrl: this.config.baseUrl,
-          lastError: `Workspace Core health returned ${response.status.toString()}.`,
+          lastError: formatDiagnosticMessage(
+            `Workspace Core health returned ${response.status.toString()}.`,
+          ),
           pid: this.child?.pid,
+          runtime: this.config.runtime,
           state: 'unhealthy',
         };
         return this.status;
@@ -218,8 +270,9 @@ export class WorkspaceCoreSidecarManager {
       if (!isHealthResponse(body)) {
         this.status = {
           baseUrl: this.config.baseUrl,
-          lastError: 'Workspace Core health returned an invalid response.',
+          lastError: formatDiagnosticMessage('Workspace Core health returned an invalid response.'),
           pid: this.child?.pid,
+          runtime: this.config.runtime,
           state: 'unhealthy',
         };
         return this.status;
@@ -228,6 +281,7 @@ export class WorkspaceCoreSidecarManager {
       this.status = {
         baseUrl: this.config.baseUrl,
         pid: this.child?.pid,
+        runtime: this.config.runtime,
         service: body.service,
         state: 'healthy',
       };
@@ -235,8 +289,11 @@ export class WorkspaceCoreSidecarManager {
     } catch (error) {
       this.status = {
         baseUrl: this.config.baseUrl,
-        lastError: error instanceof Error ? error.message : 'Workspace Core health check failed.',
+        lastError: formatDiagnosticMessage(
+          error instanceof Error ? error.message : 'Workspace Core health check failed.',
+        ),
         pid: this.child?.pid,
+        runtime: this.config.runtime,
         state: 'unhealthy',
       };
       return this.status;
@@ -247,6 +304,7 @@ export class WorkspaceCoreSidecarManager {
     if (this.child === undefined) {
       this.status = {
         baseUrl: this.config.baseUrl,
+        runtime: this.config.runtime,
         state: 'stopped',
       };
       return this.status;
@@ -256,6 +314,7 @@ export class WorkspaceCoreSidecarManager {
     this.status = {
       baseUrl: this.config.baseUrl,
       pid: child.pid,
+      runtime: this.config.runtime,
       state: 'stopping',
     };
 
@@ -275,6 +334,7 @@ export class WorkspaceCoreSidecarManager {
     this.child = undefined;
     this.status = {
       baseUrl: this.config.baseUrl,
+      runtime: this.config.runtime,
       state: 'stopped',
     };
     return this.status;
@@ -288,7 +348,10 @@ export class WorkspaceCoreSidecarManager {
         if (this.lastChildError !== undefined) {
           this.status = {
             baseUrl: this.config.baseUrl,
-            lastError: `Workspace Core sidecar failed to start: ${this.lastChildError}`,
+            lastError: formatDiagnosticMessage(
+              `Workspace Core sidecar failed to start: ${this.lastChildError}`,
+            ),
+            runtime: this.config.runtime,
             state: 'exited',
           };
           return this.status;
@@ -297,6 +360,7 @@ export class WorkspaceCoreSidecarManager {
         this.status = {
           baseUrl: this.config.baseUrl,
           lastError: this.toExitDiagnostic(this.lastExit.code, this.lastExit.signal),
+          runtime: this.config.runtime,
           state: 'exited',
         };
         return this.status;
@@ -311,8 +375,11 @@ export class WorkspaceCoreSidecarManager {
 
     this.status = {
       baseUrl: this.config.baseUrl,
-      lastError: 'Workspace Core did not become healthy before the startup timeout.',
+      lastError: formatDiagnosticMessage(
+        'Workspace Core did not become healthy before the startup timeout.',
+      ),
       pid: this.child?.pid,
+      runtime: this.config.runtime,
       state: 'unhealthy',
     };
     return this.status;
@@ -323,7 +390,8 @@ export class WorkspaceCoreSidecarManager {
       code === null
         ? `Workspace Core sidecar exited with signal ${signal ?? 'unknown'}.`
         : `Workspace Core sidecar exited with code ${code.toString()}.`;
-    const stderrPart = this.stderrTail.length === 0 ? '' : ` stderr: ${this.stderrTail}`;
+    const stderrPart =
+      this.stderrTail.length === 0 ? '' : ` stderr: ${formatDiagnosticMessage(this.stderrTail)}`;
 
     return `${exitPart}${stderrPart}`;
   }
@@ -408,6 +476,22 @@ const trimDiagnosticTail = (value: string): string => {
   }
 
   return normalized.slice(-2000);
+};
+
+const formatDiagnosticMessage = (value: string): string => {
+  const redactedPaths = value
+    .replace(/(?:[A-Za-z]:)?\/(?:[^/\s]+\/)*[^/\s]+/gu, '<redacted-path>')
+    .replace(/\\(?:[^\\\s]+\\)*[^\\\s]+/gu, '<redacted-path>');
+  const redactedSecrets = redactedPaths
+    .replace(/\b(Bearer)\s+[A-Za-z0-9._~+/=-]+\b/giu, '$1 <redacted>')
+    .replace(
+      /\b([A-Z0-9_]*TOKEN[A-Z0-9_]*|[A-Z0-9_]{3,})=([^\s]+)/giu,
+      (_match: string, key: string) => {
+        return `${key}=<redacted>`;
+      },
+    );
+
+  return trimDiagnosticTail(redactedSecrets);
 };
 
 const withDesktopPath = (pathValue: string | undefined): string => {
