@@ -22,6 +22,7 @@ import {
   TaskTree,
 } from '@cairn/ui';
 
+import { loadArtifactPayload as loadArtifactPayloadRequest } from './artifact-payload-loader';
 import { desktopShellModel } from './desktop-model';
 import { loadRunReplaySource as loadRunReplaySourceRequest } from './run-replay-loader';
 
@@ -63,6 +64,7 @@ export function DesktopApp() {
   const [manualRunId, setManualRunId] = useState<string>(() => readObservedRunId() ?? '');
   const [workspaceCoreBusy, setWorkspaceCoreBusy] = useState(false);
   const [workspaceCoreError, setWorkspaceCoreError] = useState<string>();
+  const artifactPayloadLoadState = useRef({ current: 0 });
   const runReplayLoadState = useRef({ current: 0 });
   const bridgeLabel = useMemo(() => window.cairnDesktop?.app.name ?? 'Cairn Desktop', []);
 
@@ -181,19 +183,17 @@ export function DesktopApp() {
       return;
     }
 
-    setArtifactPayloadLoadingId(artifactId);
-    setArtifactPayloadError(undefined);
-    try {
-      const payload = await window.cairnDesktop.workspaceCore.getArtifactPayload(artifactId);
-      setArtifactPayloads((current) => ({
-        ...current,
-        [payload.artifactId]: payload,
-      }));
-    } catch (error) {
-      setArtifactPayloadError(toErrorMessage(error));
-    } finally {
-      setArtifactPayloadLoadingId(undefined);
-    }
+    await loadArtifactPayloadRequest(
+      artifactPayloadLoadState.current,
+      {
+        getArtifactPayload: window.cairnDesktop.workspaceCore.getArtifactPayload,
+        setArtifactPayloadError,
+        setArtifactPayloadLoadingId,
+        setArtifactPayloads,
+        toErrorMessage,
+      },
+      artifactId,
+    );
   }
 
   async function runOperatorAction(actionLabel: string, operation: () => Promise<void>) {

@@ -102,6 +102,8 @@
 
 ### Fixed
 
+- **Desktop artifact payload preview**：renderer 端 payload 加载增加请求序号保护，避免旧的 payload
+  请求在乱序返回时覆盖最新加载状态或错误提示。
 - `.npmrc`：默认 `node-linker` 改为 `hoisted`，避免 Windows 上 `pnpm install` 出现 `ERR_PNPM_ENOENT`（`@ts-rest/core` 依赖链内嵌套 `@types/node` 重命名失败）
 - `pnpm run check`：全仓 Prettier 对齐，并修正少量 markdownlint（代码围栏语言、裸 URL、围栏前后空行）
 - **`@cairn/storage`**：修复 SQLite 迁移 runner 在 `better-sqlite3@12` 下把 `PRAGMA` 与 DDL 合并为多 statement 执行的问题，并保留 Drizzle migration journal 记录以避免重复迁移

@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 03:47 CST
+> 最后更新：2026-05-22 04:06 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 03:47 CST 复核：
+2026-05-22 04:06 CST 复核：
 
-- `git status --short`：干净。
-- `git diff --name-only`：无输出。
+- `git status --short`：本轮 Desktop renderer payload loader、STATUS、CHANGELOG 与 handoff 待提交。
+- `git diff --name-only`：本轮只覆盖 Desktop renderer payload loader 与直接文档同步。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -116,6 +116,21 @@
 - `pnpm run docs:lint`
 - `git diff --check -- docs/ops/internal-trial-runbook.md`
 
+2026-05-22 04:06 CST Desktop renderer payload loader 验证通过：
+
+- 红灯：新增 `apps/desktop/src/renderer/src/artifact-payload-loader.spec.ts` 后，
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/artifact-payload-loader.spec.ts`
+  因 helper 尚不存在失败。
+- 绿灯：接入 `artifact-payload-loader.ts` 后，
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/artifact-payload-loader.spec.ts src/renderer/src/run-replay-loader.spec.ts`
+  通过，2 个文件 5 个测试。
+- `pnpm --filter @cairn/desktop typecheck`
+- `pnpm --filter @cairn/desktop lint`
+- `pnpm exec prettier --check apps/desktop/src/renderer/src/artifact-payload-loader.ts apps/desktop/src/renderer/src/artifact-payload-loader.spec.ts apps/desktop/src/renderer/src/desktop-app.tsx CHANGELOG.md docs/STATUS.md`
+- `pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md`
+- `pnpm run docs:lint`
+- `git diff --check`
+
 ---
 
 ## 6. 最新完成
@@ -150,6 +165,17 @@
 
 本轮提交：`794eac0` `docs(ops): 复核真实 Codex smoke / record real Codex smoke`。
 
+2026-05-22 04:06 CST 本轮完成：
+
+- 新增 renderer 端 `artifact-payload-loader` helper，为 bounded artifact payload 读取增加
+  request sequence guard。
+- `DesktopApp` 的 payload 加载改为通过 helper 更新 loading/error/payload state，避免旧 payload
+  请求乱序返回时覆盖最新加载状态或错误提示。
+- 新增 renderer targeted tests 覆盖“旧请求先返回不写 payload/不清 loading”与“旧请求失败不覆盖最新错误态”。
+- 同步 `docs/STATUS.md` 的 Desktop spec 数量与覆盖重点，并在 `CHANGELOG.md` 记录修复项。
+
+本轮提交：待提交。
+
 ---
 
 ## 7. 下一轮任务
@@ -158,7 +184,8 @@
 
 1. **真实 Codex 手动 smoke 复核**：按 runbook 再跑一条短任务，记录当前 Codex CLI / Node / OS 证据，只使用合成 prompt。
    2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
-2. **Desktop renderer 主线小补强**：继续围绕 replay-loader / bounded payload preview / operator note 的错误态和空态补 targeted tests。
+2. **Desktop renderer 主线小补强**：payload loader 已补 request sequence guard；下一轮优先补
+   operator note/action error-state 或 replay-loader 空态测试，不要重复做同一 payload race。
 3. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
 4. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。
 
@@ -169,6 +196,8 @@
 - 自动化 e2e 仅覆盖默认 mock sidecar window-level smoke；当前已有 Codex-backed 手动成功证据，但不能宣称真实 Codex 自动化端到端完成。
 - 本轮真实 Codex 复核仅覆盖外部手动启动 Workspace Core API smoke；未覆盖 Desktop 自拉起
   Codex sidecar 的观察路径。
+- Renderer payload loader 仅防止同一 renderer 会话内的 payload 请求乱序污染状态；完整 Artifact
+  workspace、导出、retention 与本地路径 reveal 仍不在本轮范围。
 - 真实 Codex CLI 行为可能随本机版本变化；默认测试仍必须依赖 mock / fixture。
 - Accepted ADR 不直接修改；Codex transport refinement 优先使用 Proposed ADR-0018 或新 ADR。
 - 文档中凡提到 `apps/web`、installer、signing、notarization、公测/公开 alpha，都要明确为未完成或非本轮目标。
