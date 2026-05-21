@@ -1144,3 +1144,25 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   - `git diff --check`
 - 下一步建议只 stage 以上 Desktop preload/renderer 6 个文件并提交；提交后继续拆
   **ui-preview 静态数据 chunk**，最后再处理 docs/runbook/doc-sync。
+
+### 2026-05-22 01:31 CST
+
+- 接上上一轮提交 `477c9ba` / `eea0ef9`，重新读取 handoff、AGENTS 必读上下文，并运行
+  `git status --short` / `git diff --name-only` 复核 dirty worktree；Desktop preload/renderer
+  已不在 dirty worktree，当前剩余主线集中在 ui-preview 静态数据与 docs/runbook/doc-sync。
+- 收口 **ui-preview 静态数据 chunk**：只审阅并提交
+  `apps/ui-preview/src/preview-data/home-inbox-data.ts` 与
+  `apps/ui-preview/src/preview-models/components-gallery-view-model.ts`，把旧固定协作角色名
+  `Supervisor / 白霓` 替换为中性 `Supervisor / Preview`。
+- 该变更只影响静态预览文案/fixture，不改变 Workspace Core、Desktop、Runtime Gateway、API
+  contract 或产品行为。
+- 通过验证：
+  - `pnpm --filter @cairn/ui-preview build`
+  - `pnpm --filter @cairn/ui-preview typecheck`
+  - `pnpm --filter @cairn/ui-preview lint`
+  - `pnpm exec prettier --check apps/ui-preview/src/preview-data/home-inbox-data.ts apps/ui-preview/src/preview-models/components-gallery-view-model.ts`
+  - `git diff --check`
+- 下一步优先拆 **docs/runbook/doc-sync chunk**：`README.md`、`CHANGELOG.md`、`apps/desktop/README.md`、
+  `docs/STATUS.md`、`docs/ops/internal-trial-runbook.md`、`docs/engineering/**`、`docs/contracts/**`、
+  `docs/design/**`、`docs/adr/**` 与 internal-trial plan/spec；要继续强调 Desktop sidecar 默认
+  mock、真实 Codex 需 env opt-in、`apps/web` 尚未创建，不宣称 public alpha/installer/signing/notarization。
