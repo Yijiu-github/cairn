@@ -56,7 +56,7 @@ export const componentsGalleryViewModel: ComponentsGalleryViewModel = {
       description: '生成组件预览页面，并检查 UI 组件状态覆盖。',
       status: 'running',
       progress: 58,
-      agentLabel: 'Supervisor / 白霓',
+      agentLabel: 'Supervisor / Preview',
       metrics: galleryRunMetrics,
     },
     runActions,

@@ -5,7 +5,7 @@ export const homeActiveRuns = [
     description: '组合任务树、证据链、产物和人工接管入口，验证单运行详情页的信息密度。',
     status: 'running' as const,
     progress: 62,
-    agentLabel: 'Supervisor / 白霓',
+    agentLabel: 'Supervisor / Preview',
     metrics: [
       { label: 'attempt', value: '1' },
       { label: '成本', value: '$0.08' },
