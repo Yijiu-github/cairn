@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 04:37 CST
+> 最后更新：2026-05-22 05:18 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 04:37 CST 复核：
+2026-05-22 05:18 CST 复核：
 
-- `git status --short`：本轮 `ui-preview` artifact review static data、STATUS、CHANGELOG 与 handoff 待提交。
-- `git diff --name-only`：本轮只覆盖 `ui-preview` artifact review static data 与直接文档同步。
+- `git status --short`：本轮改动已收口为 `docs/ops/internal-trial-runbook.md`、`docs/engineering/local-dev-setup.md`、`docs/engineering/testing-strategy.md`、`docs/STATUS.md`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- `git diff --name-only`：本轮只覆盖上述 docs 口径收口与 handoff 同步。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -197,6 +197,16 @@
 - 同步 `docs/STATUS.md` 的 `apps/ui-preview` 覆盖数量与 `CHANGELOG.md` 的静态数据修复项。
 
 本轮提交：待提交。
+
+2026-05-22 05:18 CST 本轮完成：
+
+- 把内部试用相关文档再做一轮简化：`docs/ops/internal-trial-runbook.md`、`docs/engineering/local-dev-setup.md`、`docs/engineering/testing-strategy.md`、`docs/STATUS.md`、`CHANGELOG.md` 都收成“一个 canonical runbook + 其余短引用”的口径。
+- 没有改变任何运行时边界：Desktop 默认 mock sidecar，真实 Codex 仍需 env opt-in，`apps/web` 仍未创建。
+- 将本轮说明同步进 handoff，方便下一轮继续接主线或继续做更细的文档收口。
+
+本轮提交：待提交。
+
+---
 
 ---
 

@@ -13,7 +13,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 已经可运行的主线是共享契约、领域 schema、SQLite storage、Runtime Gateway、Application 编排基线、`apps/workspace-core` 的最小 Fastify 服务、静态 `apps/ui-preview` 预览应用，以及 `apps/desktop` 的 Electron shell 骨架与最小 Workspace Core dev sidecar bridge。Web Shell 还没有创建。
 
-当前第一轮**内部开发者试用**以 `docs/ops/internal-trial-runbook.md` 为统一口径，目标是验证 `Desktop + embedded Workspace Core + Codex runtime` 的最小真实闭环。Desktop 默认 sidecar runtime 仍为 mock，真实 Codex 需通过环境变量显式 opt-in；本阶段不是外部 alpha，不包含 `apps/web`、安装器、签名或公证。
+当前第一轮**内部开发者试用**以 `docs/ops/internal-trial-runbook.md` 为统一口径，目标是验证 `Desktop + embedded Workspace Core + Codex runtime` 的最小真实闭环。Desktop 默认 sidecar runtime 仍为 mock；真实 Codex 需通过环境变量显式 opt-in。本阶段不是外部 alpha，不包含 `apps/web`、安装器、签名或公证。
 
 ---
 
@@ -44,20 +44,12 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `GET /health` 健康检查。
 - R1 run/task/agent-run HTTP 闭环：可创建 single-worker run，并通过 mock runtime 验证状态推进。
-- R1 runtime artifact/trace demo loop：可通过 `POST /v1/tasks/:taskId/agent-runs` 提交任务，落 bounded artifact payload refs，并通过 `GET /v1/artifacts/:artifactId/payload` 读取 payload text。
-- Artifact / Trace M2 operational status：Workspace Core 当前可通过 `GET /v1/runs/:runId/replay-source` 提供 Inspector-ready 聚合证据包；artifact payload 仍通过 bounded payload API 懒加载。
-- Local Artifact Store M2：本地 payload 写入采用同目录临时文件 + rename，payload ref 保持 opaque 且不暴露本地路径。
+- R1 runtime artifact/trace demo loop：可提交任务、写入 bounded artifact payload refs，并通过 `GET /v1/artifacts/:artifactId/payload` 读取 payload text。
+- `GET /v1/runs/:runId/replay-source` 提供 Inspector-ready 聚合证据包；artifact payload 仍通过 bounded payload API 懒加载。
 - Runtime gateway factory：服务默认使用 mock runtime，也可通过 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 显式注入 Codex RuntimeAdapter。
-- Runtime gateway hardening：Codex adapter 可解析 Workspace Core runtime input artifact payload；operator cancel 已能下沉到 runtime cancel，真实长任务 smoke 仍为手动步骤。
-- Runtime Gateway / Workspace Core M1 real-runtime loop：Codex adapter 确定性短任务 smoke 与 RuntimeAdapter-backed Workspace Core submit/drain 终态证明已有自动化测试覆盖；真实 Codex CLI smoke 仍是 opt-in 手动步骤，不进入默认 CI。
-- Orchestration Control R1a/M3 evidence API：pause / resume / cancel run、retry task、rerun、operator note 的最小 HTTP 接管面；cancel / retry / rerun 已补齐 TraceEvent evidence，并可通过 run trace / replay-source 读取。
+- Operator control：pause / resume / cancel run、retry task、rerun 与 operator note 的最小 HTTP 接管面；cancel / retry / rerun 已补齐 TraceEvent evidence。
 - SQLite application repository：服务启动可执行 domain 迁移，并用本地 SQLite 持久化 run/task/agent-run 状态。
-- Code Context R1a/R1b-a API：
-  - 注册与列出 SourceRoot。
-  - 手动 reindex 本地目录，生成 privacy-aware 文件清单。
-  - 查询最新索引快照。
-  - 按路径 / 语言等元数据搜索文件清单。
-  - 基于 code-search 结果创建 metadata-only ContextPack manifest。
+- Code Context API：注册 / 列出 SourceRoot，手动 reindex 本地目录，查询最新索引快照，并基于 code-search 结果创建 metadata-only ContextPack manifest。
 
 ### Runtime Gateway
 
@@ -84,11 +76,11 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `apps/desktop` 已提供 Electron 最小 shell 骨架。
 - 当前包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
-- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runInternalTrial()`、只读 `workspaceCore.getRunReplaySource(runId)` 与 `workspaceCore.getArtifactPayload(artifactId)` allowlist API。
-- Renderer 可显示 Core 状态，并通过 internal-trial 入口创建 run、读取 task、提交 AgentRun、drain runtime、读取 run/task/artifact/trace/replay 摘要；Run Detail 可按 artifact id 按需读取 bounded payload text。默认 sidecar 仍走 mock runtime，设置 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 后可观察 Codex-backed Workspace Core sidecar 产生的真实 run evidence。
+- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runInternalTrial()`、`workspaceCore.getRunReplaySource(runId)` 与 `workspaceCore.getArtifactPayload(artifactId)` allowlist API。
+- Renderer 可通过 internal-trial 入口创建 run、读取 task、提交 AgentRun、drain runtime，并在 Run Detail 按需读取 bounded payload text。默认 sidecar 走 mock runtime；`CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 仅用于观察 Codex-backed Workspace Core sidecar 产生的真实 run evidence。
 - 启动会写入不含 token 的 sidecar 诊断快照：`<userData>/diagnostics/workspace-core-sidecar.json`，其中记录 `runtime: "mock" | "codex"` 以区分本次 sidecar 后端。
 - 当前不读取或写入用户本地文件系统，不暴露真实本地路径；operator action 仅保留最小 internal-trial allowlist，不是完整接管台。
-- 自动化验证已覆盖 Desktop bootstrap 顺序、main module 非阻塞加载、sidecar manager、Workspace Core HTTP smoke 与默认 mock sidecar 的最小 window-level Electron smoke；2026-05-21 已完成一次真实 Desktop window-level Codex-backed internal-trial 手动 smoke，Electron / CDP 读回同一条 run 的 replay evidence、bounded payload text 与 operator note；真实 Codex 自动化 e2e 仍需后续补齐。
+- 自动化验证已覆盖 Desktop bootstrap 顺序、main module 非阻塞加载、sidecar manager、Workspace Core HTTP smoke 与默认 mock sidecar 的最小 window-level Electron smoke；2026-05-21 已完成一次真实 Desktop window-level Codex-backed internal-trial 手动 smoke。真实 Codex 自动化 e2e 仍需后续补齐。
 - 当前 renderer 默认安全基线为 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`。
 
 ---
@@ -135,8 +127,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 ### 内部试用口径
 
 - 统一 runbook：[`ops/internal-trial-runbook.md`](ops/internal-trial-runbook.md)
-- 统一自动化 gate：`pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build`、`pnpm --filter @cairn/desktop build`；Desktop 可追加 `pnpm --filter @cairn/desktop test:e2e` 验证默认 mock sidecar 的窗口级 smoke
-- 统一手动 gate：至少完成一次真实 Codex 短任务 smoke，确认终态、replay evidence 与最小 operator action 口径；已记录过 Workspace Core API 与 Desktop window-level Codex-backed smoke 的手动成功证据，但自动 e2e 仍未补齐
+- 统一自动化 gate：`pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build`、`pnpm --filter @cairn/desktop build`；`pnpm --filter @cairn/desktop test:e2e` 只验证默认 mock sidecar 的窗口级 smoke
+- 统一手动 gate：至少完成一次真实 Codex 短任务 smoke，确认终态、replay evidence 与最小 operator action 口径
 - 统一记录方式：区分“自动化已验证”“手动已验证”“本次未执行”
 
 ---
@@ -202,10 +194,10 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 ### 第一轮内部试用的已知限制
 
-- 真实 Codex CLI smoke 仍为手动步骤，不进入默认 CI；当前已记录 Workspace Core API 主路径成功与 Desktop window-level trial 成功，并新增默认 mock sidecar window-level smoke，但仍不等同于真实 Codex 完整自动化 E2E 已覆盖
-- Desktop 当前主要承担最小观察壳职责，真实数据面与交互仍有限
-- 最小 operator action 只验证口径，不代表完整人工接管台已完成
-- 长任务、复杂 payload、跨平台取消链路仍需要后续额外证据
+- 真实 Codex CLI smoke 仍为手动步骤，不进入默认 CI；当前已有 Workspace Core API 主路径成功、Desktop window-level trial 成功和默认 mock sidecar window-level smoke，但仍不等同于真实 Codex 完整自动化 E2E 已覆盖。
+- Desktop 当前主要承担最小观察壳职责，真实数据面与交互仍有限。
+- 最小 operator action 只验证口径，不代表完整人工接管台已完成。
+- 长任务、复杂 payload、跨平台取消链路仍需要后续额外证据。
 
 ---
 

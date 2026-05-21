@@ -44,13 +44,7 @@ pnpm --filter @cairn/desktop dev
 # pnpm --filter @cairn/web dev
 ```
 
-> ⚠️ 目前 `apps/desktop` 是最小 shell 骨架：renderer 仍以静态 fixtures 为主，preload
-> 只暴露 Workspace Core status / internal-trial / replay-source allowlist。开发态 sidecar
-> bridge 已可启动本地 Workspace Core，默认 runtime 为 mock；如需让 Desktop 自拉起
-> Codex-backed sidecar，可设置 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`。生产 sidecar
-> 打包与完整真实 runtime UI 仍未完成；operator action 仅有 internal-trial 最小
-> allowlist，不代表完整接管台。
-> `apps/web` 尚未创建。
+> ⚠️ `apps/desktop` 目前只是最小 shell 骨架：renderer 仍以静态 fixtures 为主，preload 只暴露 Workspace Core status / internal-trial / replay-source allowlist。默认 sidecar runtime 是 mock；真实 Codex 只通过 env opt-in。`apps/web` 尚未创建。生产 sidecar 打包、完整真实 runtime UI 与完整 operator action 仍未完成。
 
 第一轮**内部开发者试用**的完整范围、gate 与记录口径见 [`../ops/internal-trial-runbook.md`](../ops/internal-trial-runbook.md)。本页只保留通用开发环境与底层手动 smoke 参考。
 
@@ -81,16 +75,7 @@ pnpm --filter @cairn/workspace-core dev
 
 ### Manual Codex Runtime Smoke (Opt-In)
 
-真实 Codex smoke 是手动证据步骤，不属于默认 `pnpm test` 或 CI，也不能替代 mock / fixture 自动化覆盖。
-
-第一轮内部开发者试用的完整步骤、记录模板与故障归类统一维护在
-[`../ops/internal-trial-runbook.md`](../ops/internal-trial-runbook.md)。本页只保留底层启动口径：
-
-- 只在本机已安装 Codex CLI 且完成本地会话准备时执行。
-- prompt 必须使用合成 smoke 文本，不输入真实凭据、业务秘密、客户数据或仓库外敏感内容。
-- 启动 Workspace Core 时显式设置 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 与
-  `CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR="$PWD/.cairn/..."`。
-- 若 Codex CLI 缺失、凭据不可用或 runtime 非零退出，记录为手动环境/运行证据，不放宽自动化门禁。
+真实 Codex smoke 只作为手动证据步骤，不属于默认 `pnpm test` 或 CI。完整步骤、记录模板与故障归类见 [`../ops/internal-trial-runbook.md`](../ops/internal-trial-runbook.md)；本页只保留启动口径：只在本机已安装 Codex CLI 且完成本地会话准备时执行，prompt 必须使用合成 smoke 文本，启动 Workspace Core 时显式设置 `CAIRN_WORKSPACE_CORE_RUNTIME=codex` 与 `CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR="$PWD/.cairn/..."`，CLI 缺失或 runtime 非零退出都记录为环境证据，不放宽自动化门禁。
 
 ## 4. 数据库
 

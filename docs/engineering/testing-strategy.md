@@ -81,7 +81,7 @@
 
 ### 5.1.a 第一轮内部试用门禁
 
-当前第一轮内部试用仍以“自动化 gate + 手动 smoke”组合验证，而不是完整桌面 E2E 替代品。执行步骤和记录模板统一放在 [`../ops/internal-trial-runbook.md`](../ops/internal-trial-runbook.md)，本节只定义测试边界。
+当前第一轮内部试用仍以“自动化 gate + 手动 smoke”组合验证，而不是完整桌面 E2E 替代品。完整步骤和记录模板见 [`../ops/internal-trial-runbook.md`](../ops/internal-trial-runbook.md)，本节只保留测试边界。
 
 自动化 gate：
 
@@ -89,9 +89,7 @@
 - `pnpm test`
 - `pnpm --filter @cairn/ui-preview build`
 - `pnpm --filter @cairn/desktop build`
-- `pnpm --filter @cairn/desktop test:e2e` 可作为 Desktop 最小窗口级 smoke：它会 build
-  Desktop，启动真实 Electron 进程，等待 `main-window-ready-to-show` signal，再由脚本终止进程收尾；当前只覆盖默认 mock sidecar
-  窗口启动，不代表完整产品 E2E 或真实 Codex 自动化。
+- `pnpm --filter @cairn/desktop test:e2e` 可作为 Desktop 最小窗口级 smoke：它会 build Desktop，启动真实 Electron 进程，等待 `main-window-ready-to-show` signal，再由脚本终止进程收尾；当前只覆盖默认 mock sidecar 窗口启动，不代表完整产品 E2E 或真实 Codex 自动化。
 
 手动 gate：触发一条真实 Codex 短任务 run，确认终态、replay evidence、Desktop 最小观察壳与最小 operator action 口径；未执行的步骤必须记录原因。
 
@@ -146,10 +144,9 @@
 
 ### 内部试用与 CI 的边界
 
-- 真实 Codex CLI smoke 不进入默认 CI
-- Desktop 当前内部试用通过标准仍允许“自动化通过 + 手动真实 smoke 记录”；已新增的
-  `@cairn/desktop test:e2e` 只覆盖 mock sidecar window-level smoke
-- 已记录过一次 Desktop window-level Codex-backed smoke 成功；如果后续结论只来自手动步骤，仍必须明确标注，不得伪装为自动化覆盖
+- 真实 Codex CLI smoke 不进入默认 CI。
+- Desktop 当前内部试用通过标准仍允许“自动化通过 + 手动真实 smoke 记录”；`@cairn/desktop test:e2e` 只覆盖 mock sidecar window-level smoke。
+- 已记录过一次 Desktop window-level Codex-backed smoke 成功；若后续结论只来自手动步骤，仍必须明确标注，不得伪装为自动化覆盖。
 
 ## 10. 测试反例（不要做的事）
 

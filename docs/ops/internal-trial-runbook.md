@@ -19,8 +19,7 @@
 本轮内部试用只覆盖以下链路：
 
 - 开发者本机运行 `apps/desktop`
-- Desktop 开发态验证最小 Workspace Core bridge；默认 mock sidecar 路径、Codex sidecar opt-in
-  路径与外部手动启动 Core 的观察路径需分开记录
+- Desktop 开发态验证最小 Workspace Core bridge；默认 mock sidecar，真实 Codex 仅通过 env opt-in；与外部手动启动 Core 的观察路径分开记录
 - Workspace Core 通过 Codex Runtime Adapter 执行一条真实短任务
 - 通过 API 或 Desktop 读取 run / task / agent-run / artifact / trace / replay evidence
 - 验证最小观察与最小接管能力是否仍然成立
@@ -124,9 +123,8 @@ fi
 pnpm --filter @cairn/desktop dev
 ```
 
-当前内部试用主路径要求 Desktop 开发态可启动，并通过 preload allowlist 中的
-`workspaceCore.runInternalTrial()` 触发 `workspace-core:run-internal-trial` IPC 入口，读取最小
-replay evidence。
+Desktop 开发态默认走 mock sidecar；通过 preload allowlist 中的 `workspaceCore.runInternalTrial()`
+触发 `workspace-core:run-internal-trial` IPC 入口，可读取最小 replay evidence。
 
 默认 Desktop sidecar runtime 是 mock。启动会写入不含 token 的诊断快照：
 
@@ -136,13 +134,12 @@ replay evidence。
 
 该快照会记录 `runtime: "mock" | "codex"`，用于区分本次 sidecar 后端。
 
-不带 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 时，这条 Desktop 路径验证的是 mock sidecar 与
-bridge 可用性；如需验证真实 Codex run，使用 §5.1 的手动 API smoke，或使用 §5.3 的
-Desktop Codex sidecar opt-in 路径。
+不设置 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 时，这条路径只验证 mock sidecar 与 bridge。
+真实 Codex run 仍走 §5.1 的手动 API smoke 或 §5.3 的 Desktop sidecar opt-in 路径。
 
 ### 5.3 启动 Desktop + Codex sidecar 观察真实 run
 
-如需让 Desktop 自行拉起 **Codex-backed Workspace Core sidecar**，而不是默认的 mock sidecar，请在启动 Desktop 前设置：
+如需让 Desktop 自行拉起 **Codex-backed Workspace Core sidecar**，请在启动 Desktop 前设置：
 
 ```bash
 export CAIRN_DESKTOP_SIDECAR_RUNTIME=codex
@@ -160,10 +157,10 @@ pnpm --filter @cairn/desktop dev
 
 预期：
 
-- Desktop 自行拉起的 sidecar 仍只绑定 loopback + launch-scoped bearer token
-- Desktop Run Detail 读取到的是 **真实 Codex runtime** 产生的 run / task / agent-run / artifact / trace / replay evidence
+- sidecar 仍只绑定 loopback + launch-scoped bearer token
+- Run Detail 读取到的是 **真实 Codex runtime** 产生的 run / task / agent-run / artifact / trace / replay evidence
 - sidecar 诊断快照中的 `runtime` 为 `codex`
-- 若未设置上述环境变量，Desktop 仍保持默认 mock sidecar 路径
+- 未设置上述环境变量时，Desktop 保持默认 mock sidecar 路径
 
 ---
 
@@ -255,21 +252,11 @@ curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/replay-source" \
 
 ### 6.5 Desktop 观察路径
 
-- 若使用 §5.2 默认启动，Desktop 自行拉起 mock sidecar；此路径只验证最小 bridge 与
-  replay UI，不代表真实 Codex runtime。
-- 若使用 §5.3 启动，Desktop 自行拉起 Codex-backed sidecar；此路径可验证真实 Codex
-  runtime 的 Desktop run evidence。
-- 若使用 §5.1 手动启动的外部 Workspace Core，当前 Desktop 不能自动复用该外部进程；
-  可在 Run Detail 中手动输入该 Core 所在数据库里的 `runId`，但需记录这不是 Desktop
-  自拉起 sidecar 的同一条 bootstrap 证据。
-- 2026-05-21 已有一次 Desktop window-level Codex-backed smoke 成功证据，但自动 e2e 仍未补齐；
-  后续若只完成手动 smoke，必须继续明确标注为手动已验证。
-- 在 Run Detail 或对应观察视图中确认：
-  - run 摘要可见
-  - task / agent-run 摘要可见
-  - artifact / trace 摘要可见
-  - 对有 `payloadRef` 的 artifact，可按需加载 bounded payload text
-  - replay / inspector 摘要未报错
+- §5.2：mock sidecar，只验证最小 bridge 与 replay UI。
+- §5.3：Codex-backed sidecar，验证真实 Codex runtime 的 Desktop evidence。
+- 外部手动启动的 Workspace Core 不会被 Desktop 自动复用；如要对照，需单独记录其 `runId`。
+- Run Detail 至少应能显示 run、task / agent-run、artifact / trace 摘要，并按需读取 bounded payload text。
+- 2026-05-21 的 Desktop window-level Codex-backed smoke 仍只是手动证据，不等于自动 e2e 覆盖。
 
 如果本次验证采用 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`：
 
@@ -385,12 +372,10 @@ curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
 
 ## 8. 已知限制 / Known Limits
 
-- `apps/web` 不在本轮内部试用范围内
-- 当前是开发者自运行试用，不覆盖安装器、签名、公证与升级体验
-- Desktop 仍是最小观察壳，不是完整产品 UI
-- operator action 只验证最小动作，不代表完整人工接管工作流已完成
-- 真实 Codex smoke 仍然是手动步骤，不进入默认自动化 CI
-- 真实长任务、复杂 payload、长时取消链路仍可能存在平台差异
+- `apps/web` 不在本轮内部试用范围内；当前也不覆盖安装器、签名、公证与升级体验。
+- Desktop 仍是最小观察壳，不是完整产品 UI；operator action 只验证最小动作。
+- 真实 Codex smoke 仍然是手动步骤，不进入默认自动化 CI。
+- 真实长任务、复杂 payload、长时取消链路仍可能存在平台差异。
 
 ## 8.1 当前手动证据基线
 
@@ -449,5 +434,5 @@ curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
 - 当前分支文档与状态页已同步
 - 自动化门禁通过
 - 至少一条真实 Codex 短任务 smoke 已完成并有证据
-- Desktop 至少能作为最小观察壳读取同一条 run 的 evidence
+- Desktop 能作为最小观察壳读取同一条 run 的 evidence
 - 已知限制已明确记录，没有把未完成项包装成已交付能力
