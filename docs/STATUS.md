@@ -76,8 +76,8 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `apps/desktop` 已提供 Electron 最小 shell 骨架。
 - 当前包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
-- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runInternalTrial()`、`workspaceCore.getRunReplaySource(runId)` 与 `workspaceCore.getArtifactPayload(artifactId)` allowlist API。
-- Renderer 可通过 internal-trial 入口创建 run、读取 task、提交 AgentRun、drain runtime，并在 Run Detail 按需读取 bounded payload text。默认 sidecar 走 mock runtime；`CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 仅用于观察 Codex-backed Workspace Core sidecar 产生的真实 run evidence。
+- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runInternalTrial()`、`workspaceCore.getRunReplaySource(runId)`、`workspaceCore.getArtifactPayload(artifactId)` 与最小 operator action allowlist（cancel / retry / rerun / operator note）。
+- Renderer 可通过 internal-trial 入口创建 run、读取 task、提交 AgentRun、drain runtime，在 Run Detail 按需读取 bounded payload text，并调用最小 operator action allowlist。默认 sidecar 走 mock runtime；`CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 仅用于观察 Codex-backed Workspace Core sidecar 产生的真实 run evidence。
 - 启动会写入不含 token 的 sidecar 诊断快照：`<userData>/diagnostics/workspace-core-sidecar.json`，其中记录 `runtime: "mock" | "codex"` 以区分本次 sidecar 后端。
 - 当前不读取或写入用户本地文件系统，不暴露真实本地路径；operator action 仅保留最小 internal-trial allowlist，不是完整接管台。
 - 自动化验证已覆盖 Desktop bootstrap 顺序、main module 非阻塞加载、sidecar manager、Workspace Core HTTP smoke 与默认 mock sidecar 的最小 window-level Electron smoke；2026-05-21 已完成一次真实 Desktop window-level Codex-backed internal-trial 手动 smoke。真实 Codex 自动化 e2e 仍需后续补齐。
@@ -162,7 +162,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Local Artifact Store M2：本地 payload 写入采用同目录临时文件 + rename，payload ref 保持 opaque 且不暴露本地路径。
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
-- `apps/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、最小 Workspace Core dev sidecar bridge、internal-trial allowlist、只读 replay-source / bounded artifact payload bridge，以及 preview-safe 默认隔离设置。
+- `apps/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、最小 Workspace Core dev sidecar bridge、internal-trial allowlist、只读 replay-source / bounded artifact payload bridge、最小 operator action bridge，以及 preview-safe 默认隔离设置。
 
 ---
 

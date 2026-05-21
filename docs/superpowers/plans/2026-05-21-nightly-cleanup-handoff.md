@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 06:03 CST
+> 最后更新：2026-05-22 06:32 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 06:03 CST 复核：
+2026-05-22 06:32 CST 复核：
 
-- `git status --short`：本轮改动为 Desktop Run Detail copy helper、对应 spec、DesktopApp 接入、STATUS、CHANGELOG 与 handoff。
-- `git diff --name-only`：本轮只覆盖 `apps/desktop/src/renderer/src/run-detail-copy.ts`、`apps/desktop/src/renderer/src/run-detail-copy.spec.ts`、`apps/desktop/src/renderer/src/desktop-app.tsx`、`docs/STATUS.md`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- `git status --short`：本轮从干净工作区开始；改动为 Desktop preload/main allowlist 与 renderer 文案一致性复核后的文档事实对齐。
+- `git diff --name-only`：本轮只覆盖 `docs/STATUS.md`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -173,6 +173,12 @@
   `pnpm --filter @cairn/desktop test -- --run src/renderer/src/run-detail-copy.spec.ts src/renderer/src/operator-action-runner.spec.ts src/renderer/src/run-replay-loader.spec.ts src/renderer/src/artifact-payload-loader.spec.ts`
   通过，4 个文件 11 个测试。
 
+2026-05-22 06:32 CST Desktop allowlist docs 验证：
+
+- 审阅 `apps/desktop/src/preload/index.ts`、`apps/desktop/src/main/index.ts`、renderer 调用点、`apps/desktop/README.md` 与 `docs/STATUS.md`。
+- 发现运行时代码与 README 已对齐：preload 暴露 status / internal trial / replay / bounded payload / cancel / retry / rerun / operator note；STATUS 与 changelog 中仍有旧口径或遗漏。
+- 本轮仅同步文档事实，不改运行时代码。
+
 ---
 
 ## 6. 最新完成
@@ -260,6 +266,14 @@
 
 本轮提交：`643c8c8` `fix(desktop): 明确回放空态文案 / clarify replay empty copy`。
 
+2026-05-22 06:32 CST 本轮完成：
+
+- 复核 Desktop preload/main allowlist 与 renderer 文案一致性，确认当前 runtime 仍是 bounded internal-trial bridge，没有新增能力需求。
+- 更新 `docs/STATUS.md`，明确 preload 已暴露 bounded artifact payload read 与最小 operator action allowlist（cancel / retry / rerun / operator note）。
+- 修正 `CHANGELOG.md` 的旧口径：不再说 operator action / artifact payload 正文仍未开放，改为完整 operator cockpit、完整 Artifact workspace 与本地路径 reveal 仍未开放。
+
+本轮提交：待提交。
+
 ---
 
 ---
@@ -270,7 +284,7 @@
 
 1. **真实 Codex 手动 smoke 复核**：按 runbook 再跑一条短任务，记录当前 Codex CLI / Node / OS 证据，只使用合成 prompt。
    2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
-2. **Desktop renderer 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard、operator action sequence guard 与 Run Detail 空 evidence / metadata-only 文案已补；下一轮优先做 Desktop preload/main allowlist 与 renderer 文案的一致性复核，或继续找静态数据旧口径，不要重复做同一 guard/copy。
+2. **Desktop renderer / bridge 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard、operator action sequence guard、Run Detail 空 evidence / metadata-only 文案与 allowlist 文档口径已补；下一轮优先继续找 ui-preview / desktop-model 静态数据旧口径，或做 Desktop preload/main action response schema 小复核，不要重复做同一 guard/copy。
 3. **UI preview 静态数据收口**：本轮已修正 artifact review hero title；下一轮可继续找其它残留旧口径，但不要大改布局或样式。
 4. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
 5. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。

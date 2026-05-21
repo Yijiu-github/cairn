@@ -53,7 +53,7 @@
 - **`@cairn/desktop`**：新增并手动验证 Desktop window-level Codex-backed internal-trial smoke，Electron / CDP 可读回同一条真实 run 的 replay evidence、bounded payload text 与 operator note
 - **`@cairn/desktop`**：新增非阻塞 Desktop bootstrap 与无密钥 sidecar 诊断快照，窗口创建不再等待 Workspace Core 健康检查完成
 - **`@cairn/desktop`**：修复 Electron ESM 主入口顶层 `await app.whenReady()` 导致真实窗口 smoke 卡住的问题，并补充 main module 非阻塞加载回归测试
-- **M4a Desktop observer prep**：Desktop preload 新增只读 replay-source bridge，可通过 `runInternalTrial` 读取真实 Workspace Core evidence 并在 Run Detail 展示摘要；operator action、artifact payload 正文和本地路径 reveal 仍未开放。
+- **M4a Desktop observer prep**：Desktop preload 新增只读 replay-source bridge，可通过 `runInternalTrial` 读取真实 Workspace Core evidence 并在 Run Detail 展示摘要；完整 operator cockpit、完整 Artifact workspace 和本地路径 reveal 仍未开放。
 - **Desktop internal trial bridge**：Desktop 当前内部试用入口调整为 `workspaceCore.runInternalTrial()` / `workspace-core:run-internal-trial`，sidecar 默认 runtime 为 mock，并可通过 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 启动 Codex-backed Workspace Core sidecar。
 - **Desktop artifact payload preview**：Desktop preload/main 新增 `workspaceCore.getArtifactPayload(artifactId)` allowlist，Run Detail 可按 artifact id 通过 Workspace Core bounded payload API 按需读取文本 payload；仍不暴露本地路径、token、任意文件访问或完整 Artifact workspace。
 - 设计文档新增轻量代码上下文索引方案，明确 Cairn 自研 SourceRoot / CodeContextIndex / ContextPack 能力，不引入 GitNexus 依赖或许可证受限代码
@@ -104,6 +104,8 @@
 
 - **Desktop Run Detail copy**：空 replay / 空 task / 空 artifact / metadata-only artifact 文案改为明确的
   read-only evidence 口径，避免把刷新误解为重新执行或把 metadata-only 误解为 UI 故障。
+- **Desktop allowlist docs**：STATUS 与 changelog 的 Desktop preload 口径对齐当前实现，明确
+  bounded artifact payload read 与最小 operator action allowlist 已存在，但不代表完整 operator cockpit。
 - **Desktop operator actions**：renderer 端 operator action 增加请求序号保护，避免旧的 note /
   cancel / retry / rerun 请求在乱序返回时覆盖最新动作的 loading、错误或反馈状态。
 - **Desktop replay loader**：renderer 端 replay evidence 加载会在空白 run id 时停在本地错误态，
