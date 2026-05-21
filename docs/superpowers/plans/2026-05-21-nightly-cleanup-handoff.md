@@ -1118,3 +1118,29 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
 - 提交后 `apps/desktop/src/main/**` 不再有 dirty diff；当前剩余 dirty worktree 降为 16 个 tracked
   files、5 个 untracked files，主要集中在 preload、renderer/replay-loader、ui-preview 静态数据与
   docs/runbook。
+
+### 2026-05-22 01:03 CST
+
+- 接上今天“推进 internal trial 主线优先”的 automation 指令，重新读取 handoff、AGENTS 必读上下文，
+  并运行 `git status --short` / `git diff --name-only` 复核 dirty worktree；当前仍是 Desktop
+  preload/renderer、ui-preview 静态数据与 docs/runbook/doc-sync 三块，没有发现需要停下确认的疑似无关改动。
+- 继续拆 Desktop 大块，选择 preload + renderer replay-loader 子块，不带 ui-preview 或正式 docs：
+  `apps/desktop/src/preload/index.ts`、
+  `apps/desktop/src/renderer/src/desktop-app.tsx`、
+  `apps/desktop/src/renderer/src/desktop-model.ts`、
+  `apps/desktop/src/renderer/src/styles.css`、
+  `apps/desktop/src/renderer/src/run-replay-loader.ts`、
+  `apps/desktop/src/renderer/src/run-replay-loader.spec.ts`。
+- 按 TDD 给 `run-replay-loader` 补一条 stale request 回归：先跑出“旧 replay 请求在等待
+  `getStatus()` 后仍会写回 stale workspace status”的红灯，再在 loader 内补 status await 后的
+  request id guard。
+- 通过验证：
+  - `pnpm --filter @cairn/desktop test -- --run src/renderer/src/run-replay-loader.spec.ts`
+  - `pnpm --filter @cairn/desktop test -- --run src/renderer/src/run-replay-loader.spec.ts src/main/index.spec.ts src/main/workspace-core-client.spec.ts src/main/workspace-core-sidecar.spec.ts`
+  - `pnpm --filter @cairn/desktop typecheck`
+  - `pnpm --filter @cairn/desktop lint`
+  - `pnpm exec prettier --check apps/desktop/src/preload/index.ts apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-model.ts apps/desktop/src/renderer/src/styles.css apps/desktop/src/renderer/src/run-replay-loader.ts apps/desktop/src/renderer/src/run-replay-loader.spec.ts`
+  - `pnpm --filter @cairn/desktop build`
+  - `git diff --check`
+- 下一步建议只 stage 以上 Desktop preload/renderer 6 个文件并提交；提交后继续拆
+  **ui-preview 静态数据 chunk**，最后再处理 docs/runbook/doc-sync。
