@@ -102,6 +102,8 @@
 
 ### Fixed
 
+- **Desktop replay loader**：renderer 端 replay evidence 加载会在空白 run id 时停在本地错误态，
+  不再触发 Desktop bridge / Workspace Core 请求。
 - **UI preview artifact review**：`artifactReviewViewModel` 的 hero 标题改为 Artifact Review，
   并补充静态数据 smoke，避免继续沿用 Run Detail 残留口径。
 - **Desktop artifact payload preview**：renderer 端 payload 加载增加请求序号保护，避免旧的 payload

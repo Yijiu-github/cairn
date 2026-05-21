@@ -8,6 +8,39 @@ import { loadRunReplaySource } from './run-replay-loader.js';
 import type { RunReplaySource } from '@cairn/shared-contracts';
 
 describe('loadRunReplaySource', () => {
+  it('does not call the desktop bridge when the run id is blank', async () => {
+    const requestState = { current: 0 };
+    const getRunReplaySource = vi.fn();
+    const getStatus = vi.fn();
+    const setRunReplayError = vi.fn();
+    const setRunReplayLoading = vi.fn();
+    const setRunReplaySource = vi.fn();
+    const setWorkspaceCoreStatus = vi.fn();
+
+    await loadRunReplaySource(
+      requestState,
+      {
+        getRunReplaySource,
+        getStatus,
+        setRunReplayError,
+        setRunReplayLoading,
+        setRunReplaySource,
+        setWorkspaceCoreStatus,
+        toErrorMessage: (error: unknown) =>
+          error instanceof Error ? error.message : 'Unknown desktop bridge error.',
+      },
+      '   ',
+      { replaceCurrentSource: true },
+    );
+
+    expect(getRunReplaySource).not.toHaveBeenCalled();
+    expect(getStatus).not.toHaveBeenCalled();
+    expect(setRunReplaySource).toHaveBeenCalledWith(undefined);
+    expect(setRunReplayError).toHaveBeenCalledWith('Enter a Workspace Core run id to observe.');
+    expect(setRunReplayLoading).not.toHaveBeenCalled();
+    expect(setWorkspaceCoreStatus).not.toHaveBeenCalled();
+  });
+
   it('clears stale replay source before loading a replacement run', async () => {
     const requestState = { current: 0 };
     const runFreshId = '01HZZZZZZZZZZZZZZZZZZZZZR0';

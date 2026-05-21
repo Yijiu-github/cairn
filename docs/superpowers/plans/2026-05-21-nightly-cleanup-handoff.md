@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 05:18 CST
+> 最后更新：2026-05-22 05:32 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 05:18 CST 复核：
+2026-05-22 05:32 CST 复核：
 
-- `git status --short`：本轮改动已收口为 `docs/ops/internal-trial-runbook.md`、`docs/engineering/local-dev-setup.md`、`docs/engineering/testing-strategy.md`、`docs/STATUS.md`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
-- `git diff --name-only`：本轮只覆盖上述 docs 口径收口与 handoff 同步。
+- `git status --short`：本轮改动为 Desktop renderer replay-loader guard、对应 spec、STATUS、CHANGELOG 与 handoff。
+- `git diff --name-only`：本轮只覆盖 `apps/desktop/src/renderer/src/run-replay-loader.ts`、`apps/desktop/src/renderer/src/run-replay-loader.spec.ts`、`docs/STATUS.md`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -145,6 +145,14 @@
 - `pnpm run docs:lint`
 - `git diff --check`
 
+2026-05-22 05:32 CST Desktop renderer replay-loader guard 验证：
+
+- 红灯：新增 `apps/desktop/src/renderer/src/run-replay-loader.spec.ts` 空白 run id 用例后，
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/run-replay-loader.spec.ts`
+  因 `getRunReplaySource('   ')` 被调用而失败。
+- 绿灯：`run-replay-loader.ts` 在空白 run id 时本地设置错误态并跳过 Desktop bridge 后，同一 spec 通过，4 个测试。
+- 相邻验证：`pnpm --filter @cairn/desktop test -- --run src/renderer/src/artifact-payload-loader.spec.ts` 通过，2 个测试。
+
 ---
 
 ## 6. 最新完成
@@ -206,6 +214,14 @@
 
 本轮提交：待提交。
 
+2026-05-22 05:32 CST 本轮完成：
+
+- 补强 Desktop renderer `run-replay-loader` 空态防护：空白 run id 直接在 renderer 本地给出错误态，不再触发 Desktop bridge / Workspace Core 请求。
+- 新增 targeted spec 锁住该行为，并保留既有 replay request sequence guard 覆盖。
+- 同步 `docs/STATUS.md`、`CHANGELOG.md` 与本 handoff。
+
+本轮提交：待提交。
+
 ---
 
 ---
@@ -216,8 +232,8 @@
 
 1. **真实 Codex 手动 smoke 复核**：按 runbook 再跑一条短任务，记录当前 Codex CLI / Node / OS 证据，只使用合成 prompt。
    2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
-2. **Desktop renderer 主线小补强**：payload loader 已补 request sequence guard；下一轮优先补
-   operator note/action error-state 或 replay-loader 空态测试，不要重复做同一 payload race。
+2. **Desktop renderer 主线小补强**：payload loader request sequence guard 与 replay-loader 空白 run id guard 已补；下一轮优先补
+   operator note/action error-state 或 Run Detail 空 evidence 文案，不要重复做同一 payload/replay guard。
 3. **UI preview 静态数据收口**：本轮已修正 artifact review hero title；下一轮可继续找其它残留旧口径，但不要大改布局或样式。
 4. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
 5. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。
@@ -229,8 +245,8 @@
 - 自动化 e2e 仅覆盖默认 mock sidecar window-level smoke；当前已有 Codex-backed 手动成功证据，但不能宣称真实 Codex 自动化端到端完成。
 - 本轮真实 Codex 复核仅覆盖外部手动启动 Workspace Core API smoke；未覆盖 Desktop 自拉起
   Codex sidecar 的观察路径。
-- Renderer payload loader 仅防止同一 renderer 会话内的 payload 请求乱序污染状态；完整 Artifact
-  workspace、导出、retention 与本地路径 reveal 仍不在本轮范围。
+- Renderer payload/replay loader 只覆盖同一 renderer 会话内的 payload 请求乱序与空白 run id guard；完整 Artifact
+  workspace、导出、retention、本地路径 reveal 与完整 Run Detail 数据面仍不在本轮范围。
 - `ui-preview` 静态数据只修正了 artifact review hero title 残留；没有动到 layout、CSS 或导航结构。
 - 真实 Codex CLI 行为可能随本机版本变化；默认测试仍必须依赖 mock / fixture。
 - Accepted ADR 不直接修改；Codex transport refinement 优先使用 Proposed ADR-0018 或新 ADR。

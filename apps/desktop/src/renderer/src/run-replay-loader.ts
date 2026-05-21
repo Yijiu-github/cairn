@@ -21,6 +21,16 @@ export async function loadRunReplaySource<TWorkspaceCoreStatus>(
   runId: string,
   options: { replaceCurrentSource?: boolean } = {},
 ): Promise<void> {
+  const normalizedRunId = runId.trim();
+
+  if (normalizedRunId.length === 0) {
+    if (options.replaceCurrentSource === true) {
+      dependencies.setRunReplaySource(undefined);
+    }
+    dependencies.setRunReplayError('Enter a Workspace Core run id to observe.');
+    return;
+  }
+
   const requestId = ++requestState.current;
   dependencies.setRunReplayLoading(true);
   dependencies.setRunReplayError(undefined);
@@ -30,7 +40,7 @@ export async function loadRunReplaySource<TWorkspaceCoreStatus>(
   }
 
   try {
-    const replaySource = await dependencies.getRunReplaySource(runId);
+    const replaySource = await dependencies.getRunReplaySource(normalizedRunId);
     if (requestState.current !== requestId) {
       return;
     }

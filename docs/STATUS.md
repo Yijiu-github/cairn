@@ -105,17 +105,17 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 ### 当前测试覆盖分布
 
-| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                                                                                                                                             |
-| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `packages/shared_contracts` | 16               | schema、contracts、WS events、ID / enum 基础                                                                                                                                         |
-| `packages/domain`           | 1                | 生成迁移与核心表结构                                                                                                                                                                 |
-| `packages/storage`          | 2                | SQLite connection 与迁移目录                                                                                                                                                         |
-| `packages/runtime_gateway`  | 4                | mock adapter、Codex protocol、Codex process wrapper、Codex RuntimeAdapter                                                                                                            |
-| `packages/application`      | 3                | orchestration、planning output 与 code context service                                                                                                                               |
-| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                                                                                                                              |
-| `apps/ui-preview`           | 1                | preview model / static data smoke，当前以 typecheck / lint / production build 作为验证门禁                                                                                           |
-| `apps/desktop`              | 7                | main module 非阻塞加载、bootstrap 顺序、sidecar manager、Workspace Core internal-trial client、renderer replay/payload loaders、Electron Vite config；另以 typecheck/lint/build 验证 |
-| `apps/workspace-core`       | 6                | Fastify app、config、SQLite repository、runtime gateway factory、local artifact store、local code index scanner                                                                      |
+| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                                                                                                                                                                       |
+| --------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared_contracts` | 16               | schema、contracts、WS events、ID / enum 基础                                                                                                                                                                   |
+| `packages/domain`           | 1                | 生成迁移与核心表结构                                                                                                                                                                                           |
+| `packages/storage`          | 2                | SQLite connection 与迁移目录                                                                                                                                                                                   |
+| `packages/runtime_gateway`  | 4                | mock adapter、Codex protocol、Codex process wrapper、Codex RuntimeAdapter                                                                                                                                      |
+| `packages/application`      | 3                | orchestration、planning output 与 code context service                                                                                                                                                         |
+| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                                                                                                                                                        |
+| `apps/ui-preview`           | 1                | preview model / static data smoke，当前以 typecheck / lint / production build 作为验证门禁                                                                                                                     |
+| `apps/desktop`              | 7                | main module 非阻塞加载、bootstrap 顺序、sidecar manager、Workspace Core internal-trial client、renderer replay/payload loaders（含空 run id / 乱序防护）、Electron Vite config；另以 typecheck/lint/build 验证 |
+| `apps/workspace-core`       | 6                | Fastify app、config、SQLite repository、runtime gateway factory、local artifact store、local code index scanner                                                                                                |
 
 ### 本地环境注意事项
 
