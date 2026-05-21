@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 05:40 CST
+> 最后更新：2026-05-22 05:43 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -214,7 +214,7 @@
 - 新增 artifact review static data spec，确保页面身份与静态模型一致。
 - 同步 `docs/STATUS.md` 的 `apps/ui-preview` 覆盖数量与 `CHANGELOG.md` 的静态数据修复项。
 
-本轮提交：待提交。
+本轮提交：`58c88f3` `fix(ui-preview): 对齐 Artifact Review 静态标题 / align artifact review title`。
 
 2026-05-22 05:18 CST 本轮完成：
 
@@ -239,7 +239,7 @@
 - `DesktopApp` 的 internal-trial operator actions 改为通过 helper 返回反馈，保持现有 bounded allowlist，不扩大操作范围。
 - 同步 `docs/STATUS.md` 的 Desktop spec 数量与 `CHANGELOG.md` 修复项。
 
-本轮提交：待提交。
+本轮提交：`5f23e9d` `fix(desktop): 防止操作动作乱序污染 / guard operator action races`。
 
 ---
 
