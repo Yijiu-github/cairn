@@ -118,7 +118,7 @@
 - 加固 Desktop smoke signal 写入为临时文件 + rename；reader 对写入瞬间的 JSON 解析窗口做重试。
 - 同步 Desktop README、STATUS、CHANGELOG 与 testing strategy，明确这是默认 mock sidecar window-level smoke，不代表真实 Codex 自动化 e2e。
 
-本轮提交 hash 将在提交后补写。
+本轮提交：`eb43e0e` `test(desktop): 补窗口级 smoke / add window smoke`。
 
 ---
 
