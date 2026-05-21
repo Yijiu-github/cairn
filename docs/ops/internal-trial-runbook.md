@@ -171,11 +171,21 @@ pnpm --filter @cairn/desktop dev
 
 ### 6.1 创建真实 run
 
+先显式使用当前 Workspace Core 启动时的 bootstrap IDs。默认值需与
+`apps/workspace-core/src/config.ts` 保持一致；如启动 Core 时覆盖过
+`CAIRN_WORKSPACE_CORE_BOOTSTRAP_WORKSPACE_ID` / `CAIRN_WORKSPACE_CORE_BOOTSTRAP_EVENT_ID`，
+这里必须同步覆盖，否则 SQLite 外键会拒绝创建 run。
+
 ```bash
-curl -sS -X POST "$CAIRN_BASE_URL/v1/workspaces/01HZZZZZZZZZZZZZZZZZZZZZW0/runs" \
+export CAIRN_WORKSPACE_ID="${CAIRN_WORKSPACE_CORE_BOOTSTRAP_WORKSPACE_ID:-01J000000000000000000000W0}"
+export CAIRN_EVENT_ID="${CAIRN_WORKSPACE_CORE_BOOTSTRAP_EVENT_ID:-01J000000000000000000000E0}"
+```
+
+```bash
+curl -sS -X POST "$CAIRN_BASE_URL/v1/workspaces/$CAIRN_WORKSPACE_ID/runs" \
   "${CAIRN_CURL_AUTH_ARGS[@]}" \
   -H 'content-type: application/json' \
-  -d '{"originEventId":"01HZZZZZZZZZZZZZZZZZZZZZE0","task":{"taskKind":"custom","title":"Internal trial smoke","brief":"Synthetic internal-trial Codex smoke only."}}' \
+  -d "{\"originEventId\":\"$CAIRN_EVENT_ID\",\"task\":{\"taskKind\":\"custom\",\"title\":\"Internal trial smoke\",\"brief\":\"Synthetic internal-trial Codex smoke only.\"}}" \
   | tee /tmp/cairn-internal-trial-run.json
 ```
 
@@ -389,6 +399,17 @@ curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
 - Desktop window-level Codex-backed internal-trial smoke 已有一次手动成功记录。
 - Electron / CDP 可触发 `runInternalTrial()`，并读回同一条真实 run 的 replay evidence、bounded payload text 与 operator note。
 - 该记录可作为后续接力基线，但仍不是自动化 e2e 覆盖。
+
+### 2026-05-22 03:36 CST
+
+- Workspace Core + Codex API smoke 已重新手动复核成功。
+- 环境：macOS 15.7.4，Node v26.0.0，pnpm 9.15.0，`codex-cli 0.131.0-alpha.9`。
+- `runId=01KS60FG1PCSXKCQKSX09WVZZF`，`taskId=01KS60FG1P4JFHD5JMEHZVR4Q4`，
+  `agentRunId=01KS60GA1SNCKD6ANYQC917NGM`。
+- run / task / agent-run 均到达 `succeeded`；replay-source 返回 2 个 artifact、13 条
+  trace event；operator note 产生 1 条 `operator.note` trace event。
+- 本次仅验证外部手动启动的 Codex-backed Workspace Core API smoke；未执行 Desktop
+  Codex sidecar 观察路径，不代表真实 Codex 自动化 e2e 覆盖。
 
 ### 2026-05-21 06:20 CST
 
