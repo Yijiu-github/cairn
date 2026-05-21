@@ -37,27 +37,31 @@ Cairn 不试图替代 Codex、Claude Code、Cursor 或 Windsurf 的代码生成�
 - ✅ 设计文档 V0.1.0 已定稿，并补充 runtime 控制面 / 证据层定位语义（见 [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)）
 - ✅ Monorepo 工程基线、共享契约、领域持久化 schema、SQLite storage、Runtime Gateway 与 Application 编排基线已启动
 - ✅ Workspace Core 最小服务骨架已启动：Fastify 入口、健康检查、R1 run/task/agent-run 基础 HTTP 闭环与 mock runtime 验证
-- 🚧 Desktop 已有最小 Electron shell 与静态 UI 壳视图；当前主线仍是 Workspace Core 接入 SQLite repository 与 Codex CLI adapter
+- 🚧 Desktop 已有最小 Electron shell、静态 UI 壳视图与 Workspace Core dev sidecar bridge；默认 sidecar runtime 仍为 mock，真实 Codex 需显式 opt-in
+- 🚧 当前正在收口第一轮**内部开发者试用**：目标是验证 `Desktop + embedded Workspace Core + Codex runtime` 的最小真实闭环；这不是外部 alpha，也不包含 `apps/web`、安装器、签名或公证
 - 🗓 Release 1 目标：Personal Desktop Edition（Windows + macOS Apple Silicon）
 
 详情见 [`docs/product/roadmap.md`](docs/product/roadmap.md)。
+
+内部试用范围、前提、smoke path、排障与最终 gate 见 [`docs/ops/internal-trial-runbook.md`](docs/ops/internal-trial-runbook.md)。
 
 ---
 
 ## 文档地图
 
-| 我想……                                   | 去看                                                                     |
-| ---------------------------------------- | ------------------------------------------------------------------------ |
-| 了解产品愿景与定位                       | [`docs/product/`](docs/product/)                                         |
-| 看完整的设计主稿                         | [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)         |
-| 看领域模型 / 状态机 / 安全模型等设计细节 | [`docs/design/`](docs/design/)                                           |
-| 看外部调研与产品模式参考                 | [`docs/research/`](docs/research/)                                       |
-| 了解为什么选 Electron / Node / SQLite 等 | [`docs/adr/`](docs/adr/)                                                 |
-| 接入新的 runtime adapter                 | [`docs/contracts/runtime-adapter.md`](docs/contracts/runtime-adapter.md) |
-| 了解仓库结构、代码风格、测试策略         | [`docs/engineering/`](docs/engineering/)                                 |
-| 安装与使用                               | [`docs/ops/`](docs/ops/)                                                 |
-| 隐私与数据本地化承诺                     | [`docs/legal/`](docs/legal/)                                             |
-| 看术语定义                               | [`docs/reference/glossary.md`](docs/reference/glossary.md)               |
+| 我想……                                   | 去看                                                                       |
+| ---------------------------------------- | -------------------------------------------------------------------------- |
+| 了解产品愿景与定位                       | [`docs/product/`](docs/product/)                                           |
+| 看完整的设计主稿                         | [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)           |
+| 看领域模型 / 状态机 / 安全模型等设计细节 | [`docs/design/`](docs/design/)                                             |
+| 看外部调研与产品模式参考                 | [`docs/research/`](docs/research/)                                         |
+| 了解为什么选 Electron / Node / SQLite 等 | [`docs/adr/`](docs/adr/)                                                   |
+| 接入新的 runtime adapter                 | [`docs/contracts/runtime-adapter.md`](docs/contracts/runtime-adapter.md)   |
+| 了解仓库结构、代码风格、测试策略         | [`docs/engineering/`](docs/engineering/)                                   |
+| 参与第一轮内部试用                       | [`docs/ops/internal-trial-runbook.md`](docs/ops/internal-trial-runbook.md) |
+| 安装与使用                               | [`docs/ops/`](docs/ops/)                                                   |
+| 隐私与数据本地化承诺                     | [`docs/legal/`](docs/legal/)                                               |
+| 看术语定义                               | [`docs/reference/glossary.md`](docs/reference/glossary.md)                 |
 
 ---
 
@@ -73,6 +77,8 @@ pnpm --filter @cairn/workspace-core dev
 ```
 
 完整步骤见 [`docs/engineering/local-dev-setup.md`](docs/engineering/local-dev-setup.md)。
+
+如果你的目标是执行第一轮内部 trial，请直接按 [`docs/ops/internal-trial-runbook.md`](docs/ops/internal-trial-runbook.md) 操作。
 
 ---
 

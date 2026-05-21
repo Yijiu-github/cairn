@@ -6,7 +6,8 @@ This first skeleton is intentionally preview-safe:
 
 - static renderer fixtures for the main product views
 - a minimal dev Workspace Core sidecar manager
-- a narrow preload allowlist for Core status and mock smoke only
+- a narrow preload allowlist for Core status, internal-trial evidence, bounded artifact payload
+  reads, and minimal operator actions
 - no renderer-exposed filesystem reads or writes
 - a non-secret sidecar diagnostic snapshot under Electron `userData`
 - local paths remain redacted by default
@@ -21,14 +22,14 @@ The renderer is a static desktop product shell that reuses `@cairn/ui` component
 first navigation shape:
 
 - **Home / Inbox** — handoff queue, pinned runs, runtime health, and safety defaults
-- **Run Detail** — selected run card, evidence timeline, task tree, and disabled operator
+- **Run Detail** — selected run card, evidence timeline, task tree, and internal-trial operator
   controls
 - **Artifact Review** — protected review panel, redacted artifact cards, and path exposure
   policy
 - **Settings** — read-only source-root and connection placeholders
 
-Production sidecar bundling, real filesystem access, real runtime action, and operator actions are
-still out of scope for this slice.
+Production sidecar bundling, real filesystem access, complete runtime action coverage, and full
+operator workflows are still out of scope for this slice.
 
 ## Workspace Core preview bridge
 
@@ -39,12 +40,16 @@ The current bridge is intentionally small:
   background.
 - Workspace Core only requires auth when `CAIRN_WORKSPACE_CORE_AUTH_TOKEN` is configured, preserving
   normal standalone development.
-- Preload exposes `workspaceCore.getStatus()` and `workspaceCore.runMockSmoke()` only.
-- The renderer can show sidecar health and run a bounded mock smoke path through Workspace Core:
-  create run, list task, submit mock AgentRun, drain runtime, then read run/task/artifact/trace
-  summary.
+- Preload exposes `workspaceCore.getStatus()`, `workspaceCore.runInternalTrial()`, read-only
+  replay-source access, bounded `workspaceCore.getArtifactPayload(artifactId)` reads, and a minimal
+  internal-trial operator action allowlist.
+- The renderer can show sidecar health and run the internal-trial path through Workspace Core:
+  create run, list task, submit AgentRun, drain runtime, then read run/task/artifact/trace
+  summary and on-demand bounded artifact payload text.
 - Startup writes a non-secret diagnostic snapshot to
   `<userData>/diagnostics/workspace-core-sidecar.json`.
+- Renderer-facing Core status uses a display-safe connection label instead of exposing the
+  loopback base URL or bearer token.
 - The main process intentionally avoids top-level `await app.whenReady()`; Electron ESM startup can
   stall app readiness when module evaluation stays suspended.
 
@@ -52,6 +57,9 @@ Known limits:
 
 - The sidecar command is a development wiring that runs `tsx src/server.ts` from
   `apps/workspace-core`; packaged production sidecar bundling is not done yet.
-- The verified automated smoke covers desktop bootstrap order, the sidecar manager, and the
-  Workspace Core HTTP path. Manual Electron window-level smoke reaches `ready-to-show`; automated
+- Automated tests cover desktop bootstrap order, the sidecar manager, and the Workspace Core HTTP
+  path. A Codex-backed window-level internal-trial smoke has been verified manually; automated
   Electron e2e remains a follow-up item.
+- Artifact payload preview is read-only and fetched by opaque artifact id through Workspace Core; it
+  does not reveal local paths, expose arbitrary filesystem access, or implement a full Artifact
+  workspace.

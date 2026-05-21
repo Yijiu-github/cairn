@@ -1,0 +1,432 @@
+# 内部试用运行手册 / Internal Trial Runbook
+
+> 状态：🟡 Draft
+> 最后更新：2026-05-21
+> 适用对象：Cairn 项目内部开发者
+
+---
+
+## 1. 目的
+
+这份手册定义 Cairn 第一轮**内部开发者试用**的统一口径，用于重复验证当前主线是否已经具备可演示、可排障、可复查的最小闭环。
+
+这不是外部 alpha，不是公开预发布，也不是面向最终用户的安装说明。
+
+---
+
+## 2. 试用范围
+
+本轮内部试用只覆盖以下链路：
+
+- 开发者本机运行 `apps/desktop`
+- Desktop 开发态验证最小 Workspace Core bridge；默认 mock sidecar 路径、Codex sidecar opt-in
+  路径与外部手动启动 Core 的观察路径需分开记录
+- Workspace Core 通过 Codex Runtime Adapter 执行一条真实短任务
+- 通过 API 或 Desktop 读取 run / task / agent-run / artifact / trace / replay evidence
+- 验证最小观察与最小接管能力是否仍然成立
+
+### 明确包含
+
+- `apps/desktop`
+- `apps/workspace-core`
+- `packages/shared_contracts`
+- `packages/application`
+- `packages/runtime_gateway`
+- 只读 replay / evidence 读取路径
+- 最小 operator action 验证口径
+
+### 明确不包含
+
+- `apps/web`
+- 安装器、签名、公证、notarization
+- 对外分发包或公开试用说明
+- 企业级审批、治理、多租户能力
+- 复杂 workflow builder
+- 桌面端无限制本地自动化能力
+
+---
+
+## 3. 进入试用前的前提条件
+
+### 本机环境
+
+- Node.js：以仓库 `.nvmrc` 为准
+- pnpm：使用根 `package.json` / workspace 当前要求的版本范围
+- 已执行 `pnpm install`
+- 本机可执行 `codex`，或通过 `CAIRN_WORKSPACE_CORE_CODEX_EXECUTABLE` 指向可执行文件
+- Codex CLI 已在当前机器完成本地登录或可用会话准备
+
+### 约束与安全口径
+
+- 真实 smoke 只允许使用合成 prompt
+- 不在命令、截图、日志、artifact 中粘贴真实凭据
+- 不输入客户数据、业务秘密或仓库外敏感内容
+- 当前内部试用不是打包产物验证，默认在开发态完成
+
+---
+
+## 4. 基线验证命令
+
+在做手动 smoke 之前，先确认基础门禁通过：
+
+```bash
+pnpm run check
+pnpm test
+pnpm --filter @cairn/ui-preview build
+pnpm --filter @cairn/desktop build
+```
+
+预期：
+
+- 所有命令通过
+- 没有额外放宽测试、lint 或 build 门禁来“换取”试用通过
+
+---
+
+## 5. 启动方式
+
+### 5.1 启动 Workspace Core Codex 开发态（手动 smoke 主路径）
+
+```bash
+CAIRN_WORKSPACE_CORE_RUNTIME=codex \
+CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR="$PWD/.cairn/runtime/internal-trial" \
+CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE=read-only \
+pnpm --filter @cairn/workspace-core dev
+```
+
+`pnpm --filter @cairn/workspace-core dev` 会在 `apps/workspace-core` 包目录内执行脚本；这里使用
+`$PWD/.cairn/...` 形式是为了让 Codex adapter 的受控工作目录稳定指向仓库根下的 ignored
+本地目录，避免相对路径随包脚本工作目录漂移。
+
+默认 API 地址：
+
+```bash
+export CAIRN_BASE_URL="${CAIRN_BASE_URL:-http://127.0.0.1:4321}"
+```
+
+如本地启用了认证，再显式设置本地开发 token：
+
+```bash
+# 仅在本地 dev auth 打开时设置
+export CAIRN_AUTH_TOKEN='local-dev-token'
+```
+
+```bash
+CAIRN_CURL_AUTH_ARGS=()
+if [ -n "${CAIRN_AUTH_TOKEN:-}" ]; then
+  CAIRN_CURL_AUTH_ARGS=(-H "Authorization: Bearer $CAIRN_AUTH_TOKEN")
+fi
+```
+
+### 5.2 启动 Desktop 开发态（观察路径）
+
+```bash
+pnpm --filter @cairn/desktop dev
+```
+
+当前内部试用主路径要求 Desktop 开发态可启动，并通过 preload allowlist 中的
+`workspaceCore.runInternalTrial()` 触发 `workspace-core:run-internal-trial` IPC 入口，读取最小
+replay evidence。
+
+默认 Desktop sidecar runtime 是 mock。启动会写入不含 token 的诊断快照：
+
+```text
+<userData>/diagnostics/workspace-core-sidecar.json
+```
+
+该快照会记录 `runtime: "mock" | "codex"`，用于区分本次 sidecar 后端。
+
+不带 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 时，这条 Desktop 路径验证的是 mock sidecar 与
+bridge 可用性；如需验证真实 Codex run，使用 §5.1 的手动 API smoke，或使用 §5.3 的
+Desktop Codex sidecar opt-in 路径。
+
+### 5.3 启动 Desktop + Codex sidecar 观察真实 run
+
+如需让 Desktop 自行拉起 **Codex-backed Workspace Core sidecar**，而不是默认的 mock sidecar，请在启动 Desktop 前设置：
+
+```bash
+export CAIRN_DESKTOP_SIDECAR_RUNTIME=codex
+export CAIRN_DESKTOP_SIDECAR_RUNTIME_WORKDIR="$PWD/.cairn/runtime/internal-trial"
+export CAIRN_DESKTOP_SIDECAR_CODEX_SANDBOX_MODE=read-only
+# 如 codex 不在 PATH，再显式指定
+export CAIRN_DESKTOP_SIDECAR_CODEX_EXECUTABLE="${CAIRN_DESKTOP_SIDECAR_CODEX_EXECUTABLE:-$(command -v codex)}"
+```
+
+然后启动：
+
+```bash
+pnpm --filter @cairn/desktop dev
+```
+
+预期：
+
+- Desktop 自行拉起的 sidecar 仍只绑定 loopback + launch-scoped bearer token
+- Desktop Run Detail 读取到的是 **真实 Codex runtime** 产生的 run / task / agent-run / artifact / trace / replay evidence
+- sidecar 诊断快照中的 `runtime` 为 `codex`
+- 若未设置上述环境变量，Desktop 仍保持默认 mock sidecar 路径
+
+---
+
+## 6. 内部试用 Smoke Path
+
+### 6.1 创建真实 run
+
+```bash
+curl -sS -X POST "$CAIRN_BASE_URL/v1/workspaces/01HZZZZZZZZZZZZZZZZZZZZZW0/runs" \
+  "${CAIRN_CURL_AUTH_ARGS[@]}" \
+  -H 'content-type: application/json' \
+  -d '{"originEventId":"01HZZZZZZZZZZZZZZZZZZZZZE0","task":{"taskKind":"custom","title":"Internal trial smoke","brief":"Synthetic internal-trial Codex smoke only."}}' \
+  | tee /tmp/cairn-internal-trial-run.json
+```
+
+```bash
+export CAIRN_RUN_ID="$(jq -r '.orchestrationRunId' /tmp/cairn-internal-trial-run.json)"
+```
+
+### 6.2 读取 task 并提交真实 Codex AgentRun
+
+```bash
+curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/tasks" \
+  "${CAIRN_CURL_AUTH_ARGS[@]}" \
+  | tee /tmp/cairn-internal-trial-tasks.json
+```
+
+```bash
+export CAIRN_TASK_ID="$(jq -r '.items[0].taskId' /tmp/cairn-internal-trial-tasks.json)"
+```
+
+```bash
+curl -sS -X POST "$CAIRN_BASE_URL/v1/tasks/$CAIRN_TASK_ID/agent-runs" \
+  "${CAIRN_CURL_AUTH_ARGS[@]}" \
+  -H 'content-type: application/json' \
+  -d '{"runtimeType":"codex","model":"default","prompt":"Reply with exactly: Cairn internal trial ok"}' \
+  | tee /tmp/cairn-internal-trial-agent-run.json
+```
+
+```bash
+export CAIRN_AGENT_RUN_ID="$(jq -r '.agentRunId' /tmp/cairn-internal-trial-agent-run.json)"
+```
+
+### 6.3 Drain runtime events
+
+```bash
+curl -sS -X POST "$CAIRN_BASE_URL/v1/agent-runs/$CAIRN_AGENT_RUN_ID/drain-runtime" \
+  "${CAIRN_CURL_AUTH_ARGS[@]}" \
+  -H 'content-type: application/json' \
+  -d '{}' \
+  | tee /tmp/cairn-internal-trial-drain.json
+```
+
+### 6.4 确认终态与证据可读
+
+```bash
+curl -sS "$CAIRN_BASE_URL/v1/agent-runs/$CAIRN_AGENT_RUN_ID" \
+  "${CAIRN_CURL_AUTH_ARGS[@]}" \
+  | tee /tmp/cairn-internal-trial-final-agent-run.json
+
+curl -sS "$CAIRN_BASE_URL/v1/tasks/$CAIRN_TASK_ID" \
+  "${CAIRN_CURL_AUTH_ARGS[@]}" \
+  | tee /tmp/cairn-internal-trial-final-task.json
+
+curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID" \
+  "${CAIRN_CURL_AUTH_ARGS[@]}" \
+  | tee /tmp/cairn-internal-trial-final-run.json
+
+curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/replay-source" \
+  "${CAIRN_CURL_AUTH_ARGS[@]}" \
+  | tee /tmp/cairn-internal-trial-replay-source.json
+```
+
+预期：
+
+- `AgentRun`、`Task`、`OrchestrationRun` 到达终态
+- `replay-source` 可返回 run、tasks、agentRuns、artifacts、traceEvents、inspector 最小结构
+- artifact payload 可按当前 API 约束单独读取
+
+### 6.5 Desktop 观察路径
+
+- 若使用 §5.2 默认启动，Desktop 自行拉起 mock sidecar；此路径只验证最小 bridge 与
+  replay UI，不代表真实 Codex runtime。
+- 若使用 §5.3 启动，Desktop 自行拉起 Codex-backed sidecar；此路径可验证真实 Codex
+  runtime 的 Desktop run evidence。
+- 若使用 §5.1 手动启动的外部 Workspace Core，当前 Desktop 不能自动复用该外部进程；
+  可在 Run Detail 中手动输入该 Core 所在数据库里的 `runId`，但需记录这不是 Desktop
+  自拉起 sidecar 的同一条 bootstrap 证据。
+- 2026-05-21 已有一次 Desktop window-level Codex-backed smoke 成功证据，但自动 e2e 仍未补齐；
+  后续若只完成手动 smoke，必须继续明确标注为手动已验证。
+- 在 Run Detail 或对应观察视图中确认：
+  - run 摘要可见
+  - task / agent-run 摘要可见
+  - artifact / trace 摘要可见
+  - 对有 `payloadRef` 的 artifact，可按需加载 bounded payload text
+  - replay / inspector 摘要未报错
+
+如果本次验证采用 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`：
+
+- 记录本次 Desktop 观察的是 sidecar 自拉起的真实 Codex Core，而不是外部手工启动的 Core
+- 如需复现同一条 run，建议记录 Desktop sidecar 对应的诊断快照位置与 runtime workdir，
+  不记录 token 或完整本地敏感路径
+
+### 6.6 最小 operator action
+
+内部试用只要求验证**最小**接管动作链路，而不是完整操作台：
+
+- 至少一次最小 operator action 可调用
+- 相关状态或 evidence 更新可读
+- 若本机会话不适合验证 cancel / retry / rerun，全量结果需明确记录为“本次未执行，原因是……”
+
+最小可重复动作建议使用 operator note，因为它不改变已完成 run 的终态：
+
+```bash
+curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
+  "${CAIRN_CURL_AUTH_ARGS[@]}" \
+  -H 'content-type: application/json' \
+  -d '{"note":"Synthetic internal-trial operator note.","visibility":"operator_only"}' \
+  | tee /tmp/cairn-internal-trial-operator-note.json
+```
+
+随后重新读取 replay-source，并确认新增 trace event 的 `eventType` 为 `operator.note`。
+
+### 6.7 结果记录
+
+每次内部试用结束后，请把以下信息追加到本手册或配套 handoff：
+
+- 实际使用的是 mock sidecar 还是 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`
+- 本轮触发的 runId / taskId / agentRunId
+- 终态是否达到
+- replay evidence 是否可读
+- 最小 operator action 是否执行
+- 失败摘要是否已脱敏
+
+---
+
+## 7. 故障排查 / Failure Triage
+
+### Workspace Core 启动失败
+
+优先检查：
+
+- `pnpm install` 是否完整
+- Node 版本是否偏离 `.nvmrc`
+- SQLite native binding 是否安装成功
+- 端口 `4321` 是否被占用
+
+建议动作：
+
+- 重新执行 `pnpm install`
+- 单独跑 `pnpm --filter @cairn/workspace-core test`
+- 查看终端中的 Fastify / storage 初始化错误
+
+### Codex runtime 不可用
+
+优先检查：
+
+- `codex` 是否在 `PATH`
+- `CAIRN_WORKSPACE_CORE_CODEX_EXECUTABLE` 是否指向正确路径
+- 当前机器是否已完成 Codex 登录
+
+建议动作：
+
+- 执行 `codex --help` 或等价健康命令确认 CLI 可启动
+- 记录为“环境前提未满足”，不要把它误记为产品逻辑失败
+
+### Run 无法进入终态
+
+优先检查：
+
+- `drain-runtime` 是否已调用
+- Codex CLI 是否非零退出
+- runtime stderr 是否给出可归类错误
+
+建议动作：
+
+- 读取 AgentRun 最终状态
+- 读取 trace timeline，确认第一处失败点
+- 记录失败时间、命令、sanitized 错误摘要
+
+### Replay source 缺失或结构异常
+
+优先检查：
+
+- run 是否真实存在
+- trace / artifact 是否已落库
+- `GET /v1/runs/:runId/replay-source` 是否返回稳定最小结构
+
+建议动作：
+
+- 同时保存 run、task、agent-run、replay-source 响应
+- 优先按“读取面不稳定”归类，而不是 UI 问题
+
+### Desktop 无法显示 evidence
+
+优先检查：
+
+- Desktop 是否连到当前 sidecar / Workspace Core
+- sidecar 诊断快照中的 `runtime` 是否符合本次预期（`mock` 或 `codex`）
+- preload bridge 是否能读取 replay-source
+- renderer 是否拿到了正确 `runId`
+
+建议动作：
+
+- 先用 API 确认 replay-source 可读
+- 再把问题归类为 Desktop bridge / renderer 映射问题
+
+---
+
+## 8. 已知限制 / Known Limits
+
+- `apps/web` 不在本轮内部试用范围内
+- 当前是开发者自运行试用，不覆盖安装器、签名、公证与升级体验
+- Desktop 仍是最小观察壳，不是完整产品 UI
+- operator action 只验证最小动作，不代表完整人工接管工作流已完成
+- 真实 Codex smoke 仍然是手动步骤，不进入默认自动化 CI
+- 真实长任务、复杂 payload、长时取消链路仍可能存在平台差异
+
+## 8.1 当前手动证据基线
+
+### 2026-05-21 06:55 CST
+
+- Desktop window-level Codex-backed internal-trial smoke 已有一次手动成功记录。
+- Electron / CDP 可触发 `runInternalTrial()`，并读回同一条真实 run 的 replay evidence、bounded payload text 与 operator note。
+- 该记录可作为后续接力基线，但仍不是自动化 e2e 覆盖。
+
+### 2026-05-21 06:20 CST
+
+- Workspace Core + Codex API smoke 已有一次手动成功记录。
+- run / task / agent-run 到达 `succeeded`，replay-source 可读，operator note 可回写为 `operator.note` trace event。
+- 文档示例已改用当前契约允许的 `taskKind: "custom"`，并建议使用 `$PWD/.cairn/...` 形式的 runtime workdir，避免包脚本工作目录漂移。
+
+---
+
+## 9. Trial Gate
+
+内部试用通过标准必须同时满足：
+
+- `pnpm run check`
+- `pnpm test`
+- `pnpm --filter @cairn/ui-preview build`
+- `pnpm --filter @cairn/desktop build`
+- 手动 smoke 完成：触发一条真实 run，读取 replay evidence，验证最小 operator action，确认终态与证据更新
+
+### 手动结果记录要求
+
+每次内部试用至少记录：
+
+- 验证日期
+- 执行机器与 Node 版本
+- 自动化门禁是否通过
+- 手动 smoke 是否通过
+- 若未通过，失败点在 Core、Runtime、Replay 还是 Desktop
+- 若某一步未执行，原因是什么
+
+---
+
+## 10. 最终试用口径
+
+只有在以下条件都成立时，才可宣称“第一轮内部 trial 可跑”：
+
+- 当前分支文档与状态页已同步
+- 自动化门禁通过
+- 至少一条真实 Codex 短任务 smoke 已完成并有证据
+- Desktop 至少能作为最小观察壳读取同一条 run 的 evidence
+- 已知限制已明确记录，没有把未完成项包装成已交付能力

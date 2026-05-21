@@ -1,7 +1,7 @@
 # 测试策略 / Testing Strategy
 
 > 状态：🟡 Draft  
-> 最后更新：2026-05-14
+> 最后更新：2026-05-20
 
 ---
 
@@ -79,12 +79,27 @@
   - 取消运行中的 run
   - 关闭应用，重启后状态正确恢复
 
+### 5.1.a 第一轮内部试用门禁
+
+当前第一轮内部试用仍以“自动化 gate + 手动 smoke”组合验证，而不是完整桌面 E2E 替代品。执行步骤和记录模板统一放在 [`../ops/internal-trial-runbook.md`](../ops/internal-trial-runbook.md)，本节只定义测试边界。
+
+自动化 gate：
+
+- `pnpm run check`
+- `pnpm test`
+- `pnpm --filter @cairn/ui-preview build`
+- `pnpm --filter @cairn/desktop build`
+
+手动 gate：触发一条真实 Codex 短任务 run，确认终态、replay evidence、Desktop 最小观察壳与最小 operator action 口径；未执行的步骤必须记录原因。
+
 ### 5.2 Web E2E
 
 - 框架：Playwright
 - 范围（Release 2 之后）：
   - 接入远程 workspace
   - 同等核心流程
+
+在 `apps/web` 尚未创建前，这一节仅作为后续占位，不应被当前 CI / 里程碑误读为已可执行目标。
 
 ### 5.3 跨平台运行
 
@@ -126,6 +141,12 @@
 
 详见 [`ci-cd.md`](ci-cd.md)。
 
+### 内部试用与 CI 的边界
+
+- 真实 Codex CLI smoke 不进入默认 CI
+- Desktop 当前内部试用通过标准仍允许“自动化通过 + 手动真实 smoke 记录”
+- 已记录过一次 Desktop window-level Codex-backed smoke 成功；如果后续结论只来自手动步骤，仍必须明确标注，不得伪装为自动化覆盖
+
 ## 10. 测试反例（不要做的事）
 
 - ❌ 测试代码包含业务逻辑分支
@@ -144,6 +165,7 @@
 
 ## 变更历史
 
-| 日期       | 变更 |
-| ---------- | ---- |
-| 2026-05-14 | 初版 |
+| 日期       | 变更                                           |
+| ---------- | ---------------------------------------------- |
+| 2026-05-20 | 补充第一轮内部试用 gate、手动 smoke 与 CI 边界 |
+| 2026-05-14 | 初版                                           |

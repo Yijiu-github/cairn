@@ -1166,3 +1166,24 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   `docs/STATUS.md`、`docs/ops/internal-trial-runbook.md`、`docs/engineering/**`、`docs/contracts/**`、
   `docs/design/**`、`docs/adr/**` 与 internal-trial plan/spec；要继续强调 Desktop sidecar 默认
   mock、真实 Codex 需 env opt-in、`apps/web` 尚未创建，不宣称 public alpha/installer/signing/notarization。
+
+### 2026-05-22 02:08 CST
+
+- 接上用户要求“定时任务里提到的那几个文档重新整理，有过时的，需要简化更新”，本轮只处理
+  docs/runbook/doc-sync，不新增代码行为。
+- 精简 `README.md`、`docs/STATUS.md`、`CHANGELOG.md`、`apps/desktop/README.md`、
+  `docs/ops/internal-trial-runbook.md`、`docs/engineering/local-dev-setup.md`、
+  `docs/engineering/testing-strategy.md` 与 `docs/design/security-model.md`：
+  - README 只保留门面状态与 runbook 入口，不再展开 window-level smoke 细节。
+  - STATUS 保留当前能力、限制和 gate 事实，并把 Desktop spec 数量修正为 6。
+  - runbook 保留可执行步骤，把手动证据记录压缩为“当前手动证据基线”。
+  - local-dev/testing 只保留通用开发和测试边界，避免重复 runbook 的完整试用步骤。
+  - Desktop README 清掉过时 `ready-to-show` 口径，改为“手动 Codex-backed window-level smoke 已验证，自动 e2e 待补”。
+- `docs/contracts/runtime-adapter.md` 与 `docs/design/r1-codex-e2e-artifact-trace.md` 保留当前实现事实：
+  Codex adapter 当前走 `child_process.spawn` + stdout/stderr pipes，CLI 不可执行映射为
+  `SERVICE_UNAVAILABLE`；模型不可用才是 `MODEL_UNAVAILABLE`。
+- 注意：`docs/adr/0017-codex-cli-runtime-adapter.md` 当前仍有 dirty diff，但它是 Accepted ADR，
+  本轮不应把旧 ADR 作为活文档直接提交；若要正式更新 PTY 口径，应使用 ADR-0018 或新 refinement /
+  supersede ADR 处理。
+- 下一步：跑 docs lint / Prettier / stale scan / `git diff --check`，若通过则只 stage 本轮正式文档
+  与 handoff；不要 stage ADR-0017，除非另起 ADR 决策。

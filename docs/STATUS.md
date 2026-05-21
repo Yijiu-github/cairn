@@ -1,7 +1,7 @@
 # 项目状态 / Project Status
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-20
+> 最后更新：2026-05-21
 > 目的：给人类与多 agent 协作提供当前事实基线，减少“我以为已经有 Desktop/Web”的误判。
 > 协作口径：自 2026-05-20 起，Cairn 当前按产品裁剪人 + Codex 两方推进；旧的白霓 / 海棠固定角色分工不再作为项目计划依据。
 
@@ -12,6 +12,8 @@
 Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**。
 
 已经可运行的主线是共享契约、领域 schema、SQLite storage、Runtime Gateway、Application 编排基线、`apps/workspace-core` 的最小 Fastify 服务、静态 `apps/ui-preview` 预览应用，以及 `apps/desktop` 的 Electron shell 骨架与最小 Workspace Core dev sidecar bridge。Web Shell 还没有创建。
+
+当前第一轮**内部开发者试用**以 `docs/ops/internal-trial-runbook.md` 为统一口径，目标是验证 `Desktop + embedded Workspace Core + Codex runtime` 的最小真实闭环。Desktop 默认 sidecar runtime 仍为 mock，真实 Codex 需通过环境变量显式 opt-in；本阶段不是外部 alpha，不包含 `apps/web`、安装器、签名或公证。
 
 ---
 
@@ -82,11 +84,11 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `apps/desktop` 已提供 Electron 最小 shell 骨架。
 - 当前包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
-- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runMockSmoke()` 与只读 `workspaceCore.getRunReplaySource(runId)` allowlist API。
-- Renderer 可显示 Core 状态，并触发 bounded mock smoke：create run、list task、submit mock AgentRun、drain runtime、读取 run/task/artifact/trace 摘要；Run Detail 可用 mock smoke 生成的 run id 读取 Workspace Core sanitized replay source，并展示 run/task/agent-run/artifact/trace/inspector 摘要。
-- 启动会写入不含 token 的 sidecar 诊断快照：`<userData>/diagnostics/workspace-core-sidecar.json`。
-- 当前不读取或写入用户本地文件系统，不暴露真实本地路径，不提供 operator action。
-- 自动化验证已覆盖 Desktop bootstrap 顺序、main module 非阻塞加载、sidecar manager 与 Workspace Core HTTP smoke；手动 Electron window-level smoke 已到 `ready-to-show`，自动 e2e 仍需后续补齐。
+- Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runInternalTrial()`、只读 `workspaceCore.getRunReplaySource(runId)` 与 `workspaceCore.getArtifactPayload(artifactId)` allowlist API。
+- Renderer 可显示 Core 状态，并通过 internal-trial 入口创建 run、读取 task、提交 AgentRun、drain runtime、读取 run/task/artifact/trace/replay 摘要；Run Detail 可按 artifact id 按需读取 bounded payload text。默认 sidecar 仍走 mock runtime，设置 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 后可观察 Codex-backed Workspace Core sidecar 产生的真实 run evidence。
+- 启动会写入不含 token 的 sidecar 诊断快照：`<userData>/diagnostics/workspace-core-sidecar.json`，其中记录 `runtime: "mock" | "codex"` 以区分本次 sidecar 后端。
+- 当前不读取或写入用户本地文件系统，不暴露真实本地路径；operator action 仅保留最小 internal-trial allowlist，不是完整接管台。
+- 自动化验证已覆盖 Desktop bootstrap 顺序、main module 非阻塞加载、sidecar manager 与 Workspace Core HTTP smoke；2026-05-21 已完成一次真实 Desktop window-level Codex-backed internal-trial smoke，Electron / CDP 读回同一条 run 的 replay evidence、bounded payload text 与 operator note；自动 e2e 仍需后续补齐。
 - 当前 renderer 默认安全基线为 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`。
 
 ---
@@ -111,17 +113,17 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 ### 当前测试覆盖分布
 
-| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                                                                                  |
-| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `packages/shared_contracts` | 12               | schema、contracts、WS events、ID / enum 基础                                                                              |
-| `packages/domain`           | 1                | 生成迁移与核心表结构                                                                                                      |
-| `packages/storage`          | 2                | SQLite connection 与迁移目录                                                                                              |
-| `packages/runtime_gateway`  | 4                | mock adapter、Codex protocol、Codex process wrapper、Codex RuntimeAdapter                                                 |
-| `packages/application`      | 3                | orchestration、planning output 与 code context service                                                                    |
-| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                                                                   |
-| `apps/ui-preview`           | 0                | 当前以 typecheck / lint / production build 作为验证门禁                                                                   |
-| `apps/desktop`              | 4                | main module 非阻塞加载、bootstrap 顺序、sidecar manager、Workspace Core mock smoke client；另以 typecheck/lint/build 验证 |
-| `apps/workspace-core`       | 6                | Fastify app、config、SQLite repository、runtime gateway factory、local artifact store、local code index scanner           |
+| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                                                                                                                                    |
+| --------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared_contracts` | 16               | schema、contracts、WS events、ID / enum 基础                                                                                                                                |
+| `packages/domain`           | 1                | 生成迁移与核心表结构                                                                                                                                                        |
+| `packages/storage`          | 2                | SQLite connection 与迁移目录                                                                                                                                                |
+| `packages/runtime_gateway`  | 4                | mock adapter、Codex protocol、Codex process wrapper、Codex RuntimeAdapter                                                                                                   |
+| `packages/application`      | 3                | orchestration、planning output 与 code context service                                                                                                                      |
+| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                                                                                                                     |
+| `apps/ui-preview`           | 0                | 当前以 typecheck / lint / production build 作为验证门禁                                                                                                                     |
+| `apps/desktop`              | 6                | main module 非阻塞加载、bootstrap 顺序、sidecar manager、Workspace Core internal-trial client、renderer replay loader、Electron Vite config；另以 typecheck/lint/build 验证 |
+| `apps/workspace-core`       | 6                | Fastify app、config、SQLite repository、runtime gateway factory、local artifact store、local code index scanner                                                             |
 
 ### 本地环境注意事项
 
@@ -129,6 +131,13 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Node 26.0.0 下 `pnpm install --frozen-lockfile`、`pnpm run check`、`pnpm test` 与 `pnpm --filter @cairn/ui-preview build` 可通过；`better-sqlite3` 可能因预编译包不可用而走本地编译，并出现 V8 deprecation warnings。
 - 如果 SQLite 相关测试因 native binding 缺失失败，优先重新 `pnpm install`，再跑 `pnpm --filter @cairn/storage test` 与 `pnpm --filter @cairn/workspace-core test`。
 - 不要因为本机 Node 版本不一致就删除或长期 skip SQLite 测试；skip 必须有明确原因与后续处理记录。
+
+### 内部试用口径
+
+- 统一 runbook：[`ops/internal-trial-runbook.md`](ops/internal-trial-runbook.md)
+- 统一自动化 gate：`pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build`、`pnpm --filter @cairn/desktop build`
+- 统一手动 gate：至少完成一次真实 Codex 短任务 smoke，确认终态、replay evidence 与最小 operator action 口径；已记录过 Workspace Core API 与 Desktop window-level Codex-backed smoke 的手动成功证据，但自动 e2e 仍未补齐
+- 统一记录方式：区分“自动化已验证”“手动已验证”“本次未执行”
 
 ---
 
@@ -155,13 +164,13 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Planning Output Model：`planner_output_ref` 指向独立 PlanningOutput，支持 action tree、preconditions、blocked reason、replan reason 的 schema / storage / application 闭环，并保留 TraceEvent 镜像。
 - Planning Output read API：Workspace Core 提供 `GET /v1/runs/:runId/planning-output`。
 - Runtime Drain Slice：Workspace Core 可把 submitted AgentRun 的 AdapterStreamEvent 应用回 run/task/agent-run 状态，并已有 RuntimeAdapter-backed gateway 注入测试。
-- M1 real-runtime loop：Codex adapter 确定性短任务 smoke 与 Workspace Core RuntimeAdapter-backed submit/drain 证明都在自动化测试内；真实 Codex CLI smoke 已文档化为 opt-in 手动流程。
+- M1 real-runtime loop：Codex adapter 确定性短任务 smoke 与 Workspace Core RuntimeAdapter-backed submit/drain 证明都在自动化测试内；真实 Codex CLI smoke 已文档化为 opt-in 手动流程，且 2026-05-21 已完成一次 Workspace Core + Codex API 手动成功记录。
 - Artifact / Trace Read API：Workspace Core 提供 Artifact metadata、bounded artifact payload 与 run trace timeline/read 只读接口。
 - Artifact / Trace Replay Source M2 milestone：Workspace Core 已落地 `GET /v1/runs/:runId/replay-source`，聚合 run/task/agent-run/artifact metadata/trace timeline 与轻量 Inspector 摘要。
 - Local Artifact Store M2：本地 payload 写入采用同目录临时文件 + rename，payload ref 保持 opaque 且不暴露本地路径。
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
-- `apps/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、最小 Workspace Core dev sidecar bridge、bounded mock smoke allowlist、只读 replay-source bridge，以及 preview-safe 默认隔离设置。
+- `apps/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、最小 Workspace Core dev sidecar bridge、internal-trial allowlist、只读 replay-source / bounded artifact payload bridge，以及 preview-safe 默认隔离设置。
 
 ---
 
@@ -171,17 +180,32 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `apps/web` React Web Shell。
 - UI preview 不是 Web Shell，不能假设已有远程 workspace 控制台。
-- Desktop 生产 sidecar 打包、签名后内嵌启动、window-level smoke 与完整 preload / contextBridge allowlist。
-- Desktop 完整真实 Workspace Core UI 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前已有 bounded mock smoke 与只读 replay-source 摘要，不是完整产品数据面）。
-- Desktop operator action UI、artifact payload viewer、run 列表 / 选择器与本地路径 reveal。
+- Desktop 生产 sidecar 打包、签名后内嵌启动与完整 preload / contextBridge allowlist。
+- Desktop 完整真实 Workspace Core UI 接入、Chat、Runs、Tasks、Run Detail、Artifact、Trace 视图（当前已有 internal-trial 入口与只读 replay-source 摘要，不是完整产品数据面）。
+- Desktop 完整 operator action UI、完整 Artifact workspace、run 列表 / 选择器与本地路径 reveal。
 - Artifact store 的导出、清理/retention、hash 校验与更完整 review metadata。
 - 真实 Goal Planner 与 Planner 到多 Task DAG 的生成逻辑。
-- 真实 Codex CLI 手动 smoke 执行结果记录，以及更完整的 payload / long-run 证据收集。
+- Desktop 自动化 window-level e2e，以及更完整的 payload / long-run 证据收集。
 - 真实 Runtime Gateway cancellation / kill、AgentRun retry、protected step approve/reject 与 operator control UI。
 - TraceEvent replay UI。
 - 代码上下文索引的文本搜索、symbol outline、import/export dependency edge。
 - macOS / Windows 签名、公证、安装器、更新引导。
 - 面向用户的 install guide、troubleshooting、privacy statement 公开版完善。
+
+### 第一轮内部试用的非目标
+
+- 不是公开 alpha 或外部用户试用
+- 不是 installer/package/signing/notarization 验证
+- 不是 Desktop 完整产品 UI 验证
+- 不是 Web Shell 启动或远程 workspace 验证
+- 不是复杂 operator workflow、审批流或多租户治理验证
+
+### 第一轮内部试用的已知限制
+
+- 真实 Codex CLI smoke 仍为手动步骤，不进入默认 CI；当前已记录 Workspace Core API 主路径成功与 Desktop window-level trial 成功，但仍不等同于完整自动化 E2E 已覆盖
+- Desktop 当前主要承担最小观察壳职责，真实数据面与交互仍有限
+- 最小 operator action 只验证口径，不代表完整人工接管台已完成
+- 长任务、复杂 payload、跨平台取消链路仍需要后续额外证据
 
 ---
 
@@ -196,7 +220,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 1. **战略文档刷新**：更新 README、positioning、roadmap，并新增 competitive positioning 文档。
 2. **Planning Output API slice**：为 Workspace Core 增加 PlanningOutput 读取接口，只读返回现有 application/storage 数据，不实现真实 Planner。
 3. **R1 demo-loop 收口**：补齐 runtime submit、bounded artifact payload read、trace replay 说明与 smoke note。
-4. **Desktop Shell dev bridge 收口**：补齐 Electron window-level smoke、生产 sidecar 打包策略与更完整的 Core 状态/错误展示。
+4. **Desktop Shell dev bridge 收口**：补齐生产 sidecar 打包策略、完整 Core 状态/错误展示，以及自动化 window-level smoke 覆盖。
 5. **验证门禁**：保持 `pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build` 通过。
 
 ### Week of 2026-05-25
@@ -206,7 +230,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 1. **Runtime Gateway 真实闭环**：在 M1 自动化证据基础上，继续收集真实 Codex CLI opt-in smoke 证据，并完善可观测 AgentRun 流。
 2. **Artifact / Trace 基线**：明确 artifact store 的文件边界、payload 引用、TraceEvent replay 输入格式。
 3. **Operator control polish**：补齐取消、runtime kill、失败映射与重试路径的最小真实行为。
-4. **Desktop Shell 接入准备**：在当前 Electron 静态骨架上，等待 Workspace Core、Codex adapter、Artifact / Trace 基线稳定后，再接 sidecar 管理、preload allowlist 与真实数据。
+4. **Desktop Shell 接入准备**：在当前 Electron 静态骨架上，继续补齐完整产品数据面、artifact payload viewer、trace/replay 观察和更完善的 operator UI。
 
 ### 暂不插队
 
@@ -214,14 +238,14 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - 不做 marketplace。
 - 不做 workflow builder。
 - 不创建 `apps/web`。
-- 不把 `apps/desktop` 静态骨架扩展为真实本地自动化工具，除非 Workspace Core + Runtime Gateway 闭环和安全边界已满足接入条件。
+- 不把 `apps/desktop` 静态骨架误写成完整产品 UI；当前仍是最小观察壳 + internal-trial allowlist。
 
 ---
 
 ## 7. 协作提醒
 
 - 开始任何任务前先读 `AGENTS.md`、产品边界、术语表、主设计文档和任务相关文档。
-- 不要引用尚未创建的 `apps/web/src`；`apps/desktop/src` 当前仅有静态 shell 骨架，不能假设已接入 Workspace Core 或 sidecar。
+- 不要引用尚未创建的 `apps/web/src`；`apps/desktop/src` 当前已有最小 Workspace Core dev sidecar bridge 与 internal-trial allowlist，但仍不能假设已有完整产品数据面或完整 operator UI。
 - UI 主线可能有其他 agent 并行开发，改 UI 文档或 `packages/ui` 前先看 `git status` 与相关 diff。
 - 重大更新、接口、状态机、安全边界、数据模型、迁移策略必须同步相关 docs 与 `CHANGELOG.md`。
 - 外部项目只作为参考雷达，详见 [`reference/external-project-radar.md`](reference/external-project-radar.md)。

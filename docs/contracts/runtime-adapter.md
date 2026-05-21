@@ -212,7 +212,7 @@ Adapter 事件 → Cairn 的 AgentRun 状态（由 application 编排服务在�
 
 ### 4.3 推荐做
 
-- 子进程类 adapter（如 CLI tool）使用 `node-pty`，支持 `cancel()` 通过 SIGTERM/SIGKILL
+- 子进程类 adapter（如 CLI tool）可使用 `child_process.spawn` 或 `node-pty`；当前 Codex adapter 使用 `child_process.spawn` + stdout/stderr pipes，支持 `cancel()` 通过 SIGTERM/SIGKILL
 - 内部并发请求做连接池
 - 长流式响应做背压控制
 - 工具调用沙箱化（见 [`../design/security-model.md#9-第三方-runtime-命令执行`](../design/security-model.md#9-第三方-runtime-命令执行)）
@@ -225,8 +225,8 @@ Adapter 事件 → Cairn 的 AgentRun 状态（由 application 编排服务在�
 
 要点：
 
-- 接入方式：**PTY 子进程**（`node-pty`）
-- 运行模式：S5 在 Windows 11 验证 `codex exec --json` 可输出 stdout JSONL；首发实现优先采用 `child_process.spawn` + stdout pipe，PTY 作为 fallback（见 [ADR-0018](../adr/0018-codex-cli-exec-jsonl-transport.md)）
+- 接入方式：**子进程**；当前首发实现采用 `child_process.spawn` + stdout/stderr pipes，`node-pty` 作为后续可选路线
+- 运行模式：S5 在 Windows 11 验证 `codex exec --json` 可输出 stdout JSONL；当前实现以非交互 JSONL 为主，不依赖 PTY（见 [ADR-0018](../adr/0018-codex-cli-exec-jsonl-transport.md)）
 - 凭据：用户 OS 安全存储（ADR-0010），Adapter 不接触原始凭据
 - 沙箱：限定 cwd 到 `<userData>/Cairn/workspaces/<id>/runs/<run_id>/`，环境变量白名单
 - 取消：`SIGTERM` → 5s 后 `SIGKILL`

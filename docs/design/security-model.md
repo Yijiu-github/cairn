@@ -61,13 +61,21 @@ new BrowserWindow({
 
 当前 Desktop Shell 的 Workspace Core allowlist 仅包含：
 
-- `workspaceCore.getStatus()`：读取 sidecar 健康状态，不返回 token。
-- `workspaceCore.runMockSmoke()`：触发 bounded mock runtime smoke，由 Main process 持有
-  sidecar token 并调用固定 Workspace Core endpoint。
+- `workspaceCore.getStatus()`：读取 renderer-safe sidecar 健康状态；不返回 token 或 loopback
+  base URL，只返回展示用连接标签。
+- `workspaceCore.runInternalTrial()`：触发当前 Desktop 内部试用入口，由 Main process
+  持有 sidecar token 并通过固定 IPC channel `workspace-core:run-internal-trial` 调用固定
+  Workspace Core endpoint；默认 sidecar runtime 为 mock，可通过
+  `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 切换为 Codex-backed sidecar。
 - `workspaceCore.getRunReplaySource(runId)`：只读读取 Workspace Core 已清洗的
   `RunReplaySource`；renderer 只能传 run id，不能传 base URL、token 或任意 endpoint。
+- `workspaceCore.cancelRun(runId, reason?)`：内部试用下最小取消动作，只允许已授权 run。
+- `workspaceCore.retryTask(taskId, reason?)`：内部试用下最小 task 重试动作，只允许已授权 task。
+- `workspaceCore.rerun(runId, options?)`：内部试用下最小 rerun 动作，只允许已授权 run。
+- `workspaceCore.addOperatorNote(runId, note, visibility?)`：内部试用下最小 operator note 动作，只允许已授权 run。
 
-Operator action、artifact payload 正文、本地路径 reveal 与文件系统能力仍需后续显式
+Operator action 已有最小 allowlist，但仍属于受控的 internal-trial 范围；artifact payload 只允许通过
+opaque artifact id 读取 bounded text。本地路径 reveal 与更广泛文件系统能力仍需后续显式
 allowlist、用户确认与错误恢复设计。
 
 ## 4. 桌面能力暴露规则

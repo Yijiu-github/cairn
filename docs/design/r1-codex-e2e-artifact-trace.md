@@ -388,7 +388,8 @@ R1 该接口可以作为 internal / desktop-only，后续自动调度后仍可�
 
 - `AUTH_INVALID` / `AUTH_EXPIRED`：Codex 凭据不可用。
 - `AUTH_RATE_LIMITED` / `QUOTA_EXCEEDED`：额度或速率问题。
-- `MODEL_UNAVAILABLE`：Codex CLI 未安装或模型不可用。
+- `SERVICE_UNAVAILABLE`：Codex CLI 未安装、不可执行或子进程启动失败。
+- `MODEL_UNAVAILABLE`：Codex CLI 已启动但模型不可用。
 - `CONTEXT_OVERFLOW`：输入超上下文。
 - `TIMEOUT`：本地 timeout 触发。
 - `INTERNAL_ERROR`：未知非零退出或无效 JSONL。

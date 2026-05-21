@@ -18,6 +18,9 @@
 
 ### Added
 
+- 新增第一轮内部开发者试用文档基线：`docs/ops/internal-trial-runbook.md` 统一记录 scope、smoke path、failure triage、known limits 与 gate，明确它不是外部 alpha、installer、signing、notarization 或 `apps/web` 验证。
+- Desktop 已记录一次 Codex-backed internal-trial 手动 smoke 成功，可读回同一条 run 的 replay evidence、bounded payload text 与 operator note；自动 e2e 仍是后续工作。
+- 收口静态预览数据中的旧固定协作角色名，改为中性 preview label，避免继续传播已废止的计划口径。
 - **M3 Operator Control evidence polish**：补齐 operator cancel 的 runtime requested / acknowledged / not-acknowledged / dispatch-failed TraceEvent 证据，并为 retry / rerun trace 增加最小恢复路径 payload。
 - 新增战略定位刷新说明，明确 Cairn 以个人本地工作台切入，长期聚焦小团队 Agent 工程控制台，并通过 runtime-neutral control plane 接入 Codex / Claude 等官方 agent 工具。
 - 项目正式命名为 **Cairn**，仓库根目录改名为 `cairn-workspace/`
@@ -28,7 +31,7 @@
 - Monorepo 引导文件：`pnpm-workspace.yaml`（catalog）、`turbo.json`、根 `package.json`、`.npmrc`、`.nvmrc`
 - License 拍板：**Apache-2.0**，仓库公开开源
 - NOTICE 文件
-- 首发 Runtime Adapter 形态确认：**OpenAI Codex CLI**（子进程 + PTY）
+- 首发 Runtime Adapter 形态确认：**OpenAI Codex CLI**（子进程 + stdout/stderr pipes）
 - **`@cairn/domain`**：`packages/domain` 首版 Drizzle SQLite schema（`workspaces`、`orchestration_runs`、`tasks`、`agent_runs`、`artifacts`）及 `drizzle-kit` 初始迁移
 - **`@cairn/domain`**：补齐协作闭环持久化表（`conversations`、`events`、`messages`、`trace_events`），并为 `orchestration_runs` 补充 `origin_event_id` / `conversation_id` 外键
 - **`@cairn/shared-contracts`**：新增 `Event` / `Message` schema，并补充 `Conversation`、`Event`、`Message` schema 测试
@@ -45,10 +48,13 @@
 - **Orchestration Control R1a**：新增 application 与 workspace-core 最小接管控制面，覆盖 pause / resume / cancel run、retry task、rerun 与 operator note，并写入 TraceEvent。
 - **`@cairn/ui`**：新增共享 UI 包工程校验基线，纳入 typecheck / lint / test，并补充公共导出 smoke 测试
 - **`@cairn/desktop`**：新增 Electron 最小 shell 骨架与静态 UI 壳视图，包含 Home / Run Detail / Artifact Review / Settings 四个静态视图、只读 preload identity bridge 与 preview-safe 默认隔离设置
-- **`@cairn/desktop`**：新增最小 Workspace Core dev sidecar bridge，包含 per-launch bearer token、Core status allowlist、bounded mock smoke IPC、renderer Core 状态面板，以及 sidecar manager / smoke client 单元测试
+- **`@cairn/desktop`**：新增最小 Workspace Core dev sidecar bridge，包含 per-launch bearer token、Core status allowlist、internal-trial IPC、renderer Core 状态面板，以及 sidecar manager / smoke client 单元测试
+- **`@cairn/desktop`**：新增并手动验证 Desktop window-level Codex-backed internal-trial smoke，Electron / CDP 可读回同一条真实 run 的 replay evidence、bounded payload text 与 operator note
 - **`@cairn/desktop`**：新增非阻塞 Desktop bootstrap 与无密钥 sidecar 诊断快照，窗口创建不再等待 Workspace Core 健康检查完成
 - **`@cairn/desktop`**：修复 Electron ESM 主入口顶层 `await app.whenReady()` 导致真实窗口 smoke 卡住的问题，并补充 main module 非阻塞加载回归测试
-- **M4a Desktop observer prep**：Desktop preload 新增只读 replay-source bridge，可通过 mock smoke 生成的 run id 读取真实 Workspace Core evidence 并在 Run Detail 展示摘要；operator action、artifact payload 正文和本地路径 reveal 仍未开放。
+- **M4a Desktop observer prep**：Desktop preload 新增只读 replay-source bridge，可通过 `runInternalTrial` 生成的 run id 读取真实 Workspace Core evidence 并在 Run Detail 展示摘要；operator action、artifact payload 正文和本地路径 reveal 仍未开放。
+- **Desktop internal trial bridge**：Desktop 当前内部试用入口调整为 `workspaceCore.runInternalTrial()` / `workspace-core:run-internal-trial`，sidecar 默认 runtime 为 mock，并可通过 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 启动 Codex-backed Workspace Core sidecar；sidecar 诊断快照记录 `runtime: "mock" | "codex"`。
+- **Desktop artifact payload preview**：Desktop preload/main 新增 `workspaceCore.getArtifactPayload(artifactId)` allowlist，Run Detail 可按 artifact id 通过 Workspace Core bounded payload API 按需读取文本 payload；仍不暴露本地路径、token、任意文件访问或完整 Artifact workspace。
 - 设计文档新增轻量代码上下文索引方案，明确 Cairn 自研 SourceRoot / CodeContextIndex / ContextPack 能力，不引入 GitNexus 依赖或许可证受限代码
 - **Code Context R1a**：新增 SourceRoot registry、最小 CodeIndexSnapshot 元数据、ContextPack manifest 契约、domain schema、application service 与 workspace-core API/SQLite 持久化基线
 - **Code Context R1b-a**：新增手动 reindex 与本地文件清单快照，持久化 `code_index_files` 派生元数据并通过 workspace-core 查询最新索引
@@ -76,6 +82,9 @@
 
 ### Changed
 
+- README、STATUS、本地开发与测试文档已对齐第一轮内部试用口径：开发态默认 mock sidecar，真实 Codex 需显式 opt-in，且不包含外部 alpha、`apps/web`、installer、signing 或 notarization。
+- Desktop 内部试用入口文档已从历史 mock-smoke wording 对齐到 `runInternalTrial` / Codex sidecar runtime switch。
+- `docs/ops/internal-trial-runbook.md` 与 `docs/engineering/local-dev-setup.md` 的 Codex smoke 示例改用当前契约允许的 `taskKind: "custom"`，并建议 `CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR` 使用 `$PWD/.cairn/...` 绝对路径，避免 `pnpm --filter` 包脚本工作目录漂移。
 - Git 提交规范调整为 **中英双语标题，中文在前、英文在后**，并补充 `commit-msg` + `commitlint` 校验
 - Git 工作流统一 `develop` 为日常集成分支，并补充远程短分支清理、agent 分支、release / hotfix 回灌规则
 - 设计主线从「Web 优先」升级为「共享核心 + 双外壳 + 可本地运行 + 可远程扩展」

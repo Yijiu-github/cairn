@@ -45,9 +45,14 @@ pnpm --filter @cairn/desktop dev
 ```
 
 > ⚠️ 目前 `apps/desktop` 是最小 shell 骨架：renderer 仍以静态 fixtures 为主，preload
-> 只暴露 Workspace Core status / bounded mock smoke allowlist。开发态 sidecar bridge 已可启动
-> 本地 Workspace Core，但生产 sidecar 打包、真实 runtime UI 和 operator action 仍未完成。
+> 只暴露 Workspace Core status / internal-trial / replay-source allowlist。开发态 sidecar
+> bridge 已可启动本地 Workspace Core，默认 runtime 为 mock；如需让 Desktop 自拉起
+> Codex-backed sidecar，可设置 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`。生产 sidecar
+> 打包与完整真实 runtime UI 仍未完成；operator action 仅有 internal-trial 最小
+> allowlist，不代表完整接管台。
 > `apps/web` 尚未创建。
+
+第一轮**内部开发者试用**的完整范围、gate 与记录口径见 [`../ops/internal-trial-runbook.md`](../ops/internal-trial-runbook.md)。本页只保留通用开发环境与底层手动 smoke 参考。
 
 ### Workspace Core runtime 选择
 
@@ -61,23 +66,25 @@ pnpm --filter @cairn/workspace-core dev
 
 ```bash
 CAIRN_WORKSPACE_CORE_RUNTIME=codex \
-CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR=.cairn/runtime \
+CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR="$PWD/.cairn/runtime" \
 pnpm --filter @cairn/workspace-core dev
 ```
 
 可选变量：
 
-| 变量                                      | 默认值           | 说明                                                   |
-| ----------------------------------------- | ---------------- | ------------------------------------------------------ |
-| `CAIRN_WORKSPACE_CORE_RUNTIME`            | `mock`           | `mock` 或 `codex`                                      |
-| `CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR`    | `.cairn/runtime` | Codex CLI adapter 的受控工作目录                       |
-| `CAIRN_WORKSPACE_CORE_CODEX_EXECUTABLE`   | `codex`          | 自定义 Codex CLI 可执行文件路径                        |
-| `CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE` | `read-only`      | `read-only` / `workspace-write` / `danger-full-access` |
+| 变量                                      | 默认值           | 说明                                                                                   |
+| ----------------------------------------- | ---------------- | -------------------------------------------------------------------------------------- |
+| `CAIRN_WORKSPACE_CORE_RUNTIME`            | `mock`           | `mock` 或 `codex`                                                                      |
+| `CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR`    | `.cairn/runtime` | Codex CLI adapter 的受控工作目录；手动 smoke 建议传入 `$PWD/.cairn/...` 形式的绝对路径 |
+| `CAIRN_WORKSPACE_CORE_CODEX_EXECUTABLE`   | `codex`          | 自定义 Codex CLI 可执行文件路径                                                        |
+| `CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE` | `read-only`      | `read-only` / `workspace-write` / `danger-full-access`                                 |
 
 ### Manual Codex Runtime Smoke (Opt-In)
 
 This smoke is a manual evidence step only. It is not part of default `pnpm test` or CI, and must
 not weaken or replace automated mock / fixture coverage.
+
+For the first internal developer trial, use [`../ops/internal-trial-runbook.md`](../ops/internal-trial-runbook.md) as the canonical guide. The procedure below is only the lower-level Codex runtime smoke reference.
 
 Run it only on a machine with Codex CLI installed and user-configured credentials. The example task
 and prompt below use synthetic smoke text only. Do not paste real credentials, repository secrets,
@@ -87,10 +94,13 @@ customer data, or business task content into these commands or prompts.
 
    ```bash
    CAIRN_WORKSPACE_CORE_RUNTIME=codex \
-   CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR=.cairn/runtime/codex-smoke \
+   CAIRN_WORKSPACE_CORE_RUNTIME_WORKDIR="$PWD/.cairn/runtime/codex-smoke" \
    CAIRN_WORKSPACE_CORE_CODEX_SANDBOX_MODE=read-only \
    pnpm --filter @cairn/workspace-core dev
    ```
+
+   The workspace-core package script runs from `apps/workspace-core`; using `$PWD/.cairn/...` keeps
+   this smoke workdir anchored at the repository root when launched from the root workspace.
 
 2. In another terminal, set the local API base URL and optional auth args. The default Workspace
    Core port is `4321`. If the server was started with auth enabled, set only a local dev token
@@ -117,7 +127,7 @@ customer data, or business task content into these commands or prompts.
    curl -sS -X POST "$CAIRN_BASE_URL/v1/workspaces/01HZZZZZZZZZZZZZZZZZZZZZW0/runs" \
      "${CAIRN_CURL_AUTH_ARGS[@]}" \
      -H 'content-type: application/json' \
-     -d '{"originEventId":"01HZZZZZZZZZZZZZZZZZZZZZE0","task":{"taskKind":"analysis","title":"Codex smoke","brief":"Synthetic manual smoke only."}}' \
+     -d '{"originEventId":"01HZZZZZZZZZZZZZZZZZZZZZE0","task":{"taskKind":"custom","title":"Codex smoke","brief":"Synthetic manual smoke only."}}' \
      | tee /tmp/cairn-codex-smoke-run.json
    ```
 
@@ -219,21 +229,21 @@ echo "DATABASE_URL=postgres://postgres:devpass@localhost:5432/cairn" >> .env
 ### 迁移
 
 ```bash
-pnpm db:migrate          # 应用所有迁移
-pnpm db:migrate:make new # 生成新迁移
-pnpm db:reset            # 重置（仅开发态）
+pnpm db:migrate   # 应用所有迁移
+pnpm db:generate  # 生成新迁移
+pnpm db:reset     # 重置（仅开发态）
 ```
 
 ## 5. 测试
 
 ```bash
 pnpm test               # 全量（unit + contract）
-pnpm test:unit
-pnpm test:contract
-pnpm test:integration
-pnpm test:e2e           # 启动桌面 e2e（需先 build）
-pnpm test:watch         # watch 模式
+pnpm --filter @cairn/desktop test
+pnpm --filter @cairn/workspace-core test
+pnpm --filter @cairn/runtime-gateway test
 ```
+
+> 根目录目前没有 `test:unit` / `test:contract` / `test:e2e` 聚合脚本；按包运行更可靠。内部试用 gate 见 runbook。
 
 ## 6. Lint / Format / Typecheck
 
@@ -248,16 +258,20 @@ pnpm typecheck          # tsc --noEmit
 
 ## 7. 常用脚本
 
-| 命令                 | 作用                                     |
-| -------------------- | ---------------------------------------- |
-| `pnpm dev`           | 启动完整开发态（Desktop/Web 创建后补齐） |
-| `pnpm dev:core`      | 启动 Workspace Core 开发服务             |
-| `pnpm build`         | 构建所有包                               |
-| `pnpm build:desktop` | 仅构建桌面端                             |
-| `pnpm build:web`     | 仅构建 Web                               |
-| `pnpm clean`         | 清理 dist / cache                        |
-| `pnpm db:studio`     | 启动 Drizzle Studio（DB GUI）            |
-| `pnpm docs:check`    | 校验文档链接                             |
+| 命令                    | 作用                                                 |
+| ----------------------- | ---------------------------------------------------- |
+| `pnpm dev`              | 启动当前已存在 app/package 的开发任务                |
+| `pnpm dev:core`         | 启动 Workspace Core 开发服务                         |
+| `pnpm dev:desktop`      | 启动 Desktop 开发态                                  |
+| `pnpm dev:ui-preview`   | 启动 UI preview                                      |
+| `pnpm build`            | 构建所有已存在 package/app                           |
+| `pnpm build:desktop`    | 仅构建桌面端                                         |
+| `pnpm build:ui-preview` | 仅构建 UI preview                                    |
+| `pnpm build:web`        | 占位脚本；`apps/web` 尚未创建，当前不作为可运行 gate |
+| `pnpm db:migrate`       | 应用所有迁移                                         |
+| `pnpm db:generate`      | 生成迁移                                             |
+| `pnpm db:reset`         | 重置开发态数据库                                     |
+| `pnpm docs:lint`        | 校验 Markdown                                        |
 
 ## 8. IDE 推荐
 
@@ -291,7 +305,9 @@ DevTools 自动打开 Renderer；Main 进程附加 `--inspect=9229`。
 
 ### Sidecar 与 Main 通信
 
-`apps/desktop/src/dev/loopback-inspector.ts` 提供调试 endpoint 查看 sidecar 实时状态（待写）。
+开发态 Desktop 会在 Electron `userData` 下写入不含 token 的 sidecar 诊断快照：
+`diagnostics/workspace-core-sidecar.json`。该文件用于确认 sidecar pid、端口、健康状态与
+`runtime: "mock" | "codex"`，不要把 bearer token、真实业务 payload 或凭据写入诊断输出。
 
 ## 10. 常见问题
 
