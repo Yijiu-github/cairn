@@ -102,6 +102,8 @@
 
 ### Fixed
 
+- **Desktop operator actions**：renderer 端 operator action 增加请求序号保护，避免旧的 note /
+  cancel / retry / rerun 请求在乱序返回时覆盖最新动作的 loading、错误或反馈状态。
 - **Desktop replay loader**：renderer 端 replay evidence 加载会在空白 run id 时停在本地错误态，
   不再触发 Desktop bridge / Workspace Core 请求。
 - **UI preview artifact review**：`artifactReviewViewModel` 的 hero 标题改为 Artifact Review，

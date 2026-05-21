@@ -24,6 +24,7 @@ import {
 
 import { loadArtifactPayload as loadArtifactPayloadRequest } from './artifact-payload-loader';
 import { desktopShellModel } from './desktop-model';
+import { runOperatorAction as runOperatorActionRequest } from './operator-action-runner';
 import { loadRunReplaySource as loadRunReplaySourceRequest } from './run-replay-loader';
 
 import type { DesktopView } from './desktop-model';
@@ -65,6 +66,7 @@ export function DesktopApp() {
   const [workspaceCoreBusy, setWorkspaceCoreBusy] = useState(false);
   const [workspaceCoreError, setWorkspaceCoreError] = useState<string>();
   const artifactPayloadLoadState = useRef({ current: 0 });
+  const operatorActionRunState = useRef({ current: 0 });
   const runReplayLoadState = useRef({ current: 0 });
   const bridgeLabel = useMemo(() => window.cairnDesktop?.app.name ?? 'Cairn Desktop', []);
 
@@ -196,17 +198,21 @@ export function DesktopApp() {
     );
   }
 
-  async function runOperatorAction(actionLabel: string, operation: () => Promise<void>) {
-    setOperatorActionBusy(actionLabel);
-    setOperatorActionError(undefined);
-    setOperatorActionFeedback(undefined);
-    try {
-      await operation();
-    } catch (error) {
-      setOperatorActionError(toErrorMessage(error));
-    } finally {
-      setOperatorActionBusy(undefined);
-    }
+  async function runOperatorAction(
+    actionLabel: string,
+    operation: Parameters<typeof runOperatorActionRequest>[3],
+  ) {
+    await runOperatorActionRequest(
+      operatorActionRunState.current,
+      {
+        setOperatorActionBusy,
+        setOperatorActionError,
+        setOperatorActionFeedback,
+        toErrorMessage,
+      },
+      actionLabel,
+      operation,
+    );
   }
 
   return (
@@ -298,27 +304,36 @@ export function DesktopApp() {
             artifactPayloads={artifactPayloads}
             observedRunId={observedRunId}
             onAddOperatorNote={async (runId) => {
-              await runOperatorAction('note', async () => {
+              await runOperatorAction('note', async ({ isCurrent }) => {
                 const result = await window.cairnDesktop?.workspaceCore.addOperatorNote(
                   runId,
                   'Operator note from the Cairn Desktop internal trial shell.',
                   'operator_only',
                 );
-                if (result === undefined) {
+                if (result === undefined || !isCurrent()) {
                   return;
                 }
                 await loadObservedRunReplaySource(runId);
-                setOperatorActionFeedback(`Operator note recorded as ${result.messageId}.`);
+                if (!isCurrent()) {
+                  return;
+                }
+                return `Operator note recorded as ${result.messageId}.`;
               });
             }}
             onCancelRun={async (runId) => {
-              await runOperatorAction('cancel', async () => {
+              await runOperatorAction('cancel', async ({ isCurrent }) => {
                 await window.cairnDesktop?.workspaceCore.cancelRun(
                   runId,
                   'Cancelled from the Cairn Desktop internal trial shell.',
                 );
+                if (!isCurrent()) {
+                  return;
+                }
                 await loadObservedRunReplaySource(runId);
-                setOperatorActionFeedback(`Run ${runId} was cancelled.`);
+                if (!isCurrent()) {
+                  return;
+                }
+                return `Run ${runId} was cancelled.`;
               });
             }}
             onLoadArtifactPayload={loadArtifactPayload}
@@ -326,38 +341,37 @@ export function DesktopApp() {
             onRefreshReplay={loadObservedRunReplaySource}
             onRunIdChange={setManualRunId}
             onRerun={async (runId) => {
-              await runOperatorAction('rerun', async () => {
+              await runOperatorAction('rerun', async ({ isCurrent }) => {
                 const rerun = await window.cairnDesktop?.workspaceCore.rerun(runId, {
                   operatorNote: 'Rerun requested from the Cairn Desktop internal trial shell.',
                   replan: true,
                 });
-                if (rerun === undefined) {
+                if (rerun === undefined || !isCurrent()) {
                   return;
                 }
                 setArtifactPayloads({});
                 setArtifactPayloadError(undefined);
                 setObservedRunId(rerun.orchestrationRunId);
-                setOperatorActionFeedback(
-                  `Created rerun ${rerun.orchestrationRunId} from ${runId}.`,
-                );
+                return `Created rerun ${rerun.orchestrationRunId} from ${runId}.`;
               });
             }}
             onRetryTask={async (taskId) => {
-              await runOperatorAction('retry', async () => {
+              await runOperatorAction('retry', async ({ isCurrent }) => {
                 const result = await window.cairnDesktop?.workspaceCore.retryTask(
                   taskId,
                   'Retry requested from the Cairn Desktop internal trial shell.',
                 );
-                if (result === undefined) {
+                if (result === undefined || !isCurrent()) {
                   return;
                 }
                 const activeRunId = runReplaySource?.run.orchestrationRunId ?? observedRunId;
                 if (activeRunId !== undefined) {
                   await loadObservedRunReplaySource(activeRunId);
                 }
-                setOperatorActionFeedback(
-                  `Task ${result.taskId} advanced to attempt ${String(result.newAttempt)}.`,
-                );
+                if (!isCurrent()) {
+                  return;
+                }
+                return `Task ${result.taskId} advanced to attempt ${String(result.newAttempt)}.`;
               });
             }}
             replayError={runReplayError}
