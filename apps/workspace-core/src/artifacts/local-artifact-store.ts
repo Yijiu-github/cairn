@@ -65,7 +65,7 @@ export class LocalArtifactStore implements ArtifactStorePort {
       return {
         mediaType,
         text,
-        truncated: Buffer.byteLength(text, 'utf8') >= this.maxInlineBytes,
+        truncated: Buffer.byteLength(text, 'utf8') > this.maxInlineBytes,
       };
     } catch (error) {
       if (isKnownPayloadError(error)) {

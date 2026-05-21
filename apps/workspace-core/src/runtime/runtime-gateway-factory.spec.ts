@@ -7,6 +7,8 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { AgentRunId } from '@cairn/shared-contracts/schemas';
+
 import { createWorkspaceCoreRuntimeGateway } from './runtime-gateway-factory.js';
 
 import type { AdapterContext, AdapterSubmitRequest, RuntimeAdapter } from '@cairn/runtime-gateway';
@@ -70,7 +72,15 @@ class RecordingRuntimeAdapter implements RuntimeAdapter {
 
   async query(runId: string): Promise<AdapterRunSnapshot> {
     await Promise.resolve();
-    return { runId, status: 'submitted' };
+    return {
+      runId,
+      status: 'cancelled',
+      error: {
+        code: 'CANCELLED_BY_USER',
+        message: 'operator_cancelled',
+        retryable: false,
+      },
+    };
   }
 }
 
@@ -172,6 +182,31 @@ describe('createWorkspaceCoreRuntimeGateway', () => {
     await expect(
       receivedOptions?.resolveArtifactPayload?.({ artifactId: 'artifact:1' }),
     ).resolves.toMatchObject({ text: '{"prompt":"Hello from artifact"}' });
+
+    await runtime.close?.();
+  });
+
+  it('exposes the underlying Codex runtime snapshot for trial evidence reads', async () => {
+    const adapter = new RecordingRuntimeAdapter();
+    const agentRunId = AgentRunId.parse('01J000000000000000000000A0');
+
+    const runtime = await createWorkspaceCoreRuntimeGateway(
+      {
+        runtime: 'codex',
+        runtimeWorkdir: '/tmp/cairn-runtime',
+      },
+      { createCodexAdapter: () => adapter },
+    );
+
+    await expect(runtime.query?.(agentRunId)).resolves.toEqual({
+      runId: agentRunId,
+      status: 'cancelled',
+      error: {
+        code: 'CANCELLED_BY_USER',
+        message: 'operator_cancelled',
+        retryable: false,
+      },
+    });
 
     await runtime.close?.();
   });

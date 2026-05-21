@@ -3,6 +3,7 @@
 import type { RuntimeGatewayPort } from '@cairn/application';
 import type {
   AdapterCancelAck,
+  AdapterRunSnapshot,
   AdapterStreamEvent,
   AdapterSubmitAck,
   AdapterSubmitRequest,
@@ -23,5 +24,9 @@ export class RuntimeAdapterGatewayPort implements RuntimeGatewayPort {
 
   cancel(runId: AgentRunId, reason?: string): Promise<AdapterCancelAck> {
     return this.adapter.cancel(runId, reason);
+  }
+
+  query(runId: AgentRunId): Promise<AdapterRunSnapshot> {
+    return this.adapter.query(runId);
   }
 }

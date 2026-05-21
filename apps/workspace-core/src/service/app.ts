@@ -32,6 +32,7 @@ import type {
   Artifact,
   OrchestrationRun,
   RunReplayInspector,
+  RunReplaySource,
   Task,
   TraceEvent,
 } from '@cairn/shared-contracts/schemas';
@@ -192,11 +193,18 @@ const TERMINAL_RUN_STATUSES: readonly OrchestrationRun['status'][] = [
   'timeout',
 ];
 
-const paginateItems = <T>(items: T[], limit: number) => ({
-  items: items.slice(0, limit),
-  nextCursor: items.length > limit ? String(limit) : undefined,
-  total: items.length,
-});
+const paginateItems = <T>(items: readonly T[], limit: number, cursor?: string) => {
+  const offset = cursor === undefined ? 0 : Number.parseInt(cursor, 10);
+  const safeOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset;
+  const pageItems = items.slice(safeOffset, safeOffset + limit);
+  const nextOffset = safeOffset + pageItems.length;
+
+  return {
+    items: pageItems,
+    nextCursor: nextOffset < items.length ? String(nextOffset) : undefined,
+    total: items.length,
+  };
+};
 
 const sanitizeArtifactForResponse = (artifact: Artifact): Artifact => ({
   artifactId: artifact.artifactId,
@@ -285,6 +293,25 @@ const createRunReplayInspector = (
   };
 };
 
+const createTrialReplaySource = (
+  run: OrchestrationRun,
+  tasks: readonly Task[],
+  agentRuns: readonly AgentRun[],
+  artifacts: readonly Artifact[],
+  traceEvents: readonly TraceEvent[],
+): RunReplaySource => {
+  const sanitizedArtifacts = artifacts.map((artifact) => sanitizeArtifactForResponse(artifact));
+
+  return {
+    run,
+    tasks: [...tasks],
+    agentRuns: [...agentRuns],
+    artifacts: sanitizedArtifacts,
+    traceEvents: [...traceEvents],
+    inspector: createRunReplayInspector(run, tasks, agentRuns, sanitizedArtifacts, traceEvents),
+  };
+};
+
 const toApplicationHttpCode = (
   status: 404 | 409 | 500 | 503,
 ): 'NOT_FOUND' | 'CONFLICT' | 'INTERNAL_ERROR' | 'UNAVAILABLE' => {
@@ -303,11 +330,11 @@ const toApplicationHttpCode = (
   return 'INTERNAL_ERROR';
 };
 
-const toArtifactPayloadHttpStatus = (error: unknown): 404 | 413 | 415 => {
+const toArtifactPayloadHttpStatus = (error: unknown): 404 | 413 | 415 | 500 => {
   if (typeof error === 'object' && error !== null && 'code' in error) {
     const code = (error as { code?: unknown }).code;
     if (code === 'ARTIFACT_PAYLOAD_STORAGE_ERROR') {
-      return 415;
+      return 500;
     }
     if (code === 'ARTIFACT_PAYLOAD_TOO_LARGE') {
       return 413;
@@ -421,7 +448,7 @@ export const createWorkspaceCoreApp = async (
       return true;
     });
 
-    return reply.send(paginateItems(filteredRuns, query.data.limit));
+    return reply.send(paginateItems(filteredRuns, query.data.limit, query.data.cursor));
   });
 
   app.post('/v1/workspaces/:workspaceId/source-roots', async (request, reply) => {
@@ -622,7 +649,7 @@ export const createWorkspaceCoreApp = async (
 
     const run = await options.container.repository.getRun(runId.data);
     if (run === undefined) {
-      return reply.code(404).send(toApiError('NOT_FOUND', 'Run not found.'));
+      return reply.code(404).send(toApiError('MISSING_ORCHESTRATION_RUN', 'Run not found.'));
     }
 
     const tasks = await options.container.repository.listTasksByRun(runId.data);
@@ -633,16 +660,15 @@ export const createWorkspaceCoreApp = async (
     ).flat();
     const artifacts = await options.container.repository.listArtifactsByRun(runId.data);
     const traceEvents = await options.container.repository.listTraceEventsByRun(runId.data);
-    const sanitizedArtifacts = artifacts.map((artifact) => sanitizeArtifactForResponse(artifact));
-
-    return reply.send({
+    const trialReplaySource = createTrialReplaySource(
       run,
       tasks,
       agentRuns,
-      artifacts: sanitizedArtifacts,
+      artifacts,
       traceEvents,
-      inspector: createRunReplayInspector(run, tasks, agentRuns, sanitizedArtifacts, traceEvents),
-    });
+    );
+
+    return reply.send(trialReplaySource);
   });
 
   app.get('/v1/runs/:runId/artifacts', async (request, reply) => {
@@ -667,7 +693,7 @@ export const createWorkspaceCoreApp = async (
 
     const artifacts = await options.container.repository.listArtifactsByRun(runId.data);
     const sanitizedArtifacts = artifacts.map((artifact) => sanitizeArtifactForResponse(artifact));
-    return reply.send(paginateItems(sanitizedArtifacts, query.data.limit));
+    return reply.send(paginateItems(sanitizedArtifacts, query.data.limit, query.data.cursor));
   });
 
   app.get('/v1/runs/:runId/planning-output', async (request, reply) => {
@@ -724,7 +750,7 @@ export const createWorkspaceCoreApp = async (
       }
       return true;
     });
-    return reply.send(paginateItems(filteredTraceEvents, query.data.limit));
+    return reply.send(paginateItems(filteredTraceEvents, query.data.limit, query.data.cursor));
   });
 
   app.get('/v1/runs/:runId/tasks', async (request, reply) => {
@@ -751,7 +777,7 @@ export const createWorkspaceCoreApp = async (
     const filteredTasks = tasks.filter((task) =>
       query.data.status === undefined ? true : task.status === query.data.status,
     );
-    return reply.send(paginateItems(filteredTasks, query.data.limit));
+    return reply.send(paginateItems(filteredTasks, query.data.limit, query.data.cursor));
   });
 
   app.get('/v1/tasks/:taskId', async (request, reply) => {
@@ -794,7 +820,7 @@ export const createWorkspaceCoreApp = async (
     const filteredAgentRuns = agentRuns.filter((agentRun) =>
       query.data.status === undefined ? true : agentRun.status === query.data.status,
     );
-    return reply.send(paginateItems(filteredAgentRuns, query.data.limit));
+    return reply.send(paginateItems(filteredAgentRuns, query.data.limit, query.data.cursor));
   });
 
   app.get('/v1/agent-runs/:agentRunId', async (request, reply) => {
@@ -863,13 +889,17 @@ export const createWorkspaceCoreApp = async (
           ? 'ARTIFACT_PAYLOAD_TOO_LARGE'
           : status === 415
             ? 'ARTIFACT_PAYLOAD_UNSUPPORTED_MEDIA'
-            : 'ARTIFACT_PAYLOAD_NOT_FOUND';
+            : status === 500
+              ? 'ARTIFACT_PAYLOAD_STORAGE_ERROR'
+              : 'ARTIFACT_PAYLOAD_NOT_FOUND';
       const message =
         status === 413
           ? 'Artifact payload is too large to inline.'
           : status === 415
             ? 'Artifact payload media type is unsupported.'
-            : 'Artifact payload not found.';
+            : status === 500
+              ? 'Artifact payload could not be read.'
+              : 'Artifact payload not found.';
       return reply.code(status).send(toApiError(code, message));
     }
   });

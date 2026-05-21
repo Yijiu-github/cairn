@@ -95,6 +95,54 @@ describe('LocalArtifactStore', () => {
     });
   });
 
+  it('persists runtime output artifacts atomically for trial inspection', async () => {
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'cairn-artifacts-'));
+    tempDirectories.push(rootDir);
+    const store = new LocalArtifactStore({ rootDir, maxInlineBytes: 1024 });
+
+    const write = await store.writeText({
+      artifactId: '01J000000000000000000000A1' as ArtifactId,
+      workspaceId: '01J000000000000000000000W1' as WorkspaceId,
+      orchestrationRunId: '01J000000000000000000000R1' as OrchestrationRunId,
+      filename: 'runtime-output.txt',
+      mediaType: 'text/plain',
+      text: 'expected output',
+      maxBytes: 1024,
+    });
+
+    expect(write.payloadRef).toMatch(/^artifact-payload:\/\//u);
+    expect(await store.readText(write.payloadRef)).toMatchObject({
+      text: 'expected output',
+      mediaType: 'text/plain',
+    });
+  });
+
+  it('removes the temp file when an atomic rename fails', async () => {
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'cairn-artifacts-'));
+    tempDirectories.push(rootDir);
+    const store = new LocalArtifactStore({ rootDir, maxInlineBytes: 1024 });
+    const renameMock = vi.mocked(fsPromises.rename);
+    const rmSpy = vi.spyOn(fsPromises, 'rm');
+
+    renameMock.mockRejectedValueOnce(new Error('rename failed'));
+
+    await expect(
+      store.writeText({
+        artifactId: '01J000000000000000000000A1' as ArtifactId,
+        workspaceId: '01J000000000000000000000W1' as WorkspaceId,
+        orchestrationRunId: '01J000000000000000000000R1' as OrchestrationRunId,
+        filename: 'runtime-output.txt',
+        mediaType: 'text/plain',
+        text: 'expected output',
+        maxBytes: 1024,
+      }),
+    ).rejects.toThrow('rename failed');
+
+    const temporaryPath = renameMock.mock.calls[0]?.[0];
+    expect(temporaryPath).toEqual(expect.any(String));
+    expect(rmSpy).toHaveBeenCalledWith(temporaryPath, { force: true });
+  });
+
   it('truncates text using the stricter explicit write bound', async () => {
     const rootDir = await mkdtemp(path.join(tmpdir(), 'cairn-artifacts-'));
     tempDirectories.push(rootDir);
@@ -116,6 +164,31 @@ describe('LocalArtifactStore', () => {
     expect(write).toMatchObject({
       byteLength: 3,
       truncated: true,
+    });
+  });
+
+  it('does not mark a payload truncated when its size exactly matches the inline bound', async () => {
+    const rootDir = await mkdtemp(path.join(tmpdir(), 'cairn-artifacts-'));
+    tempDirectories.push(rootDir);
+    const store = new LocalArtifactStore({ rootDir, maxInlineBytes: 3 });
+
+    const write = await store.writeText({
+      artifactId: '01J000000000000000000000A1' as ArtifactId,
+      workspaceId: '01J000000000000000000000W1' as WorkspaceId,
+      orchestrationRunId: '01J000000000000000000000R1' as OrchestrationRunId,
+      filename: 'runtime-output.txt',
+      mediaType: 'text/plain',
+      text: 'abc',
+      maxBytes: 3,
+    });
+
+    await expect(store.readText(write.payloadRef)).resolves.toMatchObject({
+      text: 'abc',
+      truncated: false,
+    });
+    expect(write).toMatchObject({
+      byteLength: 3,
+      truncated: false,
     });
   });
 

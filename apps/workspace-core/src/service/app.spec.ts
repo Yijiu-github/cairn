@@ -249,6 +249,26 @@ describe('workspace-core app', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.json()).toMatchObject({ total: 2, items: [{ status: 'queued' }] });
+
+      const paged = response.json<{
+        items: { orchestrationRunId: string }[];
+        nextCursor?: string;
+      }>();
+      expect(paged.nextCursor).toBe('1');
+
+      const nextPageResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/workspaces/${ids.workspace}/runs?limit=1&cursor=1&status=queued`,
+      });
+
+      expect(nextPageResponse.statusCode).toBe(200);
+      const nextPage = nextPageResponse.json<{
+        items: { orchestrationRunId: string }[];
+        nextCursor?: string;
+      }>();
+      expect(nextPage.items).toHaveLength(1);
+      expect(nextPage.items[0]?.orchestrationRunId).not.toBe(paged.items[0]?.orchestrationRunId);
+      expect(nextPage.nextCursor).toBeUndefined();
     } finally {
       await app.close();
     }
@@ -525,6 +545,7 @@ describe('workspace-core app', () => {
         finalArtifactId: body.run.finalResponseRef,
       });
       expect(JSON.stringify(body)).not.toContain('/Users/');
+      expect(JSON.stringify(body)).not.toContain('hello');
     } finally {
       await app.close();
     }
@@ -562,7 +583,7 @@ describe('workspace-core app', () => {
       });
 
       expect(response.statusCode).toBe(404);
-      expect(response.json()).toMatchObject({ error: { code: 'NOT_FOUND' } });
+      expect(response.json()).toMatchObject({ error: { code: 'MISSING_ORCHESTRATION_RUN' } });
     } finally {
       await app.close();
     }
@@ -713,6 +734,56 @@ describe('workspace-core app', () => {
       });
       expect(response.json<{ text: string }>().text).toContain('Say hello.');
       expect(JSON.stringify(response.json())).not.toContain('/Users/');
+    } finally {
+      await app.close();
+    }
+  });
+
+  it('returns 500 when artifact payload storage fails', async () => {
+    const failingArtifactStore = {
+      readText: () =>
+        Promise.reject(
+          Object.assign(new Error('disk unavailable'), {
+            code: 'ARTIFACT_PAYLOAD_STORAGE_ERROR',
+          }),
+        ),
+      writeText: (input: {
+        readonly artifactId: string;
+        readonly filename: string;
+        readonly orchestrationRunId: string;
+        readonly text: string;
+        readonly workspaceId: string;
+      }) =>
+        Promise.resolve({
+          byteLength: Buffer.byteLength(input.text, 'utf8'),
+          payloadRef: `artifact-payload://${input.workspaceId}/${input.orchestrationRunId}/${input.artifactId}/${input.filename}`,
+          truncated: false,
+        }),
+    };
+    const app = await createWorkspaceCoreApp({
+      container: createDefaultWorkspaceCoreContainer({ artifactStore: failingArtifactStore }),
+      logger: false,
+    });
+
+    try {
+      const { runId } = await createSubmittedRun(app);
+      const artifactsResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/artifacts`,
+      });
+      const artifact = first(
+        artifactsResponse.json<{ items: { artifactId: string; payloadRef?: string }[] }>().items,
+      );
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/v1/artifacts/${artifact.artifactId}/payload`,
+      });
+
+      expect(response.statusCode).toBe(500);
+      expect(response.json()).toMatchObject({
+        error: { code: 'ARTIFACT_PAYLOAD_STORAGE_ERROR' },
+      });
     } finally {
       await app.close();
     }
@@ -1373,6 +1444,25 @@ describe('workspace-core app', () => {
         messageId: expect.stringContaining('message:') as unknown,
         traceEventId: expect.any(String) as unknown,
       });
+      const traceAfterNoteResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}/trace?eventTypePrefix=operator.&limit=10`,
+      });
+      expect(traceAfterNoteResponse.statusCode).toBe(200);
+      expect(
+        traceAfterNoteResponse.json<{
+          items: { eventType: string; payloadInline?: { note?: string } }[];
+        }>().items,
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            eventType: 'operator.note',
+            payloadInline: expect.objectContaining({
+              note: 'Keep this context for later.',
+            }) as unknown,
+          }),
+        ]),
+      );
 
       const rerunResponse = await app.inject({
         method: 'POST',
@@ -1380,8 +1470,19 @@ describe('workspace-core app', () => {
         payload: { operatorNote: 'Try the narrower approach.', replan: true },
       });
       expect(rerunResponse.statusCode).toBe(202);
-      expect(rerunResponse.json()).toMatchObject({
+      const rerun = rerunResponse.json<{ orchestrationRunId: string; status: string }>();
+      expect(rerun).toMatchObject({
         status: 'queued',
+      });
+      expect(rerun.orchestrationRunId).not.toBe(runId);
+      const sourceRunResponse = await app.inject({
+        method: 'GET',
+        url: `/v1/runs/${runId}`,
+      });
+      expect(sourceRunResponse.statusCode).toBe(200);
+      expect(sourceRunResponse.json()).toMatchObject({
+        orchestrationRunId: runId,
+        status: 'cancelled',
       });
 
       const retryResponse = await app.inject({

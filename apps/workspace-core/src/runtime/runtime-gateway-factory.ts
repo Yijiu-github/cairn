@@ -14,8 +14,9 @@ import { MockRuntimeGatewayPort } from './mock-runtime-gateway-port.js';
 import { RuntimeAdapterGatewayPort } from './runtime-adapter-gateway-port.js';
 
 import type { RuntimeGatewayPort } from '@cairn/application';
-import type { RuntimeAdapter, RuntimeLogger } from '@cairn/runtime-gateway';
+import type { AdapterRunSnapshot, RuntimeAdapter, RuntimeLogger } from '@cairn/runtime-gateway';
 import type { CodexRuntimeAdapterOptions } from '@cairn/runtime-gateway/adapters/codex';
+import type { AgentRunId } from '@cairn/shared-contracts/schemas';
 
 export interface WorkspaceCoreRuntimeConfig {
   runtime: 'mock' | 'codex';
@@ -26,6 +27,7 @@ export interface WorkspaceCoreRuntimeConfig {
 
 export interface WorkspaceCoreRuntimeGateway {
   gateway: RuntimeGatewayPort;
+  query?: (runId: AgentRunId) => Promise<AdapterRunSnapshot>;
   close?: () => Promise<void>;
 }
 
@@ -68,6 +70,7 @@ export const createWorkspaceCoreRuntimeGateway = async (
 
   const adapter =
     overrides.createCodexAdapter?.(codexOptions) ?? createCodexRuntimeAdapter(codexOptions);
+  const gateway = new RuntimeAdapterGatewayPort(adapter);
 
   await mkdir(config.runtimeWorkdir, { recursive: true });
 
@@ -87,7 +90,8 @@ export const createWorkspaceCoreRuntimeGateway = async (
   });
 
   return {
-    gateway: new RuntimeAdapterGatewayPort(adapter),
+    gateway,
+    query: (runId) => gateway.query(runId),
     close: () => adapter.shutdown(),
   };
 };

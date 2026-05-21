@@ -167,6 +167,50 @@ describe.skipIf(!isNativeSqliteAvailable())('SqliteApplicationRepository', () =>
     }
   });
 
+  it('keeps payload refs opaque in repository reads', async () => {
+    const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
+    tempDirectories.push(directory);
+    const databasePath = path.join(directory, 'workspace.sqlite');
+
+    const repository = openRepository(databasePath);
+
+    try {
+      const created = await repository.container.orchestrationRuns.createSingleWorkerRun({
+        workspaceId: ids.workspace,
+        originEventId: ids.event,
+        task: {
+          taskKind: 'edit',
+          title: 'Opaque artifact refs',
+          brief: 'Ensure repository reads do not leak local payload paths.',
+        },
+      });
+
+      const submitted = await repository.container.orchestrationRuns.submitTaskToRuntime({
+        taskId: created.task.taskId,
+        runtimeType: 'codex',
+        model: 'default',
+        prompt: 'Say hello.',
+      });
+
+      await repository.container.orchestrationRuns.drainAgentRunRuntime({
+        agentRunId: submitted.agentRun.runId,
+      });
+
+      const runArtifacts = await repository.container.repository.listArtifactsByRun(
+        created.run.orchestrationRunId,
+      );
+      const outputArtifact = runArtifacts.find((artifact) => artifact.artifactRole === 'output');
+
+      expect(outputArtifact).toBeDefined();
+      expect(outputArtifact?.payloadRef).toMatch(/^artifact-payload:\/\//u);
+      expect(outputArtifact?.uriOrPath).toBe(outputArtifact?.payloadRef);
+      expect(outputArtifact?.uriOrPath).not.toContain('/Users/');
+      expect(outputArtifact?.uriOrPath).not.toContain(directory);
+    } finally {
+      repository.close();
+    }
+  });
+
   it('persists SourceRoots and ContextPack manifests across repository instances', async () => {
     const directory = mkdtempSync(path.join(tmpdir(), 'cairn-workspace-core-'));
     tempDirectories.push(directory);
