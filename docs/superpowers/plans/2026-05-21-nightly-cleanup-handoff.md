@@ -1,7 +1,7 @@
 # Nightly Cleanup Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-21 15:29 CST
+> 最后更新：2026-05-21 15:39 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 基线提交：`56aa3894db1cd99d023c80595d087f5cbaf968a7`
 
@@ -44,7 +44,6 @@
 ### 4.1 Internal Trial 主线改动
 
 - `apps/desktop/**`：Desktop internal-trial IPC/preload/client/renderer/sidecar bridge 与 Electron build 配置。
-- `apps/workspace-core/**`：runtime gateway factory、service replay/evidence/API、SQLite repository 与 artifact store 相关补测。
 - `docs/ops/internal-trial-runbook.md`：内部试用运行手册。
 - `docs/superpowers/specs/2026-05-20-internal-trial-core-first-design.md`：内部试用设计拆分。
 - `docs/superpowers/plans/2026-05-20-internal-trial-core-first-implementation-plan.md`：内部试用实现计划。
@@ -67,15 +66,13 @@
 
 ### 4.4 建议拆分的 Review Chunk
 
-2026-05-21 15:29 CST 只读统计：当前未提交区包含 33 个已跟踪文件、6 个未跟踪文件，约
-3446 additions / 456 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
+2026-05-21 15:39 CST 只读统计：当前未提交区包含 25 个已跟踪文件、6 个未跟踪文件，约
+3127 additions / 429 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
 
 1. **Desktop bridge + renderer internal-trial chunk**：`apps/desktop/**`、`apps/desktop/README.md`。
    这是最大块，包含 IPC allowlist、sidecar bridge、artifact payload preview、renderer replay loader
    与 Electron Vite config 测试；拆 PR 时可再按 main/preload/renderer 分成子提交。
-2. **Workspace Core evidence/storage chunk**：`apps/workspace-core/**`。包含 replay/evidence API、
-   runtime gateway factory、local artifact store 与 SQLite repository 补测。
-3. **Docs/runbook chunk**：`README.md`、`CHANGELOG.md`、`docs/STATUS.md`、`docs/ops/internal-trial-runbook.md`、
+2. **Docs/runbook chunk**：`README.md`、`CHANGELOG.md`、`docs/STATUS.md`、`docs/ops/internal-trial-runbook.md`、
    `docs/engineering/**`、`docs/contracts/**`、`docs/design/**`、`docs/adr/**` 与 internal-trial plan/spec。
    该 chunk 应明确：Desktop sidecar 默认 mock、真实 Codex 需 env opt-in、`apps/web` 尚未创建。
 
@@ -88,6 +85,10 @@
   已提交为 `7ae1498` `fix(runtime): 收紧 Codex 终态证据 / harden codex terminal evidence`，
   包含 Codex adapter/process/error mapping、runtime terminal event 与 evidence 状态推进，不再处于当前
   dirty worktree。
+- **Workspace Core evidence/storage chunk**：`apps/workspace-core/**` 已提交为 `b1a98ba`
+  `fix(core): 收紧回放证据读取 / harden replay evidence reads`，包含 replay/evidence API、
+  runtime gateway factory、local artifact store 与 SQLite repository 补测，不再处于当前 dirty
+  worktree。
 
 当前未跟踪文件：
 
@@ -403,6 +404,18 @@
 - 已只 stage runtime/application 8 个文件，并提交 `7ae1498`
   `fix(runtime): 收紧 Codex 终态证据 / harden codex terminal evidence`。
 
+2026-05-21 15:39 CST 追加验证：
+
+- `pnpm --filter @cairn/workspace-core test -- local-artifact-store.spec.ts app.spec.ts runtime-gateway-factory.spec.ts sqlite-application-repository.spec.ts`
+  通过：4 files / 55 tests。
+- `pnpm --filter @cairn/workspace-core typecheck` 通过。
+- `pnpm --filter @cairn/workspace-core lint` 通过。
+- `pnpm exec prettier --check apps/workspace-core/src/artifacts/local-artifact-store.ts apps/workspace-core/src/artifacts/local-artifact-store.spec.ts apps/workspace-core/src/runtime/runtime-adapter-gateway-port.ts apps/workspace-core/src/runtime/runtime-gateway-factory.ts apps/workspace-core/src/runtime/runtime-gateway-factory.spec.ts apps/workspace-core/src/service/app.ts apps/workspace-core/src/service/app.spec.ts apps/workspace-core/src/storage/sqlite-application-repository.spec.ts`
+  通过。
+- `git diff --check` 通过。
+- 检修结果：Workspace Core chunk 未发现需额外修复的 blocker；已只 stage 8 个 Workspace Core 文件，
+  并提交 `b1a98ba` `fix(core): 收紧回放证据读取 / harden replay evidence reads`。
+
 ### 5.1 本轮验证结果摘要
 
 - `apps/desktop/src/renderer/src/run-replay-loader.ts` 已拆出并接入 `DesktopApp`，latest-request-wins 的 replay 载入逻辑现在有独立单测覆盖。
@@ -681,9 +694,10 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   的区别是否保持清楚。
 - 当前更适合进入“拆 review chunk / 准备短分支或 PR”的阶段；除非发现明确 blocker，下一轮不要继续
   在 Desktop bridge 上重复加安全边界测试。
-- 推荐下一轮先从 **Workspace Core evidence/storage chunk** 开始拆；**Contracts/schema chunk**
-  已在 `54c31f4` 收口，**Runtime Gateway + Application chunk** 已在 `7ae1498` 收口。Desktop
-  chunk 最大，适合等 Workspace Core chunk 稳住后再拆。
+- 推荐下一轮先从 **Desktop bridge + renderer internal-trial chunk** 开始拆；**Contracts/schema chunk**
+  已在 `54c31f4` 收口，**Runtime Gateway + Application chunk** 已在 `7ae1498` 收口，
+  **Workspace Core evidence/storage chunk** 已在 `b1a98ba` 收口。Desktop chunk 最大，拆时建议再按
+  main/preload/renderer/preview-data 分子提交。
 
 ---
 
@@ -1034,3 +1048,17 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
 - 提交后 `packages/application/**` 与 `packages/runtime_gateway/**` 不再有 dirty diff；当前剩余
   dirty worktree 降为 33 个 tracked files、6 个 untracked files，建议下一步拆
   **Workspace Core evidence/storage chunk**。
+
+### 2026-05-21 15:39 CST
+
+- 接上用户“检修/继续”要求，按 systematic debugging 原则先验证再决定是否修：重新读取 handoff，
+  运行 `git status --short` / `git diff --name-only`，确认当前无 staged 文件。
+- 审阅 Workspace Core diff，范围为 8 个 tracked 文件，覆盖 cursor pagination、replay-source 隐私边界、
+  artifact payload storage error mapping、runtime query exposure、local artifact store 与 SQLite opaque
+  payloadRef 回归。
+- 运行 Workspace Core targeted tests、typecheck、lint、Prettier check 与 `git diff --check`，均通过；
+  未发现需额外修复的 blocker。
+- 只 stage 这 8 个 Workspace Core 文件，并提交 `b1a98ba`
+  `fix(core): 收紧回放证据读取 / harden replay evidence reads`。
+- 提交后 `apps/workspace-core/**` 不再有 dirty diff；当前剩余 dirty worktree 降为 25 个 tracked
+  files、6 个 untracked files，主要集中在 Desktop、ui-preview 静态数据与文档/runbook。
