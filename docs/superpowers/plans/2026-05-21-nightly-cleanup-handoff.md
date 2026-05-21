@@ -212,7 +212,7 @@
 - 没有改变任何运行时边界：Desktop 默认 mock sidecar，真实 Codex 仍需 env opt-in，`apps/web` 仍未创建。
 - 将本轮说明同步进 handoff，方便下一轮继续接主线或继续做更细的文档收口。
 
-本轮提交：待提交。
+本轮提交：`3b91a19` `docs(trial): 精简内部试用文档 / simplify internal trial docs`。
 
 2026-05-22 05:32 CST 本轮完成：
 
@@ -220,7 +220,7 @@
 - 新增 targeted spec 锁住该行为，并保留既有 replay request sequence guard 覆盖。
 - 同步 `docs/STATUS.md`、`CHANGELOG.md` 与本 handoff。
 
-本轮提交：待提交。
+本轮提交：`bb794f5` `fix(desktop): 拦截空回放 run id / guard blank replay run ids`。
 
 ---
 
