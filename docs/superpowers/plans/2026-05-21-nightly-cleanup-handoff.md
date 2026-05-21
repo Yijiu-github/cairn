@@ -272,7 +272,7 @@
 - 更新 `docs/STATUS.md`，明确 preload 已暴露 bounded artifact payload read 与最小 operator action allowlist（cancel / retry / rerun / operator note）。
 - 修正 `CHANGELOG.md` 的旧口径：不再说 operator action / artifact payload 正文仍未开放，改为完整 operator cockpit、完整 Artifact workspace 与本地路径 reveal 仍未开放。
 
-本轮提交：待提交。
+本轮提交：`8b3aefc` `docs(desktop): 对齐预加载桥接口径 / align preload bridge docs`。
 
 ---
 
