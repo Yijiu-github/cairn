@@ -69,6 +69,15 @@ const isTerminalStatus = (status: AdapterRunStatus): boolean =>
 const isSandboxMode = (value: unknown): value is CodexSandboxMode =>
   value === 'read-only' || value === 'workspace-write' || value === 'danger-full-access';
 
+const normalizeCodexModel = (model: string): string | undefined => {
+  const trimmed = model.trim();
+  if (trimmed.length === 0 || trimmed === 'default') {
+    return undefined;
+  }
+
+  return trimmed;
+};
+
 const readStringOption = (
   options: Record<string, unknown> | undefined,
   key: string,
@@ -140,8 +149,9 @@ const toPrompt = async (
   return `Run Cairn AgentRun ${request.runId} with these input artifact references:\n${inputRefs}`;
 };
 
-const getFinalArtifactRef = (request: AdapterSubmitRequest): ArtifactRef =>
-  request.inputs[0] ?? { artifactId: `artifact:${request.runId}` };
+const getFinalArtifactRef = (request: AdapterSubmitRequest): ArtifactRef => ({
+  artifactId: `artifact:${request.runId}`,
+});
 
 const applyEventToState = (state: CodexRunState, event: AdapterStreamEvent): void => {
   state.lastEventAt = event.at;
@@ -164,12 +174,16 @@ const applyEventToState = (state: CodexRunState, event: AdapterStreamEvent): voi
       break;
     }
     case 'failed': {
+      if (state.status === 'cancelled' && state.cancelReason !== undefined) {
+        break;
+      }
       state.status = 'failed';
       state.error = event.error;
       break;
     }
     case 'cancelled': {
       state.status = 'cancelled';
+      delete state.error;
       if (event.reason !== undefined) {
         state.cancelReason = event.reason;
       }
@@ -291,6 +305,7 @@ export const createCodexRuntimeAdapter = (
         (isSandboxMode(configSandboxMode) ? configSandboxMode : undefined) ??
         options.sandboxMode;
       const prompt = await toPrompt(request, options.resolveArtifactPayload);
+      const model = normalizeCodexModel(request.model);
       const controller = startCodexExec(
         request.runId,
         {
@@ -299,7 +314,7 @@ export const createCodexRuntimeAdapter = (
           finalArtifactRef: getFinalArtifactRef(request),
           ...(options.executable === undefined ? {} : { executable: options.executable }),
           ...(sandboxMode === undefined ? {} : { sandboxMode }),
-          ...(request.model === '' ? {} : { model: request.model }),
+          ...(model === undefined ? {} : { model }),
           ...(request.timeoutMs === undefined ? {} : { timeoutMs: request.timeoutMs }),
           ...(options.env === undefined ? {} : { env: options.env }),
           ...(options.now === undefined ? {} : { now: options.now }),
@@ -354,6 +369,7 @@ export const createCodexRuntimeAdapter = (
       if (reason !== undefined) {
         state.cancelReason = reason;
       }
+      delete state.error;
 
       return reason === undefined ? { runId, cancelled: true } : { runId, cancelled: true, reason };
     },

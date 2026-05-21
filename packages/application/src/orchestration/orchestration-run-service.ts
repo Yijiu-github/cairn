@@ -263,7 +263,10 @@ export class OrchestrationRunService {
         input.prompt,
         now,
       );
-      runtimeInputs.unshift({ artifactId: promptArtifact.artifactId });
+      runtimeInputs.unshift({
+        artifactId: promptArtifact.artifactId,
+        uri: promptArtifact.payloadRef,
+      });
     }
     const firstInputRef =
       runtimeInputs[0] === undefined ? undefined : (runtimeInputs[0].artifactId as ArtifactId);
@@ -294,6 +297,13 @@ export class OrchestrationRunService {
     await this.appendTrace(runningRun, dispatchedTask, agentRun, 'task.dispatched', 'info', {
       runtimeType: input.runtimeType,
     });
+    const runtimeOptions =
+      input.prompt === undefined
+        ? input.options
+        : {
+            ...(input.options ?? {}),
+            prompt: input.prompt,
+          };
 
     let ack;
     try {
@@ -302,10 +312,10 @@ export class OrchestrationRunService {
         model: input.model,
         inputs: runtimeInputs,
         traceId: agentRun.traceId,
+        ...(runtimeOptions === undefined ? {} : { options: runtimeOptions }),
         ...(input.tools === undefined ? {} : { tools: input.tools }),
         ...(input.timeoutMs === undefined ? {} : { timeoutMs: input.timeoutMs }),
         ...(task.budgetHint === undefined ? {} : { budget: task.budgetHint }),
-        ...(input.options === undefined ? {} : { options: input.options }),
       });
     } catch {
       await this.failUnavailableRuntimeSubmit(runningRun, dispatchedTask, agentRun, now);
@@ -873,6 +883,10 @@ export class OrchestrationRunService {
     await this.repository.updateAgentRun(failedAgentRun);
     await this.repository.updateTask(failedTask);
     await this.repository.updateRun(failedRun);
+    await this.appendTrace(failedRun, failedTask, failedAgentRun, 'agent_run.failed', 'error', {
+      code: event.error.code,
+      retryable: event.error.retryable,
+    });
     await this.appendTrace(failedRun, failedTask, failedAgentRun, 'run.failed', 'error', {
       code: event.error.code,
       retryable: event.error.retryable,
@@ -919,6 +933,16 @@ export class OrchestrationRunService {
     await this.repository.updateAgentRun(cancelledAgentRun);
     await this.repository.updateTask(cancelledTask);
     await this.repository.updateRun(cancelledRun);
+    await this.appendTrace(
+      cancelledRun,
+      cancelledTask,
+      cancelledAgentRun,
+      'agent_run.cancelled',
+      'warn',
+      {
+        reason: error.message,
+      },
+    );
     await this.appendTrace(
       cancelledRun,
       cancelledTask,

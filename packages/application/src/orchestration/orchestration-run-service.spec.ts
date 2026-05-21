@@ -401,7 +401,17 @@ describe('OrchestrationRunService', () => {
         }),
       ]),
     );
-    expect(runtimeGateway.requests[0]?.inputs).toEqual([{ artifactId: ids.artifact }]);
+    expect(runtimeGateway.requests[0]).toMatchObject({
+      inputs: [
+        {
+          artifactId: ids.artifact,
+          uri: expect.stringMatching(/^artifact-payload:\/\//),
+        },
+      ],
+      options: {
+        prompt: 'Please update the target module.',
+      },
+    });
   });
 
   it('marks runtime submit transport errors as failed durable state', async () => {
@@ -658,6 +668,30 @@ describe('OrchestrationRunService', () => {
       completionLevel: 'failed',
       hasPartialFailures: true,
     });
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          eventType: 'agent_run.failed',
+          level: 'error',
+          payloadInline: {
+            code: 'MODEL_UNAVAILABLE',
+            retryable: true,
+          },
+          runId: ids.agentRun,
+          taskId: ids.task,
+        }),
+        expect.objectContaining({
+          eventType: 'run.failed',
+          level: 'error',
+          payloadInline: {
+            code: 'MODEL_UNAVAILABLE',
+            retryable: true,
+          },
+          runId: ids.agentRun,
+          taskId: ids.task,
+        }),
+      ]),
+    );
   });
 
   it.each([
@@ -675,6 +709,39 @@ describe('OrchestrationRunService', () => {
       status: expectedStatus,
       completionLevel: 'failed',
     });
+  });
+
+  it('records runtime cancellation evidence when the adapter emits a cancelled terminal event', async () => {
+    const { repository, service } = await createRunAndSubmit();
+
+    await service.applyAdapterEvent(ids.agentRun, {
+      type: 'cancelled',
+      at: Date.parse('2026-05-14T01:00:03.000Z'),
+      reason: 'operator_cancelled',
+    });
+
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          eventType: 'agent_run.cancelled',
+          level: 'warn',
+          payloadInline: {
+            reason: 'operator_cancelled',
+          },
+          runId: ids.agentRun,
+          taskId: ids.task,
+        }),
+        expect.objectContaining({
+          eventType: 'run.cancelled',
+          level: 'warn',
+          payloadInline: {
+            reason: 'operator_cancelled',
+          },
+          runId: ids.agentRun,
+          taskId: ids.task,
+        }),
+      ]),
+    );
   });
 
   it('rejects adapter events after an AgentRun reaches a terminal state', async () => {
@@ -968,6 +1035,11 @@ describe('OrchestrationRunService', () => {
       status: 'queued',
       executionMode: 'single_worker',
     });
+    await expect(repository.getRun(ids.run)).resolves.toMatchObject({
+      orchestrationRunId: ids.run,
+      status: 'failed',
+      finishedAt: '2026-05-14T00:05:00.000Z',
+    });
     const tasks = await repository.listTasksByRun(ids.rerun);
     expect(tasks).toHaveLength(1);
     expect(tasks[0]).toMatchObject({
@@ -1024,15 +1096,17 @@ describe('OrchestrationRunService', () => {
       status: 'succeeded',
       updatedAt: '2026-05-14T00:00:00.000Z',
     });
-    expect(repository.listTraceEvents()).toEqual([
-      expect.objectContaining({
-        traceEventId: ids.noteTrace,
-        eventType: 'operator.note',
-        payloadInline: {
-          note: 'Remember to inspect the patch manually.',
-          visibility: 'operator_only',
-        },
-      }),
-    ]);
+    expect(repository.listTraceEvents()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          traceEventId: ids.noteTrace,
+          eventType: 'operator.note',
+          payloadInline: {
+            note: 'Remember to inspect the patch manually.',
+            visibility: 'operator_only',
+          },
+        }),
+      ]),
+    );
   });
 });

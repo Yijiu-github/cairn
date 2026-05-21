@@ -114,13 +114,17 @@ describe('createCodexRuntimeAdapter', () => {
       { type: 'queued', at: now() },
       { type: 'started', at: now(), providerRunId: 'thread_1' },
       { type: 'token', at: now(), delta: 'CAIRN_OK' },
-      { type: 'succeeded', at: now(), finalArtifactRef: createTestArtifactRef() },
+      {
+        type: 'succeeded',
+        at: now(),
+        finalArtifactRef: { artifactId: `artifact:${TEST_IDS.runId}` },
+      },
     ]);
     await expect(adapter.query(TEST_IDS.runId)).resolves.toMatchObject({
       runId: TEST_IDS.runId,
       status: 'succeeded',
       providerRunId: 'thread_1',
-      finalArtifactRef: createTestArtifactRef(),
+      finalArtifactRef: { artifactId: `artifact:${TEST_IDS.runId}` },
       lastEventAt: now(),
     });
 
@@ -184,6 +188,27 @@ describe('createCodexRuntimeAdapter', () => {
     await adapter.submit(createTestSubmitRequest());
 
     expect(calls[0]?.args).toContain('Summarize the staged runtime input.');
+    child.close(0);
+    await adapter.shutdown();
+  });
+
+  it('omits the explicit model flag when the requested model is the default sentinel', async () => {
+    const child = new FakeCodexChildProcess();
+    const calls: SpawnCall[] = [];
+    const adapter = createCodexRuntimeAdapter({
+      spawnProcess: (command, args, options) => {
+        calls.push({ command, args, options });
+        return child.asChildProcess();
+      },
+      now,
+      killGraceMs: 0,
+    });
+    await adapter.init(createTestAdapterContext());
+
+    await adapter.submit(createTestSubmitRequest({ model: 'default' }));
+
+    expect(calls[0]?.args).not.toContain('--model');
+    expect(calls[0]?.args).not.toContain('default');
     child.close(0);
     await adapter.shutdown();
   });
@@ -287,5 +312,66 @@ describe('createCodexRuntimeAdapter', () => {
 
     child.close(null, 'SIGTERM');
     await adapter.shutdown();
+  });
+
+  it('keeps query status cancelled when the process exits non-zero after operator cancel', async () => {
+    const child = new FakeCodexChildProcess();
+    const adapter = createCodexRuntimeAdapter({
+      spawnProcess: (_command, _args, _options) => child.asChildProcess(),
+      now,
+      killGraceMs: 0,
+    });
+    await adapter.init(createTestAdapterContext());
+    await adapter.submit(createTestSubmitRequest());
+
+    await adapter.cancel(TEST_IDS.runId, 'operator_cancelled');
+    child.stderr.write('late exit after cancel');
+    child.close(1);
+
+    const events = [];
+    for await (const event of adapter.stream(TEST_IDS.runId)) {
+      events.push(event);
+    }
+
+    expect(events.at(-1)).toEqual({
+      type: 'cancelled',
+      at: now(),
+      reason: 'operator_cancelled',
+    });
+    await expect(adapter.query(TEST_IDS.runId)).resolves.toMatchObject({
+      runId: TEST_IDS.runId,
+      status: 'cancelled',
+    });
+
+    await adapter.shutdown();
+  });
+
+  it('maps stderr-only Codex failures to stable adapter failure events', async () => {
+    const child = new FakeCodexChildProcess();
+    const adapter = createCodexRuntimeAdapter({
+      spawnProcess: (_command, _args, _options) => child.asChildProcess(),
+      now,
+      killGraceMs: 0,
+    });
+    await adapter.init(createTestAdapterContext());
+    await adapter.submit(createTestSubmitRequest());
+
+    child.stderr.write('fatal: codex trial failed before emitting JSONL');
+    child.close(2);
+
+    const events = [];
+    for await (const event of adapter.stream(TEST_IDS.runId)) {
+      events.push(event);
+    }
+
+    expect(events.at(-1)).toEqual({
+      type: 'failed',
+      at: now(),
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Codex CLI exited with code 2: fatal: codex trial failed before emitting JSONL',
+        retryable: true,
+      },
+    });
   });
 });

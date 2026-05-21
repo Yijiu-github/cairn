@@ -100,14 +100,14 @@ describe('mapCodexProcessFailure', () => {
       mapCodexProcessFailure({
         stderr: "'codex' is not recognized as an internal or external command",
       }).code,
-    ).toBe('MODEL_UNAVAILABLE');
+    ).toBe('SERVICE_UNAVAILABLE');
   });
 
   it('uses internal error for unknown non-zero exits', () => {
     expect(mapCodexProcessFailure({ exitCode: 2, stderr: 'unexpected failure' })).toEqual({
       code: 'INTERNAL_ERROR',
-      message: 'Codex CLI process failed',
-      retryable: false,
+      message: 'Codex CLI exited with code 2: unexpected failure',
+      retryable: true,
     });
   });
 });

@@ -2,6 +2,7 @@
 
 import { EventEmitter } from 'node:events';
 import { PassThrough } from 'node:stream';
+import { setTimeout as delay } from 'node:timers/promises';
 
 import { describe, expect, it } from 'vitest';
 
@@ -119,6 +120,23 @@ describe('startCodexExec', () => {
     });
   });
 
+  it('closes stdin immediately so codex exec does not wait for extra input', () => {
+    const child = new FakeCodexChildProcess();
+
+    startCodexExec(
+      TEST_IDS.runId,
+      {
+        prompt: 'Reply exactly: CAIRN_OK',
+        sandboxDir: 'C:/tmp/cairn',
+        finalArtifactRef: createTestArtifactRef(),
+        now,
+      },
+      { spawnProcess: createFakeSpawn(child, []), killGraceMs: 0 },
+    );
+
+    expect(child.stdin.writableEnded).toBe(true);
+  });
+
   it('maps non-zero exit codes through Codex error normalization', async () => {
     const child = new FakeCodexChildProcess();
     const controller = startCodexExec(
@@ -145,6 +163,65 @@ describe('startCodexExec', () => {
         retryable: false,
       },
     });
+  });
+
+  it('maps stderr-only failures to a stable non-zero process error', async () => {
+    const child = new FakeCodexChildProcess();
+    const controller = startCodexExec(
+      TEST_IDS.runId,
+      {
+        prompt: 'do work',
+        sandboxDir: 'C:/tmp/cairn',
+        finalArtifactRef: createTestArtifactRef(),
+        now,
+      },
+      { spawnProcess: createFakeSpawn(child, []), killGraceMs: 0 },
+    );
+
+    child.stderr.write('fatal: codex trial failed before emitting JSONL');
+    child.close(2);
+
+    const result = await controller.result;
+    expect(result.events.at(-1)).toEqual({
+      type: 'failed',
+      at: now(),
+      error: {
+        code: 'INTERNAL_ERROR',
+        message: 'Codex CLI exited with code 2: fatal: codex trial failed before emitting JSONL',
+        retryable: true,
+      },
+    });
+  });
+
+  it('emits a stable failure when stdout never reaches a terminal JSONL event', async () => {
+    const child = new FakeCodexChildProcess();
+    const controller = startCodexExec(
+      TEST_IDS.runId,
+      {
+        prompt: 'do work',
+        sandboxDir: 'C:/tmp/cairn',
+        finalArtifactRef: createTestArtifactRef(),
+        now,
+      },
+      { spawnProcess: createFakeSpawn(child, []), killGraceMs: 0 },
+    );
+
+    child.stdout.write('{"type":"thread.started","thread_id":"thread_1"}\n');
+    child.close(0);
+
+    const result = await controller.result;
+    expect(result.events).toEqual([
+      { type: 'queued', at: now() },
+      {
+        type: 'failed',
+        at: now(),
+        error: {
+          code: 'INTERNAL_ERROR',
+          message: 'Codex CLI exited without a terminal JSONL event.',
+          retryable: true,
+        },
+      },
+    ]);
   });
 
   it('kills the process on cancel and escalates after the grace window', async () => {
@@ -185,6 +262,31 @@ describe('startCodexExec', () => {
     expect(child.killedSignals).toEqual(['SIGTERM']);
   });
 
+  it('preserves operator cancellation even when the process exits non-zero after cancel', async () => {
+    const child = new FakeCodexChildProcess();
+    const controller = startCodexExec(
+      TEST_IDS.runId,
+      {
+        prompt: 'do work',
+        sandboxDir: 'C:/tmp/cairn',
+        finalArtifactRef: createTestArtifactRef(),
+        now,
+      },
+      { spawnProcess: createFakeSpawn(child, []), killGraceMs: 0 },
+    );
+
+    const cancel = controller.cancel('operator_cancelled');
+    child.stderr.write('process interrupted after cancel');
+    child.close(1);
+    await cancel;
+
+    await expect(controller.result).resolves.toMatchObject({
+      events: [expect.objectContaining({ type: 'cancelled', reason: 'operator_cancelled' })],
+      exitCode: 1,
+      signal: null,
+    });
+  });
+
   it('maps spawn errors to executable unavailable', async () => {
     const child = new FakeCodexChildProcess();
     const controller = startCodexExec(
@@ -206,7 +308,7 @@ describe('startCodexExec', () => {
           type: 'failed',
           at: now(),
           error: {
-            code: 'MODEL_UNAVAILABLE',
+            code: 'SERVICE_UNAVAILABLE',
             message: 'Codex CLI executable is unavailable',
             retryable: false,
           },
@@ -214,6 +316,29 @@ describe('startCodexExec', () => {
       ],
       exitCode: null,
       signal: null,
+    });
+  });
+
+  it('emits timeout when the process exceeds timeoutMs', async () => {
+    const child = new FakeCodexChildProcess();
+    const controller = startCodexExec(
+      TEST_IDS.runId,
+      {
+        prompt: 'do work',
+        sandboxDir: 'C:/tmp/cairn',
+        finalArtifactRef: createTestArtifactRef(),
+        now,
+        timeoutMs: 1,
+      },
+      { spawnProcess: createFakeSpawn(child, []), killGraceMs: 0 },
+    );
+
+    await delay(5);
+    child.close(null, 'SIGTERM');
+
+    await expect(controller.result).resolves.toMatchObject({
+      events: [expect.objectContaining({ type: 'timeout' })],
+      signal: 'SIGTERM',
     });
   });
 });

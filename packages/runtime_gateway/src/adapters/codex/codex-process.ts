@@ -9,10 +9,12 @@
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 
+import { createAdapterError } from '../../runtime-errors.js';
+import { isAdapterTerminalEvent, type AdapterStreamEvent } from '../../runtime-events.js';
+
 import { mapCodexProcessFailure } from './codex-errors.js';
 import { createCodexJsonlParser } from './codex-protocol.js';
 
-import type { AdapterStreamEvent } from '../../runtime-events.js';
 import type { ArtifactRef } from '@cairn/shared-contracts/schemas';
 import type { ChildProcessWithoutNullStreams, SpawnOptionsWithoutStdio } from 'node:child_process';
 
@@ -95,6 +97,9 @@ export const startCodexExec = (
   );
   const events: AdapterStreamEvent[] = [];
   const stderrChunks: string[] = [];
+  let cancelRequestedReason: string | undefined;
+  let timeoutTriggered = false;
+  let terminalEventObserved = false;
   let settled = false;
   let child: ChildProcessWithoutNullStreams;
   let timeout: NodeJS.Timeout | undefined;
@@ -106,6 +111,15 @@ export const startCodexExec = (
   });
 
   const result = new Promise<CodexExecResult>((resolve) => {
+    const pushEvents = (nextEvents: readonly AdapterStreamEvent[]) => {
+      for (const event of nextEvents) {
+        events.push(event);
+        if (isAdapterTerminalEvent(event)) {
+          terminalEventObserved = true;
+        }
+      }
+    };
+
     const finish = (exitCode: number | null, signal: NodeJS.Signals | null) => {
       if (settled) {
         return;
@@ -116,17 +130,46 @@ export const startCodexExec = (
       }
       markClosed();
 
-      events.push(...parser.flush());
+      pushEvents(parser.flush());
       const stderr = stderrChunks.join('');
-      if (exitCode !== 0 || signal !== null) {
-        if (signal === null) {
-          events.push({
-            type: 'failed',
-            at: request.now?.() ?? Date.now(),
-            error: mapCodexProcessFailure(exitCode === null ? { stderr } : { exitCode, stderr }),
-          });
+
+      if (!terminalEventObserved) {
+        if (cancelRequestedReason !== undefined) {
+          pushEvents([
+            {
+              type: 'cancelled',
+              at: request.now?.() ?? Date.now(),
+              reason: cancelRequestedReason,
+            },
+          ]);
+        } else if (timeoutTriggered) {
+          pushEvents([{ type: 'timeout', at: request.now?.() ?? Date.now() }]);
+        } else if (exitCode !== 0 || signal !== null) {
+          if (signal === null) {
+            pushEvents([
+              {
+                type: 'failed',
+                at: request.now?.() ?? Date.now(),
+                error: mapCodexProcessFailure(
+                  exitCode === null ? { stderr } : { exitCode, stderr },
+                ),
+              },
+            ]);
+          } else {
+            pushEvents([{ type: 'cancelled', at: request.now?.() ?? Date.now(), reason: signal }]);
+          }
         } else {
-          events.push({ type: 'cancelled', at: request.now?.() ?? Date.now(), reason: signal });
+          pushEvents([
+            {
+              type: 'failed',
+              at: request.now?.() ?? Date.now(),
+              error: createAdapterError(
+                'INTERNAL_ERROR',
+                'Codex CLI exited without a terminal JSONL event.',
+                true,
+              ),
+            },
+          ]);
         }
       }
 
@@ -146,12 +189,13 @@ export const startCodexExec = (
       cwd: request.sandboxDir,
       env: request.env,
     });
+    child.stdin.end();
 
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
 
     child.stdout.on('data', (chunk: string) => {
-      events.push(...parser.push(chunk));
+      pushEvents(parser.push(chunk));
     });
 
     child.stderr.on('data', (chunk: string) => {
@@ -186,6 +230,7 @@ export const startCodexExec = (
 
     if (request.timeoutMs !== undefined) {
       timeout = setTimeout(() => {
+        timeoutTriggered = true;
         child.kill('SIGTERM');
       }, request.timeoutMs);
     }
@@ -193,11 +238,12 @@ export const startCodexExec = (
 
   return {
     runId,
-    async cancel() {
+    async cancel(reason?: string) {
       if (settled) {
         return;
       }
 
+      cancelRequestedReason = reason ?? 'cancel_requested';
       child.kill('SIGTERM');
       const closedBeforeGrace = await Promise.race([
         delay(killGraceMs).then(() => false),

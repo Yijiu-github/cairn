@@ -12,15 +12,21 @@ export interface CodexProcessFailure {
   spawnError?: unknown;
 }
 
+const summarizeStderr = (stderr: string): string | undefined => {
+  const normalized = stderr.replace(/\s+/g, ' ').trim();
+  return normalized === '' ? undefined : normalized;
+};
+
 export const mapCodexProcessFailure = (failure: CodexProcessFailure): AdapterError => {
   const stderr = failure.stderr.toLowerCase();
+  const stderrSummary = summarizeStderr(failure.stderr);
 
   if (failure.signal === 'SIGTERM' || failure.signal === 'SIGKILL') {
     return createAdapterError('CANCELLED_BY_USER', 'Codex CLI process was cancelled', false);
   }
 
   if (failure.spawnError !== undefined || stderr.includes('not recognized')) {
-    return createAdapterError('MODEL_UNAVAILABLE', 'Codex CLI executable is unavailable', false);
+    return createAdapterError('SERVICE_UNAVAILABLE', 'Codex CLI executable is unavailable', false);
   }
 
   if (stderr.includes('unauthorized') || stderr.includes('auth_invalid')) {
@@ -39,9 +45,21 @@ export const mapCodexProcessFailure = (failure: CodexProcessFailure): AdapterErr
     return createAdapterError('TIMEOUT', 'Codex CLI process timed out', true);
   }
 
+  if (failure.exitCode !== undefined) {
+    return createAdapterError(
+      'INTERNAL_ERROR',
+      stderrSummary === undefined
+        ? `Codex CLI exited with code ${String(failure.exitCode)}`
+        : `Codex CLI exited with code ${String(failure.exitCode)}: ${stderrSummary}`,
+      true,
+    );
+  }
+
   return createAdapterError(
-    failure.exitCode === undefined ? 'UNKNOWN' : 'INTERNAL_ERROR',
-    'Codex CLI process failed',
+    'UNKNOWN',
+    stderrSummary === undefined
+      ? 'Codex CLI process failed'
+      : `Codex CLI process failed: ${stderrSummary}`,
     false,
   );
 };
