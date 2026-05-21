@@ -111,6 +111,17 @@ describe('runContract', () => {
     expect(runContract.getRunReplaySource.path).toBe('/v1/runs/:runId/replay-source');
   });
 
+  it('getRunReplaySource keeps the stable internal-trial read surface', () => {
+    const response200 = runContract.getRunReplaySource.responses[200];
+
+    expect(response200.shape.run).toBeDefined();
+    expect(response200.shape.tasks).toBeDefined();
+    expect(response200.shape.agentRuns).toBeDefined();
+    expect(response200.shape.artifacts).toBeDefined();
+    expect(response200.shape.traceEvents).toBeDefined();
+    expect(response200.shape.inspector).toBeDefined();
+  });
+
   it('submitTaskToRuntime is the runtime dispatch endpoint', () => {
     expect(runContract.submitTaskToRuntime.method).toBe('POST');
     expect(runContract.submitTaskToRuntime.path).toBe('/v1/tasks/:taskId/agent-runs');
@@ -128,6 +139,12 @@ describe('runContract', () => {
 
     for (const status of [400, 401, 403, 404, 409, 413, 415, 422, 429, 500] as const) {
       expect(runContract.getArtifactPayload.responses[status]).toBeDefined();
+    }
+  });
+
+  it('keeps common error responses on trial read endpoints', () => {
+    for (const status of [400, 401, 403, 404, 409, 422, 429, 500] as const) {
+      expect(runContract.getRunReplaySource.responses[status]).toBeDefined();
     }
   });
 });

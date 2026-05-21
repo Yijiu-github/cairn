@@ -155,4 +155,39 @@ describe('RunReplaySource', () => {
 
     expect(parsed.traceEvents[0]?.eventType).toBe('task.failed');
   });
+
+  it('accepts a Desktop-consumable replay source without artifact payload bodies', () => {
+    const parsed = RunReplaySource.parse({
+      run,
+      tasks: [task],
+      agentRuns: [agentRun],
+      artifacts: [
+        {
+          ...artifact,
+          payloadRef: 'artifact-payload://workspace/run/artifact/runtime-output.txt',
+        },
+      ],
+      traceEvents: [traceEvent],
+      inspector: {
+        status: 'failed',
+        taskCount: 1,
+        agentRunCount: 1,
+        artifactCount: 1,
+        traceEventCount: 1,
+        errorEventCount: 1,
+        warningEventCount: 0,
+      },
+    });
+
+    expect(parsed.run.orchestrationRunId).toBe(ids.orchestrationRun);
+    expect(parsed.tasks).toHaveLength(1);
+    expect(parsed.traceEvents).toHaveLength(1);
+    expect(
+      parsed.artifacts.every(
+        (replayArtifact) =>
+          replayArtifact.payloadRef === undefined || typeof replayArtifact.payloadRef === 'string',
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(parsed)).not.toContain('payloadBody');
+  });
 });
