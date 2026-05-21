@@ -1,7 +1,7 @@
 # Nightly Cleanup Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-21 15:05 CST
+> 最后更新：2026-05-21 15:16 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 基线提交：`56aa3894db1cd99d023c80595d087f5cbaf968a7`
 
@@ -47,7 +47,6 @@
 - `apps/workspace-core/**`：runtime gateway factory、service replay/evidence/API、SQLite repository 与 artifact store 相关补测。
 - `packages/application/**`：orchestration runtime event / evidence 状态推进相关整理。
 - `packages/runtime_gateway/**`：Codex process/adapter/error mapping 与 tests。
-- `packages/shared_contracts/**`：contracts 与 replay-source schema tests。
 - `docs/ops/internal-trial-runbook.md`：内部试用运行手册。
 - `docs/superpowers/specs/2026-05-20-internal-trial-core-first-design.md`：内部试用设计拆分。
 - `docs/superpowers/plans/2026-05-20-internal-trial-core-first-implementation-plan.md`：内部试用实现计划。
@@ -70,8 +69,8 @@
 
 ### 4.4 建议拆分的 Review Chunk
 
-2026-05-21 15:05 CST 只读统计：当前未提交区包含 43 个已跟踪文件、6 个未跟踪文件，约
-3924 additions / 493 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
+2026-05-21 15:16 CST 只读统计：当前未提交区包含 41 个已跟踪文件、6 个未跟踪文件，约
+3872 additions / 493 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
 
 1. **Desktop bridge + renderer internal-trial chunk**：`apps/desktop/**`、`apps/desktop/README.md`。
    这是最大块，包含 IPC allowlist、sidecar bridge、artifact payload preview、renderer replay loader
@@ -80,10 +79,15 @@
    runtime gateway factory、local artifact store 与 SQLite repository 补测。
 3. **Runtime Gateway + Application chunk**：`packages/runtime_gateway/**` 与 `packages/application/**`。
    包含 Codex adapter/process/error mapping、runtime event / evidence 状态推进。
-4. **Contracts/schema chunk**：`packages/shared_contracts/**`。包含 contracts 与 replay-source schema tests。
-5. **Docs/runbook chunk**：`README.md`、`CHANGELOG.md`、`docs/STATUS.md`、`docs/ops/internal-trial-runbook.md`、
+4. **Docs/runbook chunk**：`README.md`、`CHANGELOG.md`、`docs/STATUS.md`、`docs/ops/internal-trial-runbook.md`、
    `docs/engineering/**`、`docs/contracts/**`、`docs/design/**`、`docs/adr/**` 与 internal-trial plan/spec。
    该 chunk 应明确：Desktop sidecar 默认 mock、真实 Codex 需 env opt-in、`apps/web` 尚未创建。
+
+已完成拆分：
+
+- **Contracts/schema chunk**：`packages/shared_contracts/**` 已提交为 `54c31f4`
+  `test(contracts): 补齐回放契约覆盖 / cover replay contracts`，包含 contracts 与 replay-source
+  schema tests，不再处于当前 dirty worktree。
 
 当前未跟踪文件：
 
@@ -371,6 +375,19 @@
   - 当前未跟踪文件 6 个，均已在 §4.4 记录。
 - 本轮只读审计和 handoff 更新后，仍需执行 handoff 文档格式校验、markdownlint、`git diff --check`。
 
+2026-05-21 15:14 CST 追加验证：
+
+- `pnpm --filter @cairn/shared-contracts test -- src/contracts/index.spec.ts src/schemas/run-replay-source.spec.ts`
+  通过：2 files / 24 tests。
+- `pnpm --filter @cairn/shared-contracts typecheck` 通过。
+- `pnpm --filter @cairn/shared-contracts lint` 通过。
+- `pnpm exec prettier --check packages/shared_contracts/src/contracts/index.spec.ts packages/shared_contracts/src/schemas/run-replay-source.spec.ts`
+  通过。
+- `git diff --check` 通过。
+- 已只 stage `packages/shared_contracts/src/contracts/index.spec.ts` 与
+  `packages/shared_contracts/src/schemas/run-replay-source.spec.ts`，并提交 `54c31f4`
+  `test(contracts): 补齐回放契约覆盖 / cover replay contracts`。
+
 ### 5.1 本轮验证结果摘要
 
 - `apps/desktop/src/renderer/src/run-replay-loader.ts` 已拆出并接入 `DesktopApp`，latest-request-wins 的 replay 载入逻辑现在有独立单测覆盖。
@@ -649,8 +666,8 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   的区别是否保持清楚。
 - 当前更适合进入“拆 review chunk / 准备短分支或 PR”的阶段；除非发现明确 blocker，下一轮不要继续
   在 Desktop bridge 上重复加安全边界测试。
-- 推荐下一轮先从 **Contracts/schema chunk** 或 **Runtime Gateway + Application chunk** 开始拆，因为它们比
-  Desktop chunk 小，依赖方向也更靠底层；Desktop chunk 最大，适合等底层 chunk 稳住后再拆。
+- 推荐下一轮先从 **Runtime Gateway + Application chunk** 开始拆；**Contracts/schema chunk**
+  已在 `54c31f4` 收口。Desktop chunk 最大，适合等底层 chunk 稳住后再拆。
 
 ---
 
@@ -972,3 +989,16 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
 - 未继续叠加源码行为改动；更新 §4.4，把当前宽 diff 拆成 Desktop、Workspace Core、
   Runtime/Application、Contracts、Docs 五个建议 review chunk，并记录 6 个未跟踪文件。
 - 本轮目标是让下一轮能直接进入拆分提交/PR，而不是重复探索同一批文件。
+
+### 2026-05-21 15:16 CST
+
+- 开始时重新读取 handoff，并运行 `git status --short` / `git diff --name-only` 复核 dirty
+  worktree；当前仍是 broad internal-trial/docs 主线改动，且无 staged 文件。
+- 优先收口最小底层 **Contracts/schema chunk**：只涉及
+  `packages/shared_contracts/src/contracts/index.spec.ts` 与
+  `packages/shared_contracts/src/schemas/run-replay-source.spec.ts`。
+- 通过 shared contracts targeted tests、typecheck、lint、Prettier check 与 `git diff --check`。
+- 只 stage 这两个 shared contracts 测试文件，并提交 `54c31f4`
+  `test(contracts): 补齐回放契约覆盖 / cover replay contracts`。
+- 提交后当前 dirty worktree 降为 41 个 tracked files、6 个 untracked files；下一步建议继续拆
+  **Runtime Gateway + Application chunk**。
