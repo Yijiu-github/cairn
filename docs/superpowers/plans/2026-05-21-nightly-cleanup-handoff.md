@@ -1,7 +1,7 @@
 # Nightly Cleanup Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-21 16:43 CST
+> 最后更新：2026-05-21 16:57 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 基线提交：`56aa3894db1cd99d023c80595d087f5cbaf968a7`
 
@@ -66,8 +66,8 @@
 
 ### 4.4 建议拆分的 Review Chunk
 
-2026-05-21 16:43 CST 只读统计：当前未提交区包含 24 个已跟踪文件、5 个未跟踪文件，约
-3117 additions / 427 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
+2026-05-21 16:57 CST 只读统计：当前未提交区包含 16 个已跟踪文件、5 个未跟踪文件，约
+1018 additions / 287 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
 
 1. **Desktop bridge + renderer internal-trial chunk**：`apps/desktop/**`、`apps/desktop/README.md`。
    这是最大块，包含 IPC allowlist、sidecar bridge、artifact payload preview、renderer replay loader
@@ -93,6 +93,10 @@
   `apps/desktop/src/electron-vite-config.spec.ts` 已提交为 `aaea412`
   `fix(desktop): 修正 preload 构建输出 / fix preload build output`，包含 preload CJS output 与
   shared-contracts bundling guard，不再处于当前 dirty worktree。
+- **Desktop main/client/sidecar bridge chunk**：`apps/desktop/src/main/**` 已提交为 `09120c1`
+  `feat(desktop): 收紧 Core 桥接边界 / harden core bridge boundary`，包含 sidecar runtime/env/
+  diagnostic、client response schema 与 bounded artifact payload、main IPC allowlist / action guards /
+  redaction，不再处于当前 dirty worktree。
 
 当前未跟踪文件：
 
@@ -430,6 +434,18 @@
 - 已只 stage Desktop config 2 个文件，并提交 `aaea412`
   `fix(desktop): 修正 preload 构建输出 / fix preload build output`。
 
+2026-05-21 16:56 CST 追加验证：
+
+- `pnpm --filter @cairn/desktop test -- --run src/main/index.spec.ts src/main/workspace-core-client.spec.ts src/main/workspace-core-sidecar.spec.ts src/main/workspace-core-bootstrap.spec.ts`
+  通过：4 files / 55 tests。
+- `pnpm --filter @cairn/desktop typecheck` 通过。
+- `pnpm --filter @cairn/desktop lint` 通过。
+- `pnpm exec prettier --check apps/desktop/src/main/index.ts apps/desktop/src/main/index.spec.ts apps/desktop/src/main/workspace-core-client.ts apps/desktop/src/main/workspace-core-client.spec.ts apps/desktop/src/main/workspace-core-sidecar.ts apps/desktop/src/main/workspace-core-sidecar.spec.ts apps/desktop/src/main/workspace-core-bootstrap.ts apps/desktop/src/main/workspace-core-bootstrap.spec.ts`
+  通过。
+- `git diff --check` 通过。
+- 已只 stage Desktop main/client/sidecar/bootstrap 8 个文件，并提交 `09120c1`
+  `feat(desktop): 收紧 Core 桥接边界 / harden core bridge boundary`。
+
 ### 5.1 本轮验证结果摘要
 
 - `apps/desktop/src/renderer/src/run-replay-loader.ts` 已拆出并接入 `DesktopApp`，latest-request-wins 的 replay 载入逻辑现在有独立单测覆盖。
@@ -708,11 +724,11 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   的区别是否保持清楚。
 - 当前更适合进入“拆 review chunk / 准备短分支或 PR”的阶段；除非发现明确 blocker，下一轮不要继续
   在 Desktop bridge 上重复加安全边界测试。
-- 推荐下一轮继续拆 **Desktop main/client/sidecar bridge chunk**；**Contracts/schema chunk**
+- 推荐下一轮继续拆 **Desktop preload + renderer replay-loader chunk**；**Contracts/schema chunk**
   已在 `54c31f4` 收口，**Runtime Gateway + Application chunk** 已在 `7ae1498` 收口，
   **Workspace Core evidence/storage chunk** 已在 `b1a98ba` 收口，**Desktop config chunk** 已在
-  `aaea412` 收口。剩余 Desktop chunk 最大，拆时建议按 main/client/sidecar、preload、
-  renderer/replay-loader、preview-data 分子提交。
+  `aaea412` 收口，**Desktop main/client/sidecar bridge chunk** 已在 `09120c1` 收口。剩余建议按
+  preload、renderer/replay-loader、preview-data、docs/runbook 分子提交。
 
 ---
 
@@ -1089,3 +1105,16 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   `fix(desktop): 修正 preload 构建输出 / fix preload build output`。
 - 提交后 Desktop config 子块不再有 dirty diff；当前剩余 dirty worktree 降为 24 个 tracked files、
   5 个 untracked files。下一步建议拆 Desktop main/client/sidecar bridge 子块。
+
+### 2026-05-21 16:57 CST
+
+- 继续拆 Desktop 大块，选择 main/client/sidecar/bootstrap 子块，不带 preload、renderer、README 或 docs。
+- 审阅 8 个 `apps/desktop/src/main/**` 文件，确认范围覆盖 sidecar runtime/env/diagnostic、client
+  response schema 与 bounded artifact payload、main IPC allowlist / action guards / redaction。
+- 通过 Desktop main/client/sidecar/bootstrap targeted tests、Desktop typecheck、Desktop lint、
+  Prettier check 与 `git diff --check`。
+- 只 stage 这 8 个 Desktop main 文件，并提交 `09120c1`
+  `feat(desktop): 收紧 Core 桥接边界 / harden core bridge boundary`。
+- 提交后 `apps/desktop/src/main/**` 不再有 dirty diff；当前剩余 dirty worktree 降为 16 个 tracked
+  files、5 个 untracked files，主要集中在 preload、renderer/replay-loader、ui-preview 静态数据与
+  docs/runbook。
