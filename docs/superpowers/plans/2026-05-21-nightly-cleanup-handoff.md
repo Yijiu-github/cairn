@@ -1,7 +1,7 @@
 # Nightly Cleanup Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-21 15:39 CST
+> 最后更新：2026-05-21 16:43 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 基线提交：`56aa3894db1cd99d023c80595d087f5cbaf968a7`
 
@@ -66,8 +66,8 @@
 
 ### 4.4 建议拆分的 Review Chunk
 
-2026-05-21 15:39 CST 只读统计：当前未提交区包含 25 个已跟踪文件、6 个未跟踪文件，约
-3127 additions / 429 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
+2026-05-21 16:43 CST 只读统计：当前未提交区包含 24 个已跟踪文件、5 个未跟踪文件，约
+3117 additions / 427 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
 
 1. **Desktop bridge + renderer internal-trial chunk**：`apps/desktop/**`、`apps/desktop/README.md`。
    这是最大块，包含 IPC allowlist、sidecar bridge、artifact payload preview、renderer replay loader
@@ -89,10 +89,13 @@
   `fix(core): 收紧回放证据读取 / harden replay evidence reads`，包含 replay/evidence API、
   runtime gateway factory、local artifact store 与 SQLite repository 补测，不再处于当前 dirty
   worktree。
+- **Desktop config chunk**：`apps/desktop/electron.vite.config.ts` 与
+  `apps/desktop/src/electron-vite-config.spec.ts` 已提交为 `aaea412`
+  `fix(desktop): 修正 preload 构建输出 / fix preload build output`，包含 preload CJS output 与
+  shared-contracts bundling guard，不再处于当前 dirty worktree。
 
 当前未跟踪文件：
 
-- `apps/desktop/src/electron-vite-config.spec.ts`
 - `apps/desktop/src/renderer/src/run-replay-loader.ts`
 - `apps/desktop/src/renderer/src/run-replay-loader.spec.ts`
 - `docs/ops/internal-trial-runbook.md`
@@ -416,6 +419,17 @@
 - 检修结果：Workspace Core chunk 未发现需额外修复的 blocker；已只 stage 8 个 Workspace Core 文件，
   并提交 `b1a98ba` `fix(core): 收紧回放证据读取 / harden replay evidence reads`。
 
+2026-05-21 16:42 CST 追加验证：
+
+- `pnpm --filter @cairn/desktop test -- --run src/electron-vite-config.spec.ts` 通过：1 file / 2 tests。
+- `pnpm --filter @cairn/desktop typecheck` 通过。
+- `pnpm --filter @cairn/desktop lint` 通过。
+- `pnpm exec prettier --check apps/desktop/electron.vite.config.ts apps/desktop/src/electron-vite-config.spec.ts`
+  通过。
+- `git diff --check` 通过。
+- 已只 stage Desktop config 2 个文件，并提交 `aaea412`
+  `fix(desktop): 修正 preload 构建输出 / fix preload build output`。
+
 ### 5.1 本轮验证结果摘要
 
 - `apps/desktop/src/renderer/src/run-replay-loader.ts` 已拆出并接入 `DesktopApp`，latest-request-wins 的 replay 载入逻辑现在有独立单测覆盖。
@@ -694,10 +708,11 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   的区别是否保持清楚。
 - 当前更适合进入“拆 review chunk / 准备短分支或 PR”的阶段；除非发现明确 blocker，下一轮不要继续
   在 Desktop bridge 上重复加安全边界测试。
-- 推荐下一轮先从 **Desktop bridge + renderer internal-trial chunk** 开始拆；**Contracts/schema chunk**
+- 推荐下一轮继续拆 **Desktop main/client/sidecar bridge chunk**；**Contracts/schema chunk**
   已在 `54c31f4` 收口，**Runtime Gateway + Application chunk** 已在 `7ae1498` 收口，
-  **Workspace Core evidence/storage chunk** 已在 `b1a98ba` 收口。Desktop chunk 最大，拆时建议再按
-  main/preload/renderer/preview-data 分子提交。
+  **Workspace Core evidence/storage chunk** 已在 `b1a98ba` 收口，**Desktop config chunk** 已在
+  `aaea412` 收口。剩余 Desktop chunk 最大，拆时建议按 main/client/sidecar、preload、
+  renderer/replay-loader、preview-data 分子提交。
 
 ---
 
@@ -1062,3 +1077,15 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   `fix(core): 收紧回放证据读取 / harden replay evidence reads`。
 - 提交后 `apps/workspace-core/**` 不再有 dirty diff；当前剩余 dirty worktree 降为 25 个 tracked
   files、6 个 untracked files，主要集中在 Desktop、ui-preview 静态数据与文档/runbook。
+
+### 2026-05-21 16:43 CST
+
+- 开始拆最大的 Desktop chunk，但先选最小独立子块：Electron Vite config。
+- 审阅 `apps/desktop/electron.vite.config.ts` 与新测试
+  `apps/desktop/src/electron-vite-config.spec.ts`，确认范围只覆盖 shared-contracts bundling 与
+  sandboxed Electron preload 的 CJS 输出。
+- 通过 Desktop config spec、Desktop typecheck、Desktop lint、Prettier check 与 `git diff --check`。
+- 只 stage 这 2 个 Desktop config 文件，并提交 `aaea412`
+  `fix(desktop): 修正 preload 构建输出 / fix preload build output`。
+- 提交后 Desktop config 子块不再有 dirty diff；当前剩余 dirty worktree 降为 24 个 tracked files、
+  5 个 untracked files。下一步建议拆 Desktop main/client/sidecar bridge 子块。
