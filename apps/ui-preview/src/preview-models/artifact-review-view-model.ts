@@ -47,7 +47,7 @@ export const artifactReviewViewModel: ArtifactReviewViewModel = {
   artifact: primaryArtifact,
   runId: 'run_01JDEMOHOME0000000000001',
   hero: {
-    title: 'Run Detail preview page',
+    title: 'Artifact Review preview page',
     summary:
       '审阅页的目标是回答三个问题：产物从哪来、是否可信、批准后会发生什么。这里刻意把本地路径和导出风险放在第一屏。',
     badges: [

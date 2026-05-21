@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 04:06 CST
+> 最后更新：2026-05-22 04:37 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 04:06 CST 复核：
+2026-05-22 04:37 CST 复核：
 
-- `git status --short`：本轮 Desktop renderer payload loader、STATUS、CHANGELOG 与 handoff 待提交。
-- `git diff --name-only`：本轮只覆盖 Desktop renderer payload loader 与直接文档同步。
+- `git status --short`：本轮 `ui-preview` artifact review static data、STATUS、CHANGELOG 与 handoff 待提交。
+- `git diff --name-only`：本轮只覆盖 `ui-preview` artifact review static data 与直接文档同步。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -131,6 +131,20 @@
 - `pnpm run docs:lint`
 - `git diff --check`
 
+2026-05-22 04:37 CST UI preview artifact review static data 验证通过：
+
+- 红灯：新增 `apps/ui-preview/src/preview-models/artifact-review-view-model.spec.ts` 后，
+  `pnpm exec vitest run apps/ui-preview/src/preview-models/artifact-review-view-model.spec.ts`
+  因 hero title 仍残留 `Run Detail preview page` 失败。
+- 绿灯：将 `artifactReviewViewModel.hero.title` 改为 `Artifact Review preview page` 后，
+  同一 spec 通过。
+- `pnpm --filter @cairn/ui-preview typecheck`
+- `pnpm --filter @cairn/ui-preview lint`
+- `pnpm exec prettier --check apps/ui-preview/src/preview-models/artifact-review-view-model.ts apps/ui-preview/src/preview-models/artifact-review-view-model.spec.ts CHANGELOG.md docs/STATUS.md`
+- `pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md`
+- `pnpm run docs:lint`
+- `git diff --check`
+
 ---
 
 ## 6. 最新完成
@@ -174,6 +188,14 @@
 - 新增 renderer targeted tests 覆盖“旧请求先返回不写 payload/不清 loading”与“旧请求失败不覆盖最新错误态”。
 - 同步 `docs/STATUS.md` 的 Desktop spec 数量与覆盖重点，并在 `CHANGELOG.md` 记录修复项。
 
+本轮提交：`cdb372c` `fix(desktop): 防止 payload 乱序污染 / guard payload races`。
+
+2026-05-22 04:37 CST 本轮完成：
+
+- 收口 `apps/ui-preview` 的 artifact review 静态数据，修正 hero title 残留的 Run Detail 文案。
+- 新增 artifact review static data spec，确保页面身份与静态模型一致。
+- 同步 `docs/STATUS.md` 的 `apps/ui-preview` 覆盖数量与 `CHANGELOG.md` 的静态数据修复项。
+
 本轮提交：待提交。
 
 ---
@@ -186,8 +208,9 @@
    2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
 2. **Desktop renderer 主线小补强**：payload loader 已补 request sequence guard；下一轮优先补
    operator note/action error-state 或 replay-loader 空态测试，不要重复做同一 payload race。
-3. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
-4. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。
+3. **UI preview 静态数据收口**：本轮已修正 artifact review hero title；下一轮可继续找其它残留旧口径，但不要大改布局或样式。
+4. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
+5. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。
 
 ---
 
@@ -198,6 +221,7 @@
   Codex sidecar 的观察路径。
 - Renderer payload loader 仅防止同一 renderer 会话内的 payload 请求乱序污染状态；完整 Artifact
   workspace、导出、retention 与本地路径 reveal 仍不在本轮范围。
+- `ui-preview` 静态数据只修正了 artifact review hero title 残留；没有动到 layout、CSS 或导航结构。
 - 真实 Codex CLI 行为可能随本机版本变化；默认测试仍必须依赖 mock / fixture。
 - Accepted ADR 不直接修改；Codex transport refinement 优先使用 Proposed ADR-0018 或新 ADR。
 - 文档中凡提到 `apps/web`、installer、signing、notarization、公测/公开 alpha，都要明确为未完成或非本轮目标。

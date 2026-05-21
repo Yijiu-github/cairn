@@ -1,7 +1,7 @@
 # 项目状态 / Project Status
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-21
+> 最后更新：2026-05-22
 > 目的：给人类与多 agent 协作提供当前事实基线，减少“我以为已经有 Desktop/Web”的误判。
 > 协作口径：自 2026-05-20 起，Cairn 当前按产品裁剪人 + Codex 两方推进；旧的白霓 / 海棠固定角色分工不再作为项目计划依据。
 
@@ -121,7 +121,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 | `packages/runtime_gateway`  | 4                | mock adapter、Codex protocol、Codex process wrapper、Codex RuntimeAdapter                                                                                                            |
 | `packages/application`      | 3                | orchestration、planning output 与 code context service                                                                                                                               |
 | `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                                                                                                                              |
-| `apps/ui-preview`           | 0                | 当前以 typecheck / lint / production build 作为验证门禁                                                                                                                              |
+| `apps/ui-preview`           | 1                | preview model / static data smoke，当前以 typecheck / lint / production build 作为验证门禁                                                                                           |
 | `apps/desktop`              | 7                | main module 非阻塞加载、bootstrap 顺序、sidecar manager、Workspace Core internal-trial client、renderer replay/payload loaders、Electron Vite config；另以 typecheck/lint/build 验证 |
 | `apps/workspace-core`       | 6                | Fastify app、config、SQLite repository、runtime gateway factory、local artifact store、local code index scanner                                                                      |
 

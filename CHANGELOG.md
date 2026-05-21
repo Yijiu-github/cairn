@@ -102,6 +102,8 @@
 
 ### Fixed
 
+- **UI preview artifact review**：`artifactReviewViewModel` 的 hero 标题改为 Artifact Review，
+  并补充静态数据 smoke，避免继续沿用 Run Detail 残留口径。
 - **Desktop artifact payload preview**：renderer 端 payload 加载增加请求序号保护，避免旧的 payload
   请求在乱序返回时覆盖最新加载状态或错误提示。
 - `.npmrc`：默认 `node-linker` 改为 `hoisted`，避免 Windows 上 `pnpm install` 出现 `ERR_PNPM_ENOENT`（`@ts-rest/core` 依赖链内嵌套 `@types/node` 重命名失败）
