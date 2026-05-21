@@ -1,7 +1,7 @@
 # Nightly Cleanup Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-21 15:16 CST
+> 最后更新：2026-05-21 15:29 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 基线提交：`56aa3894db1cd99d023c80595d087f5cbaf968a7`
 
@@ -45,8 +45,6 @@
 
 - `apps/desktop/**`：Desktop internal-trial IPC/preload/client/renderer/sidecar bridge 与 Electron build 配置。
 - `apps/workspace-core/**`：runtime gateway factory、service replay/evidence/API、SQLite repository 与 artifact store 相关补测。
-- `packages/application/**`：orchestration runtime event / evidence 状态推进相关整理。
-- `packages/runtime_gateway/**`：Codex process/adapter/error mapping 与 tests。
 - `docs/ops/internal-trial-runbook.md`：内部试用运行手册。
 - `docs/superpowers/specs/2026-05-20-internal-trial-core-first-design.md`：内部试用设计拆分。
 - `docs/superpowers/plans/2026-05-20-internal-trial-core-first-implementation-plan.md`：内部试用实现计划。
@@ -69,17 +67,15 @@
 
 ### 4.4 建议拆分的 Review Chunk
 
-2026-05-21 15:16 CST 只读统计：当前未提交区包含 41 个已跟踪文件、6 个未跟踪文件，约
-3872 additions / 493 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
+2026-05-21 15:29 CST 只读统计：当前未提交区包含 33 个已跟踪文件、6 个未跟踪文件，约
+3446 additions / 456 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
 
 1. **Desktop bridge + renderer internal-trial chunk**：`apps/desktop/**`、`apps/desktop/README.md`。
    这是最大块，包含 IPC allowlist、sidecar bridge、artifact payload preview、renderer replay loader
    与 Electron Vite config 测试；拆 PR 时可再按 main/preload/renderer 分成子提交。
 2. **Workspace Core evidence/storage chunk**：`apps/workspace-core/**`。包含 replay/evidence API、
    runtime gateway factory、local artifact store 与 SQLite repository 补测。
-3. **Runtime Gateway + Application chunk**：`packages/runtime_gateway/**` 与 `packages/application/**`。
-   包含 Codex adapter/process/error mapping、runtime event / evidence 状态推进。
-4. **Docs/runbook chunk**：`README.md`、`CHANGELOG.md`、`docs/STATUS.md`、`docs/ops/internal-trial-runbook.md`、
+3. **Docs/runbook chunk**：`README.md`、`CHANGELOG.md`、`docs/STATUS.md`、`docs/ops/internal-trial-runbook.md`、
    `docs/engineering/**`、`docs/contracts/**`、`docs/design/**`、`docs/adr/**` 与 internal-trial plan/spec。
    该 chunk 应明确：Desktop sidecar 默认 mock、真实 Codex 需 env opt-in、`apps/web` 尚未创建。
 
@@ -88,6 +84,10 @@
 - **Contracts/schema chunk**：`packages/shared_contracts/**` 已提交为 `54c31f4`
   `test(contracts): 补齐回放契约覆盖 / cover replay contracts`，包含 contracts 与 replay-source
   schema tests，不再处于当前 dirty worktree。
+- **Runtime Gateway + Application chunk**：`packages/runtime_gateway/**` 与 `packages/application/**`
+  已提交为 `7ae1498` `fix(runtime): 收紧 Codex 终态证据 / harden codex terminal evidence`，
+  包含 Codex adapter/process/error mapping、runtime terminal event 与 evidence 状态推进，不再处于当前
+  dirty worktree。
 
 当前未跟踪文件：
 
@@ -388,6 +388,21 @@
   `packages/shared_contracts/src/schemas/run-replay-source.spec.ts`，并提交 `54c31f4`
   `test(contracts): 补齐回放契约覆盖 / cover replay contracts`。
 
+2026-05-21 15:29 CST 追加验证：
+
+- `pnpm --filter @cairn/runtime-gateway test -- codex-process.spec.ts codex-adapter.spec.ts codex-protocol.spec.ts`
+  通过：3 files / 30 tests。
+- `pnpm --filter @cairn/application test -- orchestration-run-service.spec.ts` 通过：1 file / 26 tests。
+- `pnpm --filter @cairn/runtime-gateway typecheck` 通过。
+- `pnpm --filter @cairn/application typecheck` 通过。
+- `pnpm --filter @cairn/runtime-gateway lint` 通过。
+- `pnpm --filter @cairn/application lint` 通过。
+- `pnpm exec prettier --check packages/application/src/orchestration/orchestration-run-service.ts packages/application/src/orchestration/orchestration-run-service.spec.ts packages/runtime_gateway/src/adapters/codex/codex-adapter.ts packages/runtime_gateway/src/adapters/codex/codex-adapter.spec.ts packages/runtime_gateway/src/adapters/codex/codex-errors.ts packages/runtime_gateway/src/adapters/codex/codex-process.ts packages/runtime_gateway/src/adapters/codex/codex-process.spec.ts packages/runtime_gateway/src/adapters/codex/codex-protocol.spec.ts`
+  通过。
+- `git diff --check` 通过。
+- 已只 stage runtime/application 8 个文件，并提交 `7ae1498`
+  `fix(runtime): 收紧 Codex 终态证据 / harden codex terminal evidence`。
+
 ### 5.1 本轮验证结果摘要
 
 - `apps/desktop/src/renderer/src/run-replay-loader.ts` 已拆出并接入 `DesktopApp`，latest-request-wins 的 replay 载入逻辑现在有独立单测覆盖。
@@ -666,8 +681,9 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   的区别是否保持清楚。
 - 当前更适合进入“拆 review chunk / 准备短分支或 PR”的阶段；除非发现明确 blocker，下一轮不要继续
   在 Desktop bridge 上重复加安全边界测试。
-- 推荐下一轮先从 **Runtime Gateway + Application chunk** 开始拆；**Contracts/schema chunk**
-  已在 `54c31f4` 收口。Desktop chunk 最大，适合等底层 chunk 稳住后再拆。
+- 推荐下一轮先从 **Workspace Core evidence/storage chunk** 开始拆；**Contracts/schema chunk**
+  已在 `54c31f4` 收口，**Runtime Gateway + Application chunk** 已在 `7ae1498` 收口。Desktop
+  chunk 最大，适合等 Workspace Core chunk 稳住后再拆。
 
 ---
 
@@ -1002,3 +1018,19 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   `test(contracts): 补齐回放契约覆盖 / cover replay contracts`。
 - 提交后当前 dirty worktree 降为 41 个 tracked files、6 个 untracked files；下一步建议继续拆
   **Runtime Gateway + Application chunk**。
+
+### 2026-05-21 15:29 CST
+
+- 继续按 handoff 推荐拆第二个底层 chunk；开始时重新读取 handoff、AGENTS 必读上下文，并运行
+  `git status --short` / `git diff --name-only` 复核 dirty worktree；当前无 staged 文件。
+- 审阅 Runtime/Application diff，确认范围只包含 8 个 tracked 文件：
+  `packages/application/src/orchestration/orchestration-run-service.{ts,spec.ts}` 与
+  `packages/runtime_gateway/src/adapters/codex/codex-{adapter,errors,process,protocol}.ts`
+  相关测试。
+- 通过 runtime gateway targeted tests、application orchestration test、两个包的 typecheck / lint、
+  Prettier check 与 `git diff --check`。
+- 只 stage 这 8 个 Runtime/Application 文件，并提交 `7ae1498`
+  `fix(runtime): 收紧 Codex 终态证据 / harden codex terminal evidence`。
+- 提交后 `packages/application/**` 与 `packages/runtime_gateway/**` 不再有 dirty diff；当前剩余
+  dirty worktree 降为 33 个 tracked files、6 个 untracked files，建议下一步拆
+  **Workspace Core evidence/storage chunk**。
