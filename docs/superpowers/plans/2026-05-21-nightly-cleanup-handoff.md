@@ -258,7 +258,7 @@
 - metadata-only artifact 现在在 payload 区域说明“无 bounded payload ref 且路径仍隐藏”，避免被误读成 UI 故障。
 - 同步 `docs/STATUS.md` 的 Desktop spec 数量与 `CHANGELOG.md` 修复项。
 
-本轮提交：待提交。
+本轮提交：`643c8c8` `fix(desktop): 明确回放空态文案 / clarify replay empty copy`。
 
 ---
 
