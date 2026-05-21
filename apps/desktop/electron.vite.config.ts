@@ -7,10 +7,18 @@ const repoRelative = (path: string) => fileURLToPath(new URL(`../../${path}`, im
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()],
+    plugins: [externalizeDepsPlugin({ exclude: ['@cairn/shared-contracts'] })],
   },
   preload: {
-    plugins: [externalizeDepsPlugin()],
+    build: {
+      rollupOptions: {
+        output: {
+          entryFileNames: 'index.js',
+          format: 'cjs',
+        },
+      },
+    },
+    plugins: [externalizeDepsPlugin({ exclude: ['@cairn/shared-contracts'] })],
   },
   renderer: {
     esbuild: {
