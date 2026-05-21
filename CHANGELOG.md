@@ -102,6 +102,8 @@
 
 ### Fixed
 
+- **Desktop Run Detail copy**：空 replay / 空 task / 空 artifact / metadata-only artifact 文案改为明确的
+  read-only evidence 口径，避免把刷新误解为重新执行或把 metadata-only 误解为 UI 故障。
 - **Desktop operator actions**：renderer 端 operator action 增加请求序号保护，避免旧的 note /
   cancel / retry / rerun 请求在乱序返回时覆盖最新动作的 loading、错误或反馈状态。
 - **Desktop replay loader**：renderer 端 replay evidence 加载会在空白 run id 时停在本地错误态，

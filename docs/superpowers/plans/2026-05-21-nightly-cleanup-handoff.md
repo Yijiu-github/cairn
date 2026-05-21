@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 05:43 CST
+> 最后更新：2026-05-22 06:03 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 05:40 CST 复核：
+2026-05-22 06:03 CST 复核：
 
-- `git status --short`：本轮改动为 Desktop renderer operator action runner、对应 spec、DesktopApp 接入、STATUS、CHANGELOG 与 handoff。
-- `git diff --name-only`：本轮只覆盖 `apps/desktop/src/renderer/src/operator-action-runner.ts`、`apps/desktop/src/renderer/src/operator-action-runner.spec.ts`、`apps/desktop/src/renderer/src/desktop-app.tsx`、`docs/STATUS.md`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- `git status --short`：本轮改动为 Desktop Run Detail copy helper、对应 spec、DesktopApp 接入、STATUS、CHANGELOG 与 handoff。
+- `git diff --name-only`：本轮只覆盖 `apps/desktop/src/renderer/src/run-detail-copy.ts`、`apps/desktop/src/renderer/src/run-detail-copy.spec.ts`、`apps/desktop/src/renderer/src/desktop-app.tsx`、`docs/STATUS.md`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -163,6 +163,16 @@
   `pnpm --filter @cairn/desktop test -- --run src/renderer/src/operator-action-runner.spec.ts src/renderer/src/run-replay-loader.spec.ts src/renderer/src/artifact-payload-loader.spec.ts`
   通过，3 个文件 8 个测试。
 
+2026-05-22 06:03 CST Desktop Run Detail copy 验证：
+
+- 红灯：新增 `apps/desktop/src/renderer/src/run-detail-copy.spec.ts` 后，
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/run-detail-copy.spec.ts`
+  因 `run-detail-copy` helper 尚不存在失败。
+- 绿灯：接入 `run-detail-copy.ts` 并让 Run Detail 的空 replay / 空 task / 空 artifact /
+  metadata-only artifact 文案使用明确的 read-only evidence 口径后，
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/run-detail-copy.spec.ts src/renderer/src/operator-action-runner.spec.ts src/renderer/src/run-replay-loader.spec.ts src/renderer/src/artifact-payload-loader.spec.ts`
+  通过，4 个文件 11 个测试。
+
 ---
 
 ## 6. 最新完成
@@ -241,6 +251,15 @@
 
 本轮提交：`5f23e9d` `fix(desktop): 防止操作动作乱序污染 / guard operator action races`。
 
+2026-05-22 06:03 CST 本轮完成：
+
+- 新增 Desktop Run Detail copy helper，锁住空 replay、空 task、空 artifact 与 metadata-only artifact 的 internal-trial 文案口径。
+- `DesktopApp` 改用 helper 文案，明确 Refresh Evidence 是只读读取 replay source，不会 rerun，不 reveal local files。
+- metadata-only artifact 现在在 payload 区域说明“无 bounded payload ref 且路径仍隐藏”，避免被误读成 UI 故障。
+- 同步 `docs/STATUS.md` 的 Desktop spec 数量与 `CHANGELOG.md` 修复项。
+
+本轮提交：待提交。
+
 ---
 
 ---
@@ -251,7 +270,7 @@
 
 1. **真实 Codex 手动 smoke 复核**：按 runbook 再跑一条短任务，记录当前 Codex CLI / Node / OS 证据，只使用合成 prompt。
    2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
-2. **Desktop renderer 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard 与 operator action sequence guard 已补；下一轮优先补 Run Detail 空 evidence 文案或 artifact metadata-only 说明，不要重复做同一 guard。
+2. **Desktop renderer 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard、operator action sequence guard 与 Run Detail 空 evidence / metadata-only 文案已补；下一轮优先做 Desktop preload/main allowlist 与 renderer 文案的一致性复核，或继续找静态数据旧口径，不要重复做同一 guard/copy。
 3. **UI preview 静态数据收口**：本轮已修正 artifact review hero title；下一轮可继续找其它残留旧口径，但不要大改布局或样式。
 4. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
 5. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。
@@ -263,7 +282,7 @@
 - 自动化 e2e 仅覆盖默认 mock sidecar window-level smoke；当前已有 Codex-backed 手动成功证据，但不能宣称真实 Codex 自动化端到端完成。
 - 本轮真实 Codex 复核仅覆盖外部手动启动 Workspace Core API smoke；未覆盖 Desktop 自拉起
   Codex sidecar 的观察路径。
-- Renderer payload/replay/operator action guard 只覆盖同一 renderer 会话内的请求乱序与空态防护；完整 Artifact
+- Renderer payload/replay/operator action guard 与 Run Detail copy helper 只覆盖同一 renderer 会话内的请求乱序、空态防护和 trial 文案口径；完整 Artifact
   workspace、导出、retention、本地路径 reveal、完整 operator cockpit 与完整 Run Detail 数据面仍不在本轮范围。
 - `ui-preview` 静态数据只修正了 artifact review hero title 残留；没有动到 layout、CSS 或导航结构。
 - 真实 Codex CLI 行为可能随本机版本变化；默认测试仍必须依赖 mock / fixture。

@@ -25,6 +25,12 @@ import {
 import { loadArtifactPayload as loadArtifactPayloadRequest } from './artifact-payload-loader';
 import { desktopShellModel } from './desktop-model';
 import { runOperatorAction as runOperatorActionRequest } from './operator-action-runner';
+import {
+  artifactEmptyCopy,
+  metadataOnlyArtifactCopy,
+  replayUnavailableCopy,
+  taskTreeEmptyCopy,
+} from './run-detail-copy';
 import { loadRunReplaySource as loadRunReplaySourceRequest } from './run-replay-loader';
 
 import type { DesktopView } from './desktop-model';
@@ -662,6 +668,10 @@ function RunDetailView({
   const canRetryTask = retryableTaskId !== undefined && replaySource !== undefined && !terminalRun;
   const canRerun = replaySource !== undefined && terminalRun;
   const canCancel = replaySource !== undefined && !terminalRun;
+  const replayUnavailable = replayUnavailableCopy({
+    loading: replayLoading,
+    runId: observedRunId,
+  });
 
   return (
     <div className="content-grid">
@@ -695,19 +705,13 @@ function RunDetailView({
         {run === undefined ? (
           <Card>
             <CardHeader>
-              <CardTitle>Replay evidence unavailable</CardTitle>
-              <CardDescription>
-                An observed run id exists, but replay evidence is not loaded in the renderer yet.
-              </CardDescription>
+              <CardTitle>{replayUnavailable.title}</CardTitle>
+              <CardDescription>{replayUnavailable.description}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="empty-state-panel">
                 <span aria-hidden="true">{replayLoading ? '…' : '!'}</span>
-                <p>
-                  {replayLoading
-                    ? `Refreshing replay evidence for ${observedRunId}.`
-                    : `Use Refresh Evidence to load replay data for ${observedRunId}.`}
-                </p>
+                <p>{replayUnavailable.body}</p>
               </div>
             </CardContent>
           </Card>
@@ -723,13 +727,15 @@ function RunDetailView({
         {taskItems === undefined ? (
           <Card>
             <CardHeader>
-              <CardTitle>Task tree</CardTitle>
-              <CardDescription>Task detail appears after replay evidence loads.</CardDescription>
+              <CardTitle>{taskTreeEmptyCopy.title}</CardTitle>
+              <CardDescription>
+                Task detail is derived from read-only replay evidence.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="empty-state-panel compact">
                 <span aria-hidden="true">⋯</span>
-                <p>No real task tree available yet.</p>
+                <p>{taskTreeEmptyCopy.body}</p>
               </div>
             </CardContent>
           </Card>
@@ -959,7 +965,7 @@ function ArtifactSummaryCard({
         {replaySource.artifacts.length === 0 ? (
           <div className="empty-state-panel compact">
             <span aria-hidden="true">∅</span>
-            <p>No artifacts recorded for this run.</p>
+            <p>{artifactEmptyCopy.body}</p>
           </div>
         ) : (
           <div className="artifact-summary-list">
@@ -978,7 +984,9 @@ function ArtifactSummaryCard({
                     sensitivity={artifact.sensitivity}
                     summary={toArtifactSummary(artifact)}
                     title={`${artifact.artifactRole} · ${artifact.kind}`}
-                    verification={payloadAvailable ? 'payload available' : 'metadata only'}
+                    verification={
+                      payloadAvailable ? 'payload available' : metadataOnlyArtifactCopy.verification
+                    }
                   />
                   {payloadAvailable ? (
                     <div className="artifact-payload-preview">
@@ -1007,7 +1015,11 @@ function ArtifactSummaryCard({
                         <pre>{payload.text}</pre>
                       )}
                     </div>
-                  ) : undefined}
+                  ) : (
+                    <div className="artifact-payload-preview">
+                      <p>{metadataOnlyArtifactCopy.body}</p>
+                    </div>
+                  )}
                 </div>
               );
             })}
