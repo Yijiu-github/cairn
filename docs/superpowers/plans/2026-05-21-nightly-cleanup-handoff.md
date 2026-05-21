@@ -1,7 +1,7 @@
 # Nightly Cleanup Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-21 14:38 CST
+> 最后更新：2026-05-21 15:05 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 基线提交：`56aa3894db1cd99d023c80595d087f5cbaf968a7`
 
@@ -67,6 +67,32 @@
 - 暂无明确无关改动；后续轮次仍需用 `git diff --name-only` 复核。
 - 历史文档中可能仍有 `runMockSmoke` 作为历史记录存在；不要机械替换 changelog 或历史 plan/spec 中的上下文，优先只清理当前状态文档和当前代码路径。
 - `apps/desktop/src/renderer/src/run-replay-loader.ts` 是本轮新增的可测 helper；不把它拆回组件内。
+
+### 4.4 建议拆分的 Review Chunk
+
+2026-05-21 15:05 CST 只读统计：当前未提交区包含 43 个已跟踪文件、6 个未跟踪文件，约
+3924 additions / 493 deletions。建议下一步不要继续在同一个宽 diff 上叠功能，而是按下面顺序拆：
+
+1. **Desktop bridge + renderer internal-trial chunk**：`apps/desktop/**`、`apps/desktop/README.md`。
+   这是最大块，包含 IPC allowlist、sidecar bridge、artifact payload preview、renderer replay loader
+   与 Electron Vite config 测试；拆 PR 时可再按 main/preload/renderer 分成子提交。
+2. **Workspace Core evidence/storage chunk**：`apps/workspace-core/**`。包含 replay/evidence API、
+   runtime gateway factory、local artifact store 与 SQLite repository 补测。
+3. **Runtime Gateway + Application chunk**：`packages/runtime_gateway/**` 与 `packages/application/**`。
+   包含 Codex adapter/process/error mapping、runtime event / evidence 状态推进。
+4. **Contracts/schema chunk**：`packages/shared_contracts/**`。包含 contracts 与 replay-source schema tests。
+5. **Docs/runbook chunk**：`README.md`、`CHANGELOG.md`、`docs/STATUS.md`、`docs/ops/internal-trial-runbook.md`、
+   `docs/engineering/**`、`docs/contracts/**`、`docs/design/**`、`docs/adr/**` 与 internal-trial plan/spec。
+   该 chunk 应明确：Desktop sidecar 默认 mock、真实 Codex 需 env opt-in、`apps/web` 尚未创建。
+
+当前未跟踪文件：
+
+- `apps/desktop/src/electron-vite-config.spec.ts`
+- `apps/desktop/src/renderer/src/run-replay-loader.ts`
+- `apps/desktop/src/renderer/src/run-replay-loader.spec.ts`
+- `docs/ops/internal-trial-runbook.md`
+- `docs/superpowers/plans/2026-05-20-internal-trial-core-first-implementation-plan.md`
+- `docs/superpowers/specs/2026-05-20-internal-trial-core-first-design.md`
 
 ---
 
@@ -334,6 +360,17 @@
   - 命令 exit 1，表示目标范围无命中。
 - `git diff --check`
 
+2026-05-21 15:05 CST 追加验证：
+
+- `git status --short`
+- `git diff --name-only`
+- `git diff --stat`
+  - 当前未提交区约 43 个 tracked files、3924 additions / 493 deletions。
+- `git diff --numstat`
+- `git ls-files --others --exclude-standard`
+  - 当前未跟踪文件 6 个，均已在 §4.4 记录。
+- 本轮只读审计和 handoff 更新后，仍需执行 handoff 文档格式校验、markdownlint、`git diff --check`。
+
 ### 5.1 本轮验证结果摘要
 
 - `apps/desktop/src/renderer/src/run-replay-loader.ts` 已拆出并接入 `DesktopApp`，latest-request-wins 的 replay 载入逻辑现在有独立单测覆盖。
@@ -545,6 +582,8 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
 ## 8. 当前剩余事项
 
 - 仍有大量历史/主线改动处于 dirty worktree，需要后续按短分支或 PR 继续收口。
+- 当前宽 diff 已经进入更适合拆 review chunk 的阶段；除非发现明确 blocker，下一轮优先按 §4.4
+  拆分提交/PR，而不是继续在 Desktop bridge 或 docs 上追加零散小改。
 - Desktop artifact payload 最小只读查看能力已补；后续只做小 polish、手动 smoke 截图/记录或更完整
   Artifact workspace 设计，不要在当前 internal trial 里扩成路径 reveal / 导出 / 文件系统操作。
 - 真实 Workspace Core + Codex API smoke 已有一条成功手动证据，且 Desktop window-level 观察也已
@@ -610,6 +649,8 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
   的区别是否保持清楚。
 - 当前更适合进入“拆 review chunk / 准备短分支或 PR”的阶段；除非发现明确 blocker，下一轮不要继续
   在 Desktop bridge 上重复加安全边界测试。
+- 推荐下一轮先从 **Contracts/schema chunk** 或 **Runtime Gateway + Application chunk** 开始拆，因为它们比
+  Desktop chunk 小，依赖方向也更靠底层；Desktop chunk 最大，适合等底层 chunk 稳住后再拆。
 
 ---
 
@@ -920,3 +961,14 @@ rg -n "runMockSmoke|run-mock-smoke|workspaceCore\\.runMockSmoke|Run Mock Smoke|b
 - 通过 `pnpm run check`、`pnpm test`、`pnpm --filter @cairn/ui-preview build`、
   `pnpm --filter @cairn/desktop build`、stale-current-state scan 与 `git diff --check`。
 - 更新本 handoff，记录全量 gate 已恢复为新鲜通过状态；本轮无源码或正式产品文档改动。
+
+### 2026-05-21 15:05 CST
+
+- 开始时重新读取 handoff、AGENTS 必读上下文，并运行 `git status --short` /
+  `git diff --name-only` 复核 dirty worktree；当前仍是 broad internal-trial/docs 主线改动，
+  未发现需要停下确认的疑似无关改动。
+- 本轮只读统计 dirty worktree：43 个已跟踪文件、6 个未跟踪文件，约 3924 additions /
+  493 deletions。
+- 未继续叠加源码行为改动；更新 §4.4，把当前宽 diff 拆成 Desktop、Workspace Core、
+  Runtime/Application、Contracts、Docs 五个建议 review chunk，并记录 6 个未跟踪文件。
+- 本轮目标是让下一轮能直接进入拆分提交/PR，而不是重复探索同一批文件。
