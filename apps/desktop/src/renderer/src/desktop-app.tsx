@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   AgentStatusStrip,
@@ -13,6 +13,7 @@ import {
   CardTitle,
   EvidenceTimeline,
   HandoffQueueItem,
+  Input,
   InlineAlert,
   MetadataList,
   RunCard,
@@ -22,9 +23,10 @@ import {
 } from '@cairn/ui';
 
 import { desktopShellModel } from './desktop-model';
+import { loadRunReplaySource as loadRunReplaySourceRequest } from './run-replay-loader';
 
 import type { DesktopView } from './desktop-model';
-import type { RunReplaySource } from '@cairn/shared-contracts';
+import type { ArtifactPayloadResponse, RunReplaySource } from '@cairn/shared-contracts';
 import type {
   CairnEvidenceTone,
   CairnRunStatus,
@@ -40,16 +42,28 @@ export function DesktopApp() {
     useState<
       Awaited<ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['getStatus']>>
     >();
-  const [smokeResult, setSmokeResult] =
+  const [trialResult, setTrialResult] =
     useState<
-      Awaited<ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['runMockSmoke']>>
+      Awaited<
+        ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['runInternalTrial']>
+      >
     >();
-  const [observedRunId, setObservedRunId] = useState<string>();
+  const [observedRunId, setObservedRunId] = useState<string | undefined>(() => readObservedRunId());
   const [runReplaySource, setRunReplaySource] = useState<RunReplaySource>();
   const [runReplayLoading, setRunReplayLoading] = useState(false);
   const [runReplayError, setRunReplayError] = useState<string>();
+  const [artifactPayloads, setArtifactPayloads] = useState<
+    Readonly<Record<string, ArtifactPayloadResponse>>
+  >({});
+  const [artifactPayloadLoadingId, setArtifactPayloadLoadingId] = useState<string>();
+  const [artifactPayloadError, setArtifactPayloadError] = useState<string>();
+  const [operatorActionBusy, setOperatorActionBusy] = useState<string>();
+  const [operatorActionError, setOperatorActionError] = useState<string>();
+  const [operatorActionFeedback, setOperatorActionFeedback] = useState<string>();
+  const [manualRunId, setManualRunId] = useState<string>(() => readObservedRunId() ?? '');
   const [workspaceCoreBusy, setWorkspaceCoreBusy] = useState(false);
   const [workspaceCoreError, setWorkspaceCoreError] = useState<string>();
+  const runReplayLoadState = useRef({ current: 0 });
   const bridgeLabel = useMemo(() => window.cairnDesktop?.app.name ?? 'Cairn Desktop', []);
 
   useEffect(() => {
@@ -57,8 +71,25 @@ export function DesktopApp() {
   }, [activeView]);
 
   useEffect(() => {
+    if (observedRunId === undefined) {
+      window.localStorage.removeItem('cairn.desktop.observedRunId');
+      return;
+    }
+
+    window.localStorage.setItem('cairn.desktop.observedRunId', observedRunId);
+  }, [observedRunId]);
+
+  useEffect(() => {
     void refreshWorkspaceCoreStatus();
   }, []);
+
+  useEffect(() => {
+    if (window.cairnDesktop?.workspaceCore === undefined || observedRunId === undefined) {
+      return;
+    }
+
+    void loadObservedRunReplaySource(observedRunId, { replaceCurrentSource: true });
+  }, [observedRunId]);
 
   async function refreshWorkspaceCoreStatus() {
     if (window.cairnDesktop?.workspaceCore === undefined) {
@@ -76,7 +107,7 @@ export function DesktopApp() {
     }
   }
 
-  async function runMockSmoke() {
+  async function runInternalTrial() {
     if (window.cairnDesktop?.workspaceCore === undefined) {
       return;
     }
@@ -84,11 +115,16 @@ export function DesktopApp() {
     setWorkspaceCoreBusy(true);
     setWorkspaceCoreError(undefined);
     try {
-      const result = await window.cairnDesktop.workspaceCore.runMockSmoke();
-      setSmokeResult(result);
+      const result = await window.cairnDesktop.workspaceCore.runInternalTrial();
+      setTrialResult(result);
+      setArtifactPayloads({});
+      setArtifactPayloadError(undefined);
       setObservedRunId(result.runId);
-      await loadRunReplaySource(result.runId);
+      setManualRunId(result.runId);
+      setRunReplaySource(undefined);
+      setRunReplayError(undefined);
       setWorkspaceCoreStatus(await window.cairnDesktop.workspaceCore.getStatus());
+      setActiveView('run-detail');
     } catch (error) {
       setWorkspaceCoreError(toErrorMessage(error));
     } finally {
@@ -96,20 +132,80 @@ export function DesktopApp() {
     }
   }
 
-  async function loadRunReplaySource(runId: string) {
+  async function loadObservedRunReplaySource(
+    runId: string,
+    options: { replaceCurrentSource?: boolean } = {},
+  ) {
     if (window.cairnDesktop?.workspaceCore === undefined) {
       return;
     }
 
-    setRunReplayLoading(true);
+    await loadRunReplaySourceRequest(
+      runReplayLoadState.current,
+      {
+        getRunReplaySource: window.cairnDesktop.workspaceCore.getRunReplaySource,
+        getStatus: window.cairnDesktop.workspaceCore.getStatus,
+        setRunReplayError,
+        setRunReplayLoading,
+        setRunReplaySource,
+        setWorkspaceCoreStatus,
+        toErrorMessage,
+      },
+      runId,
+      options,
+    );
+  }
+
+  async function observeRunId(runId: string) {
+    const trimmedRunId = runId.trim();
+    if (trimmedRunId.length === 0) {
+      setRunReplayError('Enter a Workspace Core run id to observe.');
+      return;
+    }
+
+    setObservedRunId(trimmedRunId);
+    setManualRunId(trimmedRunId);
+    setArtifactPayloads({});
+    setArtifactPayloadError(undefined);
+    setRunReplaySource(undefined);
     setRunReplayError(undefined);
+    setActiveView('run-detail');
+
+    if (trimmedRunId === observedRunId) {
+      await loadObservedRunReplaySource(trimmedRunId, { replaceCurrentSource: true });
+    }
+  }
+
+  async function loadArtifactPayload(artifactId: string) {
+    if (window.cairnDesktop?.workspaceCore === undefined) {
+      return;
+    }
+
+    setArtifactPayloadLoadingId(artifactId);
+    setArtifactPayloadError(undefined);
     try {
-      setRunReplaySource(await window.cairnDesktop.workspaceCore.getRunReplaySource(runId));
-      setWorkspaceCoreStatus(await window.cairnDesktop.workspaceCore.getStatus());
+      const payload = await window.cairnDesktop.workspaceCore.getArtifactPayload(artifactId);
+      setArtifactPayloads((current) => ({
+        ...current,
+        [payload.artifactId]: payload,
+      }));
     } catch (error) {
-      setRunReplayError(toErrorMessage(error));
+      setArtifactPayloadError(toErrorMessage(error));
     } finally {
-      setRunReplayLoading(false);
+      setArtifactPayloadLoadingId(undefined);
+    }
+  }
+
+  async function runOperatorAction(actionLabel: string, operation: () => Promise<void>) {
+    setOperatorActionBusy(actionLabel);
+    setOperatorActionError(undefined);
+    setOperatorActionFeedback(undefined);
+    try {
+      await operation();
+    } catch (error) {
+      setOperatorActionError(toErrorMessage(error));
+    } finally {
+      setOperatorActionBusy(undefined);
     }
   }
 
@@ -142,8 +238,8 @@ export function DesktopApp() {
         </nav>
 
         <InlineAlert tone="warning" title="Preview-safe shell">
-          This desktop build starts a local Workspace Core sidecar for a bounded mock smoke path. It
-          still does not expose local paths or arbitrary system actions.
+          This desktop build starts a local Workspace Core sidecar for a bounded internal-trial run
+          path. It still does not expose local paths or arbitrary system actions.
         </InlineAlert>
 
         <div className="sidebar-footer" aria-label="Shell metadata">
@@ -185,20 +281,89 @@ export function DesktopApp() {
 
         {activeView === 'home' ? (
           <HomeView
-            onRunMockSmoke={runMockSmoke}
-            smokeResult={smokeResult}
+            onRunInternalTrial={runInternalTrial}
             status={workspaceCoreStatus}
             statusError={workspaceCoreError}
             statusLoading={workspaceCoreBusy}
+            trialResult={trialResult}
           />
         ) : undefined}
         {activeView === 'run-detail' ? (
           <RunDetailView
+            actionBusy={operatorActionBusy}
+            actionError={operatorActionError}
+            actionFeedback={operatorActionFeedback}
+            artifactPayloadError={artifactPayloadError}
+            artifactPayloadLoadingId={artifactPayloadLoadingId}
+            artifactPayloads={artifactPayloads}
             observedRunId={observedRunId}
-            onRefreshReplay={loadRunReplaySource}
+            onAddOperatorNote={async (runId) => {
+              await runOperatorAction('note', async () => {
+                const result = await window.cairnDesktop?.workspaceCore.addOperatorNote(
+                  runId,
+                  'Operator note from the Cairn Desktop internal trial shell.',
+                  'operator_only',
+                );
+                if (result === undefined) {
+                  return;
+                }
+                await loadObservedRunReplaySource(runId);
+                setOperatorActionFeedback(`Operator note recorded as ${result.messageId}.`);
+              });
+            }}
+            onCancelRun={async (runId) => {
+              await runOperatorAction('cancel', async () => {
+                await window.cairnDesktop?.workspaceCore.cancelRun(
+                  runId,
+                  'Cancelled from the Cairn Desktop internal trial shell.',
+                );
+                await loadObservedRunReplaySource(runId);
+                setOperatorActionFeedback(`Run ${runId} was cancelled.`);
+              });
+            }}
+            onLoadArtifactPayload={loadArtifactPayload}
+            onObserveRun={observeRunId}
+            onRefreshReplay={loadObservedRunReplaySource}
+            onRunIdChange={setManualRunId}
+            onRerun={async (runId) => {
+              await runOperatorAction('rerun', async () => {
+                const rerun = await window.cairnDesktop?.workspaceCore.rerun(runId, {
+                  operatorNote: 'Rerun requested from the Cairn Desktop internal trial shell.',
+                  replan: true,
+                });
+                if (rerun === undefined) {
+                  return;
+                }
+                setArtifactPayloads({});
+                setArtifactPayloadError(undefined);
+                setObservedRunId(rerun.orchestrationRunId);
+                setOperatorActionFeedback(
+                  `Created rerun ${rerun.orchestrationRunId} from ${runId}.`,
+                );
+              });
+            }}
+            onRetryTask={async (taskId) => {
+              await runOperatorAction('retry', async () => {
+                const result = await window.cairnDesktop?.workspaceCore.retryTask(
+                  taskId,
+                  'Retry requested from the Cairn Desktop internal trial shell.',
+                );
+                if (result === undefined) {
+                  return;
+                }
+                const activeRunId = runReplaySource?.run.orchestrationRunId ?? observedRunId;
+                if (activeRunId !== undefined) {
+                  await loadObservedRunReplaySource(activeRunId);
+                }
+                setOperatorActionFeedback(
+                  `Task ${result.taskId} advanced to attempt ${String(result.newAttempt)}.`,
+                );
+              });
+            }}
             replayError={runReplayError}
             replayLoading={runReplayLoading}
             replaySource={runReplaySource}
+            runIdInput={manualRunId}
           />
         ) : undefined}
         {activeView === 'artifact-review' ? <ArtifactReviewView /> : undefined}
@@ -219,8 +384,8 @@ type WorkspaceCoreStatus = Awaited<
   ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['getStatus']>
 >;
 
-type WorkspaceCoreSmokeResult = Awaited<
-  ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['runMockSmoke']>
+type WorkspaceCoreTrialResult = Awaited<
+  ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['runInternalTrial']>
 >;
 
 function readStoredView(): DesktopView {
@@ -242,30 +407,39 @@ function readStoredView(): DesktopView {
   return 'home';
 }
 
+function readObservedRunId(): string | undefined {
+  if (typeof window === 'undefined') {
+    return undefined;
+  }
+
+  const storedRunId = window.localStorage.getItem('cairn.desktop.observedRunId');
+  return storedRunId === null || storedRunId.length === 0 ? undefined : storedRunId;
+}
+
 interface HomeViewProps {
-  readonly onRunMockSmoke: () => Promise<void>;
-  readonly smokeResult?: WorkspaceCoreSmokeResult | undefined;
+  readonly onRunInternalTrial: () => Promise<void>;
   readonly status?: WorkspaceCoreStatus | undefined;
   readonly statusError?: string | undefined;
   readonly statusLoading: boolean;
+  readonly trialResult?: WorkspaceCoreTrialResult | undefined;
 }
 
 function HomeView({
-  onRunMockSmoke,
-  smokeResult,
+  onRunInternalTrial,
   status,
   statusError,
   statusLoading,
+  trialResult,
 }: HomeViewProps) {
   return (
     <div className="content-grid">
       <section className="content-stack">
         <WorkspaceCorePanel
-          onRunMockSmoke={onRunMockSmoke}
-          smokeResult={smokeResult}
+          onRunInternalTrial={onRunInternalTrial}
           status={status}
           statusError={statusError}
           statusLoading={statusLoading}
+          trialResult={trialResult}
         />
 
         <section className="content-stack" aria-label="Handoff inbox">
@@ -291,19 +465,19 @@ function HomeView({
 }
 
 interface WorkspaceCorePanelProps {
-  readonly onRunMockSmoke: () => Promise<void>;
-  readonly smokeResult?: WorkspaceCoreSmokeResult | undefined;
+  readonly onRunInternalTrial: () => Promise<void>;
   readonly status?: WorkspaceCoreStatus | undefined;
   readonly statusError?: string | undefined;
   readonly statusLoading: boolean;
+  readonly trialResult?: WorkspaceCoreTrialResult | undefined;
 }
 
 function WorkspaceCorePanel({
-  onRunMockSmoke,
-  smokeResult,
+  onRunInternalTrial,
   status,
   statusError,
   statusLoading,
+  trialResult,
 }: WorkspaceCorePanelProps) {
   const coreAvailable = window.cairnDesktop?.workspaceCore !== undefined;
   const isHealthy = status?.state === 'healthy';
@@ -315,7 +489,8 @@ function WorkspaceCorePanel({
           <div>
             <CardTitle>Workspace Core sidecar</CardTitle>
             <CardDescription>
-              Local loopback sidecar with a per-launch token and bounded mock runtime smoke.
+              Local loopback sidecar with a per-launch token and a bounded Desktop internal-trial
+              run path.
             </CardDescription>
           </div>
           <StatusBadge
@@ -334,10 +509,10 @@ function WorkspaceCorePanel({
 
         <MetadataList
           items={[
-            { label: 'Connection', value: status?.baseUrl ?? 'checking sidecar' },
+            { label: 'Connection', value: status?.connectionLabel ?? 'checking sidecar' },
             { label: 'Process', value: status?.pid ?? 'pending' },
             { label: 'Last error', value: status?.lastError ?? 'none' },
-            { label: 'Runtime', value: 'mock adapter' },
+            { label: 'Runtime', value: status?.runtime ?? 'checking' },
           ]}
         />
 
@@ -346,32 +521,33 @@ function WorkspaceCorePanel({
             disabled={!coreAvailable || !isHealthy}
             loading={statusLoading}
             onClick={() => {
-              void onRunMockSmoke();
+              void onRunInternalTrial();
             }}
           >
-            Run Mock Smoke
+            Run Internal Trial
           </Button>
         </div>
 
-        {smokeResult === undefined ? (
+        {trialResult === undefined ? (
           <div className="empty-state-panel compact">
             <span aria-hidden="true">✓</span>
             <p>
-              Run the bounded smoke path to create a Workspace Core run and read artifacts/trace.
+              Run the bounded internal-trial path to create a Workspace Core run and read artifacts,
+              trace, and replay evidence.
             </p>
           </div>
         ) : (
           <MetadataList
             items={[
-              { label: 'Run', value: `${smokeResult.runId} · ${smokeResult.runStatus}` },
-              { label: 'Task', value: `${smokeResult.taskId} · ${smokeResult.taskStatus}` },
-              { label: 'AgentRuns', value: smokeResult.agentRunStatuses.join(', ') },
+              { label: 'Run', value: `${trialResult.runId} · ${trialResult.runStatus}` },
+              { label: 'Task', value: `${trialResult.taskId} · ${trialResult.taskStatus}` },
+              { label: 'AgentRuns', value: trialResult.agentRunStatuses.join(', ') },
               {
                 label: 'Artifacts',
-                value: `${smokeResult.artifactCount.toString()} · ${smokeResult.artifactRoles.join(', ')}`,
+                value: `${trialResult.artifactCount.toString()} · ${trialResult.artifactRoles.join(', ')}`,
               },
-              { label: 'Trace events', value: smokeResult.traceCount },
-              { label: 'Final response', value: smokeResult.finalResponseRef ?? 'none' },
+              { label: 'Trace events', value: trialResult.traceCount },
+              { label: 'Final response', value: trialResult.finalResponseRef ?? 'none' },
             ]}
           />
         )}
@@ -381,89 +557,302 @@ function WorkspaceCorePanel({
 }
 
 interface RunDetailViewProps {
+  readonly actionBusy?: string | undefined;
+  readonly actionError?: string | undefined;
+  readonly actionFeedback?: string | undefined;
+  readonly artifactPayloadError?: string | undefined;
+  readonly artifactPayloadLoadingId?: string | undefined;
+  readonly artifactPayloads: Readonly<Record<string, ArtifactPayloadResponse>>;
   readonly observedRunId?: string | undefined;
+  readonly onAddOperatorNote: (runId: string) => Promise<void>;
+  readonly onCancelRun: (runId: string) => Promise<void>;
+  readonly onLoadArtifactPayload: (artifactId: string) => Promise<void>;
+  readonly onObserveRun: (runId: string) => Promise<void>;
   readonly onRefreshReplay: (runId: string) => Promise<void>;
+  readonly onRunIdChange: (runId: string) => void;
+  readonly onRerun: (runId: string) => Promise<void>;
+  readonly onRetryTask: (taskId: string) => Promise<void>;
   readonly replayError?: string | undefined;
   readonly replayLoading: boolean;
   readonly replaySource?: RunReplaySource | undefined;
+  readonly runIdInput: string;
 }
 
 function RunDetailView({
+  actionBusy,
+  actionError,
+  actionFeedback,
+  artifactPayloadError,
+  artifactPayloadLoadingId,
+  artifactPayloads,
   observedRunId,
+  onAddOperatorNote,
+  onCancelRun,
+  onLoadArtifactPayload,
+  onObserveRun,
   onRefreshReplay,
+  onRunIdChange,
+  onRerun,
+  onRetryTask,
   replayError,
   replayLoading,
   replaySource,
+  runIdInput,
 }: RunDetailViewProps) {
-  const staticRun = desktopShellModel.pinnedRuns[0];
-  const run = replaySource === undefined ? staticRun : toRunCardProps(replaySource);
-  const timelineItems =
-    replaySource === undefined
-      ? desktopShellModel.runDetail.evidence
-      : toEvidenceTimelineItems(replaySource);
-  const taskItems =
-    replaySource === undefined ? desktopShellModel.runDetail.tasks : toTaskTreeItems(replaySource);
-  const selectedTaskId =
-    replaySource?.tasks[0]?.taskId ?? desktopShellModel.runDetail.selectedTaskId;
-
-  if (run === undefined) {
-    return <InlineAlert tone="info">No selected run is available.</InlineAlert>;
+  if (observedRunId === undefined) {
+    return (
+      <div className="content-grid">
+        <section className="content-stack">
+          <RunIdObservationForm
+            disabled={replayLoading}
+            onRunIdChange={onRunIdChange}
+            onSubmit={onObserveRun}
+            runId={runIdInput}
+          />
+          <Card>
+            <CardHeader>
+              <CardTitle>No observed run yet</CardTitle>
+              <CardDescription>
+                Run the internal-trial path from Home or paste an existing run id from the API smoke
+                path.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="empty-state-panel">
+                <span aria-hidden="true">◎</span>
+                <p>
+                  Run Detail only renders real Workspace Core replay evidence. Nothing has been
+                  observed yet.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </section>
+        <aside className="content-stack">
+          <RunObservationCard observedRunId={observedRunId} replaySource={replaySource} />
+          <SafetyDefaultsCard />
+        </aside>
+      </div>
+    );
   }
+
+  const run = replaySource === undefined ? undefined : toRunCardProps(replaySource);
+  const timelineItems =
+    replaySource === undefined ? undefined : toEvidenceTimelineItems(replaySource);
+  const taskItems = replaySource === undefined ? undefined : toTaskTreeItems(replaySource);
+  const selectedTaskId = replaySource?.tasks[0]?.taskId;
+  const activeRunId = replaySource?.run.orchestrationRunId ?? observedRunId;
+  const terminalRun =
+    replaySource === undefined ? false : isTerminalRunStatus(replaySource.run.status);
+  const retryableTaskId = replaySource?.tasks.find((task) => task.status === 'failed')?.taskId;
+  const canRetryTask = retryableTaskId !== undefined && replaySource !== undefined && !terminalRun;
+  const canRerun = replaySource !== undefined && terminalRun;
+  const canCancel = replaySource !== undefined && !terminalRun;
 
   return (
     <div className="content-grid">
       <section className="content-stack">
-        {replayError === undefined ? undefined : (
+        <RunIdObservationForm
+          disabled={replayLoading}
+          onRunIdChange={onRunIdChange}
+          onSubmit={onObserveRun}
+          runId={runIdInput}
+        />
+        {replayError === undefined || replaySource !== undefined ? undefined : (
           <InlineAlert tone="danger" title="Run evidence failed to load">
             {replayError}
           </InlineAlert>
         )}
-        {replaySource === undefined ? (
-          <InlineAlert tone="info" title="Static Run Detail fallback">
-            Run the bounded smoke path from Home to load real Workspace Core replay evidence.
+        {actionError === undefined ? undefined : (
+          <InlineAlert tone="danger" title="Operator action failed">
+            {actionError}
           </InlineAlert>
-        ) : (
+        )}
+        {actionFeedback === undefined ? undefined : (
+          <InlineAlert tone="success" title="Operator action applied">
+            {actionFeedback}
+          </InlineAlert>
+        )}
+        {replaySource === undefined ? undefined : (
           <InlineAlert tone="success" title="Live replay source">
             Showing sanitized Workspace Core evidence for {replaySource.run.orchestrationRunId}.
           </InlineAlert>
         )}
-        <RunCard {...run} />
-        <EvidenceTimeline items={timelineItems} />
+        {run === undefined ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Replay evidence unavailable</CardTitle>
+              <CardDescription>
+                An observed run id exists, but replay evidence is not loaded in the renderer yet.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="empty-state-panel">
+                <span aria-hidden="true">{replayLoading ? '…' : '!'}</span>
+                <p>
+                  {replayLoading
+                    ? `Refreshing replay evidence for ${observedRunId}.`
+                    : `Use Refresh Evidence to load replay data for ${observedRunId}.`}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <RunCard {...run} />
+            <EvidenceTimeline items={timelineItems ?? []} />
+          </>
+        )}
       </section>
       <aside className="content-stack">
-        <TaskTree items={taskItems} selectedId={selectedTaskId} />
+        <RunObservationCard observedRunId={observedRunId} replaySource={replaySource} />
+        {taskItems === undefined ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Task tree</CardTitle>
+              <CardDescription>Task detail appears after replay evidence loads.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="empty-state-panel compact">
+                <span aria-hidden="true">⋯</span>
+                <p>No real task tree available yet.</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <TaskTree items={taskItems} selectedId={selectedTaskId} />
+        )}
         {replaySource === undefined ? undefined : (
           <ReplayInspectorCard replaySource={replaySource} />
+        )}
+        {replaySource === undefined ? undefined : (
+          <ArtifactSummaryCard
+            artifactPayloadError={artifactPayloadError}
+            artifactPayloadLoadingId={artifactPayloadLoadingId}
+            artifactPayloads={artifactPayloads}
+            onLoadArtifactPayload={onLoadArtifactPayload}
+            replaySource={replaySource}
+          />
         )}
         <Card>
           <CardHeader>
             <CardTitle>Operator controls</CardTitle>
-            <CardDescription>Disabled until explicit IPC and safety gates exist.</CardDescription>
+            <CardDescription>
+              Internal-trial actions only: cancel run, retry failed task, rerun, and record an
+              operator note.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="button-row">
-            <Button
-              disabled={observedRunId === undefined}
-              loading={replayLoading}
-              onClick={() => {
-                if (observedRunId !== undefined) {
-                  void onRefreshReplay(observedRunId);
-                }
-              }}
-              variant="secondary"
-            >
-              Refresh Evidence
-            </Button>
-            <Button disabled>Approve</Button>
-            <Button disabled variant="warning">
-              Pause
-            </Button>
-            <Button disabled variant="danger">
-              Cancel
-            </Button>
+          <CardContent className="content-stack">
+            <MetadataList
+              items={[
+                { label: 'Observed run', value: activeRunId },
+                { label: 'Retryable task', value: retryableTaskId ?? 'none' },
+                { label: 'Run state', value: replaySource?.run.status ?? 'loading' },
+              ]}
+            />
+            <div className="button-row">
+              <Button
+                loading={actionBusy === 'note'}
+                onClick={() => {
+                  void onAddOperatorNote(activeRunId);
+                }}
+                variant="secondary"
+              >
+                Add note
+              </Button>
+              <Button
+                disabled={!canRetryTask}
+                loading={actionBusy === 'retry'}
+                onClick={() => {
+                  if (retryableTaskId !== undefined) {
+                    void onRetryTask(retryableTaskId);
+                  }
+                }}
+                variant="secondary"
+              >
+                Retry task
+              </Button>
+              <Button
+                disabled={!canRerun}
+                loading={actionBusy === 'rerun'}
+                onClick={() => {
+                  void onRerun(activeRunId);
+                }}
+                variant="secondary"
+              >
+                Rerun
+              </Button>
+              <Button
+                disabled={!canCancel}
+                loading={actionBusy === 'cancel'}
+                onClick={() => {
+                  void onCancelRun(activeRunId);
+                }}
+                variant="danger"
+              >
+                Cancel run
+              </Button>
+              <Button
+                loading={replayLoading}
+                onClick={() => {
+                  void onRefreshReplay(activeRunId);
+                }}
+                variant="secondary"
+              >
+                Refresh Evidence
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </aside>
     </div>
+  );
+}
+
+interface RunIdObservationFormProps {
+  readonly disabled: boolean;
+  readonly onRunIdChange: (runId: string) => void;
+  readonly onSubmit: (runId: string) => Promise<void>;
+  readonly runId: string;
+}
+
+function RunIdObservationForm({
+  disabled,
+  onRunIdChange,
+  onSubmit,
+  runId,
+}: RunIdObservationFormProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Observe run id</CardTitle>
+        <CardDescription>
+          Load replay evidence for a Workspace Core run created by Desktop or by the API smoke path.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form
+          className="run-id-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void onSubmit(runId);
+          }}
+        >
+          <Input
+            aria-label="Workspace Core run id"
+            disabled={disabled}
+            onChange={(event) => {
+              onRunIdChange(event.currentTarget.value);
+            }}
+            placeholder="01J..."
+            value={runId}
+          />
+          <Button disabled={disabled || runId.trim().length === 0} loading={disabled}>
+            Observe Run
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -491,6 +880,125 @@ function ReplayInspectorCard({ replaySource }: { readonly replaySource: RunRepla
             { label: 'Final artifact', value: inspector.finalArtifactId ?? 'none' },
           ]}
         />
+      </CardContent>
+    </Card>
+  );
+}
+
+function RunObservationCard({
+  observedRunId,
+  replaySource,
+}: {
+  readonly observedRunId?: string | undefined;
+  readonly replaySource?: RunReplaySource | undefined;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Observed run</CardTitle>
+        <CardDescription>
+          Desktop stores one bounded run id and refreshes replay evidence from it.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <MetadataList
+          items={[
+            { label: 'Observed run id', value: observedRunId ?? 'none' },
+            { label: 'Replay loaded', value: replaySource === undefined ? 'no' : 'yes' },
+            { label: 'Run status', value: replaySource?.run.status ?? 'unknown' },
+          ]}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+interface ArtifactSummaryCardProps {
+  readonly artifactPayloadError?: string | undefined;
+  readonly artifactPayloadLoadingId?: string | undefined;
+  readonly artifactPayloads: Readonly<Record<string, ArtifactPayloadResponse>>;
+  readonly onLoadArtifactPayload: (artifactId: string) => Promise<void>;
+  readonly replaySource: RunReplaySource;
+}
+
+function ArtifactSummaryCard({
+  artifactPayloadError,
+  artifactPayloadLoadingId,
+  artifactPayloads,
+  onLoadArtifactPayload,
+  replaySource,
+}: ArtifactSummaryCardProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Artifact summary</CardTitle>
+        <CardDescription>
+          Read-only artifact metadata and bounded payload text for the observed run.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="content-stack">
+        {artifactPayloadError === undefined ? undefined : (
+          <InlineAlert tone="danger" title="Artifact payload failed to load">
+            {artifactPayloadError}
+          </InlineAlert>
+        )}
+        {replaySource.artifacts.length === 0 ? (
+          <div className="empty-state-panel compact">
+            <span aria-hidden="true">∅</span>
+            <p>No artifacts recorded for this run.</p>
+          </div>
+        ) : (
+          <div className="artifact-summary-list">
+            {replaySource.artifacts.map((artifact) => {
+              const payload = artifactPayloads[artifact.artifactId];
+              const payloadAvailable = artifact.payloadRef !== undefined;
+              return (
+                <div className="artifact-summary-item" key={artifact.artifactId}>
+                  <ArtifactCard
+                    artifactId={artifact.artifactId}
+                    kind={toArtifactCardKind(artifact.kind)}
+                    path={artifact.uriOrPath}
+                    pathDisplayMode="hidden"
+                    redactionLabel="Artifact storage location remains hidden in the desktop renderer."
+                    reviewState="draft"
+                    sensitivity={artifact.sensitivity}
+                    summary={toArtifactSummary(artifact)}
+                    title={`${artifact.artifactRole} · ${artifact.kind}`}
+                    verification={payloadAvailable ? 'payload available' : 'metadata only'}
+                  />
+                  {payloadAvailable ? (
+                    <div className="artifact-payload-preview">
+                      <div className="artifact-payload-header">
+                        <span>
+                          {payload === undefined
+                            ? 'Payload not loaded'
+                            : `${payload.mediaType}${payload.truncated ? ' · truncated' : ''}`}
+                        </span>
+                        <Button
+                          loading={artifactPayloadLoadingId === artifact.artifactId}
+                          onClick={() => {
+                            void onLoadArtifactPayload(artifact.artifactId);
+                          }}
+                          variant="secondary"
+                        >
+                          Load payload
+                        </Button>
+                      </div>
+                      {payload === undefined ? (
+                        <p>
+                          Payload text is fetched on demand through Workspace Core. Local storage
+                          paths stay hidden.
+                        </p>
+                      ) : (
+                        <pre>{payload.text}</pre>
+                      )}
+                    </div>
+                  ) : undefined}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -597,9 +1105,9 @@ function NextSafeStepCard() {
       <CardContent>
         <MetadataList
           items={[
-            { label: 'Preload allowlist', value: 'design before wiring' },
-            { label: 'Sidecar lifecycle', value: 'contract first' },
-            { label: 'Live actions', value: 'disabled until reviewed' },
+            { label: 'Preload allowlist', value: 'internal-trial only' },
+            { label: 'Sidecar lifecycle', value: 'dev bridge only' },
+            { label: 'Live actions', value: 'bounded operator allowlist' },
           ]}
         />
       </CardContent>
@@ -620,7 +1128,7 @@ function SafetyDefaultsCard() {
         <MetadataList
           items={[
             { label: 'Replay evidence', value: 'read-only' },
-            { label: 'Real IPC actions', value: 'disabled' },
+            { label: 'Real IPC actions', value: 'bounded allowlist' },
             { label: 'Local path reveal', value: 'redacted by default' },
           ]}
         />
@@ -646,24 +1154,100 @@ function toRunCardProps(replaySource: RunReplaySource): RunCardProps {
 }
 
 function toTaskTreeItems(replaySource: RunReplaySource): readonly TaskTreeItem[] {
-  return replaySource.tasks.map((task) => ({
-    attempt: task.attempt,
-    id: task.taskId,
-    label: task.title,
-    metadata: task.taskKind,
-    status: toCairnTaskStatus(task.status),
-  }));
+  const taskMap = new Map(
+    replaySource.tasks.map((task) => [
+      task.taskId,
+      {
+        attempt: task.attempt,
+        children: [] as TaskTreeItem[],
+        id: task.taskId,
+        label: task.title,
+        metadata: `${task.taskKind} · ${task.status}`,
+        status: toCairnTaskStatus(task.status),
+      },
+    ]),
+  );
+  const rootItems: TaskTreeItem[] = [];
+
+  for (const task of replaySource.tasks) {
+    const item = taskMap.get(task.taskId);
+    if (item === undefined) {
+      continue;
+    }
+
+    if (task.parentTaskId === undefined) {
+      rootItems.push(item);
+      continue;
+    }
+
+    const parent = taskMap.get(task.parentTaskId);
+    if (parent === undefined) {
+      rootItems.push(item);
+      continue;
+    }
+
+    parent.children = [...parent.children, item];
+  }
+
+  return rootItems;
 }
 
 function toEvidenceTimelineItems(replaySource: RunReplaySource): readonly EvidenceTimelineItem[] {
   return replaySource.traceEvents.map((event) => ({
-    description: `${event.level} · ${event.traceEventId}`,
+    description: toTraceDescription(event),
     id: event.traceEventId,
-    metadata: `trace ${event.traceId}`,
+    metadata: [
+      `level ${event.level}`,
+      `trace ${event.traceId}`,
+      event.taskId === undefined ? undefined : `task ${event.taskId}`,
+      event.runId === undefined ? undefined : `agent-run ${event.runId}`,
+    ]
+      .filter((value): value is string => value !== undefined)
+      .join(' · '),
     time: formatTraceTime(event.createdAt),
     title: event.eventType,
     tone: toEvidenceTone(event.level),
   }));
+}
+
+function toArtifactCardKind(
+  kind: RunReplaySource['artifacts'][number]['kind'],
+): 'patch' | 'log' | 'other' {
+  if (kind === 'patch') {
+    return 'patch';
+  }
+
+  if (kind === 'log') {
+    return 'log';
+  }
+
+  return 'other';
+}
+
+function toArtifactSummary(artifact: RunReplaySource['artifacts'][number]): string {
+  return [
+    `kind ${artifact.kind}`,
+    `visibility ${artifact.visibility}`,
+    artifact.contentType === undefined ? undefined : `content ${artifact.contentType}`,
+    artifact.sizeBytes === undefined ? undefined : `${artifact.sizeBytes.toString()} bytes`,
+  ]
+    .filter((value): value is string => value !== undefined)
+    .join(' · ');
+}
+
+function toTraceDescription(event: RunReplaySource['traceEvents'][number]): string {
+  if (event.payloadRef !== undefined) {
+    return `Payload stored in artifact ${event.payloadRef}.`;
+  }
+
+  if (event.payloadInline !== undefined) {
+    const payloadKeys = Object.keys(event.payloadInline);
+    return payloadKeys.length === 0
+      ? 'Inline payload recorded.'
+      : `Inline payload keys: ${payloadKeys.join(', ')}.`;
+  }
+
+  return 'No payload attached.';
 }
 
 function toCairnRunStatus(status: RunReplaySource['run']['status']): CairnRunStatus {
@@ -745,6 +1329,12 @@ function toEvidenceTone(level: RunReplaySource['traceEvents'][number]['level']):
   }
 
   return 'info';
+}
+
+function isTerminalRunStatus(status: RunReplaySource['run']['status']): boolean {
+  return (
+    status === 'succeeded' || status === 'failed' || status === 'cancelled' || status === 'timeout'
+  );
 }
 
 function formatTraceTime(value: string): string {

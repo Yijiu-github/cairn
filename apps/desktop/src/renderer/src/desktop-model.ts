@@ -4,10 +4,8 @@ import type {
   AgentStatusItem,
   ArtifactCardProps,
   CairnMetric,
-  EvidenceTimelineItem,
   HandoffQueueItemProps,
   RunCardProps,
-  TaskTreeItem,
 } from '@cairn/ui';
 
 export type DesktopView = 'home' | 'run-detail' | 'artifact-review' | 'settings';
@@ -28,11 +26,6 @@ export interface DesktopShellModel {
   readonly handoffs: readonly HandoffQueueItemProps[];
   readonly navItems: readonly DesktopNavItem[];
   readonly pinnedRuns: readonly RunCardProps[];
-  readonly runDetail: {
-    readonly evidence: readonly EvidenceTimelineItem[];
-    readonly selectedTaskId: string;
-    readonly tasks: readonly TaskTreeItem[];
-  };
   readonly runtime: {
     readonly description: string;
     readonly metrics: readonly CairnMetric[];
@@ -79,7 +72,7 @@ export const desktopShellModel: DesktopShellModel = {
   handoffs: [
     {
       action: { disabled: true, label: 'Review' },
-      agentLabel: '白霓',
+      agentLabel: 'Supervisor / Desktop',
       description:
         'Confirm that the first desktop shell stays preview-safe before sidecar or IPC work starts.',
       kind: 'review',
@@ -122,7 +115,7 @@ export const desktopShellModel: DesktopShellModel = {
   ],
   pinnedRuns: [
     {
-      agentLabel: '白霓',
+      agentLabel: 'Supervisor / Desktop',
       description: 'Create the first desktop shell frame without touching live workspace data.',
       metrics: [
         { label: 'Scope', value: 'static shell' },
@@ -146,76 +139,16 @@ export const desktopShellModel: DesktopShellModel = {
       title: 'Artifact review safety copy',
     },
   ],
-  runDetail: {
-    evidence: [
-      {
-        description: 'Electron main creates one isolated BrowserWindow and denies new windows.',
-        id: 'event-main-window',
-        metadata: 'contextIsolation=true · nodeIntegration=false',
-        time: '03:00',
-        title: 'Main process shell baseline',
-        tone: 'success',
-      },
-      {
-        description: 'Preload exposes only static app metadata through contextBridge.',
-        id: 'event-preload-bridge',
-        metadata: 'window.cairnDesktop.app.mode=static-preview',
-        time: '03:01',
-        title: 'Read-only preload bridge',
-        tone: 'info',
-      },
-      {
-        description: 'Workspace Core startup and filesystem actions remain out of scope.',
-        id: 'event-safety-gate',
-        metadata: 'no live data · no IPC actions · no filesystem mutation',
-        time: '03:02',
-        title: 'Safety gate preserved',
-        tone: 'warning',
-      },
-    ],
-    selectedTaskId: 'task-renderer-shell',
-    tasks: [
-      {
-        children: [
-          {
-            attempt: 1,
-            id: 'task-main-process',
-            label: 'Create Electron main process shell',
-            metadata: 'window bootstrap only',
-            status: 'completed',
-          },
-          {
-            attempt: 1,
-            id: 'task-preload-bridge',
-            label: 'Expose read-only preload identity',
-            metadata: 'no commands',
-            status: 'completed',
-          },
-          {
-            attempt: 1,
-            id: 'task-renderer-shell',
-            label: 'Render static desktop shell views',
-            metadata: 'Home / Run / Artifact / Settings',
-            status: 'running',
-          },
-        ],
-        id: 'task-desktop-skeleton',
-        label: 'Desktop minimal skeleton',
-        metadata: 'preview-safe',
-        status: 'running',
-      },
-    ],
-  },
   runtime: {
     description:
-      'Static renderer fixture. Workspace Core and sidecar startup are intentionally not connected yet.',
+      'Renderer reads sidecar status and run replay evidence through a bounded preload bridge. Operator actions are limited to the internal-trial allowlist.',
     metrics: [
-      { label: 'Workspace Core', value: 'not connected' },
-      { label: 'IPC', value: 'preload identity only' },
-      { label: 'Filesystem', value: 'no access' },
+      { label: 'Workspace Core', value: 'status + replay only' },
+      { label: 'IPC', value: 'allowlist bridge' },
+      { label: 'Filesystem', value: 'no direct renderer access' },
     ],
-    runtimeLabel: 'Desktop shell runtime',
-    status: 'unknown',
+    runtimeLabel: 'Desktop observation runtime',
+    status: 'ready',
   },
   statusStrip: [
     {
@@ -239,8 +172,8 @@ export const desktopShellModel: DesktopShellModel = {
   ],
   workspace: {
     label: 'Cairn Local Workspace',
-    mode: 'Static desktop shell',
+    mode: 'Desktop observation shell',
     summary:
-      'First desktop application frame. It is safe by default: no live Workspace Core calls, no real IPC actions, and no filesystem mutation.',
+      'Minimal internal-trial console for observing one bounded Workspace Core run through replay evidence, with safety gates still intact.',
   },
 };

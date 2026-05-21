@@ -220,9 +220,17 @@ h2 {
 
 .content-stack,
 .run-list,
-.artifact-list {
+.artifact-list,
+.artifact-summary-list {
   display: grid;
   gap: 14px;
+}
+
+.run-id-form {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 .card-title-row {
@@ -269,6 +277,55 @@ h2 {
   width: 52px;
 }
 
+.artifact-summary-list {
+  max-height: 28rem;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.artifact-summary-item,
+.artifact-payload-preview {
+  display: grid;
+  gap: 10px;
+}
+
+.artifact-payload-preview {
+  background: var(--desktop-panel-muted);
+  border: 1px solid var(--desktop-border);
+  border-radius: 16px;
+  color: var(--desktop-subtle);
+  line-height: 1.55;
+  padding: 12px;
+}
+
+.artifact-payload-header {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.artifact-payload-header span {
+  color: var(--desktop-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.artifact-payload-preview pre {
+  background: white;
+  border: 1px solid var(--desktop-border);
+  border-radius: 12px;
+  color: var(--desktop-text);
+  margin: 0;
+  max-height: 12rem;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .timeline-list {
   color: var(--desktop-subtle);
   display: grid;
@@ -298,5 +355,9 @@ h2 {
   .top-bar {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .run-id-form {
+    grid-template-columns: 1fr;
   }
 }
