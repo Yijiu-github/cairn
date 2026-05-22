@@ -85,6 +85,9 @@
 
 ### Changed
 
+- Desktop Mission Control 首屏继续做信息层级收敛：把 Agent 总览、运行中的 Agent 与最近
+  进展合并为一个 Agent 动态面板，并把“写下目标 → 派发给总 Agent → 查看 Agent 进展”的
+  体验指引保留在旁侧；不改变 bounded internal-trial、默认 mock sidecar 或真实 Codex env opt-in 边界。
 - Desktop Mission Control 首屏继续简化：右侧主卡从本地服务诊断改为 Agent 状态总览，
   增加“写下目标 → 派发给总 Agent → 查看 Agent 进展”的体验指引，并隐藏首屏中的进程、
   运行时、sidecar 与 Codex opt-in 等实现细节；不改变 bounded internal-trial、默认 mock sidecar

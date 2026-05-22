@@ -13,7 +13,7 @@ describe('DesktopApp home screen', () => {
     globalThis.window = originalWindow;
   });
 
-  it('renders the mission-control home layout with dispatch, agent summary, live agents, and recent progress', () => {
+  it('renders the mission-control home layout with dispatch and a consolidated agent activity panel', () => {
     globalThis.window = {
       cairnDesktop: {
         app: {
@@ -34,7 +34,10 @@ describe('DesktopApp home screen', () => {
     expect(markup).toContain('活跃 Agent');
     expect(markup).toContain('1');
     expect(markup).toContain('总 Agent');
-    expect(markup).toContain('最近进展');
+    expect(markup).toContain('Agent 动态');
+    expect(markup).toContain('近期完成');
+    expect(markup).not.toContain('Agent 总览');
+    expect(markup).not.toContain('<h3>最近进展</h3>');
   });
 
   it('keeps mission-control counts aligned with the visible agent roster', () => {

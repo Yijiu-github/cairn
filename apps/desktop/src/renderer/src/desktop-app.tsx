@@ -653,11 +653,9 @@ function HomeView({
           statusLoading={statusLoading}
           trialResult={trialResult}
         />
-        <AgentSummaryStrip copy={copy} missionControl={model.missionControl} />
         <div className="mission-control-columns">
           <div className="content-stack">
-            <LiveAgentList copy={copy} missionControl={model.missionControl} />
-            <RecentProgressPanel copy={copy} missionControl={model.missionControl} />
+            <AgentActivityPanel copy={copy} missionControl={model.missionControl} />
           </div>
           <div className="content-stack">
             <section className="content-stack" aria-label={copy.handoffInboxLabel}>
@@ -799,7 +797,7 @@ function MissionControlHero({
   );
 }
 
-function AgentSummaryStrip({
+function AgentActivityPanel({
   copy,
   missionControl,
 }: {
@@ -814,36 +812,23 @@ function AgentSummaryStrip({
   ];
 
   return (
-    <section className="agent-summary-strip" aria-label={copy.agentSummaryLabel}>
-      {items.map((item) => (
-        <Card key={item.label} className="agent-summary-card">
-          <CardContent>
-            <p>{item.label}</p>
-            <strong>{item.value.toString()}</strong>
-          </CardContent>
-        </Card>
-      ))}
-    </section>
-  );
-}
-
-function LiveAgentList({
-  copy,
-  missionControl,
-}: {
-  readonly copy: DesktopLocaleStrings;
-  readonly missionControl: LocalizedDesktopModel['missionControl'];
-}) {
-  return (
-    <section className="content-stack" aria-label={copy.liveAgentsTitle}>
-      <div className="section-heading">
-        <h3>{copy.liveAgentsTitle}</h3>
+    <Card className="agent-activity-panel">
+      <CardHeader>
+        <CardTitle>{copy.agentActivityTitle}</CardTitle>
         <p>{copy.liveAgentsDescription}</p>
-      </div>
-      <div className="live-agent-grid">
-        {missionControl.liveAgents.map((agent) => (
-          <Card key={agent.agentId} className="live-agent-card">
-            <CardContent className="content-stack">
+      </CardHeader>
+      <CardContent className="content-stack">
+        <div className="agent-activity-metrics" aria-label={copy.agentSummaryLabel}>
+          {items.map((item) => (
+            <div key={item.label} className="agent-activity-metric">
+              <span>{item.label}</span>
+              <strong>{item.value.toString()}</strong>
+            </div>
+          ))}
+        </div>
+        <div className="live-agent-grid" aria-label={copy.liveAgentsTitle}>
+          {missionControl.liveAgents.map((agent) => (
+            <article key={agent.agentId} className="live-agent-card">
               <div className="card-title-row">
                 <div>
                   <p className="live-agent-label">
@@ -857,28 +842,10 @@ function LiveAgentList({
                 />
               </div>
               <p className="live-agent-summary">{agent.summary}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function RecentProgressPanel({
-  copy,
-  missionControl,
-}: {
-  readonly copy: DesktopLocaleStrings;
-  readonly missionControl: LocalizedDesktopModel['missionControl'];
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{copy.recentProgressLabel}</CardTitle>
-        <CardDescription>{copy.recentProgressDescription}</CardDescription>
-      </CardHeader>
-      <CardContent>
+            </article>
+          ))}
+        </div>
+        <p className="agent-activity-subtitle">{copy.agentActivityRecentLabel}</p>
         <div className="recent-progress-list">
           {missionControl.recentProgressItems.map((item) => (
             <article key={item.itemId} className="recent-progress-item">

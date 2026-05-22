@@ -45,7 +45,9 @@ describe('desktop locale', () => {
 
     expect(copy.missionControlTitle).toBe('派活工作台');
     expect(copy.dispatchMissionLabel).toBe('派发给总 Agent');
-    expect(copy.agentSummaryLabel).toBe('Agent 总览');
+    expect(copy.agentActivityTitle).toBe('Agent 动态');
+    expect(copy.agentActivityRecentLabel).toBe('近期完成');
+    expect(copy.agentSummaryLabel).toBe('Agent 状态汇总');
     expect(copy.agentWorkingLabel).toBe('工作中');
     expect(copy.recentProgressLabel).toBe('最近进展');
     expect(copy.liveAgentsTitle).toBe('运行中的 Agent');

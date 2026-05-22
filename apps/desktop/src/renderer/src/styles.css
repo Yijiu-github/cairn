@@ -279,7 +279,12 @@ h2 {
 .mission-hero {
   background:
     radial-gradient(circle at top right, rgb(37 99 235 / 14%), transparent 18rem),
-    linear-gradient(160deg, rgb(255 255 255 / 96%) 0%, rgb(243 248 255 / 92%) 62%, rgb(233 241 250 / 92%) 100%);
+    linear-gradient(
+      160deg,
+      rgb(255 255 255 / 96%) 0%,
+      rgb(243 248 255 / 92%) 62%,
+      rgb(233 241 250 / 92%) 100%
+    );
   border: 1px solid rgb(191 219 254 / 85%);
   border-radius: 30px;
   display: grid;
@@ -326,29 +331,41 @@ h2 {
   background: rgb(255 255 255 / 86%);
 }
 
-.agent-summary-strip {
+.agent-activity-panel {
+  background: rgb(255 255 255 / 90%);
+}
+
+.agent-activity-metrics {
   display: grid;
-  gap: 14px;
+  gap: 10px;
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.agent-summary-card {
-  background: rgb(255 255 255 / 82%);
-  border-color: rgb(226 232 240 / 90%);
+.agent-activity-metric {
+  background: rgb(248 250 252 / 88%);
+  border: 1px solid rgb(226 232 240 / 90%);
+  border-radius: 18px;
+  padding: 14px;
 }
 
-.agent-summary-card p {
+.agent-activity-metric span,
+.agent-activity-subtitle {
   color: var(--desktop-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  margin-bottom: 8px;
   text-transform: uppercase;
 }
 
-.agent-summary-card strong {
+.agent-activity-metric strong {
+  display: block;
   font-size: 30px;
   letter-spacing: -0.05em;
+  margin-top: 6px;
+}
+
+.agent-activity-subtitle {
+  margin: 2px 0 -2px;
 }
 
 .live-agent-grid {
@@ -359,6 +376,11 @@ h2 {
 
 .live-agent-card {
   background: linear-gradient(180deg, rgb(255 255 255 / 96%) 0%, rgb(248 250 252 / 88%) 100%);
+  border: 1px solid var(--desktop-border);
+  border-radius: 20px;
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
 }
 
 .live-agent-label {
@@ -494,7 +516,7 @@ h2 {
   .content-grid,
   .mission-control-layout,
   .mission-control-columns,
-  .agent-summary-strip {
+  .agent-activity-metrics {
     grid-template-columns: 1fr;
   }
 

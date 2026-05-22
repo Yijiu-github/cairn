@@ -9,6 +9,8 @@ export interface DesktopLocaleStrings {
   readonly agentCompletedLabel: string;
   readonly agentIdleLabel: string;
   readonly agentStatusTitle: string;
+  readonly agentActivityRecentLabel: string;
+  readonly agentActivityTitle: string;
   readonly agentSummaryLabel: string;
   readonly agentWorkingLabel: string;
   readonly liveAgentsDescription: string;
@@ -193,7 +195,9 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     agentCompletedLabel: 'Completed',
     agentIdleLabel: 'Idle',
     agentStatusTitle: 'Agent status',
-    agentSummaryLabel: 'Agent overview',
+    agentActivityRecentLabel: 'Recently completed',
+    agentActivityTitle: 'Agent activity',
+    agentSummaryLabel: 'Agent status summary',
     agentWorkingLabel: 'Working',
     liveAgentsDescription: 'Current supervisor and worker activity across the mission queue.',
     liveAgentsTitle: 'Live agents',
@@ -230,7 +234,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     finalResponseLabel: 'Final response',
     followSystemLabel: 'Follow system language',
     handoffInboxLabel: 'Handoff inbox',
-    homeTabDescription: 'Handoff queue, pinned runs, and runtime overview.',
+    homeTabDescription: 'Handoff queue, pinned runs, and agent activity.',
     homeTabLabel: 'Home / Inbox',
     inspectTitle: 'Inspect evidence',
     languageSwitcherLabel: 'Interface language',
@@ -403,7 +407,9 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     agentCompletedLabel: '已完成',
     agentIdleLabel: '空闲',
     agentStatusTitle: 'Agent 状态',
-    agentSummaryLabel: 'Agent 总览',
+    agentActivityRecentLabel: '近期完成',
+    agentActivityTitle: 'Agent 动态',
+    agentSummaryLabel: 'Agent 状态汇总',
     agentWorkingLabel: '工作中',
     liveAgentsDescription: '当前任务队列里的总 Agent 与子 Agent 动态。',
     liveAgentsTitle: '运行中的 Agent',
@@ -436,7 +442,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     finalResponseLabel: '最终响应',
     followSystemLabel: '跟随系统语言',
     handoffInboxLabel: '接力收件箱',
-    homeTabDescription: '接力队列、固定运行与 Agent 总览。',
+    homeTabDescription: '接力队列、固定运行与 Agent 动态。',
     homeTabLabel: '首页 / 收件箱',
     inspectTitle: '查看证据',
     languageSwitcherLabel: '界面语言',

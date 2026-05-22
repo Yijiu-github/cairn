@@ -118,7 +118,7 @@ export const desktopShellModel: DesktopShellModel = {
         title: '派活工作台数据已接入',
       },
       {
-        detail: '默认简中文案已经覆盖首页的核心派活和 Agent 总览入口。',
+        detail: '默认简中文案已经覆盖首页的核心派活和 Agent 动态入口。',
         itemId: 'progress-mission-control-locale',
         title: '首屏简中文案已准备',
       },
