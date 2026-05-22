@@ -308,7 +308,7 @@
 - 新增 `run-detail-view-model.spec.ts`，锁住 Run Detail 与 Artifact Review 两个视图模型的静态标题。
 - 同步 `CHANGELOG.md` 的修复项；没有扩大布局、导航或外壳范围。
 
-本轮提交：待提交。
+本轮提交：`a63abe0` `fix(ui-preview): 收口静态标题口径 / align static titles`。
 
 ---
 
