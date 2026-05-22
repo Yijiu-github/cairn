@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 12:24 CST
+> 最后更新：2026-05-22 12:34 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 12:24 CST 复核：
+2026-05-22 12:34 CST 复核：
 
-- `git status --short`：当前仅 internal-trial runbook 模板收口与 handoff 记录待提交。
-- `git diff --name-only`：当前只覆盖 `docs/ops/internal-trial-runbook.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- `git status --short`：本轮已提交 internal-trial runbook 模板收口；当前工作区干净。
+- `git diff --name-only`：当前无未提交变更。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -325,12 +325,12 @@
 
 本轮提交：`a63abe0` `fix(ui-preview): 收口静态标题口径 / align static titles`。
 
-2026-05-22 12:24 CST 本轮完成：
+2026-05-22 12:34 CST 本轮完成：
 
 - 压缩 internal-trial runbook 的结果记录模板，改成短表口径，避免后续手动 smoke 结果说明继续膨胀。
 - 维持现有手动证据基线不变，未修改运行时代码、preload allowlist、operator action 范围或 runtime 默认行为。
 
-本轮提交：待提交。
+本轮提交：`5257d30` `docs(trial): 压缩试用记录模板 / compress trial record template`。
 
 ---
 
