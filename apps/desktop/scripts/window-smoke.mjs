@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { spawn } from 'node:child_process';
 import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import process from 'node:process';
 import { dirname, join } from 'node:path';
@@ -12,10 +13,11 @@ const expectedEvent = 'main-window-ready-to-show';
 const timeoutMs = 20_000;
 const pollIntervalMs = 100;
 const root = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
+const require = createRequire(import.meta.url);
 const smokeDir = await mkdtemp(join(tmpdir(), 'cairn-desktop-window-smoke-'));
 const signalPath = join(smokeDir, 'signal.json');
 
-const electronBin = process.env['CAIRN_DESKTOP_ELECTRON_BIN'] ?? (await findElectronBin(root));
+const electronBin = process.env['CAIRN_DESKTOP_ELECTRON_BIN'] ?? (await resolveElectronBin(root));
 const child = spawn(electronBin, ['.'], {
   cwd: root,
   env: {
@@ -44,8 +46,9 @@ child.once('error', (error) => {
 
 try {
   await waitForSignal();
+  const exitPromise = waitForExit();
   child.kill('SIGTERM');
-  const exit = await waitForExit();
+  const exit = await exitPromise;
 
   if (exit.code !== 0 && exit.signal !== 'SIGTERM') {
     throw new Error(
@@ -94,6 +97,14 @@ async function findElectronBin(packageRoot) {
   }
 
   throw new Error(`Electron binary not found. Checked: ${candidates.join(', ')}`);
+}
+
+async function resolveElectronBin(packageRoot) {
+  try {
+    return require('electron');
+  } catch {
+    return findElectronBin(packageRoot);
+  }
 }
 
 async function readSignal() {

@@ -39,6 +39,19 @@ describe('desktop locale', () => {
 
     expect(storage.get('cairn.desktop.locale')).toBe('en-US');
   });
+
+  it('covers the first-run Desktop experience with Simplified Chinese copy', () => {
+    const copy = getDesktopLocaleStrings('zh-CN');
+
+    expect(copy.workspaceCorePanelTitle).toBe('Workspace Core 本地 sidecar');
+    expect(copy.runInternalTrial).toBe('运行内部试用');
+    expect(copy.runInternalTrialEmptyBody).toContain('点击“运行内部试用”');
+    expect(copy.agentRunsLabel).toBe('AgentRuns');
+    expect(copy.processLabel).toBe('进程');
+    expect(copy.replaySourceBody('01J_RUN')).toBe('正在显示 01J_RUN 的脱敏 Workspace Core 证据。');
+    expect(copy.sourceRootsEmptyTitle).toBe('还没有连接源目录');
+    expect(copy.safetyLocalPathRevealValue).toBe('默认隐藏');
+  });
 });
 
 function installWindowStub(

@@ -265,13 +265,17 @@ export function DesktopApp() {
           ))}
         </nav>
 
-        <InlineAlert tone="warning" title="Preview-safe shell">
+        <InlineAlert tone="warning" title={copy.previewSafeLabel}>
           {copy.desktopSummary}
         </InlineAlert>
 
         <div className="sidebar-footer" aria-label="Shell metadata">
-          <span>Mode: {window.cairnDesktop?.app.mode ?? 'static-preview'}</span>
-          <span>View: {localizedModel.viewTitle[activeView]}</span>
+          <span>
+            {copy.modeLabel}: {window.cairnDesktop?.app.mode ?? 'static-preview'}
+          </span>
+          <span>
+            {copy.statusLabel}: {localizedModel.viewTitle[activeView]}
+          </span>
         </div>
       </aside>
 
@@ -655,11 +659,8 @@ function WorkspaceCorePanel({
       <CardHeader>
         <div className="card-title-row">
           <div>
-            <CardTitle>Workspace Core sidecar</CardTitle>
-            <CardDescription>
-              Local loopback sidecar with a per-launch token and a bounded Desktop internal-trial
-              run path.
-            </CardDescription>
+            <CardTitle>{copy.workspaceCorePanelTitle}</CardTitle>
+            <CardDescription>{copy.workspaceCorePanelDescription}</CardDescription>
           </div>
           <StatusBadge
             label={status?.service ?? 'workspace-core'}
@@ -673,7 +674,7 @@ function WorkspaceCorePanel({
           <InlineAlert
             data-smoke-id="workspace-core-action-error"
             tone="danger"
-            title="Workspace Core action failed"
+            title={copy.workspaceCorePanelTitle}
           >
             {statusError}
           </InlineAlert>
@@ -681,10 +682,13 @@ function WorkspaceCorePanel({
 
         <MetadataList
           items={[
-            { label: copy.connectionLabel, value: status?.connectionLabel ?? 'checking sidecar' },
-            { label: 'Process', value: status?.pid ?? 'pending' },
-            { label: copy.lastErrorLabel, value: status?.lastError ?? 'none' },
-            { label: copy.runtimeLabel, value: status?.runtime ?? 'checking' },
+            {
+              label: copy.connectionLabel,
+              value: status?.connectionLabel ?? copy.connectionPending,
+            },
+            { label: copy.processLabel, value: status?.pid ?? copy.serviceChecking },
+            { label: copy.lastErrorLabel, value: status?.lastError ?? copy.lastErrorNone },
+            { label: copy.runtimeLabel, value: status?.runtime ?? copy.serviceChecking },
           ]}
         />
 
@@ -697,24 +701,21 @@ function WorkspaceCorePanel({
               void onRunInternalTrial();
             }}
           >
-            Run Internal Trial
+            {copy.runInternalTrial}
           </Button>
         </div>
 
         {trialResult === undefined ? (
           <div className="empty-state-panel compact">
             <span aria-hidden="true">✓</span>
-            <p>
-              Run the bounded internal-trial path to create a Workspace Core run and read artifacts,
-              trace, and replay evidence.
-            </p>
+            <p>{copy.runInternalTrialEmptyBody}</p>
           </div>
         ) : (
           <MetadataList
             items={[
-              { label: 'Run', value: `${trialResult.runId} · ${trialResult.runStatus}` },
+              { label: copy.runLabel, value: `${trialResult.runId} · ${trialResult.runStatus}` },
               { label: copy.taskLabel, value: `${trialResult.taskId} · ${trialResult.taskStatus}` },
-              { label: 'AgentRuns', value: trialResult.agentRunStatuses.join(', ') },
+              { label: copy.agentRunsLabel, value: trialResult.agentRunStatuses.join(', ') },
               {
                 label: copy.artifactsLabel,
                 value: `${trialResult.artifactCount.toString()} · ${trialResult.artifactRoles.join(', ')}`,
@@ -787,7 +788,7 @@ function RunDetailView({
           />
           <Card>
             <CardHeader>
-              <CardTitle>No observed run yet</CardTitle>
+              <CardTitle>{copy.runDetailOnlyRealEvidenceTitle}</CardTitle>
               <CardDescription>{copy.runDetailOnlyRealEvidenceDescription}</CardDescription>
             </CardHeader>
             <CardContent>
@@ -810,9 +811,9 @@ function RunDetailView({
     );
   }
 
-  const run = replaySource === undefined ? undefined : toRunCardProps(replaySource);
+  const run = replaySource === undefined ? undefined : toRunCardProps(replaySource, copy);
   const timelineItems =
-    replaySource === undefined ? undefined : toEvidenceTimelineItems(replaySource);
+    replaySource === undefined ? undefined : toEvidenceTimelineItems(replaySource, copy);
   const taskItems = replaySource === undefined ? undefined : toTaskTreeItems(replaySource);
   const selectedTaskId = replaySource?.tasks[0]?.taskId;
   const activeRunId = replaySource?.run.orchestrationRunId ?? observedRunId;
@@ -838,7 +839,7 @@ function RunDetailView({
           runId={runIdInput}
         />
         {replayError === undefined || replaySource !== undefined ? undefined : (
-          <InlineAlert tone="danger" title="Run evidence failed to load">
+          <InlineAlert tone="danger" title={copy.runEvidenceFailedTitle}>
             {replayError}
           </InlineAlert>
         )}
@@ -862,7 +863,7 @@ function RunDetailView({
             tone="success"
             title={copy.replaySourceLabel}
           >
-            Showing sanitized Workspace Core evidence for {replaySource.run.orchestrationRunId}.
+            {copy.replaySourceBody(replaySource.run.orchestrationRunId)}
           </InlineAlert>
         )}
         {run === undefined ? (
@@ -925,7 +926,7 @@ function RunDetailView({
             <MetadataList
               items={[
                 { label: copy.observedRunLabel, value: activeRunId },
-                { label: 'Retryable task', value: retryableTaskId ?? 'none' },
+                { label: copy.retryableTaskLabel, value: retryableTaskId ?? copy.runIdUnknown },
                 { label: copy.runStateLabel, value: replaySource?.run.status ?? 'loading' },
               ]}
             />
@@ -1130,7 +1131,7 @@ function ArtifactSummaryCard({
       </CardHeader>
       <CardContent className="content-stack">
         {artifactPayloadError === undefined ? undefined : (
-          <InlineAlert tone="danger" title="Artifact payload failed to load">
+          <InlineAlert tone="danger" title={copy.artifactPayloadErrorTitle}>
             {artifactPayloadError}
           </InlineAlert>
         )}
@@ -1151,7 +1152,7 @@ function ArtifactSummaryCard({
                     kind={toArtifactCardKind(artifact.kind)}
                     path={artifact.uriOrPath}
                     pathDisplayMode="hidden"
-                    redactionLabel="Artifact storage location remains hidden in the desktop renderer."
+                    redactionLabel={copy.artifactPayloadStorageHidden}
                     reviewState="draft"
                     sensitivity={artifact.sensitivity}
                     summary={toArtifactSummary(artifact)}
@@ -1165,7 +1166,7 @@ function ArtifactSummaryCard({
                       <div className="artifact-payload-header">
                         <span>
                           {payload === undefined
-                            ? 'Payload not loaded'
+                            ? copy.artifactPayloadNotLoaded
                             : `${payload.mediaType}${payload.truncated ? ' · truncated' : ''}`}
                         </span>
                         <Button
@@ -1175,14 +1176,11 @@ function ArtifactSummaryCard({
                           }}
                           variant="secondary"
                         >
-                          {copy.artifactSummaryLoadPayload}
+                          {copy.artifactPayloadLoadPrompt}
                         </Button>
                       </div>
                       {payload === undefined ? (
-                        <p>
-                          Payload text is fetched on demand through Workspace Core. Local storage
-                          paths stay hidden.
-                        </p>
+                        <p>{copy.artifactPayloadHiddenBody}</p>
                       ) : (
                         <pre>{payload.text}</pre>
                       )}
@@ -1214,8 +1212,8 @@ function ArtifactReviewView({
       <section className="content-stack">
         <ArtifactReviewPanel
           actions={[
-            { disabled: true, label: 'Approve export', tone: 'primary' },
-            { disabled: true, label: 'Reject', tone: 'danger' },
+            { disabled: true, label: copy.reviewActionApproveExport, tone: 'primary' },
+            { disabled: true, label: copy.reviewActionReject, tone: 'danger' },
           ]}
           artifactId={model.artifactReview.artifactId}
           note={model.artifactReview.note}
@@ -1232,15 +1230,15 @@ function ArtifactReviewView({
         <SafetyDefaultsCard copy={copy} />
         <Card>
           <CardHeader>
-            <CardTitle>Path exposure policy</CardTitle>
-            <CardDescription>Local absolute paths remain hidden in this shell.</CardDescription>
+            <CardTitle>{copy.pathExposurePolicyTitle}</CardTitle>
+            <CardDescription>{copy.pathExposurePolicyDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <MetadataList
               items={[
-                { label: 'Display path', value: 'redacted' },
-                { label: 'Export/share', value: 'requires explicit future gate' },
-                { label: 'Filesystem mutation', value: 'not available' },
+                { label: copy.pathExposureDisplayLabel, value: copy.pathExposureDisplayValue },
+                { label: copy.exportShareLabel, value: copy.exportShareValue },
+                { label: copy.fileSystemMutationLabel, value: copy.fileSystemMutationValue },
               ]}
             />
           </CardContent>
@@ -1263,16 +1261,13 @@ function SettingsView({
         <Card>
           <CardHeader>
             <CardTitle>{copy.sourceRootsTitle}</CardTitle>
-            <CardDescription>
-              Settings are read-only until source-root contracts and explicit folder approval are
-              ready.
-            </CardDescription>
+            <CardDescription>{copy.sourceRootsDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <MetadataList
               items={[
-                { label: 'Workspace', value: model.workspace.label },
-                { label: copy.connectionLabel, value: 'static fixture' },
+                { label: copy.workspaceLabel, value: model.workspace.label },
+                { label: copy.connectionLabel, value: copy.workspaceStaticFixture },
                 {
                   label: copy.desktopBridgeLabel,
                   value: window.cairnDesktop?.app.mode ?? 'unavailable',
@@ -1284,16 +1279,13 @@ function SettingsView({
 
         <Card variant="interactive">
           <CardHeader>
-            <CardTitle>No source roots connected</CardTitle>
-            <CardDescription>
-              Future desktop builds should request explicit user approval before indexing any local
-              folder.
-            </CardDescription>
+            <CardTitle>{copy.sourceRootsEmptyTitle}</CardTitle>
+            <CardDescription>{copy.sourceRootsEmptyDescription}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="empty-state-panel">
               <span aria-hidden="true">⌁</span>
-              <p>Choose folder, index metadata, and reveal paths are intentionally unavailable.</p>
+              <p>{copy.sourceRootsEmptyBody}</p>
             </div>
           </CardContent>
         </Card>
@@ -1316,9 +1308,9 @@ function NextSafeStepCard({ copy }: { readonly copy: DesktopLocaleStrings }) {
       <CardContent>
         <MetadataList
           items={[
-            { label: 'Preload allowlist', value: 'internal-trial only' },
-            { label: 'Sidecar lifecycle', value: 'dev bridge only' },
-            { label: 'Live actions', value: 'bounded operator allowlist' },
+            { label: copy.preloadAllowlistLabel, value: copy.preloadAllowlistValue },
+            { label: copy.sidecarLifecycleLabel, value: copy.sidecarLifecycleValue },
+            { label: copy.liveActionsLabel, value: copy.liveActionsValue },
           ]}
         />
       </CardContent>
@@ -1336,9 +1328,9 @@ function SafetyDefaultsCard({ copy }: { readonly copy: DesktopLocaleStrings }) {
       <CardContent>
         <MetadataList
           items={[
-            { label: copy.replaySourceLabel, value: 'read-only' },
-            { label: 'Real IPC actions', value: 'bounded allowlist' },
-            { label: 'Local path reveal', value: 'redacted by default' },
+            { label: copy.replaySourceLabel, value: copy.safetyReplayValue },
+            { label: copy.safetyIpcActionsLabel, value: copy.safetyIpcActionsValue },
+            { label: copy.safetyLocalPathRevealLabel, value: copy.safetyLocalPathRevealValue },
           ]}
         />
       </CardContent>
@@ -1346,19 +1338,23 @@ function SafetyDefaultsCard({ copy }: { readonly copy: DesktopLocaleStrings }) {
   );
 }
 
-function toRunCardProps(replaySource: RunReplaySource): RunCardProps {
+function toRunCardProps(replaySource: RunReplaySource, copy: DesktopLocaleStrings): RunCardProps {
   return {
-    agentLabel: 'Workspace Core',
-    description: `Replay source contains ${replaySource.tasks.length.toString()} task(s), ${replaySource.artifacts.length.toString()} artifact(s), and ${replaySource.traceEvents.length.toString()} trace event(s).`,
+    agentLabel: copy.runCardAgentLabel,
+    description: copy.runCardDescription({
+      artifactCount: replaySource.artifacts.length,
+      taskCount: replaySource.tasks.length,
+      traceEventCount: replaySource.traceEvents.length,
+    }),
     metrics: [
-      { label: 'Tasks', value: replaySource.inspector.taskCount },
-      { label: 'Artifacts', value: replaySource.inspector.artifactCount },
-      { label: 'Trace', value: replaySource.inspector.traceEventCount },
+      { label: copy.taskCountLabel, value: replaySource.inspector.taskCount },
+      { label: copy.artifactsLabel, value: replaySource.inspector.artifactCount },
+      { label: copy.traceEventsLabel, value: replaySource.inspector.traceEventCount },
     ],
     progress: toRunProgress(replaySource.run.status),
     runId: replaySource.run.orchestrationRunId,
     status: toCairnRunStatus(replaySource.run.status),
-    title: `Workspace Core run · ${replaySource.run.status}`,
+    title: copy.runCardTitle(replaySource.run.status),
   };
 }
 
@@ -1401,9 +1397,12 @@ function toTaskTreeItems(replaySource: RunReplaySource): readonly TaskTreeItem[]
   return rootItems;
 }
 
-function toEvidenceTimelineItems(replaySource: RunReplaySource): readonly EvidenceTimelineItem[] {
+function toEvidenceTimelineItems(
+  replaySource: RunReplaySource,
+  copy: DesktopLocaleStrings,
+): readonly EvidenceTimelineItem[] {
   return replaySource.traceEvents.map((event) => ({
-    description: toTraceDescription(event),
+    description: toTraceDescription(event, copy),
     id: event.traceEventId,
     metadata: [
       `level ${event.level}`,
@@ -1444,19 +1443,22 @@ function toArtifactSummary(artifact: RunReplaySource['artifacts'][number]): stri
     .join(' · ');
 }
 
-function toTraceDescription(event: RunReplaySource['traceEvents'][number]): string {
+function toTraceDescription(
+  event: RunReplaySource['traceEvents'][number],
+  copy: DesktopLocaleStrings,
+): string {
   if (event.payloadRef !== undefined) {
-    return `Payload stored in artifact ${event.payloadRef}.`;
+    return copy.traceDescriptionPayload(event.payloadRef);
   }
 
   if (event.payloadInline !== undefined) {
     const payloadKeys = Object.keys(event.payloadInline);
     return payloadKeys.length === 0
-      ? 'Inline payload recorded.'
-      : `Inline payload keys: ${payloadKeys.join(', ')}.`;
+      ? copy.traceDescriptionInlineEmpty
+      : copy.traceDescriptionInlineKeys(payloadKeys);
   }
 
-  return 'No payload attached.';
+  return copy.traceDescriptionUnavailable;
 }
 
 function toCairnRunStatus(status: RunReplaySource['run']['status']): CairnRunStatus {

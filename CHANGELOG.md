@@ -84,6 +84,9 @@
 
 ### Changed
 
+- Desktop 默认简体中文首轮体验继续收口：Home sidecar panel、Run Detail replay 提示、Artifact
+  payload / path exposure policy、Settings source-root 空态与安全卡片文案改为使用 renderer
+  locale copy，仍不引入完整 i18n 框架。
 - 内部试用文档已明确真实 Codex window-level smoke 的当前边界：默认 `@cairn/desktop test:e2e` 只覆盖 mock sidecar 窗口 ready smoke；真实 Codex window-level runner 需通过 `@cairn/desktop smoke:codex` 和本机 Codex env 显式 opt-in。
 - README、STATUS、本地开发与测试文档已对齐第一轮内部试用口径：开发态默认 mock sidecar，真实 Codex 需显式 opt-in，且不包含外部 alpha、`apps/web`、installer、signing 或 notarization。
 - Desktop 内部试用入口文档已对齐 `runInternalTrial` / Codex sidecar runtime switch。
@@ -104,6 +107,8 @@
 
 ### Fixed
 
+- **Desktop window smoke**：默认 mock sidecar `test:e2e` runner 优先解析真实 Electron binary，
+  避免通过 `node_modules/.bin/electron` 包装器启动时在 smoke event 后卡住退出等待。
 - **Desktop Codex smoke**：`smoke:codex` runner 改用 locale-neutral `data-smoke-id` hook，
   不再依赖英文可见文案，避免 Desktop 默认简体中文后真实 Codex window-level smoke 卡在导航定位。
 - **Desktop replay bridge errors**：Workspace Core client 的只读 replay / payload 请求会在 transport
