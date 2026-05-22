@@ -81,6 +81,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - 启动会写入不含 token 的 sidecar 诊断快照：`<userData>/diagnostics/workspace-core-sidecar.json`，其中记录 `runtime: "mock" | "codex"` 以区分本次 sidecar 后端。
 - 当前不读取或写入用户本地文件系统，不暴露真实本地路径；operator action 仅保留最小 internal-trial allowlist，不是完整接管台。
 - 自动化验证已覆盖 Desktop bootstrap 顺序、main module 非阻塞加载、sidecar manager、Workspace Core HTTP smoke 与默认 mock sidecar 的最小 window-level Electron smoke；2026-05-21 已完成一次真实 Desktop window-level Codex-backed internal-trial 手动 smoke。真实 Codex 自动化 e2e 仍需后续补齐。
+- 当前 `@cairn/desktop test:e2e` 只覆盖窗口 ready smoke，不会自动触发 `runInternalTrial()`、读取 replay evidence 或验证 operator note；真实 Codex window-level 自动化仍需 opt-in 驱动与专用环境。
 - 当前 renderer 默认安全基线为 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`。
 
 ---

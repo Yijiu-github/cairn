@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 12:34 CST
+> 最后更新：2026-05-22 13:04 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 12:34 CST 复核：
+2026-05-22 13:04 CST 复核：
 
-- `git status --short`：本轮已提交 internal-trial runbook 模板收口；当前工作区干净。
-- `git diff --name-only`：当前无未提交变更。
+- `git status --short`：当前仅真实 Codex window-level e2e 边界文档化与 handoff 记录待提交。
+- `git diff --name-only`：当前覆盖 `CHANGELOG.md`、`docs/STATUS.md`、`docs/engineering/testing-strategy.md`、`docs/ops/internal-trial-runbook.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -325,12 +325,13 @@
 
 本轮提交：`a63abe0` `fix(ui-preview): 收口静态标题口径 / align static titles`。
 
-2026-05-22 12:34 CST 本轮完成：
+2026-05-22 13:04 CST 本轮完成：
 
-- 压缩 internal-trial runbook 的结果记录模板，改成短表口径，避免后续手动 smoke 结果说明继续膨胀。
-- 维持现有手动证据基线不变，未修改运行时代码、preload allowlist、operator action 范围或 runtime 默认行为。
+- 评估真实 Codex window-level e2e 的当前可行边界，并把结论写入 runbook、STATUS、testing strategy 与 changelog。
+- 明确默认 `@cairn/desktop test:e2e` 只覆盖 mock sidecar 的窗口 ready smoke；真实 Codex 路径还缺 renderer 驱动、稳定断言入口和专用环境。
+- 本轮没有修改运行时代码，也没有扩大 preload allowlist、operator action 范围或 runtime 默认行为。
 
-本轮提交：`5257d30` `docs(trial): 压缩试用记录模板 / compress trial record template`。
+本轮提交：待提交。
 
 ---
 
@@ -342,7 +343,7 @@
 
 1. **真实 Codex 手动 smoke 复核**：按 runbook 再跑一条短任务，记录当前 Codex CLI / Node / OS 证据，只使用合成 prompt。
    2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
-2. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。
+2. **真实 Codex window-level e2e 方案**：边界已写实；下一轮若继续推进，优先设计 opt-in 专用 runner 或手动 smoke 驱动，不直接塞进默认 CI。
 3. **Runbook 记录模板**：本轮已压缩成短表；若后续仍频繁重复记录，可继续合并为更短的 canonical table，但不要再扩成长段。
 
 ---

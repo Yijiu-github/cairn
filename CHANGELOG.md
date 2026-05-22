@@ -83,6 +83,7 @@
 
 ### Changed
 
+- 内部试用文档已明确真实 Codex window-level e2e 的当前边界：默认 `@cairn/desktop test:e2e` 只覆盖 mock sidecar 窗口 ready smoke，不自动执行 `runInternalTrial()`、replay evidence 读取或 operator note 断言。
 - README、STATUS、本地开发与测试文档已对齐第一轮内部试用口径：开发态默认 mock sidecar，真实 Codex 需显式 opt-in，且不包含外部 alpha、`apps/web`、installer、signing 或 notarization。
 - Desktop 内部试用入口文档已对齐 `runInternalTrial` / Codex sidecar runtime switch。
 - `docs/ops/internal-trial-runbook.md` 与 `docs/engineering/local-dev-setup.md` 的 Codex smoke 示例已收敛为当前契约允许的 `taskKind: "custom"` 和受控 runtime workdir 口径。

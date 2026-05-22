@@ -379,6 +379,23 @@ curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
 - 真实 Codex smoke 仍然是手动步骤，不进入默认自动化 CI。
 - 真实长任务、复杂 payload、长时取消链路仍可能存在平台差异。
 
+### 8.0 真实 Codex window-level e2e 当前边界
+
+当前 `pnpm --filter @cairn/desktop test:e2e` 只验证默认 mock sidecar 的窗口 ready smoke。
+它会在 `main-window-ready-to-show` 后立即退出，不会自动执行以下真实 Codex 链路：
+
+- 通过 renderer / preload 触发 `workspaceCore.runInternalTrial()`
+- 等待真实 Codex-backed sidecar 完成 run / task / agent-run
+- 读取 replay evidence、bounded payload text 与 operator note 更新
+
+因此，真实 Codex window-level e2e 现在仍不适合进入默认 CI。主要约束是：
+
+- 依赖本机 Codex 登录态与可用会话，CI 无法默认提供
+- 受 Codex CLI 版本、响应时延与平台环境影响，结果天然更 flaky
+- 现有最小 smoke 脚本只观察窗口 ready，没有稳定的 renderer 驱动与断言入口
+
+后续若要补这条自动化链路，应先把它定义为 opt-in 手动或专用 runner smoke，而不是默认 gate。
+
 ## 8.1 当前手动证据基线
 
 ### 2026-05-21 06:55 CST
