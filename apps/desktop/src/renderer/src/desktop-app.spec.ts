@@ -97,7 +97,7 @@ describe('DesktopApp home screen', () => {
 
     const markup = renderToStaticMarkup(createElement(DesktopApp));
 
-    expect(markup).toContain('本地运行服务');
+    expect(markup).toContain('Agent 状态');
     expect(markup).toContain('运行安全');
     expect(markup).toContain('派活工作台');
     expect(markup).not.toContain('Workspace Core 本地 sidecar');
@@ -112,6 +112,32 @@ describe('DesktopApp home screen', () => {
     expect(markup).not.toContain('语言偏好只保存在当前浏览器会话');
     expect(markup).toContain('下一步');
     expect(markup).toContain('先走受限内部试用路径');
+  });
+
+  it('prioritizes task dispatch and agent status over service diagnostics on the zh-CN home', () => {
+    globalThis.window = {
+      cairnDesktop: {
+        app: {
+          mode: 'desktop-observer',
+          name: 'Cairn Desktop',
+        },
+      },
+      localStorage: createStorage(),
+    } as unknown as Window & typeof globalThis;
+
+    const markup = renderToStaticMarkup(createElement(DesktopApp));
+
+    expect(markup).toContain('体验指引');
+    expect(markup).toContain('1. 写下目标');
+    expect(markup).toContain('2. 派发给总 Agent');
+    expect(markup).toContain('3. 查看 Agent 进展');
+    expect(markup).toContain('Agent 状态');
+    expect(markup).not.toContain('进程');
+    expect(markup).not.toContain('运行时');
+    expect(markup).not.toContain('本地服务生命周期');
+    expect(markup).not.toContain('开发态受限');
+    expect(markup).not.toContain('mock sidecar');
+    expect(markup).not.toContain('Codex opt-in');
   });
 
   it('keeps mission dispatch as the primary smoke path without duplicate Core error selectors', () => {

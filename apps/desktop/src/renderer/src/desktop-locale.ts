@@ -8,6 +8,7 @@ export interface DesktopLocaleStrings {
   readonly agentBlockedLabel: string;
   readonly agentCompletedLabel: string;
   readonly agentIdleLabel: string;
+  readonly agentStatusTitle: string;
   readonly agentSummaryLabel: string;
   readonly agentWorkingLabel: string;
   readonly liveAgentsDescription: string;
@@ -168,6 +169,10 @@ export interface DesktopLocaleStrings {
   readonly missionControlTitle: string;
   readonly missionDraftRequiredError: string;
   readonly missionInputPreviewBody: string;
+  readonly missionGuideStepOne: string;
+  readonly missionGuideStepThree: string;
+  readonly missionGuideStepTwo: string;
+  readonly missionGuideTitle: string;
   readonly recentProgressLabel: string;
   readonly recentProgressDescription: string;
   readonly nextSafeStepDescription: string;
@@ -187,6 +192,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     agentBlockedLabel: 'Blocked',
     agentCompletedLabel: 'Completed',
     agentIdleLabel: 'Idle',
+    agentStatusTitle: 'Agent status',
     agentSummaryLabel: 'Agent overview',
     agentWorkingLabel: 'Working',
     liveAgentsDescription: 'Current supervisor and worker activity across the mission queue.',
@@ -374,6 +380,10 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     missionDraftRequiredError: 'Describe a mission draft before dispatching the bounded preview.',
     missionInputPreviewBody:
       'This draft is kept locally in the renderer. Dispatch still runs the bounded internal trial until the planner contract lands.',
+    missionGuideStepOne: '1. Describe the goal',
+    missionGuideStepThree: '3. Review agent progress',
+    missionGuideStepTwo: '2. Dispatch to the supervisor agent',
+    missionGuideTitle: 'Experience guide',
     recentProgressLabel: 'Recent progress',
     recentProgressDescription: 'Small but durable changes the desktop shell can already observe.',
     nextSafeStepDescription:
@@ -392,6 +402,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     agentBlockedLabel: '阻塞',
     agentCompletedLabel: '已完成',
     agentIdleLabel: '空闲',
+    agentStatusTitle: 'Agent 状态',
     agentSummaryLabel: 'Agent 总览',
     agentWorkingLabel: '工作中',
     liveAgentsDescription: '当前任务队列里的总 Agent 与子 Agent 动态。',
@@ -425,7 +436,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     finalResponseLabel: '最终响应',
     followSystemLabel: '跟随系统语言',
     handoffInboxLabel: '接力收件箱',
-    homeTabDescription: '接力队列、固定运行与运行时总览。',
+    homeTabDescription: '接力队列、固定运行与 Agent 总览。',
     homeTabLabel: '首页 / 收件箱',
     inspectTitle: '查看证据',
     languageSwitcherLabel: '界面语言',
@@ -563,6 +574,10 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     missionDraftRequiredError: '先写下要交给总 Agent 的任务草稿，再派发受限预览。',
     missionInputPreviewBody:
       '任务草稿只保存在当前 renderer；在 planner 契约落地前，派发仍会执行受限内部试用路径。',
+    missionGuideStepOne: '1. 写下目标',
+    missionGuideStepThree: '3. 查看 Agent 进展',
+    missionGuideStepTwo: '2. 派发给总 Agent',
+    missionGuideTitle: '体验指引',
     recentProgressLabel: '最近进展',
     recentProgressDescription: '桌面壳已经能稳定观察到的近期进度。',
     nextSafeStepDescription: '先走受限内部试用路径，再按需查看回放证据或产物负载。',

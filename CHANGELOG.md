@@ -85,6 +85,10 @@
 
 ### Changed
 
+- Desktop Mission Control 首屏继续简化：右侧主卡从本地服务诊断改为 Agent 状态总览，
+  增加“写下目标 → 派发给总 Agent → 查看 Agent 进展”的体验指引，并隐藏首屏中的进程、
+  运行时、sidecar 与 Codex opt-in 等实现细节；不改变 bounded internal-trial、默认 mock sidecar
+  或真实 Codex env opt-in 边界。
 - Desktop 默认 mock 上手路径做轻量烟测后继续减法：运行中 Agent 卡片不再露出内部
   `agent-*` ID，Settings / 安全侧栏的下一步提示改为直接指向受限内部试用、回放证据与产物负载；
   没有改变 bounded internal-trial、默认 mock sidecar 或真实 Codex env opt-in 边界。

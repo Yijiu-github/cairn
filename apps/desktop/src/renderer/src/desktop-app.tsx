@@ -501,13 +501,26 @@ function createLocalizedDesktopModel(copy: DesktopLocaleStrings): LocalizedDeskt
               ...handoff,
               action: { ...handoff.action, label: '计划门禁' },
               description: '下一步真实任务派发前，需要先明确本地服务和桌面桥接的受限范围。',
-              agentLabel: '运行时 Agent',
+              agentLabel: '执行 Agent',
               sourceLabel: '本地服务接入',
               title: '真实任务派发仍有意受限',
               waitedFor: '契约确认',
             },
     ),
-    missionControl: desktopShellModel.missionControl,
+    missionControl: isSimplifiedChinese
+      ? {
+          ...desktopShellModel.missionControl,
+          liveAgents: desktopShellModel.missionControl.liveAgents.map((agent) =>
+            agent.agentId === 'agent-runtime'
+              ? {
+                  ...agent,
+                  summary: '已完成默认运行边界检查，等待下一步真实任务派发契约。',
+                  title: '执行 Agent',
+                }
+              : agent,
+          ),
+        }
+      : desktopShellModel.missionControl,
     navItems: [
       {
         description: copy.homeTabDescription,
@@ -555,7 +568,7 @@ function createLocalizedDesktopModel(copy: DesktopLocaleStrings): LocalizedDeskt
           },
           {
             id: 'agent-runtime',
-            label: '运行时 Agent',
+            label: '执行 Agent',
             status: 'idle',
             task: '等待本地服务契约',
           },
@@ -661,7 +674,7 @@ function HomeView({
         </div>
       </section>
 
-      <HomeSafetyRail copy={copy} runtime={model.runtime} />
+      <HomeSafetyRail copy={copy} />
     </div>
   );
 }
@@ -738,15 +751,15 @@ function MissionControlHero({
           </InlineAlert>
         )}
       </div>
-      <Card className="mission-hero-status workspace-core-panel">
+      <Card className="mission-hero-status agent-status-panel">
         <CardHeader>
           <div className="card-title-row">
             <div>
-              <CardTitle>{copy.workspaceCorePanelTitle}</CardTitle>
-              <CardDescription>{copy.workspaceCorePanelDescription}</CardDescription>
+              <CardTitle>{copy.agentStatusTitle}</CardTitle>
+              <CardDescription>{copy.liveAgentsDescription}</CardDescription>
             </div>
             <StatusBadge
-              label={status?.service ?? 'workspace-core'}
+              label={toWorkspaceCoreStateLabel(status?.state, copy)}
               metadata={toWorkspaceCoreStateLabel(status?.state, copy)}
               tone={toStatusTone(status?.state)}
             />
@@ -764,13 +777,9 @@ function MissionControlHero({
           )}
           <MetadataList
             items={[
-              {
-                label: copy.connectionLabel,
-                value: toWorkspaceCoreConnectionLabel(status?.connectionLabel, copy),
-              },
-              { label: copy.processLabel, value: status?.pid ?? copy.serviceChecking },
-              { label: copy.lastErrorLabel, value: status?.lastError ?? copy.lastErrorNone },
-              { label: copy.runtimeLabel, value: status?.runtime ?? copy.serviceChecking },
+              { label: copy.activeAgentCountLabel, value: missionControl.activeAgentCount },
+              { label: copy.completedAgentCountLabel, value: missionControl.completedAgentCount },
+              { label: copy.blockedAgentCountLabel, value: missionControl.blockedAgentCount },
             ]}
           />
           {trialResult === undefined ? undefined : (
@@ -883,19 +892,31 @@ function RecentProgressPanel({
   );
 }
 
-function HomeSafetyRail({
-  copy,
-  runtime,
-}: {
-  readonly copy: DesktopLocaleStrings;
-  readonly runtime: LocalizedDesktopModel['runtime'];
-}) {
+function HomeSafetyRail({ copy }: { readonly copy: DesktopLocaleStrings }) {
   return (
     <aside className="content-stack home-safety-rail">
-      <RuntimeHealthCard {...runtime} />
+      <ExperienceGuideCard copy={copy} />
       <SafetyDefaultsCard copy={copy} />
       <NextSafeStepCard copy={copy} />
     </aside>
+  );
+}
+
+function ExperienceGuideCard({ copy }: { readonly copy: DesktopLocaleStrings }) {
+  return (
+    <Card className="experience-guide-card">
+      <CardHeader>
+        <CardTitle>{copy.missionGuideTitle}</CardTitle>
+        <CardDescription>{copy.desktopWorkspaceSummary}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="experience-guide-list">
+          <span>{copy.missionGuideStepOne}</span>
+          <span>{copy.missionGuideStepTwo}</span>
+          <span>{copy.missionGuideStepThree}</span>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1492,8 +1513,8 @@ function NextSafeStepCard({ copy }: { readonly copy: DesktopLocaleStrings }) {
         <MetadataList
           items={[
             { label: copy.preloadAllowlistLabel, value: copy.preloadAllowlistValue },
-            { label: copy.sidecarLifecycleLabel, value: copy.sidecarLifecycleValue },
             { label: copy.liveActionsLabel, value: copy.liveActionsValue },
+            { label: copy.safetyLocalPathRevealLabel, value: copy.safetyLocalPathRevealValue },
           ]}
         />
       </CardContent>
@@ -1756,21 +1777,6 @@ function toStatusTone(
   }
 
   return 'danger';
-}
-
-function toWorkspaceCoreConnectionLabel(
-  connectionLabel: string | undefined,
-  copy: DesktopLocaleStrings,
-): string {
-  if (connectionLabel === undefined) {
-    return copy.connectionPending;
-  }
-
-  if (connectionLabel === 'local sidecar' && readStoredDesktopLocale() === 'zh-CN') {
-    return '本地 sidecar';
-  }
-
-  return connectionLabel;
 }
 
 function toWorkspaceCoreStateLabel(
