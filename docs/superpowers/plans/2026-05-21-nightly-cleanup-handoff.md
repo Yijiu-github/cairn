@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 16:03 CST
+> 最后更新：2026-05-22 17:12 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,13 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 16:03 CST 复核：
+2026-05-22 17:12 CST 复核：
 
-- `git status --short`：本轮有未提交变更，集中在 Desktop `smoke:codex` runner、Desktop 语言切换和相关文档。
-- `git diff --name-only`：当前变更包括 `apps/desktop`、`docs/STATUS.md`、testing strategy、runbook、CHANGELOG、pnpm lock/workspace、`2026-05-22-codex-window-e2e-runner.md` 与本 handoff。
+- `git status --short`：本轮有未提交变更，集中在 Desktop renderer 首轮简中文案、
+  `window-smoke` runner、`CHANGELOG.md` 与本 handoff。
+- `git diff --name-only`：当前变更为 `apps/desktop/scripts/window-smoke.mjs`、
+  `apps/desktop/src/renderer/src/desktop-app.tsx`、`desktop-locale.ts`、
+  `desktop-locale.spec.ts`、`CHANGELOG.md` 与本 handoff。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -243,6 +246,24 @@
 - `pnpm run docs:lint`
 - `git diff --check`
 
+2026-05-22 17:12 CST Desktop first-run 简中体验收口验证通过：
+
+- 红灯：`pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-locale.spec.ts`
+  先因首轮体验简中文案字段缺失失败；随后新增 `agentRunsLabel` / `processLabel`
+  断言，再因字段缺失失败。
+- 绿灯：补齐 Desktop locale copy，并把 Home sidecar panel、Run Detail replay 提示、
+  Artifact payload / path exposure policy、Settings source-root 空态、安全卡片和 run card /
+  trace 描述接到 `desktop-locale.ts`；同一 locale spec 通过。
+- 发现并修复 `@cairn/desktop test:e2e` 的 runner 退出竞态：页面 smoke event 已写出，但
+  通过 `node_modules/.bin/electron` 包装器启动时 Electron 在 signal 后可能卡住退出等待；
+  `window-smoke.mjs` 改为优先解析真实 Electron binary。
+- `pnpm --filter @cairn/desktop typecheck`
+- `pnpm --filter @cairn/desktop lint`
+- `pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-locale.spec.ts src/renderer/src/run-detail-copy.spec.ts src/renderer/src/run-replay-loader.spec.ts src/renderer/src/operator-action-runner.spec.ts src/renderer/src/artifact-payload-loader.spec.ts src/main/index.spec.ts src/main/workspace-core-bootstrap.spec.ts`
+- `pnpm --filter @cairn/desktop test:e2e`
+- `pnpm exec prettier --check apps/desktop/scripts/window-smoke.mjs apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts`
+- `git diff --check`
+
 ---
 
 ## 6. 最新完成
@@ -366,6 +387,20 @@
 
 本轮提交：`188fb00` `feat(desktop): 增加真实 Codex smoke 与语言切换 / add codex smoke and locale switch`。
 
+2026-05-22 17:12 CST 本轮完成：
+
+- 收口 Desktop 默认简体中文首轮体验：Home sidecar panel、Run Detail replay 成功/错误提示、
+  Artifact payload preview、Artifact Review path exposure policy、Settings source-root 空态、
+  safety/defaults cards、run card 与 trace 描述改为走 `desktop-locale.ts`。
+- 新增 locale regression，锁住首轮体验关键简中文案、AgentRuns 标签与进程标签，避免误把
+  AgentRun 状态显示成可重试任务。
+- 修复默认 mock window smoke runner：优先通过 `require('electron')` 解析真实 Electron binary，
+  避免 `.bin/electron` Node 包装器在 smoke event 后卡住退出等待。
+- 未引入完整 i18n 框架，未创建 `apps/web`，未改变 Desktop 默认 mock sidecar / 真实 Codex
+  env opt-in 边界。
+
+本轮代码提交：`78e5433` `feat(desktop): 收口首轮简中体验 / polish first-run zh-CN UX`。
+
 ---
 
 ---
@@ -374,15 +409,22 @@
 
 优先级从高到低：
 
-1. **Desktop 语言切换收口**：继续复查 `DesktopApp` 中仍未本地化的静态模型/组件文案，优先把 Home sidecar panel、Artifact Review policy、Settings / Source Roots、安全卡片和 replay metadata 常用路径继续搬到 `desktop-locale.ts`，不要引入完整 i18n 框架。
-2. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
-3. **UI copy 与设计文档对齐**：必要时同步 `docs/design/ux/foundations/i18n-and-language-switching.md` 的实现状态，但不要创建 `apps/web` 或扩大产品边界。
+1. **Desktop 上手体验冒烟**：启动默认 mock Desktop，按人类试用路径从首页点击“运行内部试用”，
+   观察 Run Detail、Artifact payload、operator note 和 Settings 空态；优先修真实体验阻塞，
+   不做完整产品 UI。
+2. **Desktop 静态模型剩余文案轻量收口**：继续复查 `desktop-model.ts` 中 pinned runs /
+   handoff / status strip 的英语 fixture；仅搬运第一屏会直接看到且影响体验的文案，不引入完整
+   i18n 框架。
+3. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现
+   runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
 
 ---
 
 ## 8. 风险与阻塞
 
 - 默认自动化 e2e 仅覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
+- 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，
+  优先检查 `window-smoke.mjs` 的真实 binary 解析与退出链路。
 - 本轮真实 Codex runner 覆盖 Desktop 自拉起 Codex sidecar 的观察路径；仍依赖本机 Codex 登录态、CLI 版本和响应时延。
 - `smoke:codex` 现在依赖 renderer 上少量 `data-smoke-id` hook 以避免被语言切换文案打断；这些 hook 不能作为产品 API 或 Desktop bridge 能力边界。
 - Renderer payload/replay/operator action guard 与 Run Detail copy helper 只覆盖同一 renderer 会话内的请求乱序、空态防护和 trial 文案口径；完整 Artifact
