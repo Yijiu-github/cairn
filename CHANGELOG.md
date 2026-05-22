@@ -102,6 +102,8 @@
 
 ### Fixed
 
+- **Desktop replay bridge errors**：Workspace Core client 的只读 replay / payload 请求会在 transport
+  failure 时脱敏 URL、token 与本地路径后再返回 Desktop bridge 错误。
 - **UI preview static titles**：`RunDetailViewModel` 与 `ArtifactReviewViewModel` 的静态标题统一为
   `Run Detail 页面 prototype`，避免继续沿用 `Run Detail preview page` 旧口径。
 - **Desktop bridge errors**：main process 在格式化 Workspace Core action 错误前会先收窄

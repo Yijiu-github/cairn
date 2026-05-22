@@ -360,7 +360,12 @@ const requestJson = async <T = unknown>(
     init.body = JSON.stringify(request.body);
   }
 
-  const response = await fetchImpl(`${runtime.baseUrl}${request.path}`, init);
+  let response: Response;
+  try {
+    response = await fetchImpl(`${runtime.baseUrl}${request.path}`, init);
+  } catch (error) {
+    throw new Error(formatWorkspaceCoreTransportError(error));
+  }
 
   if (!response.ok) {
     throw new Error(
@@ -382,6 +387,39 @@ const requestJson = async <T = unknown>(
 
   return parsed.data;
 };
+
+function formatWorkspaceCoreTransportError(error: unknown): string {
+  const message =
+    error instanceof Error && error.message.trim().length > 0
+      ? redactWorkspaceCoreClientMessage(error.message)
+      : 'unknown transport error';
+
+  return `Workspace Core request failed before receiving a response: ${message}`;
+}
+
+function redactWorkspaceCoreClientMessage(message: string): string {
+  const redactedUrls = message.replace(/\bhttps?:\/\/[^\s"'<>]+/giu, '<redacted>');
+  const redactedPaths = redactedUrls
+    .replace(/(?:[A-Za-z]:)?\/(?:[^/\s]+\/)*[^/\s]+/gu, '<redacted>')
+    .replace(/\\(?:[^\\\s]+\\)*[^\\\s]+/gu, '<redacted>');
+  const redactedSecrets = redactedPaths
+    .replace(/\b(Bearer)\s+[A-Za-z0-9._~+/=-]+\b/giu, '$1 <redacted>')
+    .replace(
+      /\b([A-Z0-9_]*TOKEN[A-Z0-9_]*|[A-Z0-9_]{3,})=([^\s]+)/giu,
+      (_match: string, key: string) => `${key}=<redacted>`,
+    );
+
+  return trimWorkspaceCoreClientMessage(redactedSecrets);
+}
+
+function trimWorkspaceCoreClientMessage(message: string): string {
+  const normalized = message.trim();
+  if (normalized.length <= 2000) {
+    return normalized;
+  }
+
+  return normalized.slice(-2000);
+}
 
 const first = <T>(items: readonly T[], message: string): T => {
   const item = items[0];
