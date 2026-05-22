@@ -286,14 +286,16 @@ curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
 
 ### 6.7 结果记录
 
-每次内部试用结束后，请把以下信息追加到本手册或配套 handoff：
+每次内部试用结束后，请把以下信息追加到本手册或配套 handoff。建议使用短表，不再扩写长段叙述：
 
-- 实际使用的是 mock sidecar 还是 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`
-- 本轮触发的 runId / taskId / agentRunId
-- 终态是否达到
-- replay evidence 是否可读
-- 最小 operator action 是否执行
-- 失败摘要是否已脱敏
+| 项目                 | 记录                                         |
+| -------------------- | -------------------------------------------- |
+| sidecar 模式         | mock / `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` |
+| run 证据             | `runId` / `taskId` / `agentRunId`            |
+| 终态                 | 是否达到                                     |
+| replay evidence      | 是否可读                                     |
+| 最小 operator action | 是否执行                                     |
+| 失败摘要             | 是否已脱敏                                   |
 
 ---
 
@@ -400,9 +402,7 @@ curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
 
 - Workspace Core + Codex API smoke 已有一次手动成功记录。
 - run / task / agent-run 到达 `succeeded`，replay-source 可读，operator note 可回写为 `operator.note` trace event。
-- 文档示例已改用当前契约允许的 `taskKind: "custom"`，并建议使用 `$PWD/.cairn/...` 形式的 runtime workdir，避免包脚本工作目录漂移。
-
----
+  -- 文档示例已改用当前契约允许的 `taskKind: "custom"`，并建议使用 `$PWD/.cairn/...` 形式的 runtime workdir，避免包脚本工作目录漂移。
 
 ## 9. Trial Gate
 
