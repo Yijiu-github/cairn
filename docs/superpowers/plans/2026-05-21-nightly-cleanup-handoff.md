@@ -364,7 +364,7 @@
 - 修正默认简中与 `smoke:codex` 的交叉问题：runner 不再依赖英文可见文案，改用 locale-neutral smoke hook。
 - 同步 README、STATUS、CHANGELOG、testing strategy、runbook 与 `2026-05-22-codex-window-e2e-runner.md`。
 
-本轮提交：待创建。
+本轮提交：`188fb00` `feat(desktop): 增加真实 Codex smoke 与语言切换 / add codex smoke and locale switch`。
 
 ---
 
