@@ -140,7 +140,7 @@ export const runDetailArtifacts = [
     path: 'apps/ui-preview/src/pages/run-detail-preview-page.tsx',
     reviewState: 'pending_review' as const,
     summary: 'Run Detail 页面 prototype，组合任务树、证据链、产物列表和人工接管。',
-    title: 'Run Detail preview page',
+    title: 'Run Detail 页面 prototype',
     verification: 'typecheck pending',
     actions: [
       { label: '打开预览', tone: 'primary' as const },

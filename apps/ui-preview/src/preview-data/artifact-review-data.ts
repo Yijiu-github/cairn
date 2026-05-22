@@ -40,7 +40,7 @@ export const artifactReviewRelatedArtifacts = [
     reviewState: 'pending_review' as const,
     sensitive: true,
     summary: 'Run Detail 页面 prototype，包含 run id、任务树、证据链、产物和接管入口。',
-    title: 'Run Detail preview page',
+    title: 'Run Detail 页面 prototype',
     verification: 'typecheck passed',
   },
   {

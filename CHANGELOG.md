@@ -102,6 +102,8 @@
 
 ### Fixed
 
+- **UI preview static titles**：`RunDetailViewModel` 与 `ArtifactReviewViewModel` 的静态标题统一为
+  `Run Detail 页面 prototype`，避免继续沿用 `Run Detail preview page` 旧口径。
 - **Desktop bridge errors**：main process 在格式化 Workspace Core action 错误前会先收窄
   error payload，只接受字符串 code / message；畸形错误体会返回通用安全错误，不再抛出
   `code?.trim` 之类的内部 TypeError。

@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 08:04 CST
+> 最后更新：2026-05-22 08:37 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 08:04 CST 复核：
+2026-05-22 08:37 CST 复核：
 
-- `git status --short`：本轮从干净工作区开始；改动为 Desktop main bridge action error payload hardening、对应 spec、CHANGELOG 与 handoff。
-- `git diff --name-only`：本轮只覆盖 `apps/desktop/src/main/index.ts`、`apps/desktop/src/main/index.spec.ts`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- `git status --short`：本轮从干净工作区开始；改动为 UI preview 静态标题收口、对应 spec、CHANGELOG 与 handoff。
+- `git diff --name-only`：本轮只覆盖 `apps/ui-preview/src/preview-data/run-detail-data.ts`、`apps/ui-preview/src/preview-data/artifact-review-data.ts`、`apps/ui-preview/src/preview-models/run-detail-view-model.spec.ts`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -187,6 +187,16 @@
 - 绿灯：`apps/desktop/src/main/index.ts` 在格式化 Workspace Core action error 前先把 error payload 从
   `unknown` 收窄，只接受字符串 `code` / `message`；同一 spec 通过，28 个测试。
 
+2026-05-22 08:37 CST UI preview static title 验证：
+
+- 红灯：新增 `apps/ui-preview/src/preview-models/run-detail-view-model.spec.ts` 后，
+  `pnpm exec vitest run apps/ui-preview/src/preview-models/run-detail-view-model.spec.ts`
+  因 `runDetailViewModel.run.artifacts[0].title` / `artifactReviewViewModel.relatedArtifacts[0].title`
+  仍为 `Run Detail preview page` 失败。
+- 绿灯：`apps/ui-preview/src/preview-data/run-detail-data.ts` 与
+  `apps/ui-preview/src/preview-data/artifact-review-data.ts` 将两处标题统一为
+  `Run Detail 页面 prototype`；同一 spec 通过，2 个测试。
+
 ---
 
 ## 6. 最新完成
@@ -291,6 +301,15 @@
 
 本轮提交：`c32c622` `fix(desktop): 收紧桥接错误解析 / harden bridge error parsing`。
 
+2026-05-22 08:37 CST 本轮完成：
+
+- 收口 `ui-preview` 两处静态标题旧口径：`Run Detail` 相关 artifact 标题从 `Run Detail preview page`
+  统一为 `Run Detail 页面 prototype`，与当前页面 / 产物 prototype 口径一致。
+- 新增 `run-detail-view-model.spec.ts`，锁住 Run Detail 与 Artifact Review 两个视图模型的静态标题。
+- 同步 `CHANGELOG.md` 的修复项；没有扩大布局、导航或外壳范围。
+
+本轮提交：待提交。
+
 ---
 
 ---
@@ -301,8 +320,8 @@
 
 1. **真实 Codex 手动 smoke 复核**：按 runbook 再跑一条短任务，记录当前 Codex CLI / Node / OS 证据，只使用合成 prompt。
    2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
-2. **Desktop renderer / bridge 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard、operator action sequence guard、Run Detail 空 evidence / metadata-only 文案、allowlist 文档口径与 action error payload 收窄已补；下一轮优先继续找 ui-preview / desktop-model 静态数据旧口径，或复核 Desktop bridge 其它只读路径的畸形错误体处理，不要重复做同一 guard/copy。
-3. **UI preview 静态数据收口**：本轮已修正 artifact review hero title；下一轮可继续找其它残留旧口径，但不要大改布局或样式。
+2. **Desktop renderer / bridge 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard、operator action sequence guard、Run Detail 空 evidence / metadata-only 文案、allowlist 文档口径与 action error payload 收窄已补；下一轮可继续复核 Desktop bridge 其它只读路径的畸形错误体处理，但不要重复做同一 guard/copy。
+3. **UI preview 静态数据收口**：本轮已收口 Run Detail / Artifact Review 的静态标题旧口径；下一轮继续找其他残留旧口径，但不要大改布局或样式。
 4. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
 5. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。
 
