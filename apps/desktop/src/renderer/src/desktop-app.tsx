@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   AgentStatusStrip,
@@ -31,6 +31,7 @@ import {
   writeStoredDesktopLocale,
 } from './desktop-locale';
 import { desktopShellModel } from './desktop-model';
+import { validateMissionDraft } from './mission-draft';
 import { runOperatorAction as runOperatorActionRequest } from './operator-action-runner';
 import {
   artifactEmptyCopy,
@@ -659,6 +660,27 @@ function MissionControlHero({
 }) {
   const coreAvailable = window.cairnDesktop?.workspaceCore !== undefined;
   const isHealthy = status?.state === 'healthy';
+  const [missionDraft, setMissionDraft] = useState('');
+  const [missionDraftError, setMissionDraftError] = useState<string>();
+
+  function handleMissionDraftChange(event: ChangeEvent<HTMLInputElement>) {
+    setMissionDraft(event.target.value);
+    if (missionDraftError !== undefined) {
+      setMissionDraftError(undefined);
+    }
+  }
+
+  function dispatchMissionPreview() {
+    const validation = validateMissionDraft(missionDraft);
+
+    if (!validation.isValid) {
+      setMissionDraftError(copy.missionDraftRequiredError);
+      return;
+    }
+
+    setMissionDraftError(undefined);
+    void onRunInternalTrial();
+  }
 
   return (
     <section className="mission-hero" aria-label={copy.missionControlTitle}>
@@ -670,22 +692,26 @@ function MissionControlHero({
           <Input
             aria-label={missionControl.taskComposerPlaceholder}
             className="mission-composer-input"
+            name="missionDraft"
+            onChange={handleMissionDraftChange}
             placeholder={missionControl.taskComposerPlaceholder}
-            readOnly
-            value=""
+            value={missionDraft}
           />
           <Button
             data-smoke-id="run-internal-trial"
             disabled={!coreAvailable || !isHealthy}
             loading={statusLoading}
-            onClick={() => {
-              void onRunInternalTrial();
-            }}
+            onClick={dispatchMissionPreview}
           >
             {copy.dispatchMissionLabel}
           </Button>
         </div>
         <p className="mission-hero-note">{copy.missionInputPreviewBody}</p>
+        {missionDraftError === undefined ? undefined : (
+          <InlineAlert tone="danger" title={copy.dispatchMissionLabel}>
+            {missionDraftError}
+          </InlineAlert>
+        )}
       </div>
       <Card className="mission-hero-status workspace-core-panel">
         <CardHeader>

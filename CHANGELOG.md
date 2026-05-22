@@ -22,7 +22,7 @@
 - Desktop 新增 `pnpm --filter @cairn/desktop test:e2e` 最小窗口级 smoke；当前只覆盖默认 mock sidecar 路径。
 - Desktop 新增 `pnpm --filter @cairn/desktop smoke:codex` opt-in 真实 Codex window-level smoke，可通过窗口驱动 internal-trial、replay evidence 与 operator note；默认 CI 仍只跑 mock sidecar smoke。
 - Desktop 壳新增简体中文 / English 页面切换，默认简体中文，并把语言偏好保存到本地 `localStorage`。
-- Desktop Home 首屏新增 Mission Control 风格体验：突出“派发给总 Agent”、Agent 总览、运行中的 Agent 与最近进展；当前仍使用 bounded internal-trial 入口，不开放自由文本 Supervisor 任务。
+- Desktop Home 首屏新增 Mission Control 风格体验：突出“派发给总 Agent”、Agent 总览、运行中的 Agent 与最近进展；任务草稿先保存在 renderer 本地，当前仍使用 bounded internal-trial 入口，不开放自由文本 Supervisor 执行。
 - 收口静态预览数据中的旧固定协作角色名，改为中性 preview label。
 - **M3 Operator Control evidence polish**：补齐 operator cancel 的 runtime requested / acknowledged / not-acknowledged / dispatch-failed TraceEvent 证据，并为 retry / rerun trace 增加最小恢复路径 payload。
 - 新增战略定位刷新说明，明确 Cairn 以个人本地工作台切入，长期聚焦小团队 Agent 工程控制台，并通过 runtime-neutral control plane 接入 Codex / Claude 等官方 agent 工具。

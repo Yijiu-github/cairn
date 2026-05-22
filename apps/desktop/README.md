@@ -30,9 +30,10 @@ first navigation shape:
 - **Settings** — read-only source-root and connection placeholders
 
 Production sidecar bundling, real filesystem access, complete runtime action coverage, and full
-operator workflows are still out of scope for this slice. The Home dispatch composer currently
-drives the bounded internal-trial path; free-form Supervisor prompts are intentionally not enabled
-until the planner contract and task dispatch flow are ready.
+operator workflows are still out of scope for this slice. The Home dispatch composer accepts a
+local renderer-only mission draft, then still drives the bounded internal-trial path; free-form
+Supervisor execution is intentionally not enabled until the planner contract and task dispatch flow
+are ready.
 
 ## Workspace Core preview bridge
 

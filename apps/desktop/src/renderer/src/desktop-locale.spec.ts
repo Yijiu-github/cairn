@@ -49,7 +49,8 @@ describe('desktop locale', () => {
     expect(copy.agentWorkingLabel).toBe('工作中');
     expect(copy.recentProgressLabel).toBe('最近进展');
     expect(copy.liveAgentsTitle).toBe('运行中的 Agent');
-    expect(copy.missionInputPreviewBody).toContain('自由输入给总 Agent');
+    expect(copy.missionInputPreviewBody).toContain('任务草稿只保存在当前 renderer');
+    expect(copy.missionDraftRequiredError).toContain('先写下');
     expect(copy.workspaceCorePanelTitle).toBe('Workspace Core 本地 sidecar');
     expect(copy.runInternalTrial).toBe('运行内部试用');
     expect(copy.runInternalTrialEmptyBody).toContain('点击“运行内部试用”');

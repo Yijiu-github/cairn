@@ -127,8 +127,9 @@ Desktop 开发态默认走 mock sidecar。Home 首屏现在是 Mission Control �
 可通过“派发给总 Agent”按钮触发 preload allowlist 中的 `workspaceCore.runInternalTrial()`，
 走 `workspace-core:run-internal-trial` IPC 入口，并读取最小 replay evidence。
 
-注意：当前首屏 dispatch composer 仍是 bounded internal-trial 入口。自由输入给 Supervisor、
-自动创建多个子 Agent 与真实任务编排，需要等 planner contract 和 dispatch flow 落地后再启用。
+注意：当前首屏 dispatch composer 可以填写任务草稿，但草稿只保存在 Desktop renderer 本地；
+按钮仍是 bounded internal-trial 入口。自由输入给 Supervisor 后真实执行、自动创建多个子 Agent
+与真实任务编排，需要等 planner contract 和 dispatch flow 落地后再启用。
 
 默认 Desktop sidecar runtime 是 mock。启动会写入不含 token 的诊断快照：
 

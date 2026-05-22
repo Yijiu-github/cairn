@@ -12,6 +12,8 @@ import { fileURLToPath, URL } from 'node:url';
 const expectedEvent = 'main-window-ready-to-show';
 const timeoutMs = 20_000;
 const pollIntervalMs = 100;
+const gracefulExitTimeoutMs = 5000;
+const forcedExitTimeoutMs = 3000;
 const root = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
 const require = createRequire(import.meta.url);
 const smokeDir = await mkdtemp(join(tmpdir(), 'cairn-desktop-window-smoke-'));
@@ -48,7 +50,7 @@ try {
   await waitForSignal();
   const exitPromise = waitForExit();
   child.kill('SIGTERM');
-  const exit = await exitPromise;
+  const exit = await waitForGracefulOrForcedExit(exitPromise);
 
   if (exit.code !== 0 && exit.signal !== 'SIGTERM') {
     throw new Error(
@@ -128,7 +130,39 @@ async function waitForExit() {
       reject(
         new Error(`Timed out waiting for Electron to exit after smoke event.\n${formatOutput()}`),
       );
-    }, 5000);
+    }, gracefulExitTimeoutMs);
+
+    child.once('error', (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+
+    child.once('exit', (code, signal) => {
+      clearTimeout(timer);
+      resolve({ code, signal });
+    });
+  });
+}
+
+async function waitForGracefulOrForcedExit(exitPromise) {
+  try {
+    return await exitPromise;
+  } catch (error) {
+    child.kill('SIGKILL');
+    const forcedExit = await waitForForcedExit();
+    if (forcedExit.signal === 'SIGKILL') {
+      return forcedExit;
+    }
+
+    throw error;
+  }
+}
+
+async function waitForForcedExit() {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error(`Timed out waiting for Electron to exit after SIGKILL.\n${formatOutput()}`));
+    }, forcedExitTimeoutMs);
 
     child.once('error', (error) => {
       clearTimeout(timer);

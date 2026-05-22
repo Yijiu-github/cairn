@@ -156,6 +156,7 @@ export interface DesktopLocaleStrings {
   readonly liveActionsLabel: string;
   readonly liveActionsValue: string;
   readonly missionControlTitle: string;
+  readonly missionDraftRequiredError: string;
   readonly missionInputPreviewBody: string;
   readonly recentProgressLabel: string;
   readonly recentProgressDescription: string;
@@ -343,8 +344,9 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     liveActionsLabel: 'Live actions',
     liveActionsValue: 'bounded operator allowlist',
     missionControlTitle: 'Mission control',
+    missionDraftRequiredError: 'Describe a mission draft before dispatching the bounded preview.',
     missionInputPreviewBody:
-      'This preview dispatches a bounded internal trial. Free-form supervisor prompts will be enabled after the planner contract lands.',
+      'This draft is kept locally in the renderer. Dispatch still runs the bounded internal trial until the planner contract lands.',
     recentProgressLabel: 'Recent progress',
     recentProgressDescription: 'Small but durable changes the desktop shell can already observe.',
     pathExposurePolicyTitle: 'Path exposure policy',
@@ -519,8 +521,9 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     liveActionsLabel: '实时动作',
     liveActionsValue: '受限 operator 白名单',
     missionControlTitle: '派活工作台',
+    missionDraftRequiredError: '先写下要交给总 Agent 的任务草稿，再派发受限预览。',
     missionInputPreviewBody:
-      '当前预览会派发一条受限内部试用任务；自由输入给总 Agent 的真实任务会在 planner 契约落地后开启。',
+      '任务草稿只保存在当前 renderer；在 planner 契约落地前，派发仍会执行受限内部试用路径。',
     recentProgressLabel: '最近进展',
     recentProgressDescription: '桌面壳已经能稳定观察到的近期进度。',
     pathExposurePolicyTitle: '路径暴露策略',

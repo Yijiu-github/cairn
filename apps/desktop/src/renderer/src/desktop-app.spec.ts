@@ -28,6 +28,9 @@ describe('DesktopApp home screen', () => {
 
     expect(markup).toContain('派活工作台');
     expect(markup).toContain('派发给总 Agent');
+    expect(markup).toContain('name="missionDraft"');
+    expect(markup).not.toContain('readOnly');
+    expect(markup).not.toContain('readonly');
     expect(markup).toContain('活跃 Agent');
     expect(markup).toContain('1');
     expect(markup).toContain('总 Agent');
