@@ -218,6 +218,19 @@ h2 {
   grid-template-columns: minmax(0, 1fr) 380px;
 }
 
+.mission-control-layout {
+  align-items: start;
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(300px, 0.85fr);
+}
+
+.mission-control-columns {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+}
+
 .content-stack,
 .run-list,
 .artifact-list,
@@ -238,6 +251,147 @@ h2 {
   display: flex;
   gap: 14px;
   justify-content: space-between;
+}
+
+.section-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.section-heading h3,
+.mission-hero h3,
+.live-agent-card h4 {
+  font-size: 24px;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+.section-heading p,
+.mission-hero-summary,
+.mission-hero-note,
+.live-agent-summary,
+.recent-progress-item span {
+  color: var(--desktop-subtle);
+  line-height: 1.6;
+}
+
+.mission-hero {
+  background:
+    radial-gradient(circle at top right, rgb(37 99 235 / 14%), transparent 18rem),
+    linear-gradient(160deg, rgb(255 255 255 / 96%) 0%, rgb(243 248 255 / 92%) 62%, rgb(233 241 250 / 92%) 100%);
+  border: 1px solid rgb(191 219 254 / 85%);
+  border-radius: 30px;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
+  padding: 26px;
+}
+
+.mission-hero-copy {
+  display: grid;
+  gap: 16px;
+}
+
+.mission-hero-summary {
+  font-size: 16px;
+  max-width: 62ch;
+}
+
+.mission-composer {
+  align-items: center;
+  background: rgb(255 255 255 / 88%);
+  border: 1px solid rgb(191 219 254 / 75%);
+  border-radius: 22px;
+  box-shadow: 0 18px 40px rgb(37 99 235 / 10%);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 14px;
+}
+
+.mission-composer-input {
+  background: transparent;
+  border: 0;
+  min-height: 52px;
+  padding: 0 4px;
+}
+
+.mission-hero-note {
+  font-size: 13px;
+}
+
+.mission-hero-status,
+.workspace-core-panel {
+  background: rgb(255 255 255 / 86%);
+}
+
+.agent-summary-strip {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.agent-summary-card {
+  background: rgb(255 255 255 / 82%);
+  border-color: rgb(226 232 240 / 90%);
+}
+
+.agent-summary-card p {
+  color: var(--desktop-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.agent-summary-card strong {
+  font-size: 30px;
+  letter-spacing: -0.05em;
+}
+
+.live-agent-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.live-agent-card {
+  background: linear-gradient(180deg, rgb(255 255 255 / 96%) 0%, rgb(248 250 252 / 88%) 100%);
+}
+
+.live-agent-label {
+  color: var(--desktop-blue);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+
+.recent-progress-list {
+  display: grid;
+  gap: 12px;
+}
+
+.recent-progress-item {
+  background: linear-gradient(180deg, rgb(248 250 252 / 95%) 0%, rgb(241 245 249 / 92%) 100%);
+  border: 1px solid var(--desktop-border);
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+}
+
+.recent-progress-item p {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.home-safety-rail {
+  position: sticky;
+  top: 0;
 }
 
 .empty-state-panel {
@@ -337,11 +491,18 @@ h2 {
 
 @media (max-width: 1100px) {
   .desktop-shell,
-  .content-grid {
+  .content-grid,
+  .mission-control-layout,
+  .mission-control-columns,
+  .agent-summary-strip {
     grid-template-columns: 1fr;
   }
 
   .desktop-sidebar {
+    position: static;
+  }
+
+  .home-safety-rail {
     position: static;
   }
 }
@@ -359,5 +520,14 @@ h2 {
 
   .run-id-form {
     grid-template-columns: 1fr;
+  }
+
+  .mission-hero,
+  .mission-composer {
+    grid-template-columns: 1fr;
+  }
+
+  .mission-hero {
+    padding: 20px;
   }
 }

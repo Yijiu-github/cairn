@@ -440,6 +440,7 @@ type WorkspaceCoreTrialResult = Awaited<
 interface LocalizedDesktopModel {
   readonly artifactReview: typeof desktopShellModel.artifactReview;
   readonly handoffs: typeof desktopShellModel.handoffs;
+  readonly missionControl: typeof desktopShellModel.missionControl;
   readonly navItems: typeof desktopShellModel.navItems;
   readonly pinnedRuns: typeof desktopShellModel.pinnedRuns;
   readonly runtime: typeof desktopShellModel.runtime;
@@ -508,6 +509,7 @@ function createLocalizedDesktopModel(copy: DesktopLocaleStrings): LocalizedDeskt
               waitedFor: 'contract design',
             },
     ),
+    missionControl: desktopShellModel.missionControl,
     navItems: [
       {
         description: copy.homeTabDescription,
@@ -601,36 +603,269 @@ function HomeView({
   trialResult,
 }: HomeViewProps) {
   return (
-    <div className="content-grid">
+    <div className="mission-control-layout">
       <section className="content-stack">
-        <WorkspaceCorePanel
+        <MissionControlHero
           copy={copy}
+          missionControl={model.missionControl}
           onRunInternalTrial={onRunInternalTrial}
           status={status}
           statusError={statusError}
           statusLoading={statusLoading}
           trialResult={trialResult}
         />
-
-        <section className="content-stack" aria-label={copy.handoffInboxLabel}>
-          {model.handoffs.map((handoff) => (
-            <HandoffQueueItem key={`${handoff.sourceLabel}-${handoff.title}`} {...handoff} />
-          ))}
-        </section>
-
-        <div className="run-list">
-          {model.pinnedRuns.map((run) => (
-            <RunCard key={run.runId} {...run} />
-          ))}
+        <AgentSummaryStrip copy={copy} missionControl={model.missionControl} />
+        <div className="mission-control-columns">
+          <div className="content-stack">
+            <LiveAgentList missionControl={model.missionControl} />
+            <RecentProgressPanel copy={copy} missionControl={model.missionControl} />
+          </div>
+          <div className="content-stack">
+            <section className="content-stack" aria-label={copy.handoffInboxLabel}>
+              {model.handoffs.map((handoff) => (
+                <HandoffQueueItem key={`${handoff.sourceLabel}-${handoff.title}`} {...handoff} />
+              ))}
+            </section>
+            <div className="run-list">
+              {model.pinnedRuns.map((run) => (
+                <RunCard key={run.runId} {...run} />
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      <aside className="content-stack">
-        <RuntimeHealthCard {...model.runtime} />
-        <SafetyDefaultsCard copy={copy} />
-        <NextSafeStepCard copy={copy} />
-      </aside>
+      <HomeSafetyRail
+        copy={copy}
+        onRunInternalTrial={onRunInternalTrial}
+        runtime={model.runtime}
+        status={status}
+        statusError={statusError}
+        statusLoading={statusLoading}
+        trialResult={trialResult}
+      />
     </div>
+  );
+}
+
+function MissionControlHero({
+  copy,
+  missionControl,
+  onRunInternalTrial,
+  status,
+  statusError,
+  statusLoading,
+  trialResult,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly missionControl: LocalizedDesktopModel['missionControl'];
+  readonly onRunInternalTrial: () => Promise<void>;
+  readonly status?: WorkspaceCoreStatus | undefined;
+  readonly statusError?: string | undefined;
+  readonly statusLoading: boolean;
+  readonly trialResult?: WorkspaceCoreTrialResult | undefined;
+}) {
+  const coreAvailable = window.cairnDesktop?.workspaceCore !== undefined;
+  const isHealthy = status?.state === 'healthy';
+
+  return (
+    <section className="mission-hero" aria-label={copy.missionControlTitle}>
+      <div className="mission-hero-copy">
+        <p className="eyebrow">{copy.homeTabLabel}</p>
+        <h3>{copy.missionControlTitle}</h3>
+        <p className="mission-hero-summary">{copy.desktopWorkspaceSummary}</p>
+        <div className="mission-composer" aria-label={copy.dispatchMissionLabel}>
+          <Input
+            aria-label={missionControl.taskComposerPlaceholder}
+            className="mission-composer-input"
+            placeholder={missionControl.taskComposerPlaceholder}
+            readOnly
+            value=""
+          />
+          <Button
+            data-smoke-id="dispatch-mission"
+            disabled={!coreAvailable || !isHealthy}
+            loading={statusLoading}
+            onClick={() => {
+              void onRunInternalTrial();
+            }}
+          >
+            {copy.dispatchMissionLabel}
+          </Button>
+        </div>
+        <p className="mission-hero-note">{copy.runInternalTrialEmptyBody}</p>
+      </div>
+      <Card className="mission-hero-status">
+        <CardHeader>
+          <div className="card-title-row">
+            <div>
+              <CardTitle>{copy.workspaceCorePanelTitle}</CardTitle>
+              <CardDescription>{copy.workspaceCorePanelDescription}</CardDescription>
+            </div>
+            <StatusBadge
+              label={status?.service ?? 'workspace-core'}
+              metadata={status?.state ?? 'checking'}
+              tone={toStatusTone(status?.state)}
+            />
+          </div>
+        </CardHeader>
+        <CardContent className="content-stack">
+          {statusError === undefined ? undefined : (
+            <InlineAlert
+              data-smoke-id="workspace-core-action-error"
+              tone="danger"
+              title={copy.workspaceCorePanelTitle}
+            >
+              {statusError}
+            </InlineAlert>
+          )}
+          <MetadataList
+            items={[
+              {
+                label: copy.connectionLabel,
+                value: status?.connectionLabel ?? copy.connectionPending,
+              },
+              { label: copy.processLabel, value: status?.pid ?? copy.serviceChecking },
+              { label: copy.lastErrorLabel, value: status?.lastError ?? copy.lastErrorNone },
+              { label: copy.runtimeLabel, value: status?.runtime ?? copy.serviceChecking },
+            ]}
+          />
+          {trialResult === undefined ? undefined : (
+            <MetadataList
+              items={[
+                { label: copy.runLabel, value: `${trialResult.runId} · ${trialResult.runStatus}` },
+                {
+                  label: copy.taskLabel,
+                  value: `${trialResult.taskId} · ${trialResult.taskStatus}`,
+                },
+              ]}
+            />
+          )}
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
+
+function AgentSummaryStrip({
+  copy,
+  missionControl,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly missionControl: LocalizedDesktopModel['missionControl'];
+}) {
+  const items = [
+    { label: copy.activeAgentCountLabel, value: missionControl.activeAgentCount },
+    { label: copy.blockedAgentCountLabel, value: missionControl.blockedAgentCount },
+    { label: copy.completedAgentCountLabel, value: missionControl.completedAgentCount },
+    { label: copy.totalAgentCountLabel, value: missionControl.totalAgentCount },
+  ];
+
+  return (
+    <section className="agent-summary-strip" aria-label={copy.agentSummaryLabel}>
+      {items.map((item) => (
+        <Card key={item.label} className="agent-summary-card">
+          <CardContent>
+            <p>{item.label}</p>
+            <strong>{item.value.toString()}</strong>
+          </CardContent>
+        </Card>
+      ))}
+    </section>
+  );
+}
+
+function LiveAgentList({
+  missionControl,
+}: {
+  readonly missionControl: LocalizedDesktopModel['missionControl'];
+}) {
+  return (
+    <section className="content-stack" aria-label="Live agents">
+      <div className="section-heading">
+        <h3>Live agents</h3>
+        <p>Current supervisor and worker activity across the mission queue.</p>
+      </div>
+      <div className="live-agent-grid">
+        {missionControl.liveAgents.map((agent) => (
+          <Card key={agent.agentId} className="live-agent-card">
+            <CardContent className="content-stack">
+              <div className="card-title-row">
+                <div>
+                  <p className="live-agent-label">{agent.agentId}</p>
+                  <h4>{agent.title}</h4>
+                </div>
+                <StatusBadge label={agent.status} tone={toMissionAgentTone(agent.status)} />
+              </div>
+              <p className="live-agent-summary">{agent.summary}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function RecentProgressPanel({
+  copy,
+  missionControl,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly missionControl: LocalizedDesktopModel['missionControl'];
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>{copy.recentProgressLabel}</CardTitle>
+        <CardDescription>
+          Small but durable changes the desktop shell can already observe.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="recent-progress-list">
+          {missionControl.recentProgressItems.map((item) => (
+            <article key={item.itemId} className="recent-progress-item">
+              <p>{item.title}</p>
+              <span>{item.detail}</span>
+            </article>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function HomeSafetyRail({
+  copy,
+  onRunInternalTrial,
+  runtime,
+  status,
+  statusError,
+  statusLoading,
+  trialResult,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly onRunInternalTrial: () => Promise<void>;
+  readonly runtime: LocalizedDesktopModel['runtime'];
+  readonly status?: WorkspaceCoreStatus | undefined;
+  readonly statusError?: string | undefined;
+  readonly statusLoading: boolean;
+  readonly trialResult?: WorkspaceCoreTrialResult | undefined;
+}) {
+  return (
+    <aside className="content-stack home-safety-rail">
+      <RuntimeHealthCard {...runtime} />
+      <WorkspaceCorePanel
+        copy={copy}
+        onRunInternalTrial={onRunInternalTrial}
+        status={status}
+        statusError={statusError}
+        statusLoading={statusLoading}
+        trialResult={trialResult}
+      />
+      <SafetyDefaultsCard copy={copy} />
+      <NextSafeStepCard copy={copy} />
+    </aside>
   );
 }
 
@@ -655,7 +890,7 @@ function WorkspaceCorePanel({
   const isHealthy = status?.state === 'healthy';
 
   return (
-    <Card>
+    <Card className="workspace-core-panel">
       <CardHeader>
         <div className="card-title-row">
           <div>
@@ -1573,6 +1808,24 @@ function toStatusTone(
   }
 
   return 'danger';
+}
+
+function toMissionAgentTone(
+  status: LocalizedDesktopModel['missionControl']['liveAgents'][number]['status'],
+): CairnEvidenceTone {
+  if (status === 'completed') {
+    return 'success';
+  }
+
+  if (status === 'blocked') {
+    return 'warning';
+  }
+
+  if (status === 'working') {
+    return 'info';
+  }
+
+  return 'neutral';
 }
 
 function toErrorMessage(error: unknown): string {
