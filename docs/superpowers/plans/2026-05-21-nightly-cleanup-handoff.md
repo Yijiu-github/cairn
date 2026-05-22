@@ -574,7 +574,7 @@
   已通过。
   `git diff --check`
   已通过。
-- 本轮代码/文档提交：待提交。
+- 本轮代码/文档提交：`e6c4a5d` `fix(desktop): 收口上手路径提示 / polish first-run guidance`。
 
 ## 7. 下一轮任务
 
