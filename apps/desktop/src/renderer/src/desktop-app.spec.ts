@@ -84,6 +84,30 @@ describe('DesktopApp home screen', () => {
     expect(markup).not.toContain('local sidecar');
   });
 
+  it('uses user-facing zh-CN wording for the first-run home surface', () => {
+    globalThis.window = {
+      cairnDesktop: {
+        app: {
+          mode: 'desktop-observer',
+          name: 'Cairn Desktop',
+        },
+      },
+      localStorage: createStorage(),
+    } as unknown as Window & typeof globalThis;
+
+    const markup = renderToStaticMarkup(createElement(DesktopApp));
+
+    expect(markup).toContain('本地运行服务');
+    expect(markup).toContain('运行安全');
+    expect(markup).toContain('派活工作台');
+    expect(markup).not.toContain('Workspace Core 本地 sidecar');
+    expect(markup).not.toContain('预览安全');
+    expect(markup).not.toContain('静态样例');
+    expect(markup).not.toContain('Preload 白名单');
+    expect(markup).not.toContain('sidecar 生命周期');
+    expect(markup).not.toContain('受限 operator 白名单');
+  });
+
   it('keeps mission dispatch as the primary smoke path without duplicate Core error selectors', () => {
     globalThis.window = {
       cairnDesktop: {

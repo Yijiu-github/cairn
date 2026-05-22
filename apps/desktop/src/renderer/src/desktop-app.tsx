@@ -497,21 +497,20 @@ function createLocalizedDesktopModel(copy: DesktopLocaleStrings): LocalizedDeskt
           ? {
               ...handoff,
               action: { ...handoff.action, label: '审阅' },
-              description: '确认第一版桌面壳在 sidecar / IPC 工作开始前仍保持预览安全边界。',
-              agentLabel: '主管 / Desktop',
-              sourceLabel: '桌面壳骨架 PR',
-              title: '审阅桌面壳安全文案',
-              waitedFor: 'operator review',
+              description: '确认第一版桌面派活入口仍保持受限接管和路径隐藏。',
+              agentLabel: '主管 / 桌面端',
+              sourceLabel: '桌面派活入口',
+              title: '审阅运行安全提示',
+              waitedFor: '人工审阅',
             }
           : {
               ...handoff,
               action: { ...handoff.action, label: '计划门禁' },
-              description:
-                '未来 Workspace Core 连接需要明确的 preload allowlist 与 sidecar 生命周期契约。',
+              description: '下一步真实任务派发前，需要先明确本地服务和桌面桥接的受限范围。',
               agentLabel: '运行时 Agent',
-              sourceLabel: 'Workspace Core 集成',
-              title: 'Sidecar 连接仍有意受限',
-              waitedFor: 'contract design',
+              sourceLabel: '本地服务接入',
+              title: '真实任务派发仍有意受限',
+              waitedFor: '契约确认',
             },
     ),
     missionControl: desktopShellModel.missionControl,
@@ -541,11 +540,39 @@ function createLocalizedDesktopModel(copy: DesktopLocaleStrings): LocalizedDeskt
     runtime: {
       ...desktopShellModel.runtime,
       description: isSimplifiedChinese
-        ? 'Renderer 通过受限 preload bridge 读取 sidecar 状态与 run replay evidence。接管动作限制在 internal-trial allowlist 内。'
+        ? '桌面端只读取本地服务状态和运行证据，接管动作保持受限。'
         : desktopShellModel.runtime.description,
-      runtimeLabel: isSimplifiedChinese ? '桌面观察运行时' : desktopShellModel.runtime.runtimeLabel,
+      metrics: isSimplifiedChinese
+        ? [
+            { label: '本地服务', value: '状态与证据' },
+            { label: '桌面桥接', value: '受限范围' },
+            { label: '本地文件', value: '不直接访问' },
+          ]
+        : desktopShellModel.runtime.metrics,
+      runtimeLabel: isSimplifiedChinese ? '本地运行状态' : desktopShellModel.runtime.runtimeLabel,
     },
-    statusStrip: desktopShellModel.statusStrip,
+    statusStrip: isSimplifiedChinese
+      ? [
+          {
+            id: 'agent-designer',
+            label: '设计 Agent',
+            status: 'thinking',
+            task: '梳理首页信息层级',
+          },
+          {
+            id: 'agent-runtime',
+            label: '运行时 Agent',
+            status: 'idle',
+            task: '等待本地服务契约',
+          },
+          {
+            id: 'agent-review',
+            label: '审阅 Agent',
+            status: 'waiting',
+            task: '等待产物审阅门禁',
+          },
+        ]
+      : desktopShellModel.statusStrip,
     viewTitle: {
       'artifact-review': copy.artifactReview,
       'home': copy.homeTabLabel,

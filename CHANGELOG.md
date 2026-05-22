@@ -88,6 +88,9 @@
 - Desktop 默认简体中文首轮体验继续收口：Home sidecar panel、Run Detail replay 提示、Artifact
   payload / path exposure policy、Settings source-root 空态与安全卡片文案改为使用 renderer
   locale copy，仍不引入完整 i18n 框架。
+- Desktop Mission Control 默认简中首屏继续减法：把首屏状态卡、安全栏和接力卡里的
+  `Workspace Core` / `sidecar` / `Preload` 等内部词收敛为本地运行服务、桌面桥接和运行安全口径；
+  没有改变默认 mock sidecar、真实 Codex env opt-in 或 bounded internal-trial 执行边界。
 - Desktop Home 从内部观察壳布局转向 Mission Control 首屏布局；重复 Workspace Core 状态面板已收敛到首屏状态卡，避免用户同时看到两套 Core 状态入口。
 - 内部试用文档已明确真实 Codex window-level smoke 的当前边界：默认 `@cairn/desktop test:e2e` 只覆盖 mock sidecar 窗口 ready smoke；真实 Codex window-level runner 需通过 `@cairn/desktop smoke:codex` 和本机 Codex env 显式 opt-in。
 - README、STATUS、本地开发与测试文档已对齐第一轮内部试用口径：开发态默认 mock sidecar，真实 Codex 需显式 opt-in，且不包含外部 alpha、`apps/web`、installer、signing 或 notarization。

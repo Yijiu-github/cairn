@@ -51,7 +51,7 @@ describe('desktop locale', () => {
     expect(copy.liveAgentsTitle).toBe('运行中的 Agent');
     expect(copy.missionInputPreviewBody).toContain('任务草稿只保存在当前 renderer');
     expect(copy.missionDraftRequiredError).toContain('先写下');
-    expect(copy.workspaceCorePanelTitle).toBe('Workspace Core 本地 sidecar');
+    expect(copy.workspaceCorePanelTitle).toBe('本地运行服务');
     expect(copy.runInternalTrial).toBe('运行内部试用');
     expect(copy.runInternalTrialEmptyBody).toContain('点击“运行内部试用”');
     expect(copy.agentRunsLabel).toBe('AgentRuns');
@@ -59,6 +59,8 @@ describe('desktop locale', () => {
     expect(copy.replaySourceBody('01J_RUN')).toBe('正在显示 01J_RUN 的脱敏 Workspace Core 证据。');
     expect(copy.sourceRootsEmptyTitle).toBe('还没有连接源目录');
     expect(copy.safetyLocalPathRevealValue).toBe('默认隐藏');
+    expect(copy.preloadAllowlistLabel).toBe('桌面桥接范围');
+    expect(copy.liveActionsValue).toBe('受限接管动作');
   });
 });
 
