@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-23 03:20 CST
+> 最后更新：2026-05-23 03:45 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,17 +35,20 @@
 
 ## 3. 当前工作区状态
 
-2026-05-23 03:20 CST 复核：
+2026-05-23 03:45 CST 复核：
 
 - `git status --short`：开始时已有上一轮 UI 改造未提交变更，集中在
   `apps/desktop/src/renderer/src/desktop-app.tsx`、
-  `apps/desktop/src/renderer/src/desktop-app.spec.ts` 与
-  `apps/desktop/src/renderer/src/desktop-locale.ts`；本轮继续收口同一子块，并新增
-  `CHANGELOG.md` 与本 handoff。
-- `git diff --name-only`：开始时为上述 3 个 Desktop renderer 文件；代码提交后工作区干净；
+  `apps/desktop/src/renderer/src/desktop-app.spec.ts`、
+  `apps/desktop/src/renderer/src/desktop-locale.ts`、
+  `apps/desktop/src/renderer/src/desktop-locale.spec.ts`、
+  `apps/desktop/src/renderer/src/desktop-model.ts` 与
+  `apps/desktop/src/renderer/src/styles.css`；本轮继续收口同一子块，并新增 `CHANGELOG.md`
+  与本 handoff。
+- `git diff --name-only`：开始时为上述 Desktop renderer / style 文件；代码提交后工作区干净；
   更新 handoff 后仅本文件 dirty。
-- 本轮主线子块为 Mission Control 首屏继续减法：右侧主卡从本地服务诊断转为 Agent 状态总览，
-  并新增体验指引，避免首屏直接暴露进程、运行时、sidecar、Codex opt-in 等实现细节。
+- 本轮主线子块为 Mission Control 首屏继续减法：把 Agent 总览、运行中的 Agent 与最近进展
+  合并为一个 Agent 动态面板，减少首屏重复信息与多层卡片堆叠。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
 
@@ -77,6 +80,7 @@
 - `50d49d5` `feat(desktop): 拆分首页为 mission control 布局 / split home into mission control layout`
 - `b86cb23` `fix(desktop): 收紧 mission control 首页体验 / tighten mission control home UX`
 - `6590e36` `feat(desktop): 简化首屏 Agent 状态 / simplify home agent status`
+- `9fb8d02` `feat(desktop): 合并首页 Agent 动态 / merge home agent activity`
 
 归档说明：
 
@@ -577,15 +581,15 @@
   已通过。
 - 本轮代码/文档提交：`e6c4a5d` `fix(desktop): 收口上手路径提示 / polish first-run guidance`。
 
-2026-05-23 03:20 CST 本轮完成：
+2026-05-23 03:45 CST 本轮完成：
 
-- 继续推进 Desktop Mission Control 首屏 UI 改造的小块：右侧主卡从“本地服务诊断”改为
-  “Agent 状态”，只展示活跃 / 已完成 / 阻塞 Agent 计数，减少进程、运行时、连接、错误等
-  技术诊断信息对用户的干扰。
-- 首页右侧安全栏新增“体验指引”：`写下目标 → 派发给总 Agent → 查看 Agent 进展`，把用户第一轮
-  需要做的动作放在比桥接细节更高的位置。
+- 继续推进 Desktop Mission Control 首屏 UI 改造的小块：把 Agent 总览、运行中的 Agent 与最近
+  进展合并为一个 Agent 动态面板，减少首屏重复信息与信息层级堆叠。
+- 保留旁侧体验指引：`写下目标 → 派发给总 Agent → 查看 Agent 进展`，让用户第一轮动作仍然
+  清楚可见，但不再把“总览”与“最近进展”拆成独立重复卡片。
 - 简中首页把 `运行时 Agent` 投影为 `执行 Agent`，并把 `mock sidecar` / `Codex opt-in`
   边界说明从首屏 Agent 卡片摘要中移出；底层 dev fixture 与英文 locale 仍保留工程事实口径。
+- 更新默认首页描述与最近进展文案，使其指向“Agent 动态”而不是旧的 `Agent 总览` 口径。
 - 删除不再使用的 connection label formatter；没有改变 Desktop bridge、bounded internal-trial、
   `data-smoke-id="run-internal-trial"`、默认 mock sidecar 或真实 Codex env opt-in 边界。
 - 验证：
@@ -597,7 +601,7 @@
   已通过。
   `pnpm --filter @cairn/desktop build`
   已通过。
-  `pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-app.spec.ts apps/desktop/src/renderer/src/desktop-locale.ts CHANGELOG.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  `pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-app.spec.ts apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts apps/desktop/src/renderer/src/desktop-model.ts apps/desktop/src/renderer/src/styles.css CHANGELOG.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
   已通过。
   `pnpm exec markdownlint-cli2 CHANGELOG.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
   已通过。
@@ -605,15 +609,15 @@
   已通过。
   `git diff --check`
   已通过。
-- 本轮代码提交：`6590e36` `feat(desktop): 简化首屏 Agent 状态 / simplify home agent status`。
+- 本轮代码提交：`9fb8d02` `feat(desktop): 合并首页 Agent 动态 / merge home agent activity`。
 
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **继续首屏 UI 改造的下一小块：运行中 Agent / 最近进展的信息合并**。审阅当前 Home 是否同时出现
-   Agent 状态卡、Agent 总览、运行中的 Agent、最近进展、接力收件箱和 pinned runs 造成重复信息；
-   优先把“几个 Agent、几个在干活、几个已完成、正在做什么”收成更清楚的一组卡片，不接真实 planner。
+1. **继续首屏 UI 改造的下一小块：观察是否还需要把 Agent 动态与接力收件箱 / pinned runs 再做层级重排**。
+   当前已把 Agent 总览、运行中 Agent 与最近进展合并为一个面板，但页面左侧与右侧仍可能显得偏满；
+   下一轮优先判断是否只需轻量调整顺序或摘要长度，不要再拆回多块。
 2. **补默认 mock 上手路径的 artifact payload 实操证据**：在 Desktop UI 中点“加载负载”，确认 payload
    文本加载后的简中状态是否清楚；若只暴露英文 media/truncated 等低价值技术词，优先做最小文案
    / 状态收口。
@@ -628,8 +632,8 @@
   replay / artifact / operator note，说明“可初步体验”路径已成立；本轮默认 mock Desktop 已手动烟测
   可走通；本轮进一步移除了首屏服务诊断噪音，但 artifact payload 加载后的文案和 operator note
   成功反馈仍值得下一轮继续细看。
-- 首页现在仍有 Agent 状态卡、Agent 总览、运行中 Agent、最近进展、接力收件箱和 pinned runs 多块并列；
-  信息已经更用户化，但还可能显得偏拥挤，下一轮应继续做合并和层级减法。
+- 首页左侧现在已把 Agent 总览、运行中 Agent 与最近进展合并；但整页仍有 hero、Agent 动态、
+  接力收件箱和 pinned runs 等信息块，下一轮应优先观察是否需要进一步调序或压缩摘要，而不是重新拆回独立总览卡。
 - 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
 - Mission Control 首页当前仍是静态/半静态首轮体验壳；任务草稿只在 renderer 本地保存，“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
 - 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。
