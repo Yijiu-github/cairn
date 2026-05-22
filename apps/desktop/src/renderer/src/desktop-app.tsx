@@ -18,11 +18,18 @@ import {
   MetadataList,
   RunCard,
   RuntimeHealthCard,
+  SegmentedControl,
+  SegmentedControlItem,
   StatusBadge,
   TaskTree,
 } from '@cairn/ui';
 
 import { loadArtifactPayload as loadArtifactPayloadRequest } from './artifact-payload-loader';
+import {
+  getDesktopLocaleStrings,
+  readStoredDesktopLocale,
+  writeStoredDesktopLocale,
+} from './desktop-locale';
 import { desktopShellModel } from './desktop-model';
 import { runOperatorAction as runOperatorActionRequest } from './operator-action-runner';
 import {
@@ -33,6 +40,7 @@ import {
 } from './run-detail-copy';
 import { loadRunReplaySource as loadRunReplaySourceRequest } from './run-replay-loader';
 
+import type { DesktopLocale, DesktopLocaleStrings } from './desktop-locale';
 import type { DesktopView } from './desktop-model';
 import type { ArtifactPayloadResponse, RunReplaySource } from '@cairn/shared-contracts';
 import type {
@@ -46,6 +54,7 @@ import type {
 
 export function DesktopApp() {
   const [activeView, setActiveView] = useState<DesktopView>(() => readStoredView());
+  const [locale, setLocale] = useState<DesktopLocale>(() => readStoredDesktopLocale());
   const [workspaceCoreStatus, setWorkspaceCoreStatus] =
     useState<
       Awaited<ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['getStatus']>>
@@ -75,10 +84,16 @@ export function DesktopApp() {
   const operatorActionRunState = useRef({ current: 0 });
   const runReplayLoadState = useRef({ current: 0 });
   const bridgeLabel = useMemo(() => window.cairnDesktop?.app.name ?? 'Cairn Desktop', []);
+  const copy = getDesktopLocaleStrings(locale);
+  const localizedModel = useMemo(() => createLocalizedDesktopModel(copy), [copy]);
 
   useEffect(() => {
     window.localStorage.setItem('cairn.desktop.activeView', activeView);
   }, [activeView]);
+
+  useEffect(() => {
+    writeStoredDesktopLocale(locale);
+  }, [locale]);
 
   useEffect(() => {
     if (observedRunId === undefined) {
@@ -228,16 +243,17 @@ export function DesktopApp() {
           <div className="brand-mark">C</div>
           <div>
             <p className="eyebrow">{bridgeLabel}</p>
-            <h1>{desktopShellModel.workspace.label}</h1>
+            <h1>{localizedModel.workspace.label}</h1>
           </div>
         </div>
 
         <nav className="nav-list" aria-label="Primary">
-          {desktopShellModel.navItems.map((item) => (
+          {localizedModel.navItems.map((item) => (
             <button
               key={item.id}
               aria-current={activeView === item.id ? 'page' : undefined}
               className="nav-item"
+              data-smoke-id={`nav-${item.id}`}
               onClick={() => {
                 setActiveView(item.id);
               }}
@@ -250,33 +266,42 @@ export function DesktopApp() {
         </nav>
 
         <InlineAlert tone="warning" title="Preview-safe shell">
-          This desktop build starts a local Workspace Core sidecar for a bounded internal-trial run
-          path. It still does not expose local paths or arbitrary system actions.
+          {copy.desktopSummary}
         </InlineAlert>
 
         <div className="sidebar-footer" aria-label="Shell metadata">
           <span>Mode: {window.cairnDesktop?.app.mode ?? 'static-preview'}</span>
-          <span>View: {viewTitle[activeView]}</span>
+          <span>View: {localizedModel.viewTitle[activeView]}</span>
         </div>
       </aside>
 
-      <section className="desktop-main" aria-label="Desktop content">
+      <section className="desktop-main" aria-label={copy.shellTitle}>
         <header className="top-bar">
           <div>
-            <p className="eyebrow">{desktopShellModel.workspace.mode}</p>
-            <h2>{viewTitle[activeView]}</h2>
-            <p>{desktopShellModel.workspace.summary}</p>
+            <p className="eyebrow">{localizedModel.workspace.mode}</p>
+            <h2>{localizedModel.viewTitle[activeView]}</h2>
+            <p>{localizedModel.workspace.summary}</p>
           </div>
           <div className="top-bar-actions">
-            <div className="shell-status-row" aria-label="Shell status">
-              <StatusBadge label="Preview-safe" tone="success" metadata="static" />
+            <div
+              className="shell-status-row"
+              aria-label={copy.shellStatusLabel}
+              data-smoke-id="shell-status"
+            >
               <StatusBadge
-                label="Workspace Core"
+                label={copy.previewSafeLabel}
+                tone="success"
+                metadata={copy.previewSafeStatus}
+              />
+              <StatusBadge
+                label={copy.workspaceCoreLabel}
                 metadata={workspaceCoreStatus?.state ?? 'checking'}
                 tone={toStatusTone(workspaceCoreStatus?.state)}
               />
             </div>
+            <LanguageSwitcher copy={copy} locale={locale} onLocaleChange={setLocale} />
             <Button
+              data-smoke-id="refresh-core"
               disabled={window.cairnDesktop?.workspaceCore === undefined}
               loading={workspaceCoreBusy}
               onClick={() => {
@@ -284,15 +309,17 @@ export function DesktopApp() {
               }}
               variant="secondary"
             >
-              Refresh Core
+              {copy.refreshCore}
             </Button>
           </div>
         </header>
 
-        <AgentStatusStrip agents={desktopShellModel.statusStrip} />
+        <AgentStatusStrip agents={localizedModel.statusStrip} />
 
         {activeView === 'home' ? (
           <HomeView
+            copy={copy}
+            model={localizedModel}
             onRunInternalTrial={runInternalTrial}
             status={workspaceCoreStatus}
             statusError={workspaceCoreError}
@@ -309,6 +336,7 @@ export function DesktopApp() {
             artifactPayloadLoadingId={artifactPayloadLoadingId}
             artifactPayloads={artifactPayloads}
             observedRunId={observedRunId}
+            copy={copy}
             onAddOperatorNote={async (runId) => {
               await runOperatorAction('note', async ({ isCurrent }) => {
                 const result = await window.cairnDesktop?.workspaceCore.addOperatorNote(
@@ -323,7 +351,7 @@ export function DesktopApp() {
                 if (!isCurrent()) {
                   return;
                 }
-                return `Operator note recorded as ${result.messageId}.`;
+                return copy.operatorNoteRecorded(result.messageId);
               });
             }}
             onCancelRun={async (runId) => {
@@ -386,19 +414,16 @@ export function DesktopApp() {
             runIdInput={manualRunId}
           />
         ) : undefined}
-        {activeView === 'artifact-review' ? <ArtifactReviewView /> : undefined}
-        {activeView === 'settings' ? <SettingsView /> : undefined}
+        {activeView === 'artifact-review' ? (
+          <ArtifactReviewView copy={copy} model={localizedModel} />
+        ) : undefined}
+        {activeView === 'settings' ? (
+          <SettingsView copy={copy} model={localizedModel} />
+        ) : undefined}
       </section>
     </main>
   );
 }
-
-const viewTitle: Record<DesktopView, string> = {
-  'artifact-review': 'Artifact Review',
-  'home': 'Home / Inbox',
-  'run-detail': 'Run Detail',
-  'settings': 'Source Roots / Settings',
-};
 
 type WorkspaceCoreStatus = Awaited<
   ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['getStatus']>
@@ -407,6 +432,122 @@ type WorkspaceCoreStatus = Awaited<
 type WorkspaceCoreTrialResult = Awaited<
   ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['runInternalTrial']>
 >;
+
+interface LocalizedDesktopModel {
+  readonly artifactReview: typeof desktopShellModel.artifactReview;
+  readonly handoffs: typeof desktopShellModel.handoffs;
+  readonly navItems: typeof desktopShellModel.navItems;
+  readonly pinnedRuns: typeof desktopShellModel.pinnedRuns;
+  readonly runtime: typeof desktopShellModel.runtime;
+  readonly statusStrip: typeof desktopShellModel.statusStrip;
+  readonly viewTitle: Record<DesktopView, string>;
+  readonly workspace: typeof desktopShellModel.workspace;
+}
+
+function LanguageSwitcher({
+  copy,
+  locale,
+  onLocaleChange,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly locale: DesktopLocale;
+  readonly onLocaleChange: (locale: DesktopLocale) => void;
+}) {
+  return (
+    <SegmentedControl
+      aria-label={copy.languageSwitcherLabel}
+      className="inline-flex rounded-xl bg-slate-100 p-1 text-sm text-slate-600"
+      onValueChange={(value) => {
+        onLocaleChange(value === 'en-US' ? 'en-US' : 'zh-CN');
+      }}
+      value={locale}
+    >
+      <SegmentedControlItem value="zh-CN">简体中文</SegmentedControlItem>
+      <SegmentedControlItem value="en-US">{copy.englishLabel}</SegmentedControlItem>
+    </SegmentedControl>
+  );
+}
+
+function createLocalizedDesktopModel(copy: DesktopLocaleStrings): LocalizedDesktopModel {
+  const isSimplifiedChinese = copy.homeTabLabel === '首页 / 收件箱';
+
+  return {
+    artifactReview: {
+      ...desktopShellModel.artifactReview,
+      artifacts: desktopShellModel.artifactReview.artifacts.map((artifact) =>
+        artifact.redactionLabel === undefined
+          ? artifact
+          : {
+              ...artifact,
+              redactionLabel: copy.artifactSummaryReadOnlyBody,
+            },
+      ),
+      title: copy.artifactReviewTitle,
+    },
+    handoffs: desktopShellModel.handoffs.map((handoff, index) =>
+      !isSimplifiedChinese
+        ? handoff
+        : index === 0
+          ? {
+              ...handoff,
+              description: '确认第一版桌面壳在 sidecar / IPC 工作开始前仍保持预览安全边界。',
+              sourceLabel: 'Desktop skeleton PR',
+              title: '审阅桌面壳安全文案',
+              waitedFor: 'operator review',
+            }
+          : {
+              ...handoff,
+              description:
+                '未来 Workspace Core 连接需要明确的 preload allowlist 与 sidecar 生命周期契约。',
+              sourceLabel: 'Workspace Core integration',
+              title: 'Sidecar 连接仍有意受限',
+              waitedFor: 'contract design',
+            },
+    ),
+    navItems: [
+      {
+        description: copy.homeTabDescription,
+        id: 'home',
+        label: copy.homeTabLabel,
+      },
+      {
+        description: copy.runDetailTabDescription,
+        id: 'run-detail',
+        label: copy.runDetailTabLabel,
+      },
+      {
+        description: copy.artifactReviewDescription,
+        id: 'artifact-review',
+        label: copy.artifactReview,
+      },
+      {
+        description: copy.settingsTabDescription,
+        id: 'settings',
+        label: copy.settingsTabLabel,
+      },
+    ],
+    pinnedRuns: desktopShellModel.pinnedRuns,
+    runtime: {
+      ...desktopShellModel.runtime,
+      description: isSimplifiedChinese
+        ? 'Renderer 通过受限 preload bridge 读取 sidecar 状态与 run replay evidence。接管动作限制在 internal-trial allowlist 内。'
+        : desktopShellModel.runtime.description,
+      runtimeLabel: isSimplifiedChinese ? '桌面观察运行时' : desktopShellModel.runtime.runtimeLabel,
+    },
+    statusStrip: desktopShellModel.statusStrip,
+    viewTitle: {
+      'artifact-review': copy.artifactReview,
+      'home': copy.homeTabLabel,
+      'run-detail': copy.runDetailTabLabel,
+      'settings': copy.settingsTabLabel,
+    },
+    workspace: {
+      label: copy.desktopWorkspaceLabel,
+      mode: copy.desktopWorkspaceMode,
+      summary: copy.desktopWorkspaceSummary,
+    },
+  };
+}
 
 function readStoredView(): DesktopView {
   if (typeof window === 'undefined') {
@@ -437,6 +578,8 @@ function readObservedRunId(): string | undefined {
 }
 
 interface HomeViewProps {
+  readonly copy: DesktopLocaleStrings;
+  readonly model: LocalizedDesktopModel;
   readonly onRunInternalTrial: () => Promise<void>;
   readonly status?: WorkspaceCoreStatus | undefined;
   readonly statusError?: string | undefined;
@@ -445,6 +588,8 @@ interface HomeViewProps {
 }
 
 function HomeView({
+  copy,
+  model,
   onRunInternalTrial,
   status,
   statusError,
@@ -455,6 +600,7 @@ function HomeView({
     <div className="content-grid">
       <section className="content-stack">
         <WorkspaceCorePanel
+          copy={copy}
           onRunInternalTrial={onRunInternalTrial}
           status={status}
           statusError={statusError}
@@ -462,29 +608,30 @@ function HomeView({
           trialResult={trialResult}
         />
 
-        <section className="content-stack" aria-label="Handoff inbox">
-          {desktopShellModel.handoffs.map((handoff) => (
+        <section className="content-stack" aria-label={copy.handoffInboxLabel}>
+          {model.handoffs.map((handoff) => (
             <HandoffQueueItem key={`${handoff.sourceLabel}-${handoff.title}`} {...handoff} />
           ))}
         </section>
 
         <div className="run-list">
-          {desktopShellModel.pinnedRuns.map((run) => (
+          {model.pinnedRuns.map((run) => (
             <RunCard key={run.runId} {...run} />
           ))}
         </div>
       </section>
 
       <aside className="content-stack">
-        <RuntimeHealthCard {...desktopShellModel.runtime} />
-        <SafetyDefaultsCard />
-        <NextSafeStepCard />
+        <RuntimeHealthCard {...model.runtime} />
+        <SafetyDefaultsCard copy={copy} />
+        <NextSafeStepCard copy={copy} />
       </aside>
     </div>
   );
 }
 
 interface WorkspaceCorePanelProps {
+  readonly copy: DesktopLocaleStrings;
   readonly onRunInternalTrial: () => Promise<void>;
   readonly status?: WorkspaceCoreStatus | undefined;
   readonly statusError?: string | undefined;
@@ -493,6 +640,7 @@ interface WorkspaceCorePanelProps {
 }
 
 function WorkspaceCorePanel({
+  copy,
   onRunInternalTrial,
   status,
   statusError,
@@ -522,22 +670,27 @@ function WorkspaceCorePanel({
       </CardHeader>
       <CardContent className="content-stack">
         {statusError === undefined ? undefined : (
-          <InlineAlert tone="danger" title="Workspace Core action failed">
+          <InlineAlert
+            data-smoke-id="workspace-core-action-error"
+            tone="danger"
+            title="Workspace Core action failed"
+          >
             {statusError}
           </InlineAlert>
         )}
 
         <MetadataList
           items={[
-            { label: 'Connection', value: status?.connectionLabel ?? 'checking sidecar' },
+            { label: copy.connectionLabel, value: status?.connectionLabel ?? 'checking sidecar' },
             { label: 'Process', value: status?.pid ?? 'pending' },
-            { label: 'Last error', value: status?.lastError ?? 'none' },
-            { label: 'Runtime', value: status?.runtime ?? 'checking' },
+            { label: copy.lastErrorLabel, value: status?.lastError ?? 'none' },
+            { label: copy.runtimeLabel, value: status?.runtime ?? 'checking' },
           ]}
         />
 
         <div className="button-row">
           <Button
+            data-smoke-id="run-internal-trial"
             disabled={!coreAvailable || !isHealthy}
             loading={statusLoading}
             onClick={() => {
@@ -560,14 +713,14 @@ function WorkspaceCorePanel({
           <MetadataList
             items={[
               { label: 'Run', value: `${trialResult.runId} · ${trialResult.runStatus}` },
-              { label: 'Task', value: `${trialResult.taskId} · ${trialResult.taskStatus}` },
+              { label: copy.taskLabel, value: `${trialResult.taskId} · ${trialResult.taskStatus}` },
               { label: 'AgentRuns', value: trialResult.agentRunStatuses.join(', ') },
               {
-                label: 'Artifacts',
+                label: copy.artifactsLabel,
                 value: `${trialResult.artifactCount.toString()} · ${trialResult.artifactRoles.join(', ')}`,
               },
-              { label: 'Trace events', value: trialResult.traceCount },
-              { label: 'Final response', value: trialResult.finalResponseRef ?? 'none' },
+              { label: copy.traceEventsLabel, value: trialResult.traceCount },
+              { label: copy.finalResponseLabel, value: trialResult.finalResponseRef ?? 'none' },
             ]}
           />
         )}
@@ -583,6 +736,7 @@ interface RunDetailViewProps {
   readonly artifactPayloadError?: string | undefined;
   readonly artifactPayloadLoadingId?: string | undefined;
   readonly artifactPayloads: Readonly<Record<string, ArtifactPayloadResponse>>;
+  readonly copy: DesktopLocaleStrings;
   readonly observedRunId?: string | undefined;
   readonly onAddOperatorNote: (runId: string) => Promise<void>;
   readonly onCancelRun: (runId: string) => Promise<void>;
@@ -605,6 +759,7 @@ function RunDetailView({
   artifactPayloadError,
   artifactPayloadLoadingId,
   artifactPayloads,
+  copy,
   observedRunId,
   onAddOperatorNote,
   onCancelRun,
@@ -624,6 +779,7 @@ function RunDetailView({
       <div className="content-grid">
         <section className="content-stack">
           <RunIdObservationForm
+            copy={copy}
             disabled={replayLoading}
             onRunIdChange={onRunIdChange}
             onSubmit={onObserveRun}
@@ -632,25 +788,23 @@ function RunDetailView({
           <Card>
             <CardHeader>
               <CardTitle>No observed run yet</CardTitle>
-              <CardDescription>
-                Run the internal-trial path from Home or paste an existing run id from the API smoke
-                path.
-              </CardDescription>
+              <CardDescription>{copy.runDetailOnlyRealEvidenceDescription}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="empty-state-panel">
                 <span aria-hidden="true">◎</span>
-                <p>
-                  Run Detail only renders real Workspace Core replay evidence. Nothing has been
-                  observed yet.
-                </p>
+                <p>{copy.runDetailOnlyRealEvidenceBody}</p>
               </div>
             </CardContent>
           </Card>
         </section>
         <aside className="content-stack">
-          <RunObservationCard observedRunId={observedRunId} replaySource={replaySource} />
-          <SafetyDefaultsCard />
+          <RunObservationCard
+            copy={copy}
+            observedRunId={observedRunId}
+            replaySource={replaySource}
+          />
+          <SafetyDefaultsCard copy={copy} />
         </aside>
       </div>
     );
@@ -677,6 +831,7 @@ function RunDetailView({
     <div className="content-grid">
       <section className="content-stack">
         <RunIdObservationForm
+          copy={copy}
           disabled={replayLoading}
           onRunIdChange={onRunIdChange}
           onSubmit={onObserveRun}
@@ -688,17 +843,25 @@ function RunDetailView({
           </InlineAlert>
         )}
         {actionError === undefined ? undefined : (
-          <InlineAlert tone="danger" title="Operator action failed">
+          <InlineAlert tone="danger" title={copy.operatorActionFailed}>
             {actionError}
           </InlineAlert>
         )}
         {actionFeedback === undefined ? undefined : (
-          <InlineAlert tone="success" title="Operator action applied">
-            {actionFeedback}
+          <InlineAlert
+            data-smoke-id="operator-action-applied"
+            tone="success"
+            title={copy.operatorActionApplied}
+          >
+            <span data-smoke-id="operator-action-feedback">{actionFeedback}</span>
           </InlineAlert>
         )}
         {replaySource === undefined ? undefined : (
-          <InlineAlert tone="success" title="Live replay source">
+          <InlineAlert
+            data-smoke-id="replay-source-alert"
+            tone="success"
+            title={copy.replaySourceLabel}
+          >
             Showing sanitized Workspace Core evidence for {replaySource.run.orchestrationRunId}.
           </InlineAlert>
         )}
@@ -723,14 +886,12 @@ function RunDetailView({
         )}
       </section>
       <aside className="content-stack">
-        <RunObservationCard observedRunId={observedRunId} replaySource={replaySource} />
+        <RunObservationCard copy={copy} observedRunId={observedRunId} replaySource={replaySource} />
         {taskItems === undefined ? (
           <Card>
             <CardHeader>
               <CardTitle>{taskTreeEmptyCopy.title}</CardTitle>
-              <CardDescription>
-                Task detail is derived from read-only replay evidence.
-              </CardDescription>
+              <CardDescription>{copy.taskTreeEmptyDescription}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="empty-state-panel compact">
@@ -743,42 +904,41 @@ function RunDetailView({
           <TaskTree items={taskItems} selectedId={selectedTaskId} />
         )}
         {replaySource === undefined ? undefined : (
-          <ReplayInspectorCard replaySource={replaySource} />
+          <ReplayInspectorCard copy={copy} replaySource={replaySource} />
         )}
         {replaySource === undefined ? undefined : (
           <ArtifactSummaryCard
             artifactPayloadError={artifactPayloadError}
             artifactPayloadLoadingId={artifactPayloadLoadingId}
             artifactPayloads={artifactPayloads}
+            copy={copy}
             onLoadArtifactPayload={onLoadArtifactPayload}
             replaySource={replaySource}
           />
         )}
         <Card>
           <CardHeader>
-            <CardTitle>Operator controls</CardTitle>
-            <CardDescription>
-              Internal-trial actions only: cancel run, retry failed task, rerun, and record an
-              operator note.
-            </CardDescription>
+            <CardTitle>{copy.operatorControlsTitle}</CardTitle>
+            <CardDescription>{copy.operatorControlsDescription}</CardDescription>
           </CardHeader>
           <CardContent className="content-stack">
             <MetadataList
               items={[
-                { label: 'Observed run', value: activeRunId },
+                { label: copy.observedRunLabel, value: activeRunId },
                 { label: 'Retryable task', value: retryableTaskId ?? 'none' },
-                { label: 'Run state', value: replaySource?.run.status ?? 'loading' },
+                { label: copy.runStateLabel, value: replaySource?.run.status ?? 'loading' },
               ]}
             />
             <div className="button-row">
               <Button
+                data-smoke-id="operator-add-note"
                 loading={actionBusy === 'note'}
                 onClick={() => {
                   void onAddOperatorNote(activeRunId);
                 }}
                 variant="secondary"
               >
-                Add note
+                {copy.addNote}
               </Button>
               <Button
                 disabled={!canRetryTask}
@@ -790,7 +950,7 @@ function RunDetailView({
                 }}
                 variant="secondary"
               >
-                Retry task
+                {copy.retryTask}
               </Button>
               <Button
                 disabled={!canRerun}
@@ -800,7 +960,7 @@ function RunDetailView({
                 }}
                 variant="secondary"
               >
-                Rerun
+                {copy.rerun}
               </Button>
               <Button
                 disabled={!canCancel}
@@ -810,7 +970,7 @@ function RunDetailView({
                 }}
                 variant="danger"
               >
-                Cancel run
+                {copy.cancelRun}
               </Button>
               <Button
                 loading={replayLoading}
@@ -819,7 +979,7 @@ function RunDetailView({
                 }}
                 variant="secondary"
               >
-                Refresh Evidence
+                {copy.refreshEvidence}
               </Button>
             </div>
           </CardContent>
@@ -830,6 +990,7 @@ function RunDetailView({
 }
 
 interface RunIdObservationFormProps {
+  readonly copy: DesktopLocaleStrings;
   readonly disabled: boolean;
   readonly onRunIdChange: (runId: string) => void;
   readonly onSubmit: (runId: string) => Promise<void>;
@@ -837,6 +998,7 @@ interface RunIdObservationFormProps {
 }
 
 function RunIdObservationForm({
+  copy,
   disabled,
   onRunIdChange,
   onSubmit,
@@ -845,10 +1007,8 @@ function RunIdObservationForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Observe run id</CardTitle>
-        <CardDescription>
-          Load replay evidence for a Workspace Core run created by Desktop or by the API smoke path.
-        </CardDescription>
+        <CardTitle>{copy.observedRunTitle}</CardTitle>
+        <CardDescription>{copy.loadReplayTitle}</CardDescription>
       </CardHeader>
       <CardContent>
         <form
@@ -859,16 +1019,16 @@ function RunIdObservationForm({
           }}
         >
           <Input
-            aria-label="Workspace Core run id"
+            aria-label={copy.runIdLabel}
             disabled={disabled}
             onChange={(event) => {
               onRunIdChange(event.currentTarget.value);
             }}
-            placeholder="01J..."
+            placeholder={copy.defaultRunIdPlaceholder}
             value={runId}
           />
           <Button disabled={disabled || runId.trim().length === 0} loading={disabled}>
-            Observe Run
+            {copy.observeRun}
           </Button>
         </form>
       </CardContent>
@@ -876,24 +1036,31 @@ function RunIdObservationForm({
   );
 }
 
-function ReplayInspectorCard({ replaySource }: { readonly replaySource: RunReplaySource }) {
+function ReplayInspectorCard({
+  copy,
+  replaySource,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly replaySource: RunReplaySource;
+}) {
   const inspector = replaySource.inspector;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Replay inspector</CardTitle>
-        <CardDescription>
-          Read-only summary derived from Workspace Core replay source.
-        </CardDescription>
+        <CardTitle>{copy.replayInspectorTitle}</CardTitle>
+        <CardDescription>{copy.replayInspectorDescription}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent data-smoke-id="replay-inspector">
         <MetadataList
           items={[
             { label: 'Tasks', value: inspector.taskCount },
             { label: 'Agent runs', value: inspector.agentRunCount },
-            { label: 'Artifacts', value: inspector.artifactCount },
-            { label: 'Trace events', value: inspector.traceEventCount },
+            { label: copy.artifactsLabel, value: inspector.artifactCount },
+            {
+              label: copy.traceEventsLabel,
+              value: <span data-smoke-id="trace-event-count">{inspector.traceEventCount}</span>,
+            },
             { label: 'Warnings', value: inspector.warningEventCount },
             { label: 'Errors', value: inspector.errorEventCount },
             { label: 'First failure', value: inspector.firstFailureEventType ?? 'none' },
@@ -906,16 +1073,18 @@ function ReplayInspectorCard({ replaySource }: { readonly replaySource: RunRepla
 }
 
 function RunObservationCard({
+  copy,
   observedRunId,
   replaySource,
 }: {
+  readonly copy: DesktopLocaleStrings;
   readonly observedRunId?: string | undefined;
   readonly replaySource?: RunReplaySource | undefined;
 }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Observed run</CardTitle>
+        <CardTitle>{copy.observedRunTitle}</CardTitle>
         <CardDescription>
           Desktop stores one bounded run id and refreshes replay evidence from it.
         </CardDescription>
@@ -923,9 +1092,12 @@ function RunObservationCard({
       <CardContent>
         <MetadataList
           items={[
-            { label: 'Observed run id', value: observedRunId ?? 'none' },
-            { label: 'Replay loaded', value: replaySource === undefined ? 'no' : 'yes' },
-            { label: 'Run status', value: replaySource?.run.status ?? 'unknown' },
+            {
+              label: 'Observed run id',
+              value: <span data-smoke-id="observed-run-id">{observedRunId ?? 'none'}</span>,
+            },
+            { label: copy.replayLoadedLabel, value: replaySource === undefined ? 'no' : 'yes' },
+            { label: copy.runStateLabel, value: replaySource?.run.status ?? 'unknown' },
           ]}
         />
       </CardContent>
@@ -937,6 +1109,7 @@ interface ArtifactSummaryCardProps {
   readonly artifactPayloadError?: string | undefined;
   readonly artifactPayloadLoadingId?: string | undefined;
   readonly artifactPayloads: Readonly<Record<string, ArtifactPayloadResponse>>;
+  readonly copy: DesktopLocaleStrings;
   readonly onLoadArtifactPayload: (artifactId: string) => Promise<void>;
   readonly replaySource: RunReplaySource;
 }
@@ -945,16 +1118,15 @@ function ArtifactSummaryCard({
   artifactPayloadError,
   artifactPayloadLoadingId,
   artifactPayloads,
+  copy,
   onLoadArtifactPayload,
   replaySource,
 }: ArtifactSummaryCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Artifact summary</CardTitle>
-        <CardDescription>
-          Read-only artifact metadata and bounded payload text for the observed run.
-        </CardDescription>
+        <CardTitle>{copy.artifactSummaryTitle}</CardTitle>
+        <CardDescription>{copy.artifactSummaryDescription}</CardDescription>
       </CardHeader>
       <CardContent className="content-stack">
         {artifactPayloadError === undefined ? undefined : (
@@ -1003,7 +1175,7 @@ function ArtifactSummaryCard({
                           }}
                           variant="secondary"
                         >
-                          Load payload
+                          {copy.artifactSummaryLoadPayload}
                         </Button>
                       </div>
                       {payload === undefined ? (
@@ -1030,7 +1202,13 @@ function ArtifactSummaryCard({
   );
 }
 
-function ArtifactReviewView() {
+function ArtifactReviewView({
+  copy,
+  model,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly model: LocalizedDesktopModel;
+}) {
   return (
     <div className="content-grid">
       <section className="content-stack">
@@ -1039,19 +1217,19 @@ function ArtifactReviewView() {
             { disabled: true, label: 'Approve export', tone: 'primary' },
             { disabled: true, label: 'Reject', tone: 'danger' },
           ]}
-          artifactId={desktopShellModel.artifactReview.artifactId}
-          note={desktopShellModel.artifactReview.note}
+          artifactId={model.artifactReview.artifactId}
+          note={model.artifactReview.note}
           reviewState="pending_review"
-          title={desktopShellModel.artifactReview.title}
+          title={copy.artifactReviewTitle}
         />
         <div className="artifact-list">
-          {desktopShellModel.artifactReview.artifacts.map((artifact) => (
+          {model.artifactReview.artifacts.map((artifact) => (
             <ArtifactCard key={artifact.artifactId} {...artifact} />
           ))}
         </div>
       </section>
       <aside className="content-stack">
-        <SafetyDefaultsCard />
+        <SafetyDefaultsCard copy={copy} />
         <Card>
           <CardHeader>
             <CardTitle>Path exposure policy</CardTitle>
@@ -1072,13 +1250,19 @@ function ArtifactReviewView() {
   );
 }
 
-function SettingsView() {
+function SettingsView({
+  copy,
+  model,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly model: LocalizedDesktopModel;
+}) {
   return (
     <div className="content-grid">
       <section className="content-stack">
         <Card>
           <CardHeader>
-            <CardTitle>Source roots placeholder</CardTitle>
+            <CardTitle>{copy.sourceRootsTitle}</CardTitle>
             <CardDescription>
               Settings are read-only until source-root contracts and explicit folder approval are
               ready.
@@ -1087,9 +1271,12 @@ function SettingsView() {
           <CardContent>
             <MetadataList
               items={[
-                { label: 'Workspace', value: desktopShellModel.workspace.label },
-                { label: 'Connection', value: 'static fixture' },
-                { label: 'Bridge', value: window.cairnDesktop?.app.mode ?? 'unavailable' },
+                { label: 'Workspace', value: model.workspace.label },
+                { label: copy.connectionLabel, value: 'static fixture' },
+                {
+                  label: copy.desktopBridgeLabel,
+                  value: window.cairnDesktop?.app.mode ?? 'unavailable',
+                },
               ]}
             />
           </CardContent>
@@ -1112,21 +1299,19 @@ function SettingsView() {
         </Card>
       </section>
       <aside className="content-stack">
-        <RuntimeHealthCard {...desktopShellModel.runtime} />
-        <NextSafeStepCard />
+        <RuntimeHealthCard {...model.runtime} />
+        <NextSafeStepCard copy={copy} />
       </aside>
     </div>
   );
 }
 
-function NextSafeStepCard() {
+function NextSafeStepCard({ copy }: { readonly copy: DesktopLocaleStrings }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Next safe step</CardTitle>
-        <CardDescription>
-          UI can keep moving without waiting for Workspace Core by shaping static contracts first.
-        </CardDescription>
+        <CardTitle>{copy.inspectTitle}</CardTitle>
+        <CardDescription>{copy.localStorageError}</CardDescription>
       </CardHeader>
       <CardContent>
         <MetadataList
@@ -1141,19 +1326,17 @@ function NextSafeStepCard() {
   );
 }
 
-function SafetyDefaultsCard() {
+function SafetyDefaultsCard({ copy }: { readonly copy: DesktopLocaleStrings }) {
   return (
     <Card variant="handoff">
       <CardHeader>
-        <CardTitle>Safety defaults</CardTitle>
-        <CardDescription>
-          First implementation intentionally avoids dangerous capabilities.
-        </CardDescription>
+        <CardTitle>{copy.previewSafeLabel}</CardTitle>
+        <CardDescription>{copy.desktopSummary}</CardDescription>
       </CardHeader>
       <CardContent>
         <MetadataList
           items={[
-            { label: 'Replay evidence', value: 'read-only' },
+            { label: copy.replaySourceLabel, value: 'read-only' },
             { label: 'Real IPC actions', value: 'bounded allowlist' },
             { label: 'Local path reveal', value: 'redacted by default' },
           ]}

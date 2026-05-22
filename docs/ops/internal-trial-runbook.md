@@ -162,6 +162,29 @@ pnpm --filter @cairn/desktop dev
 - sidecar 诊断快照中的 `runtime` 为 `codex`
 - 未设置上述环境变量时，Desktop 保持默认 mock sidecar 路径
 
+### 5.4 启动 Desktop 窗口级真实 Codex smoke runner
+
+如果要把真实 Codex 观察收敛成一次可重复的窗口级 smoke，可使用独立 opt-in runner：
+
+```bash
+export CAIRN_DESKTOP_SIDECAR_RUNTIME=codex
+export CAIRN_DESKTOP_SIDECAR_RUNTIME_WORKDIR="$PWD/.cairn/runtime/internal-trial"
+export CAIRN_DESKTOP_SIDECAR_CODEX_EXECUTABLE="${CAIRN_DESKTOP_SIDECAR_CODEX_EXECUTABLE:-$(command -v codex)}"
+pnpm --filter @cairn/desktop smoke:codex
+```
+
+预期：
+
+- runner 先校验 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`
+- 通过现有 Desktop 窗口驱动 internal-trial、replay evidence 与 operator note 口径
+- runner 输出可记录的 observed run / task / agent-run id 与 operator note 后的 trace event count
+
+不预期：
+
+- 进入默认 CI
+- 替代 `pnpm --filter @cairn/desktop test:e2e`
+- 证明完整产品 UI、完整 operator cockpit 或 Web Shell 已完成
+
 ---
 
 ## 6. 内部试用 Smoke Path
@@ -256,7 +279,8 @@ curl -sS "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/replay-source" \
 - §5.3：Codex-backed sidecar，验证真实 Codex runtime 的 Desktop evidence。
 - 外部手动启动的 Workspace Core 不会被 Desktop 自动复用；如要对照，需单独记录其 `runId`。
 - Run Detail 至少应能显示 run、task / agent-run、artifact / trace 摘要，并按需读取 bounded payload text。
-- 2026-05-21 的 Desktop window-level Codex-backed smoke 仍只是手动证据，不等于自动 e2e 覆盖。
+- Desktop window-level Codex-backed smoke 必须明确记录是手动/CDP 证据还是 `smoke:codex`
+  opt-in runner 证据；两者都不等于默认 CI 覆盖。
 
 如果本次验证采用 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`：
 
@@ -379,22 +403,24 @@ curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
 - 真实 Codex smoke 仍然是手动步骤，不进入默认自动化 CI。
 - 真实长任务、复杂 payload、长时取消链路仍可能存在平台差异。
 
-### 8.0 真实 Codex window-level e2e 当前边界
+### 8.0 真实 Codex window-level smoke 当前边界
 
 当前 `pnpm --filter @cairn/desktop test:e2e` 只验证默认 mock sidecar 的窗口 ready smoke。
-它会在 `main-window-ready-to-show` 后立即退出，不会自动执行以下真实 Codex 链路：
+它会在 `main-window-ready-to-show` 后立即退出，不会自动执行真实 Codex 链路。
 
-- 通过 renderer / preload 触发 `workspaceCore.runInternalTrial()`
-- 等待真实 Codex-backed sidecar 完成 run / task / agent-run
-- 读取 replay evidence、bounded payload text 与 operator note 更新
+真实 Codex window-level 覆盖已收敛为独立 opt-in runner：
 
-因此，真实 Codex window-level e2e 现在仍不适合进入默认 CI。主要约束是：
+```bash
+pnpm --filter @cairn/desktop smoke:codex
+```
+
+该 runner 会通过现有 Desktop 窗口触发 `workspaceCore.runInternalTrial()`、等待真实
+Codex-backed sidecar 完成 run / task / agent-run、读取 replay evidence，并执行最小
+operator note。它仍不适合进入默认 CI。主要约束是：
 
 - 依赖本机 Codex 登录态与可用会话，CI 无法默认提供
 - 受 Codex CLI 版本、响应时延与平台环境影响，结果天然更 flaky
-- 现有最小 smoke 脚本只观察窗口 ready，没有稳定的 renderer 驱动与断言入口
-
-后续若要补这条自动化链路，应先把它定义为 opt-in 手动或专用 runner smoke，而不是默认 gate。
+- `@cairn/desktop test:e2e` 必须继续保持 mock-only，不引入 Codex 登录态依赖
 
 ## 8.1 当前手动证据基线
 
@@ -403,6 +429,16 @@ curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
 - Desktop window-level Codex-backed internal-trial smoke 已有一次手动成功记录。
 - Electron / CDP 可触发 `runInternalTrial()`，并读回同一条真实 run 的 replay evidence、bounded payload text 与 operator note。
 - 该记录可作为后续接力基线，但仍不是自动化 e2e 覆盖。
+
+### 2026-05-22 15:34 CST
+
+- `pnpm --filter @cairn/desktop smoke:codex` 作为 opt-in runner 验证通过。
+- 环境：macOS 15.7.4，Node v26.0.0，本机 Codex executable 来自 `command -v codex`。
+- `runId=01KS79CPRQYXC9WJGA3MGHZ6SE`，
+  `taskId=01KS79CPRRD04NFM2D7ZB88KY6`，
+  `agentRunId=01KS79CPS4AW7X4VZ9DS9SQ8G2`。
+- operator note 后 replay inspector 显示 `traceEventsAfterNote=13`。
+- 结论：真实 Codex window-level path 有 opt-in runner 证据；默认 CI 仍只使用 mock sidecar smoke。
 
 ### 2026-05-22 03:36 CST
 

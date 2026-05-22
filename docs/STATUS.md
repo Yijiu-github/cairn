@@ -76,12 +76,14 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 - `apps/desktop` 已提供 Electron 最小 shell 骨架。
 - 当前包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
+- Renderer 壳新增简体中文 / English 切换，默认 `zh-CN`，语言偏好只保存在本地 `localStorage`；当前是 Desktop 内部试用壳的轻量实现，不代表 `apps/web` 已创建。
 - Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runInternalTrial()`、`workspaceCore.getRunReplaySource(runId)`、`workspaceCore.getArtifactPayload(artifactId)` 与最小 operator action allowlist（cancel / retry / rerun / operator note）。
 - Renderer 可通过 internal-trial 入口创建 run、读取 task、提交 AgentRun、drain runtime，在 Run Detail 按需读取 bounded payload text，并调用最小 operator action allowlist。默认 sidecar 走 mock runtime；`CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 仅用于观察 Codex-backed Workspace Core sidecar 产生的真实 run evidence。
+- Desktop 额外提供 `pnpm --filter @cairn/desktop smoke:codex` 作为 opt-in 的真实 Codex window-level smoke；它会要求 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`，并通过现有 Desktop 窗口驱动 internal-trial、replay evidence 与 operator note 口径，但不进入默认 CI。
 - 启动会写入不含 token 的 sidecar 诊断快照：`<userData>/diagnostics/workspace-core-sidecar.json`，其中记录 `runtime: "mock" | "codex"` 以区分本次 sidecar 后端。
 - 当前不读取或写入用户本地文件系统，不暴露真实本地路径；operator action 仅保留最小 internal-trial allowlist，不是完整接管台。
-- 自动化验证已覆盖 Desktop bootstrap 顺序、main module 非阻塞加载、sidecar manager、Workspace Core HTTP smoke 与默认 mock sidecar 的最小 window-level Electron smoke；2026-05-21 已完成一次真实 Desktop window-level Codex-backed internal-trial 手动 smoke。真实 Codex 自动化 e2e 仍需后续补齐。
-- 当前 `@cairn/desktop test:e2e` 只覆盖窗口 ready smoke，不会自动触发 `runInternalTrial()`、读取 replay evidence 或验证 operator note；真实 Codex window-level 自动化仍需 opt-in 驱动与专用环境。
+- 自动化验证已覆盖 Desktop bootstrap 顺序、main module 非阻塞加载、sidecar manager、Workspace Core HTTP smoke 与默认 mock sidecar 的最小 window-level Electron smoke；`smoke:codex` 已可作为本机 opt-in 真实 Codex window-level evidence smoke。
+- 当前 `@cairn/desktop test:e2e` 只覆盖窗口 ready smoke，不会自动触发 `runInternalTrial()`、读取 replay evidence 或验证 operator note；真实 Codex window-level smoke 需通过 `smoke:codex` 和专用环境 opt-in。
 - 当前 renderer 默认安全基线为 `contextIsolation: true`、`nodeIntegration: false`、`sandbox: true`。
 
 ---

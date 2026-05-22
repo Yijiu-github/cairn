@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 13:18 CST
+> 最后更新：2026-05-22 16:03 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,16 +35,16 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 13:18 CST 复核：
+2026-05-22 16:03 CST 复核：
 
-- `git status --short`：本轮已提交真实 Codex window-level e2e 边界文档化；当前工作区干净。
-- `git diff --name-only`：当前无未提交变更。
+- `git status --short`：本轮有未提交变更，集中在 Desktop `smoke:codex` runner、Desktop 语言切换和相关文档。
+- `git diff --name-only`：当前变更包括 `apps/desktop`、`docs/STATUS.md`、testing strategy、runbook、CHANGELOG、pnpm lock/workspace、`2026-05-22-codex-window-e2e-runner.md` 与本 handoff。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
 
-- Desktop 默认 mock sidecar 已有最小 window-level smoke；真实 Codex window-level e2e 仍未自动化。
-- 真实 Codex CLI smoke 仍是 opt-in 手动步骤，不进入默认 CI。
+- Desktop 默认 mock sidecar 已有最小 window-level smoke；真实 Codex window-level smoke 已有 `smoke:codex` opt-in runner。
+- 真实 Codex smoke 仍需 env opt-in，不进入默认 CI。
 - Desktop 仍是 internal-trial 最小观察壳，不是完整产品 UI 或完整 operator cockpit。
 - 长任务、复杂 payload、跨平台取消链路仍需后续额外证据。
 
@@ -212,6 +212,37 @@
 - 新增 characterization spec 锁住 replay-source 非 2xx 响应只暴露状态码，不回传 JSON body。
 - 这一轮没有修改运行时代码，只把边界写成可重复验证的测试。
 
+2026-05-22 15:34 CST Desktop `smoke:codex` opt-in runner 验证通过：
+
+- `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex CAIRN_DESKTOP_SIDECAR_CODEX_EXECUTABLE="$(command -v codex)" CAIRN_DESKTOP_SIDECAR_RUNTIME_WORKDIR="$PWD/.cairn/runtime/internal-trial" pnpm --filter @cairn/desktop smoke:codex`
+- 输出：`runId=01KS79CPRQYXC9WJGA3MGHZ6SE`，`taskId=01KS79CPRRD04NFM2D7ZB88KY6`，`agentRunId=01KS79CPS4AW7X4VZ9DS9SQ8G2`，`traceEventsAfterNote=13`。
+- runner 已处理两个真实边界：启动后先回 Home / Inbox，避免 localStorage 停留在 Run Detail；Core 初始 `fetch failed` 时通过 `Refresh Core` 轮询等到 Run 按钮可用。
+
+2026-05-22 15:44 CST Desktop 语言切换验证通过：
+
+- 新增 `desktop-locale.ts` / `desktop-locale.spec.ts`，默认 `zh-CN`，`en-US` 可恢复，未知 stored locale 回退简中，切换只写入本地 `localStorage`。
+- Desktop renderer 接入简体中文 / English segmented switch；当前覆盖壳导航、顶部状态、主要按钮、Run Detail / Artifact / Settings 的核心页面文案。
+- 验证：`pnpm --filter @cairn/desktop typecheck`、`pnpm --filter @cairn/desktop lint`、targeted renderer tests、`pnpm --filter @cairn/desktop test:e2e` 均通过。
+
+2026-05-22 16:03 CST Desktop locale-neutral `smoke:codex` 验证通过：
+
+- 红灯：默认 `zh-CN` 后，
+  `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex CAIRN_DESKTOP_SIDECAR_CODEX_EXECUTABLE="$(command -v codex)" CAIRN_DESKTOP_SIDECAR_RUNTIME_WORKDIR="$PWD/.cairn/runtime/internal-trial" pnpm --filter @cairn/desktop smoke:codex`
+  因 runner 仍等待英文 `Home / Inbox` button 超时失败。
+- 绿灯：Desktop renderer 为 smoke 关键节点增加 locale-neutral `data-smoke-id` hook，runner 改用 hook 定位 Home、Refresh Core、Run Internal Trial、replay source、Replay inspector、observed run id、trace event count、Add note 与 operator feedback。
+- 复测 `smoke:codex` 通过；提交前 lint 修正后最终证据为
+  `runId=01KS7BR6150KYPE49RZ34G5JKD`，
+  `taskId=01KS7BR616KR3V8Q7GXB58ZMGA`，
+  `agentRunId=01KS7BR61JTW8628CP9M501YQY`，`traceEventsAfterNote=13`。
+- `pnpm --filter @cairn/desktop typecheck`
+- `pnpm --filter @cairn/desktop lint`
+- `pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-locale.spec.ts src/renderer/src/run-detail-copy.spec.ts src/renderer/src/run-replay-loader.spec.ts src/renderer/src/operator-action-runner.spec.ts src/renderer/src/artifact-payload-loader.spec.ts`
+- `pnpm --filter @cairn/desktop test:e2e`
+- `pnpm exec prettier --check CHANGELOG.md apps/desktop/README.md apps/desktop/package.json apps/desktop/scripts/codex-window-smoke.mjs apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts docs/STATUS.md docs/engineering/testing-strategy.md docs/ops/internal-trial-runbook.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md docs/superpowers/plans/2026-05-22-codex-window-e2e-runner.md pnpm-workspace.yaml`
+- `pnpm exec markdownlint-cli2 CHANGELOG.md apps/desktop/README.md docs/STATUS.md docs/engineering/testing-strategy.md docs/ops/internal-trial-runbook.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md docs/superpowers/plans/2026-05-22-codex-window-e2e-runner.md`
+- `pnpm run docs:lint`
+- `git diff --check`
+
 ---
 
 ## 6. 最新完成
@@ -325,13 +356,15 @@
 
 本轮提交：`a63abe0` `fix(ui-preview): 收口静态标题口径 / align static titles`。
 
-2026-05-22 13:18 CST 本轮完成：
+2026-05-22 16:03 CST 本轮完成：
 
-- 评估真实 Codex window-level e2e 的当前可行边界，并把结论写入 runbook、STATUS、testing strategy 与 changelog。
-- 明确默认 `@cairn/desktop test:e2e` 只覆盖 mock sidecar 的窗口 ready smoke；真实 Codex 路径还缺 renderer 驱动、稳定断言入口和专用环境。
-- 本轮没有修改运行时代码，也没有扩大 preload allowlist、operator action 范围或 runtime 默认行为。
+- 新增 Desktop `smoke:codex` opt-in runner，并通过真实 Codex window-level internal-trial / replay evidence / operator note 路径。
+- 修正 runner readiness：先回 Home / Inbox，再通过 `Refresh Core` 等待非阻塞 sidecar startup 变 healthy，避免历史 view 和初始 `fetch failed` 让 smoke 误失败。
+- 新增 Desktop 简体中文 / English 切换，默认简体中文，语言偏好只写本地 `localStorage`；未创建 `apps/web`，未扩大 Desktop sidecar runtime 默认值。
+- 修正默认简中与 `smoke:codex` 的交叉问题：runner 不再依赖英文可见文案，改用 locale-neutral smoke hook。
+- 同步 README、STATUS、CHANGELOG、testing strategy、runbook 与 `2026-05-22-codex-window-e2e-runner.md`。
 
-本轮提交：`6e4151a` `docs(trial): 记录真实窗口级 e2e 边界 / document real window e2e boundary`。
+本轮提交：待创建。
 
 ---
 
@@ -341,18 +374,17 @@
 
 优先级从高到低：
 
-1. **真实 Codex 手动 smoke 复核**：按 runbook 再跑一条短任务，记录当前 Codex CLI / Node / OS 证据，只使用合成 prompt。
-   2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
-2. **真实 Codex window-level e2e 方案**：边界已写实；下一轮若继续推进，优先设计 opt-in 专用 runner 或手动 smoke 驱动，不直接塞进默认 CI。
-3. **Runbook 记录模板**：本轮已压缩成短表；若后续仍频繁重复记录，可继续合并为更短的 canonical table，但不要再扩成长段。
+1. **Desktop 语言切换收口**：继续复查 `DesktopApp` 中仍未本地化的静态模型/组件文案，优先把 Home sidecar panel、Artifact Review policy、Settings / Source Roots、安全卡片和 replay metadata 常用路径继续搬到 `desktop-locale.ts`，不要引入完整 i18n 框架。
+2. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
+3. **UI copy 与设计文档对齐**：必要时同步 `docs/design/ux/foundations/i18n-and-language-switching.md` 的实现状态，但不要创建 `apps/web` 或扩大产品边界。
 
 ---
 
 ## 8. 风险与阻塞
 
-- 自动化 e2e 仅覆盖默认 mock sidecar window-level smoke；当前已有 Codex-backed 手动成功证据，但不能宣称真实 Codex 自动化端到端完成。
-- 本轮真实 Codex 复核仅覆盖外部手动启动 Workspace Core API smoke；未覆盖 Desktop 自拉起
-  Codex sidecar 的观察路径。
+- 默认自动化 e2e 仅覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
+- 本轮真实 Codex runner 覆盖 Desktop 自拉起 Codex sidecar 的观察路径；仍依赖本机 Codex 登录态、CLI 版本和响应时延。
+- `smoke:codex` 现在依赖 renderer 上少量 `data-smoke-id` hook 以避免被语言切换文案打断；这些 hook 不能作为产品 API 或 Desktop bridge 能力边界。
 - Renderer payload/replay/operator action guard 与 Run Detail copy helper 只覆盖同一 renderer 会话内的请求乱序、空态防护和 trial 文案口径；完整 Artifact
   workspace、导出、retention、本地路径 reveal、完整 operator cockpit 与完整 Run Detail 数据面仍不在本轮范围。
 - `ui-preview` 静态数据只修正了 artifact review hero title 残留；没有动到 layout、CSS 或导航结构。

@@ -20,7 +20,8 @@
 
 - 新增第一轮内部开发者试用文档基线：`docs/ops/internal-trial-runbook.md` 统一记录 scope、smoke path、failure triage、known limits 与 gate，明确它不是外部 alpha、installer、signing、notarization 或 `apps/web` 验证。
 - Desktop 新增 `pnpm --filter @cairn/desktop test:e2e` 最小窗口级 smoke；当前只覆盖默认 mock sidecar 路径。
-- Desktop 已记录一次 Codex-backed internal-trial 手动 smoke 成功；自动 e2e 仍待补齐。
+- Desktop 新增 `pnpm --filter @cairn/desktop smoke:codex` opt-in 真实 Codex window-level smoke，可通过窗口驱动 internal-trial、replay evidence 与 operator note；默认 CI 仍只跑 mock sidecar smoke。
+- Desktop 壳新增简体中文 / English 页面切换，默认简体中文，并把语言偏好保存到本地 `localStorage`。
 - 收口静态预览数据中的旧固定协作角色名，改为中性 preview label。
 - **M3 Operator Control evidence polish**：补齐 operator cancel 的 runtime requested / acknowledged / not-acknowledged / dispatch-failed TraceEvent 证据，并为 retry / rerun trace 增加最小恢复路径 payload。
 - 新增战略定位刷新说明，明确 Cairn 以个人本地工作台切入，长期聚焦小团队 Agent 工程控制台，并通过 runtime-neutral control plane 接入 Codex / Claude 等官方 agent 工具。
@@ -83,7 +84,7 @@
 
 ### Changed
 
-- 内部试用文档已明确真实 Codex window-level e2e 的当前边界：默认 `@cairn/desktop test:e2e` 只覆盖 mock sidecar 窗口 ready smoke，不自动执行 `runInternalTrial()`、replay evidence 读取或 operator note 断言。
+- 内部试用文档已明确真实 Codex window-level smoke 的当前边界：默认 `@cairn/desktop test:e2e` 只覆盖 mock sidecar 窗口 ready smoke；真实 Codex window-level runner 需通过 `@cairn/desktop smoke:codex` 和本机 Codex env 显式 opt-in。
 - README、STATUS、本地开发与测试文档已对齐第一轮内部试用口径：开发态默认 mock sidecar，真实 Codex 需显式 opt-in，且不包含外部 alpha、`apps/web`、installer、signing 或 notarization。
 - Desktop 内部试用入口文档已对齐 `runInternalTrial` / Codex sidecar runtime switch。
 - `docs/ops/internal-trial-runbook.md` 与 `docs/engineering/local-dev-setup.md` 的 Codex smoke 示例已收敛为当前契约允许的 `taskKind: "custom"` 和受控 runtime workdir 口径。
@@ -103,6 +104,8 @@
 
 ### Fixed
 
+- **Desktop Codex smoke**：`smoke:codex` runner 改用 locale-neutral `data-smoke-id` hook，
+  不再依赖英文可见文案，避免 Desktop 默认简体中文后真实 Codex window-level smoke 卡在导航定位。
 - **Desktop replay bridge errors**：Workspace Core client 的只读 replay / payload 请求会在 transport
   failure 时脱敏 URL、token 与本地路径后再返回 Desktop bridge 错误。
 - **UI preview static titles**：`RunDetailViewModel` 与 `ArtifactReviewViewModel` 的静态标题统一为

@@ -90,7 +90,8 @@
 - `pnpm --filter @cairn/ui-preview build`
 - `pnpm --filter @cairn/desktop build`
 - `pnpm --filter @cairn/desktop test:e2e` 可作为 Desktop 最小窗口级 smoke：它会 build Desktop，启动真实 Electron 进程，等待 `main-window-ready-to-show` signal，再由脚本终止进程收尾；当前只覆盖默认 mock sidecar 窗口启动，不代表完整产品 E2E 或真实 Codex 自动化。
-- 真实 Codex window-level 路径当前仍缺 renderer 驱动和稳定断言入口；现有 smoke 不会自动触发 `runInternalTrial()`、读取 replay evidence 或验证 operator note，因此不进入默认 CI。
+- `pnpm --filter @cairn/desktop smoke:codex` 是独立的 opt-in 真实 Codex window-level smoke；它要求 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`，并通过现有 Desktop 窗口驱动 internal-trial、replay evidence 与 operator note 口径。它不进入默认 CI，也不替代 mock-only 的 `test:e2e`。
+- 真实 Codex window-level runner 依赖本机 Codex 登录态、CLI 版本与响应时延，因此只能作为 opt-in evidence smoke，不进入默认 CI。
 
 手动 gate：触发一条真实 Codex 短任务 run，确认终态、replay evidence、Desktop 最小观察壳与最小 operator action 口径；未执行的步骤必须记录原因。
 
@@ -147,8 +148,8 @@
 
 - 真实 Codex CLI smoke 不进入默认 CI。
 - Desktop 当前内部试用通过标准仍允许“自动化通过 + 手动真实 smoke 记录”；`@cairn/desktop test:e2e` 只覆盖 mock sidecar window-level smoke。
-- 已记录过一次 Desktop window-level Codex-backed smoke 成功；若后续结论只来自手动步骤，仍必须明确标注，不得伪装为自动化覆盖。
-- 若后续补真实 Codex window-level 自动化，优先做 opt-in 专用 runner 或手动 smoke 脚本，不把登录态、CLI 版本和时延不稳定性直接带进默认 gate。
+- 已记录过一次 Desktop window-level Codex-backed smoke 成功；后续若使用 `smoke:codex` 或手动步骤，仍必须明确标注，不得伪装为默认 CI 覆盖。
+- 真实 Codex window-level 覆盖只能通过 opt-in 专用 runner 或手动 smoke 记录，不把登录态、CLI 版本和时延不稳定性直接带进默认 gate。
 
 ## 10. 测试反例（不要做的事）
 

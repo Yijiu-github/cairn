@@ -50,6 +50,8 @@ The current bridge is intentionally small:
   `<userData>/diagnostics/workspace-core-sidecar.json`.
 - Renderer-facing Core status uses a display-safe connection label instead of exposing the
   loopback base URL or bearer token.
+- The renderer has a lightweight Simplified Chinese / English switch. It defaults to Simplified
+  Chinese and stores only the selected locale in `localStorage`.
 - The main process intentionally avoids top-level `await app.whenReady()`; Electron ESM startup can
   stall app readiness when module evaluation stays suspended.
 
@@ -59,9 +61,10 @@ Known limits:
   `apps/workspace-core`; packaged production sidecar bundling is not done yet.
 - Automated tests cover desktop bootstrap order, the sidecar manager, and the Workspace Core HTTP
   path. `pnpm --filter @cairn/desktop test:e2e` now builds the shell and runs a minimal
-  window-level Electron smoke against the default mock sidecar path. A Codex-backed window-level
-  internal-trial smoke has also been verified manually, but real Codex remains opt-in and outside
-  default CI.
+  window-level Electron smoke against the default mock sidecar path. `pnpm --filter @cairn/desktop smoke:codex`
+  is a separate opt-in runner for the real Codex window-level path; it requires the codex sidecar
+  runtime env and remains outside default CI. A Codex-backed window-level internal-trial smoke has
+  also been verified manually, but real Codex remains opt-in and outside default CI.
 - Artifact payload preview is read-only and fetched by opaque artifact id through Workspace Core; it
   does not reveal local paths, expose arbitrary filesystem access, or implement a full Artifact
   workspace.

@@ -109,6 +109,7 @@ catalog:
   # --- 测试 ---
   vitest: ^2.1.8
   "@vitest/coverage-v8": ^2.1.8
+  playwright: ^1.49.1
   "@playwright/test": ^1.49.1
   msw: ^2.7.0
 
