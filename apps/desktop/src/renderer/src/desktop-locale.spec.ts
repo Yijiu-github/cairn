@@ -60,6 +60,8 @@ describe('desktop locale', () => {
     expect(copy.runIdLabel).toBe('运行编号');
     expect(copy.replayUnavailableTitle).toBe('回放证据尚未加载');
     expect(copy.replayNotLoadedValue).toBe('否');
+    expect(copy.nextSafeStepTitle).toBe('下一步');
+    expect(copy.nextSafeStepDescription).toContain('查看回放证据或产物负载');
     expect(copy.runStateLoadingLabel).toBe('加载中');
     expect(copy.sourceRootsEmptyTitle).toBe('还没有连接源目录');
     expect(copy.safetyLocalPathRevealValue).toBe('默认隐藏');

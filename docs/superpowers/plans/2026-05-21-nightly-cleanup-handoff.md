@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-23 01:25 CST
+> 最后更新：2026-05-23 01:48 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,13 +35,17 @@
 
 ## 3. 当前工作区状态
 
-2026-05-23 01:25 CST 复核：
+2026-05-23 01:48 CST 复核：
 
-- `git status --short`：本轮 Run Detail 简中文案与正式文档已提交；开始前仅有
-  `desktop-app.spec.ts` 的 Run Detail regression 未提交，结束时仅本 handoff 待记录。
-- `git diff --name-only`：结束时仅本 handoff。
-- 本轮主线子块为 Desktop Run Detail / Artifact payload / Settings 默认简中文案收口；代码与正式文档提交为
-  `2cdd841` `fix(desktop): 收口运行详情简中文案 / polish run detail zh-CN copy`。
+- `git status --short`：开始时干净；本轮只修改 Desktop renderer copy/spec、`CHANGELOG.md`
+  与本 handoff。
+- `git diff --name-only`：`apps/desktop/src/renderer/src/desktop-app.tsx`、
+  `apps/desktop/src/renderer/src/desktop-app.spec.ts`、
+  `apps/desktop/src/renderer/src/desktop-locale.ts`、
+  `apps/desktop/src/renderer/src/desktop-locale.spec.ts`、`CHANGELOG.md` 与本 handoff。
+- 本轮主线子块为默认 mock Desktop 人类上手路径烟测与首轮体验低风险文案收口；已确认
+  “输入草稿 → 派发给总 Agent → 进入 Run Detail → 查看 replay evidence / artifact payload →
+  添加 operator note → 查看 Settings 空态”路径可走通。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
 
@@ -542,17 +546,53 @@
   已通过。
 - 本轮代码/正式文档提交：`2cdd841` `fix(desktop): 收口运行详情简中文案 / polish run detail zh-CN copy`。
 
+2026-05-23 01:48 CST 本轮完成：
+
+- 启动默认 mock Desktop 开发态，按人类上手路径完成手动烟测：输入任务草稿、派发给总
+  Agent、进入 Run Detail、读取 replay evidence、查看 artifact payload 区域、添加 operator note、
+  进入 Settings 空态。
+- 结论：当前默认简中已经可以初步体验，但首轮页面仍有两处低风险理解噪音：运行中 Agent
+  卡片显示内部 `agent-*` ID，Settings / 安全侧栏的“查看证据”说明实际更像下一步行动提示。
+- 修复：运行中 Agent 卡片副标签改为用户可读状态；安全侧栏卡片改为“下一步”，说明先走受限
+  internal-trial，再查看回放证据或产物负载。
+- 新增/扩展 renderer regression，锁住默认简中首页不再显示内部 agent id 或错位的本地存储提示，
+  并锁住新的“下一步”文案。
+- 保持边界：没有改变 `data-smoke-id="run-internal-trial"`，没有接真实 planner，没有把草稿发送给
+  Workspace Core，也没有改变 Desktop sidecar 默认 mock / 真实 Codex env opt-in。
+- 验证：
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.spec.ts src/renderer/src/mission-draft.spec.ts src/renderer/src/run-detail-copy.spec.ts src/renderer/src/run-replay-loader.spec.ts src/renderer/src/artifact-payload-loader.spec.ts src/renderer/src/operator-action-runner.spec.ts`
+  已通过，7 个文件 24 个测试。
+  `pnpm --filter @cairn/desktop typecheck`
+  已通过。
+  `pnpm --filter @cairn/desktop lint`
+  已通过。
+  `pnpm --filter @cairn/desktop build`
+  已通过。
+  `pnpm --filter @cairn/desktop test:e2e`
+  已通过。
+  `pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-app.spec.ts apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts`
+  已通过。
+  `git diff --check`
+  已通过。
+- 本轮代码/文档提交：待提交。
+
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **做人类上手路径烟测**：启动默认 mock Desktop，按“输入草稿 → 派发给总 Agent → 进入 Run Detail → 看 replay / artifact payload → 添加 operator note → 看 Settings 空态”走一遍；重点确认当前简中文案是否足够让用户知道“可以体验什么、还不能做什么”。
-2. **只修烟测中真实卡点**：如果路径卡住，优先做低风险文案、状态或 smoke hook 修正；不要扩成完整 UI 重构，不接真实 planner，不开放自由文本真实执行。
-3. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
+1. **补默认 mock 上手路径的 artifact payload 实操证据**：在 Desktop UI 中点“加载负载”，确认 payload
+   文本加载后的简中状态是否清楚；若只暴露英文 media/truncated 等低价值技术词，优先做最小文案
+   / 状态收口。
+2. **补 operator note 后的反馈可理解性**：继续用默认 mock Desktop 添加备注后，确认成功提示和
+   trace 计数变化是否足够让用户知道“备注已记录”；只修真实卡点，不扩完整 operator cockpit。
+3. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。
+   若改可见文案，保持 `data-smoke-id` hook 稳定。
 
 ## 8. 风险与阻塞
 
-- Mission Control 首屏已经能让用户输入草稿、派发 bounded internal trial，并顺着 Run Detail 读取 replay / artifact / operator note，说明“可初步体验”路径已成立；Run Detail / Artifact payload / Settings 的默认简中技术噪音已进一步收口，下一轮需要用真实默认 mock Desktop 烟测判断是否仍有体验卡点。
+- Mission Control 首屏已经能让用户输入草稿、派发 bounded internal trial，并顺着 Run Detail 读取
+  replay / artifact / operator note，说明“可初步体验”路径已成立；本轮默认 mock Desktop 已手动烟测
+  可走通，但 artifact payload 加载后的文案和 operator note 成功反馈仍值得下一轮继续细看。
 - 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
 - Mission Control 首页当前仍是静态/半静态首轮体验壳；任务草稿只在 renderer 本地保存，“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
 - 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。

@@ -837,7 +837,9 @@ function LiveAgentList({
             <CardContent className="content-stack">
               <div className="card-title-row">
                 <div>
-                  <p className="live-agent-label">{agent.agentId}</p>
+                  <p className="live-agent-label">
+                    {toMissionAgentStatusLabel(agent.status, copy)}
+                  </p>
                   <h4>{agent.title}</h4>
                 </div>
                 <StatusBadge
@@ -1483,8 +1485,8 @@ function NextSafeStepCard({ copy }: { readonly copy: DesktopLocaleStrings }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{copy.inspectTitle}</CardTitle>
-        <CardDescription>{copy.localStorageError}</CardDescription>
+        <CardTitle>{copy.nextSafeStepTitle}</CardTitle>
+        <CardDescription>{copy.nextSafeStepDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         <MetadataList

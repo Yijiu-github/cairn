@@ -85,6 +85,9 @@
 
 ### Changed
 
+- Desktop 默认 mock 上手路径做轻量烟测后继续减法：运行中 Agent 卡片不再露出内部
+  `agent-*` ID，Settings / 安全侧栏的下一步提示改为直接指向受限内部试用、回放证据与产物负载；
+  没有改变 bounded internal-trial、默认 mock sidecar 或真实 Codex env opt-in 边界。
 - Desktop Run Detail / Artifact payload / Settings 的默认简中文案继续收口：将已观察运行、回放证据、
   task/artifact 空态、payload 可加载状态与设置页源目录提示改为用户可读口径；仍保留 evidence
   / safety 边界，不改变默认 mock sidecar、真实 Codex env opt-in 或 bounded internal-trial 执行边界。

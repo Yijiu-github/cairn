@@ -170,6 +170,8 @@ export interface DesktopLocaleStrings {
   readonly missionInputPreviewBody: string;
   readonly recentProgressLabel: string;
   readonly recentProgressDescription: string;
+  readonly nextSafeStepDescription: string;
+  readonly nextSafeStepTitle: string;
   readonly pathExposurePolicyTitle: string;
   readonly pathExposurePolicyDescription: string;
   readonly pathExposureDisplayLabel: string;
@@ -374,6 +376,9 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
       'This draft is kept locally in the renderer. Dispatch still runs the bounded internal trial until the planner contract lands.',
     recentProgressLabel: 'Recent progress',
     recentProgressDescription: 'Small but durable changes the desktop shell can already observe.',
+    nextSafeStepDescription:
+      'Start with the bounded internal-trial path, then inspect replay evidence or artifact payloads as needed.',
+    nextSafeStepTitle: 'Next step',
     pathExposurePolicyTitle: 'Path exposure policy',
     pathExposurePolicyDescription: 'Local absolute paths remain hidden in this shell.',
     pathExposureDisplayLabel: 'Display path',
@@ -560,6 +565,8 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
       '任务草稿只保存在当前 renderer；在 planner 契约落地前，派发仍会执行受限内部试用路径。',
     recentProgressLabel: '最近进展',
     recentProgressDescription: '桌面壳已经能稳定观察到的近期进度。',
+    nextSafeStepDescription: '先走受限内部试用路径，再按需查看回放证据或产物负载。',
+    nextSafeStepTitle: '下一步',
     pathExposurePolicyTitle: '路径暴露策略',
     pathExposurePolicyDescription: '本 shell 中本地绝对路径保持隐藏。',
     pathExposureDisplayLabel: '显示路径',

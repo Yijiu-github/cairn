@@ -106,6 +106,12 @@ describe('DesktopApp home screen', () => {
     expect(markup).not.toContain('Preload 白名单');
     expect(markup).not.toContain('sidecar 生命周期');
     expect(markup).not.toContain('受限 operator 白名单');
+    expect(markup).not.toContain('agent-supervisor');
+    expect(markup).not.toContain('agent-runtime');
+    expect(markup).not.toContain('agent-review');
+    expect(markup).not.toContain('语言偏好只保存在当前浏览器会话');
+    expect(markup).toContain('下一步');
+    expect(markup).toContain('先走受限内部试用路径');
   });
 
   it('keeps mission dispatch as the primary smoke path without duplicate Core error selectors', () => {
