@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 19:03 CST
+> 最后更新：2026-05-22 21:52 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,20 +35,19 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 19:03 CST 复核：
+2026-05-22 21:52 CST 复核：
 
-- `git status --short`：本轮代码修复已提交；当前剩余未提交变更为文档同步与本 handoff。
-- `git diff --name-only`：当前文档变更为 `CHANGELOG.md`、`apps/desktop/README.md`、
-  `docs/STATUS.md`、`docs/ops/internal-trial-runbook.md` 与本 handoff。
-- 前序 Desktop Mission Control 数据面、首页布局和本轮 review 修复均已拆分为小提交。
+- `git status --short`：任务草稿 slice 已提交；当前 worktree clean。
+- `git diff --name-only`：无剩余未提交文件。
+- Desktop Mission Control 数据面、首页布局、review 修复与本轮任务草稿均已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
 
 - Desktop 默认 mock sidecar 已有最小 window-level smoke；真实 Codex window-level smoke 已有 `smoke:codex` opt-in runner。
 - 真实 Codex smoke 仍需 env opt-in，不进入默认 CI。
 - Desktop Home 已转向 Mission Control 风格首轮体验壳，突出“派发给总 Agent”、Agent 总览、
-  运行中 Agent 与最近进展；当前 dispatch 仍是 bounded internal-trial 入口，不是自由文本
-  Supervisor 任务入口，也不是完整 operator cockpit。
+  运行中 Agent 与最近进展；当前可输入任务草稿，但草稿只保存在 renderer 本地，dispatch 仍是
+  bounded internal-trial 入口，不是自由文本 Supervisor 执行入口，也不是完整 operator cockpit。
 - 长任务、复杂 payload、跨平台取消链路仍需后续额外证据。
 
 ---
@@ -287,6 +286,24 @@
 - `pnpm run docs:lint`
 - `git diff --check -- CHANGELOG.md apps/desktop/README.md docs/STATUS.md docs/ops/internal-trial-runbook.md`
 
+2026-05-22 21:52 CST Mission Control 任务草稿验证通过：
+
+- 红灯：新增 `mission-draft.spec.ts` 与 Home SSR 断言后，targeted test 因 helper 尚不存在、
+  composer 仍为 `readOnly` 且无 `name="missionDraft"` 失败。
+- 绿灯：新增 `mission-draft.ts`，Mission Control composer 改为 renderer 本地受控输入；空白草稿会显示本地校验错误，非空草稿仍触发 bounded internal-trial path，不把草稿发送给 planner / Workspace Core。
+- 发现 `@cairn/desktop test:e2e` 在收到 smoke signal 后偶发等待 Electron 退出超时；根因是 smoke
+  runner 把 post-signal graceful exit 当成产品 gate。已在 runner 中保留 SIGTERM graceful path，
+  但超时后 SIGKILL 清理并把已收到 smoke signal 视为成功。
+- `pnpm --filter @cairn/desktop test -- --run src/renderer/src/mission-draft.spec.ts src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.spec.ts src/main/workspace-core-bootstrap.spec.ts src/main/index.spec.ts`
+  通过，5 个文件 46 个测试。
+- `pnpm --filter @cairn/desktop typecheck`
+- `pnpm --filter @cairn/desktop lint`
+- `pnpm --filter @cairn/desktop test:e2e`
+- `pnpm exec prettier --check apps/desktop/scripts/window-smoke.mjs apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-app.spec.ts apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts apps/desktop/src/renderer/src/mission-draft.ts apps/desktop/src/renderer/src/mission-draft.spec.ts CHANGELOG.md apps/desktop/README.md docs/STATUS.md docs/ops/internal-trial-runbook.md`
+- `pnpm exec markdownlint-cli2 CHANGELOG.md apps/desktop/README.md docs/STATUS.md docs/ops/internal-trial-runbook.md`
+- `pnpm run docs:lint`
+- `git diff --check`
+
 ---
 
 ## 6. 最新完成
@@ -437,20 +454,27 @@
 本轮代码提交：`b86cb23` `fix(desktop): 收紧 mission control 首页体验 / tighten mission control home UX`。
 本轮文档提交：`392a6ec` `docs(desktop): 对齐 mission control 首屏口径 / align mission control home docs`。
 
+2026-05-22 21:52 CST 本轮完成：
+
+- 把 Mission Control composer 从只读预览输入推进为 renderer 本地任务草稿：用户可以输入草稿，空白点击会显示本地校验错误。
+- 保持产品边界：草稿不发送给 Workspace Core / planner；非空派发仍走 bounded `runInternalTrial` path，`data-smoke-id="run-internal-trial"` 保持稳定。
+- 新增 `mission-draft.ts` 与 spec，锁住 blank / trimmed draft 行为；扩展 Home SSR 和 locale spec，锁住 editable composer、简中本地草稿提示和空白错误文案。
+- 更新 README、STATUS、runbook、CHANGELOG，明确“任务草稿本地保存，真实 Supervisor 执行尚未开放”。
+- 修复默认 mock window smoke runner 的 post-signal 清理：收到 smoke event 后先 SIGTERM，若 Electron linger 再 SIGKILL，避免把清理超时误判为窗口 smoke 失败。
+
+本轮代码提交：`86a1ef9` `feat(desktop): 增加 mission control 任务草稿 / add mission control task draft`。
+
 ---
 
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **把 Mission Control CTA 从预览按钮推进到最小可输入任务草稿**：先设计/测试 renderer
-   本地输入状态、空输入校验和“仍走 bounded internal-trial”提示，不直接接真实 planner；保持
-   `run-internal-trial` smoke hook 稳定。
-2. **Desktop 上手体验冒烟**：启动默认 mock Desktop，按人类路径从“派发给总 Agent”进入 Run Detail，
+1. **Desktop 上手体验冒烟**：启动默认 mock Desktop，按人类路径输入任务草稿，再从“派发给总 Agent”进入 Run Detail，
    观察 Artifact payload、operator note 和 Settings 空态；优先修真实体验阻塞，不做完整产品 UI。
-3. **Mission Control 静态模型继续瘦身**：复查首屏以外仍会被第一轮用户看到的 pinned runs /
+2. **Mission Control 静态模型继续瘦身**：复查首屏以外仍会被第一轮用户看到的 pinned runs /
    handoff / status strip 英语 fixture；只搬运影响上手体验的文案，不引入完整 i18n 框架。
-4. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现
+3. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现
    runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
 
 ---
@@ -458,9 +482,9 @@
 ## 8. 风险与阻塞
 
 - 默认自动化 e2e 仅覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
-- Mission Control 首页当前仍是静态/半静态首轮体验壳；“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
+- Mission Control 首页当前仍是静态/半静态首轮体验壳；任务草稿只在 renderer 本地保存，“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
 - 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，
-  优先检查 `window-smoke.mjs` 的真实 binary 解析与退出链路。
+  优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。
 - 本轮真实 Codex runner 覆盖 Desktop 自拉起 Codex sidecar 的观察路径；仍依赖本机 Codex 登录态、CLI 版本和响应时延。
 - `smoke:codex` 现在依赖 renderer 上少量 `data-smoke-id` hook 以避免被语言切换文案打断；这些 hook 不能作为产品 API 或 Desktop bridge 能力边界。
 - Renderer payload/replay/operator action guard 与 Run Detail copy helper 只覆盖同一 renderer 会话内的请求乱序、空态防护和 trial 文案口径；完整 Artifact
