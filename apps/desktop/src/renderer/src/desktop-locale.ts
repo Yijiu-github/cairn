@@ -179,10 +179,20 @@ export interface DesktopLocaleStrings {
   readonly recentProgressDescription: string;
   readonly nextSafeStepDescription: string;
   readonly nextSafeStepTitle: string;
+  readonly nextStepAgentsLabel: string;
+  readonly nextStepAgentsValue: string;
+  readonly nextStepDescription: string;
+  readonly nextStepDispatchLabel: string;
+  readonly nextStepDispatchValue: string;
+  readonly nextStepTaskLabel: string;
+  readonly nextStepTaskValue: string;
+  readonly nextStepTitle: string;
   readonly pathExposurePolicyTitle: string;
   readonly pathExposurePolicyDescription: string;
   readonly pathExposureDisplayLabel: string;
   readonly pathExposureDisplayValue: string;
+  readonly pinnedRunsDescription: string;
+  readonly pinnedRunsTitle: string;
   readonly reviewActionApproveExport: string;
   readonly reviewActionReject: string;
 }
@@ -393,10 +403,21 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     nextSafeStepDescription:
       'Start with the bounded internal-trial path, then inspect replay evidence or artifact payloads as needed.',
     nextSafeStepTitle: 'Next step',
+    nextStepAgentsLabel: 'Agents to watch',
+    nextStepAgentsValue: '3 agents',
+    nextStepDescription:
+      'Check the next action first, then see what is waiting for review and what is already pinned.',
+    nextStepDispatchLabel: 'Dispatch path',
+    nextStepDispatchValue: 'bounded internal trial',
+    nextStepTaskLabel: 'Task focus',
+    nextStepTaskValue: 'one goal at a time',
+    nextStepTitle: 'Next step / Pending',
     pathExposurePolicyTitle: 'Path exposure policy',
     pathExposurePolicyDescription: 'Local absolute paths remain hidden in this shell.',
     pathExposureDisplayLabel: 'Display path',
     pathExposureDisplayValue: 'redacted',
+    pinnedRunsDescription: 'Runs you can reopen without losing the current view.',
+    pinnedRunsTitle: 'Pinned runs',
     reviewActionApproveExport: 'Approve export',
     reviewActionReject: 'Reject',
   },
@@ -588,10 +609,20 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     recentProgressDescription: '桌面壳已经能稳定观察到的近期进度。',
     nextSafeStepDescription: '先走受限内部试用路径，再按需查看回放证据或产物负载。',
     nextSafeStepTitle: '下一步',
+    nextStepAgentsLabel: '需要关注的 Agent',
+    nextStepAgentsValue: '3 个',
+    nextStepDescription: '先看下一步需要做什么，再看哪些内容在等待审阅，哪些已经固定。',
+    nextStepDispatchLabel: '派发路径',
+    nextStepDispatchValue: '受限内部试用',
+    nextStepTaskLabel: '任务关注点',
+    nextStepTaskValue: '一次只看一个目标',
+    nextStepTitle: '下一步 / 待处理',
     pathExposurePolicyTitle: '路径暴露策略',
     pathExposurePolicyDescription: '本 shell 中本地绝对路径保持隐藏。',
     pathExposureDisplayLabel: '显示路径',
     pathExposureDisplayValue: '已脱敏',
+    pinnedRunsDescription: '可重新打开而不丢失当前视图的运行。',
+    pinnedRunsTitle: '已固定运行',
     reviewActionApproveExport: '批准导出',
     reviewActionReject: '拒绝',
   },

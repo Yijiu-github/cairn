@@ -658,12 +658,40 @@ function HomeView({
             <AgentActivityPanel copy={copy} missionControl={model.missionControl} />
           </div>
           <div className="content-stack">
-            <section className="content-stack" aria-label={copy.handoffInboxLabel}>
+            <section className="content-stack" aria-label={copy.nextStepTitle}>
+              <Card className="next-step-panel">
+                <CardHeader>
+                  <CardTitle>{copy.nextStepTitle}</CardTitle>
+                  <CardDescription>{copy.nextStepDescription}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MetadataList
+                    items={[
+                      {
+                        label: copy.nextStepDispatchLabel,
+                        value: copy.nextStepDispatchValue,
+                      },
+                      {
+                        label: copy.nextStepAgentsLabel,
+                        value: copy.nextStepAgentsValue,
+                      },
+                      {
+                        label: copy.nextStepTaskLabel,
+                        value: copy.nextStepTaskValue,
+                      },
+                    ]}
+                  />
+                </CardContent>
+              </Card>
               {model.handoffs.map((handoff) => (
                 <HandoffQueueItem key={`${handoff.sourceLabel}-${handoff.title}`} {...handoff} />
               ))}
             </section>
             <div className="run-list">
+              <div className="run-list-heading">
+                <p>{copy.pinnedRunsTitle}</p>
+                <span>{copy.pinnedRunsDescription}</span>
+              </div>
               {model.pinnedRuns.map((run) => (
                 <RunCard key={run.runId} {...run} />
               ))}

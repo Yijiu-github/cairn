@@ -36,6 +36,9 @@ describe('DesktopApp home screen', () => {
     expect(markup).toContain('总 Agent');
     expect(markup).toContain('Agent 动态');
     expect(markup).toContain('近期完成');
+    expect(markup).toContain('下一步 / 待处理');
+    expect(markup).toContain('待处理');
+    expect(markup).toContain('已固定运行');
     expect(markup).not.toContain('Agent 总览');
     expect(markup).not.toContain('<h3>最近进展</h3>');
   });
