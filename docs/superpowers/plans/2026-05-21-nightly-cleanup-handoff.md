@@ -289,7 +289,7 @@
 - 新增 targeted regression，锁住畸形 error payload 不再把内部 TypeError 或原始 token/path/url 细节穿过 Desktop bridge。
 - 同步 `CHANGELOG.md` 修复项；没有扩大 operator action allowlist，也没有改变成功响应 schema。
 
-本轮提交：待提交。
+本轮提交：`c32c622` `fix(desktop): 收紧桥接错误解析 / harden bridge error parsing`。
 
 ---
 
