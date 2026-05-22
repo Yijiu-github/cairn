@@ -466,29 +466,39 @@
 
 ---
 
+2026-05-22 23:05 CST 本轮完成：
+
+- 继续把 Mission Control 首页收向“用户能直接理解并上手的派活台”：
+  默认简中下的顶部状态、pinned runs、handoffs、status strip 与运行摘要都不再露出明显英文 fixture。
+- 让首页主路径更清楚：用户可以先输入本地任务草稿，再点击“派发给总 Agent”，并沿着 Run Detail 读取 replay / artifact / operator note。
+- 新增/扩展 renderer 回归，锁住默认简中首页不再漏出 `Live agents`、`Design agent`、`Desktop minimal skeleton`、`healthy`、`local sidecar` 等首屏英文钩子。
+- 把 `packages/ui` 的 `RunCard` 共享列头从 `Operator` 本地化为 `操作方`，让 Desktop 与其它 shell 共用同一口径。
+- 更新 handoff 的下一轮方向，继续保留“先减法、再上手烟测、最后轻量维护 `smoke:codex`”的节奏。
+- 验证：
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.spec.ts`
+  `pnpm --filter @cairn/desktop lint`
+  `pnpm --filter @cairn/desktop typecheck`
+  `pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-app.spec.ts apps/desktop/src/renderer/src/desktop-model.ts packages/ui/src/cairn/run-card.tsx docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  `git diff --check`
+- 本轮代码提交：`890fb56` `feat(desktop): 收口默认简中首屏 / tighten zh-CN first screen`。
+
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **Desktop 上手体验冒烟**：启动默认 mock Desktop，按人类路径输入任务草稿，再从“派发给总 Agent”进入 Run Detail，
-   观察 Artifact payload、operator note 和 Settings 空态；优先修真实体验阻塞，不做完整产品 UI。
-2. **Mission Control 静态模型继续瘦身**：复查首屏以外仍会被第一轮用户看到的 pinned runs /
-   handoff / status strip 英语 fixture；只搬运影响上手体验的文案，不引入完整 i18n 框架。
-3. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现
-   runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
-
----
+1. **Desktop 首屏继续做减法**：优先清理首屏右侧 / 下方仍会看到的少量技术标识与状态词，只保留能帮助用户理解任务派发与运行状态的内容。
+2. **继续做人类上手路径烟测**：按“输入草稿 → 派发 → 进入 Run Detail → 看 replay / artifact / Settings”继续走一遍；如果还卡，只做低风险文案或状态修正，不扩成完整 UI 重构。
+3. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
 
 ## 8. 风险与阻塞
 
-- 默认自动化 e2e 仅覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
+- Mission Control 首屏已经能让用户输入草稿、派发 bounded internal trial，并顺着 Run Detail 读取 replay / artifact / operator note，说明“可初步体验”路径已成立；但顶部状态、运行摘要和少量技术标识仍可继续收口。
+- 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
 - Mission Control 首页当前仍是静态/半静态首轮体验壳；任务草稿只在 renderer 本地保存，“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
-- 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，
-  优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。
+- 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。
 - 本轮真实 Codex runner 覆盖 Desktop 自拉起 Codex sidecar 的观察路径；仍依赖本机 Codex 登录态、CLI 版本和响应时延。
 - `smoke:codex` 现在依赖 renderer 上少量 `data-smoke-id` hook 以避免被语言切换文案打断；这些 hook 不能作为产品 API 或 Desktop bridge 能力边界。
-- Renderer payload/replay/operator action guard 与 Run Detail copy helper 只覆盖同一 renderer 会话内的请求乱序、空态防护和 trial 文案口径；完整 Artifact
-  workspace、导出、retention、本地路径 reveal、完整 operator cockpit 与完整 Run Detail 数据面仍不在本轮范围。
+- Renderer payload/replay/operator action guard 与 Run Detail copy helper 只覆盖同一 renderer 会话内的请求乱序、空态防护和 trial 文案口径；完整 Artifact workspace、导出、retention、本地路径 reveal、完整 operator cockpit 与完整 Run Detail 数据面仍不在本轮范围。
 - `ui-preview` 静态数据只修正了 artifact review hero title 残留；没有动到 layout、CSS 或导航结构。
 - 真实 Codex CLI 行为可能随本机版本变化；默认测试仍必须依赖 mock / fixture。
 - Accepted ADR 不直接修改；Codex transport refinement 优先使用 Proposed ADR-0018 或新 ADR。
