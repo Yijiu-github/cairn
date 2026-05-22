@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 21:52 CST
+> 最后更新：2026-05-23 00:35 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 21:52 CST 复核：
+2026-05-23 00:39 CST 复核：
 
-- `git status --short`：任务草稿 slice 已提交；当前 worktree clean。
-- `git diff --name-only`：无剩余未提交文件。
+- `git status --short`：代码/正式文档已提交；仅本 handoff 仍在记录本轮结果。
+- `git diff --name-only`：仅本 handoff。
 - Desktop Mission Control 数据面、首页布局、review 修复与本轮任务草稿均已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -482,17 +482,43 @@
   `git diff --check`
 - 本轮代码提交：`890fb56` `feat(desktop): 收口默认简中首屏 / tighten zh-CN first screen`。
 
+2026-05-23 00:35 CST 本轮完成：
+
+- 继续做 Desktop Mission Control 默认简中首屏减法：把首页状态卡、安全栏和接力卡里用户会看到的
+  `Workspace Core` / `sidecar` / `Preload` / `operator 白名单` 等内部词收敛为“本地运行服务”“运行安全”“桌面桥接范围”“受限接管动作”等口径。
+- 同步 `createLocalizedDesktopModel` 的 zh-CN runtime card / handoff / status strip 文案，保持英文 locale 与底层 dev sidecar 命名不变。
+- 新增 Home SSR 回归，锁住默认简中首页不再露出旧的 `Workspace Core 本地 sidecar`、`预览安全`、
+  `静态样例`、`Preload 白名单`、`sidecar 生命周期`、`受限 operator 白名单` 等首屏噪音。
+- 保持边界：没有改变 `data-smoke-id="run-internal-trial"`，没有接真实 planner，没有把草稿发送给
+  Workspace Core，也没有改变 Desktop sidecar 默认 mock / 真实 Codex env opt-in。
+- 验证：
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.spec.ts`
+  已通过，10 个测试。
+  `pnpm --filter @cairn/desktop lint`
+  已通过。
+  `pnpm --filter @cairn/desktop typecheck`
+  已通过。
+  `pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-app.spec.ts apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  已通过。
+  `pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  已通过。
+  `pnpm run docs:lint`
+  已通过。
+  `git diff --check`
+  已通过。
+- 本轮代码/文档提交：`b3c4cee` `fix(desktop): 收口首屏技术噪音 / reduce home technical noise`。
+
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **Desktop 首屏继续做减法**：优先清理首屏右侧 / 下方仍会看到的少量技术标识与状态词，只保留能帮助用户理解任务派发与运行状态的内容。
-2. **继续做人类上手路径烟测**：按“输入草稿 → 派发 → 进入 Run Detail → 看 replay / artifact / Settings”继续走一遍；如果还卡，只做低风险文案或状态修正，不扩成完整 UI 重构。
+1. **做人类上手路径烟测**：启动默认 mock Desktop，按“输入草稿 → 派发给总 Agent → 进入 Run Detail → 看 replay / artifact payload → 添加 operator note → 看 Settings 空态”走一遍；如果还卡，只做低风险文案或状态修正，不扩成完整 UI 重构。
+2. **继续清理首屏以外第一轮会看到的技术噪音**：优先 Run Detail / Artifact payload / Settings 空态里仍明显影响理解的英文或内部词；不要隐藏必要的 evidence / safety 边界。
 3. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
 
 ## 8. 风险与阻塞
 
-- Mission Control 首屏已经能让用户输入草稿、派发 bounded internal trial，并顺着 Run Detail 读取 replay / artifact / operator note，说明“可初步体验”路径已成立；但顶部状态、运行摘要和少量技术标识仍可继续收口。
+- Mission Control 首屏已经能让用户输入草稿、派发 bounded internal trial，并顺着 Run Detail 读取 replay / artifact / operator note，说明“可初步体验”路径已成立；首屏主要技术噪音已进一步收口，但 Run Detail / Settings 的个别 evidence 术语仍需在上手烟测中判断是否影响理解。
 - 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
 - Mission Control 首页当前仍是静态/半静态首轮体验壳；任务草稿只在 renderer 本地保存，“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
 - 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。
