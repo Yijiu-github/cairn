@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 13:04 CST
+> 最后更新：2026-05-22 13:18 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 13:04 CST 复核：
+2026-05-22 13:18 CST 复核：
 
-- `git status --short`：当前仅真实 Codex window-level e2e 边界文档化与 handoff 记录待提交。
-- `git diff --name-only`：当前覆盖 `CHANGELOG.md`、`docs/STATUS.md`、`docs/engineering/testing-strategy.md`、`docs/ops/internal-trial-runbook.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- `git status --short`：本轮已提交真实 Codex window-level e2e 边界文档化；当前工作区干净。
+- `git diff --name-only`：当前无未提交变更。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -325,13 +325,13 @@
 
 本轮提交：`a63abe0` `fix(ui-preview): 收口静态标题口径 / align static titles`。
 
-2026-05-22 13:04 CST 本轮完成：
+2026-05-22 13:18 CST 本轮完成：
 
 - 评估真实 Codex window-level e2e 的当前可行边界，并把结论写入 runbook、STATUS、testing strategy 与 changelog。
 - 明确默认 `@cairn/desktop test:e2e` 只覆盖 mock sidecar 的窗口 ready smoke；真实 Codex 路径还缺 renderer 驱动、稳定断言入口和专用环境。
 - 本轮没有修改运行时代码，也没有扩大 preload allowlist、operator action 范围或 runtime 默认行为。
 
-本轮提交：待提交。
+本轮提交：`6e4151a` `docs(trial): 记录真实窗口级 e2e 边界 / document real window e2e boundary`。
 
 ---
 
