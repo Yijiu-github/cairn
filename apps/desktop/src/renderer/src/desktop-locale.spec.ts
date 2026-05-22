@@ -43,6 +43,11 @@ describe('desktop locale', () => {
   it('covers the first-run Desktop experience with Simplified Chinese copy', () => {
     const copy = getDesktopLocaleStrings('zh-CN');
 
+    expect(copy.missionControlTitle).toBe('派活工作台');
+    expect(copy.dispatchMissionLabel).toBe('派发给总 Agent');
+    expect(copy.agentSummaryLabel).toBe('Agent 总览');
+    expect(copy.agentWorkingLabel).toBe('工作中');
+    expect(copy.recentProgressLabel).toBe('最近进展');
     expect(copy.workspaceCorePanelTitle).toBe('Workspace Core 本地 sidecar');
     expect(copy.runInternalTrial).toBe('运行内部试用');
     expect(copy.runInternalTrialEmptyBody).toContain('点击“运行内部试用”');

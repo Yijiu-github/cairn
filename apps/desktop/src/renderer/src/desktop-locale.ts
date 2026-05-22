@@ -5,6 +5,8 @@ export type DesktopLocale = 'zh-CN' | 'en-US';
 export interface DesktopLocaleStrings {
   readonly addNote: string;
   readonly agentRunsLabel: string;
+  readonly agentSummaryLabel: string;
+  readonly agentWorkingLabel: string;
   readonly artifactReview: string;
   readonly artifactReviewDescription: string;
   readonly artifactReviewEmptyBody: string;
@@ -31,6 +33,7 @@ export interface DesktopLocaleStrings {
   readonly desktopWorkspaceLabel: string;
   readonly desktopWorkspaceMode: string;
   readonly desktopWorkspaceSummary: string;
+  readonly dispatchMissionLabel: string;
   readonly englishLabel: string;
   readonly errorCountLabel: string;
   readonly evidenceTimelineLabel: string;
@@ -130,6 +133,10 @@ export interface DesktopLocaleStrings {
   readonly workspaceCorePanelTitle: string;
   readonly workspaceLabel: string;
   readonly workspaceStaticFixture: string;
+  readonly activeAgentCountLabel: string;
+  readonly blockedAgentCountLabel: string;
+  readonly completedAgentCountLabel: string;
+  readonly totalAgentCountLabel: string;
   readonly runInternalTrial: string;
   readonly runInternalTrialEmptyBody: string;
   readonly safetyIpcActionsLabel: string;
@@ -143,6 +150,8 @@ export interface DesktopLocaleStrings {
   readonly preloadAllowlistValue: string;
   readonly liveActionsLabel: string;
   readonly liveActionsValue: string;
+  readonly missionControlTitle: string;
+  readonly recentProgressLabel: string;
   readonly pathExposurePolicyTitle: string;
   readonly pathExposurePolicyDescription: string;
   readonly pathExposureDisplayLabel: string;
@@ -155,6 +164,8 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
   'en-US': {
     addNote: 'Add note',
     agentRunsLabel: 'AgentRuns',
+    agentSummaryLabel: 'Agent overview',
+    agentWorkingLabel: 'Working',
     artifactReview: 'Artifact Review',
     artifactReviewDescription: 'Safe review entry point with redacted path language.',
     artifactReviewEmptyBody:
@@ -180,6 +191,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     desktopWorkspaceMode: 'Desktop observation shell',
     desktopWorkspaceSummary:
       'Minimal internal-trial console for observing one bounded Workspace Core run through replay evidence, with safety gates still intact.',
+    dispatchMissionLabel: 'Dispatch to supervisor agent',
     englishLabel: 'English',
     evidenceTimelineLabel: 'Evidence timeline',
     finalResponseLabel: 'Final response',
@@ -300,6 +312,10 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     workspaceCorePanelTitle: 'Workspace Core sidecar',
     workspaceLabel: 'Workspace',
     workspaceStaticFixture: 'static fixture',
+    activeAgentCountLabel: 'Active agents',
+    blockedAgentCountLabel: 'Blocked agents',
+    completedAgentCountLabel: 'Completed agents',
+    totalAgentCountLabel: 'Total agents',
     runInternalTrial: 'Run Internal Trial',
     runInternalTrialEmptyBody:
       'Run the bounded internal-trial path to create a Workspace Core run and read artifacts, trace, and replay evidence.',
@@ -314,6 +330,8 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     preloadAllowlistValue: 'internal-trial only',
     liveActionsLabel: 'Live actions',
     liveActionsValue: 'bounded operator allowlist',
+    missionControlTitle: 'Mission control',
+    recentProgressLabel: 'Recent progress',
     pathExposurePolicyTitle: 'Path exposure policy',
     pathExposurePolicyDescription: 'Local absolute paths remain hidden in this shell.',
     pathExposureDisplayLabel: 'Display path',
@@ -324,6 +342,8 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
   'zh-CN': {
     addNote: '添加备注',
     agentRunsLabel: 'AgentRuns',
+    agentSummaryLabel: 'Agent 总览',
+    agentWorkingLabel: '工作中',
     artifactReview: '产物审阅',
     artifactReviewDescription: '脱敏后的路径语言，作为安全审阅入口。',
     artifactReviewEmptyBody: '先从已观察到的运行中选择产物，或在 replay evidence 加载后返回。',
@@ -346,6 +366,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     desktopWorkspaceMode: '桌面观察壳',
     desktopWorkspaceSummary:
       '用于观察单个受限 Workspace Core 运行的内部试用控制台，安全边界仍然保留。',
+    dispatchMissionLabel: '派发给总 Agent',
     englishLabel: 'English',
     evidenceTimelineLabel: '证据时间线',
     finalResponseLabel: '最终响应',
@@ -459,6 +480,10 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     workspaceCorePanelTitle: 'Workspace Core 本地 sidecar',
     workspaceLabel: 'Workspace',
     workspaceStaticFixture: '静态样例',
+    activeAgentCountLabel: '活跃 Agent',
+    blockedAgentCountLabel: '阻塞 Agent',
+    completedAgentCountLabel: '已完成 Agent',
+    totalAgentCountLabel: 'Agent 总数',
     runInternalTrial: '运行内部试用',
     runInternalTrialEmptyBody:
       '点击“运行内部试用”会走受限路径，创建 Workspace Core 运行并读取产物、trace 和 replay 证据。',
@@ -473,6 +498,8 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     preloadAllowlistValue: '仅内部试用',
     liveActionsLabel: '实时动作',
     liveActionsValue: '受限 operator 白名单',
+    missionControlTitle: '派活工作台',
+    recentProgressLabel: '最近进展',
     pathExposurePolicyTitle: '路径暴露策略',
     pathExposurePolicyDescription: '本 shell 中本地绝对路径保持隐藏。',
     pathExposureDisplayLabel: '显示路径',

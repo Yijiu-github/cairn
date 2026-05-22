@@ -23,6 +23,24 @@ export interface DesktopShellModel {
     readonly note: string;
     readonly title: string;
   };
+  readonly missionControl: {
+    readonly activeAgentCount: number;
+    readonly blockedAgentCount: number;
+    readonly completedAgentCount: number;
+    readonly liveAgents: readonly {
+      readonly agentId: string;
+      readonly status: 'working' | 'idle' | 'blocked' | 'completed';
+      readonly summary: string;
+      readonly title: string;
+    }[];
+    readonly recentProgressItems: readonly {
+      readonly detail: string;
+      readonly itemId: string;
+      readonly title: string;
+    }[];
+    readonly taskComposerPlaceholder: string;
+    readonly totalAgentCount: number;
+  };
   readonly handoffs: readonly HandoffQueueItemProps[];
   readonly navItems: readonly DesktopNavItem[];
   readonly pinnedRuns: readonly RunCardProps[];
@@ -68,6 +86,46 @@ export const desktopShellModel: DesktopShellModel = {
     artifactId: 'artifact://preview/redacted-diff-001',
     note: '',
     title: 'Artifact Review placeholder',
+  },
+  missionControl: {
+    activeAgentCount: 2,
+    blockedAgentCount: 1,
+    completedAgentCount: 3,
+    liveAgents: [
+      {
+        agentId: 'agent-supervisor',
+        status: 'working',
+        summary:
+          'Orchestrates the current mission and dispatches follow-up work to the right agent.',
+        title: 'Supervisor / Desktop',
+      },
+      {
+        agentId: 'agent-runtime',
+        status: 'idle',
+        summary: 'Waiting on the sidecar contract before it can start any live integration work.',
+        title: 'Runtime agent',
+      },
+      {
+        agentId: 'agent-review',
+        status: 'blocked',
+        summary: 'Holding until the artifact review gate is ready for a safe next step.',
+        title: 'Review agent',
+      },
+    ],
+    recentProgressItems: [
+      {
+        detail: 'Mission control data now shows the current dispatch queue and live agent state.',
+        itemId: 'progress-mission-control-model',
+        title: 'Mission control model added',
+      },
+      {
+        detail: 'Desktop locale copy is ready for the first-run home screen.',
+        itemId: 'progress-mission-control-locale',
+        title: 'Locale copy prepared',
+      },
+    ],
+    taskComposerPlaceholder: 'Describe the next mission to dispatch to the supervisor agent...',
+    totalAgentCount: 6,
   },
   handoffs: [
     {
