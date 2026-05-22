@@ -21,7 +21,8 @@ The package follows ADR-0012 with `electron-vite` for main / preload / renderer 
 The renderer is a static desktop product shell that reuses `@cairn/ui` components and models the
 first navigation shape:
 
-- **Home / Inbox** — handoff queue, pinned runs, runtime health, and safety defaults
+- **Home / Mission Control** — simplified first-run dispatch surface, visible agent counts, live
+  agent cards, recent progress, runtime health, and safety defaults
 - **Run Detail** — selected run card, evidence timeline, task tree, and internal-trial operator
   controls
 - **Artifact Review** — protected review panel, redacted artifact cards, and path exposure
@@ -29,7 +30,9 @@ first navigation shape:
 - **Settings** — read-only source-root and connection placeholders
 
 Production sidecar bundling, real filesystem access, complete runtime action coverage, and full
-operator workflows are still out of scope for this slice.
+operator workflows are still out of scope for this slice. The Home dispatch composer currently
+drives the bounded internal-trial path; free-form Supervisor prompts are intentionally not enabled
+until the planner contract and task dispatch flow are ready.
 
 ## Workspace Core preview bridge
 

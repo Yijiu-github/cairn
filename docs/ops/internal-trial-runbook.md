@@ -123,8 +123,12 @@ fi
 pnpm --filter @cairn/desktop dev
 ```
 
-Desktop 开发态默认走 mock sidecar；通过 preload allowlist 中的 `workspaceCore.runInternalTrial()`
-触发 `workspace-core:run-internal-trial` IPC 入口，可读取最小 replay evidence。
+Desktop 开发态默认走 mock sidecar。Home 首屏现在是 Mission Control 风格的“派活工作台”，
+可通过“派发给总 Agent”按钮触发 preload allowlist 中的 `workspaceCore.runInternalTrial()`，
+走 `workspace-core:run-internal-trial` IPC 入口，并读取最小 replay evidence。
+
+注意：当前首屏 dispatch composer 仍是 bounded internal-trial 入口。自由输入给 Supervisor、
+自动创建多个子 Agent 与真实任务编排，需要等 planner contract 和 dispatch flow 落地后再启用。
 
 默认 Desktop sidecar runtime 是 mock。启动会写入不含 token 的诊断快照：
 
@@ -399,7 +403,7 @@ curl -sS -X POST "$CAIRN_BASE_URL/v1/runs/$CAIRN_RUN_ID/notes" \
 ## 8. 已知限制 / Known Limits
 
 - `apps/web` 不在本轮内部试用范围内；当前也不覆盖安装器、签名、公证与升级体验。
-- Desktop 仍是最小观察壳，不是完整产品 UI；operator action 只验证最小动作。
+- Desktop Home 已是 Mission Control 风格首轮体验壳，但仍不是完整产品 UI；operator action 只验证最小动作。
 - 真实 Codex smoke 仍然是手动步骤，不进入默认自动化 CI。
 - 真实长任务、复杂 payload、长时取消链路仍可能存在平台差异。
 
@@ -487,5 +491,5 @@ operator note。它仍不适合进入默认 CI。主要约束是：
 - 当前分支文档与状态页已同步
 - 自动化门禁通过
 - 至少一条真实 Codex 短任务 smoke 已完成并有证据
-- Desktop 能作为最小观察壳读取同一条 run 的 evidence
+- Desktop 能通过 Mission Control 首屏触发 bounded trial，并在 Run Detail 读取同一条 run 的 evidence
 - 已知限制已明确记录，没有把未完成项包装成已交付能力

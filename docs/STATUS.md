@@ -75,8 +75,9 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 ### Desktop Shell
 
 - `apps/desktop` 已提供 Electron 最小 shell 骨架。
-- 当前包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
+- 当前包含 main / preload / renderer、Mission Control 风格 Home 首屏、Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
 - Renderer 壳新增简体中文 / English 切换，默认 `zh-CN`，语言偏好只保存在本地 `localStorage`；当前是 Desktop 内部试用壳的轻量实现，不代表 `apps/web` 已创建。
+- Home 首屏已从内部观察面板调整为更面向用户的“派活工作台”：突出“派发给总 Agent”、Agent 统计、运行中的 Agent 与最近进展；当前按钮仍触发 bounded internal-trial 路径，不是自由文本 Supervisor 任务入口。
 - Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runInternalTrial()`、`workspaceCore.getRunReplaySource(runId)`、`workspaceCore.getArtifactPayload(artifactId)` 与最小 operator action allowlist（cancel / retry / rerun / operator note）。
 - Renderer 可通过 internal-trial 入口创建 run、读取 task、提交 AgentRun、drain runtime，在 Run Detail 按需读取 bounded payload text，并调用最小 operator action allowlist。默认 sidecar 走 mock runtime；`CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 仅用于观察 Codex-backed Workspace Core sidecar 产生的真实 run evidence。
 - Desktop 额外提供 `pnpm --filter @cairn/desktop smoke:codex` 作为 opt-in 的真实 Codex window-level smoke；它会要求 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`，并通过现有 Desktop 窗口驱动 internal-trial、replay evidence 与 operator note 口径，但不进入默认 CI。
@@ -108,17 +109,17 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 
 ### 当前测试覆盖分布
 
-| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                                                                                                                                                                                                                 |
-| --------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `packages/shared_contracts` | 16               | schema、contracts、WS events、ID / enum 基础                                                                                                                                                                                                             |
-| `packages/domain`           | 1                | 生成迁移与核心表结构                                                                                                                                                                                                                                     |
-| `packages/storage`          | 2                | SQLite connection 与迁移目录                                                                                                                                                                                                                             |
-| `packages/runtime_gateway`  | 4                | mock adapter、Codex protocol、Codex process wrapper、Codex RuntimeAdapter                                                                                                                                                                                |
-| `packages/application`      | 3                | orchestration、planning output 与 code context service                                                                                                                                                                                                   |
-| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                                                                                                                                                                                                  |
-| `apps/ui-preview`           | 1                | preview model / static data smoke，当前以 typecheck / lint / production build 作为验证门禁                                                                                                                                                               |
-| `apps/desktop`              | 9                | main module 非阻塞加载、bootstrap 顺序、sidecar manager、Workspace Core internal-trial client、renderer replay/payload/operator action loaders 与 Run Detail copy helper（含空 run id / 乱序防护）、Electron Vite config；另以 typecheck/lint/build 验证 |
-| `apps/workspace-core`       | 6                | Fastify app、config、SQLite repository、runtime gateway factory、local artifact store、local code index scanner                                                                                                                                          |
+| 包 / 应用                   | `*.spec.ts` 数量 | 覆盖重点                                                                                                                                                                                                                                                                                    |
+| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packages/shared_contracts` | 16               | schema、contracts、WS events、ID / enum 基础                                                                                                                                                                                                                                                |
+| `packages/domain`           | 1                | 生成迁移与核心表结构                                                                                                                                                                                                                                                                        |
+| `packages/storage`          | 2                | SQLite connection 与迁移目录                                                                                                                                                                                                                                                                |
+| `packages/runtime_gateway`  | 4                | mock adapter、Codex protocol、Codex process wrapper、Codex RuntimeAdapter                                                                                                                                                                                                                   |
+| `packages/application`      | 3                | orchestration、planning output 与 code context service                                                                                                                                                                                                                                      |
+| `packages/ui`               | 1                | 公共导出与 token / primitive smoke test                                                                                                                                                                                                                                                     |
+| `apps/ui-preview`           | 1                | preview model / static data smoke，当前以 typecheck / lint / production build 作为验证门禁                                                                                                                                                                                                  |
+| `apps/desktop`              | 11               | main module 非阻塞加载、bootstrap 顺序、sidecar manager、Workspace Core internal-trial client、renderer Mission Control home、locale copy、replay/payload/operator action loaders 与 Run Detail copy helper（含空 run id / 乱序防护）、Electron Vite config；另以 typecheck/lint/build 验证 |
+| `apps/workspace-core`       | 6                | Fastify app、config、SQLite repository、runtime gateway factory、local artifact store、local code index scanner                                                                                                                                                                             |
 
 ### 本地环境注意事项
 
@@ -165,7 +166,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - Local Artifact Store M2：本地 payload 写入采用同目录临时文件 + rename，payload ref 保持 opaque 且不暴露本地路径。
 - `@cairn/ui`：共享 UI 包基线。
 - `apps/ui-preview`：静态 UI 组件与产品视图预览应用，可用于验证 `packages/ui` 的产品组合形态。
-- `apps/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、静态 Home / Run Detail / Artifact Review / Settings 壳视图、最小 Workspace Core dev sidecar bridge、internal-trial allowlist、只读 replay-source / bounded artifact payload bridge、最小 operator action bridge，以及 preview-safe 默认隔离设置。
+- `apps/desktop`：Electron 最小 shell 骨架，包含 main / preload / renderer、Mission Control 风格 Home 首屏、Run Detail / Artifact Review / Settings 壳视图、最小 Workspace Core dev sidecar bridge、internal-trial allowlist、只读 replay-source / bounded artifact payload bridge、最小 operator action bridge，以及 preview-safe 默认隔离设置。
 
 ---
 
@@ -198,7 +199,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 ### 第一轮内部试用的已知限制
 
 - 真实 Codex CLI smoke 仍为手动步骤，不进入默认 CI；当前已有 Workspace Core API 主路径成功、Desktop window-level trial 成功和默认 mock sidecar window-level smoke，但仍不等同于真实 Codex 完整自动化 E2E 已覆盖。
-- Desktop 当前主要承担最小观察壳职责，真实数据面与交互仍有限。
+- Desktop 当前 Home 首屏已转向“派活工作台”体验，但真实数据面与交互仍有限；自由文本派发、自动创建多子 Agent、完整 operator cockpit 仍未完成。
 - 最小 operator action 只验证口径，不代表完整人工接管台已完成。
 - 长任务、复杂 payload、跨平台取消链路仍需要后续额外证据。
 
@@ -233,7 +234,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - 不做 marketplace。
 - 不做 workflow builder。
 - 不创建 `apps/web`。
-- 不把 `apps/desktop` 静态骨架误写成完整产品 UI；当前仍是最小观察壳 + internal-trial allowlist。
+- 不把 `apps/desktop` 当前首屏误写成完整产品 UI；当前仍是 Mission Control 风格首轮体验壳 + internal-trial allowlist。
 
 ---
 
