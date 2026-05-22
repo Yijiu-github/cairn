@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-23 03:45 CST
+> 最后更新：2026-05-23 07:43 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -611,13 +611,24 @@
   已通过。
 - 本轮代码提交：`9fb8d02` `feat(desktop): 合并首页 Agent 动态 / merge home agent activity`。
 
+2026-05-23 07:43 CST 本轮完成：
+
+- Desktop Mission Control 首页继续做右栏减法：把接力收件箱、pinned runs 与下一步提示收拢为更明确的 `下一步 / 待处理` 行动区，并把固定运行单独保留为 `已固定运行`。
+- 左侧 `Agent 动态` 保持不变，首页首屏信息层级调整为：派活工作台 -> Agent 动态 -> 下一步 / 待处理 -> 已固定运行。
+- 扩展 `desktop-app.spec.ts`、`desktop-locale.ts` 与 `styles.css`，锁住右侧新层级与简中文案，避免回退到旧的接力收件箱 / pinned runs 堆叠口径。
+- 同步 `docs/STATUS.md` 与 `CHANGELOG.md`，明确这次调整仍只是首屏 internal trial 的信息收口，不是完整产品 UI 重构。
+- 保持边界：没有创建 `apps/web`，没有接真实 planner，没有改变 Desktop sidecar 默认 mock 或真实 Codex env opt-in 边界，`data-smoke-id="run-internal-trial"` 仍保持稳定。
+- 验证：`pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-app.spec.ts`、`pnpm --filter @cairn/desktop typecheck`、`pnpm --filter @cairn/desktop lint`、`pnpm --filter @cairn/desktop build`、`pnpm exec prettier --check CHANGELOG.md docs/STATUS.md apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-app.spec.ts apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/styles.css`、`pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md`、`pnpm run docs:lint`、`git diff --check`。
+- 本轮代码/正式文档提交：`54c9868` `feat(desktop): 收口首页待处理区域 / tighten home pending area`。
+- 风险：右栏仍保留两张待处理卡片，下一轮可以继续压成更短的辅助区，或把 `已固定运行` 改成摘要 / 折叠样式，继续降低首页认知负担。
+
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **继续首屏 UI 改造的下一小块：观察是否还需要把 Agent 动态与接力收件箱 / pinned runs 再做层级重排**。
-   当前已把 Agent 总览、运行中 Agent 与最近进展合并为一个面板，但页面左侧与右侧仍可能显得偏满；
-   下一轮优先判断是否只需轻量调整顺序或摘要长度，不要再拆回多块。
+1. **继续首屏 UI 改造的下一小块：把右栏待处理 / 已固定运行再压一层**。
+   当前已把接力收件箱、pinned runs 与下一步提示收成 `下一步 / 待处理` 与 `已固定运行`；
+   下一轮优先判断是否把两张待处理卡片缩成单一优先级摘要，或把固定运行改成更短的辅助区。
 2. **补默认 mock 上手路径的 artifact payload 实操证据**：在 Desktop UI 中点“加载负载”，确认 payload
    文本加载后的简中状态是否清楚；若只暴露英文 media/truncated 等低价值技术词，优先做最小文案
    / 状态收口。
@@ -632,8 +643,8 @@
   replay / artifact / operator note，说明“可初步体验”路径已成立；本轮默认 mock Desktop 已手动烟测
   可走通；本轮进一步移除了首屏服务诊断噪音，但 artifact payload 加载后的文案和 operator note
   成功反馈仍值得下一轮继续细看。
-- 首页左侧现在已把 Agent 总览、运行中 Agent 与最近进展合并；但整页仍有 hero、Agent 动态、
-  接力收件箱和 pinned runs 等信息块，下一轮应优先观察是否需要进一步调序或压缩摘要，而不是重新拆回独立总览卡。
+- 首页左侧现在已把 Agent 总览、运行中 Agent 与最近进展合并，右栏也已收成 `下一步 / 待处理`
+  与 `已固定运行`；但待处理卡片仍偏像信息墙，下一轮应优先压缩摘要或折叠固定运行，而不是扩大新功能。
 - 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
 - Mission Control 首页当前仍是静态/半静态首轮体验壳；任务草稿只在 renderer 本地保存，“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
 - 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。
