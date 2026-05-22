@@ -5,8 +5,13 @@ export type DesktopLocale = 'zh-CN' | 'en-US';
 export interface DesktopLocaleStrings {
   readonly addNote: string;
   readonly agentRunsLabel: string;
+  readonly agentBlockedLabel: string;
+  readonly agentCompletedLabel: string;
+  readonly agentIdleLabel: string;
   readonly agentSummaryLabel: string;
   readonly agentWorkingLabel: string;
+  readonly liveAgentsDescription: string;
+  readonly liveAgentsTitle: string;
   readonly artifactReview: string;
   readonly artifactReviewDescription: string;
   readonly artifactReviewEmptyBody: string;
@@ -151,7 +156,9 @@ export interface DesktopLocaleStrings {
   readonly liveActionsLabel: string;
   readonly liveActionsValue: string;
   readonly missionControlTitle: string;
+  readonly missionInputPreviewBody: string;
   readonly recentProgressLabel: string;
+  readonly recentProgressDescription: string;
   readonly pathExposurePolicyTitle: string;
   readonly pathExposurePolicyDescription: string;
   readonly pathExposureDisplayLabel: string;
@@ -164,8 +171,13 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
   'en-US': {
     addNote: 'Add note',
     agentRunsLabel: 'AgentRuns',
+    agentBlockedLabel: 'Blocked',
+    agentCompletedLabel: 'Completed',
+    agentIdleLabel: 'Idle',
     agentSummaryLabel: 'Agent overview',
     agentWorkingLabel: 'Working',
+    liveAgentsDescription: 'Current supervisor and worker activity across the mission queue.',
+    liveAgentsTitle: 'Live agents',
     artifactReview: 'Artifact Review',
     artifactReviewDescription: 'Safe review entry point with redacted path language.',
     artifactReviewEmptyBody:
@@ -331,7 +343,10 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     liveActionsLabel: 'Live actions',
     liveActionsValue: 'bounded operator allowlist',
     missionControlTitle: 'Mission control',
+    missionInputPreviewBody:
+      'This preview dispatches a bounded internal trial. Free-form supervisor prompts will be enabled after the planner contract lands.',
     recentProgressLabel: 'Recent progress',
+    recentProgressDescription: 'Small but durable changes the desktop shell can already observe.',
     pathExposurePolicyTitle: 'Path exposure policy',
     pathExposurePolicyDescription: 'Local absolute paths remain hidden in this shell.',
     pathExposureDisplayLabel: 'Display path',
@@ -342,8 +357,13 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
   'zh-CN': {
     addNote: '添加备注',
     agentRunsLabel: 'AgentRuns',
+    agentBlockedLabel: '阻塞',
+    agentCompletedLabel: '已完成',
+    agentIdleLabel: '空闲',
     agentSummaryLabel: 'Agent 总览',
     agentWorkingLabel: '工作中',
+    liveAgentsDescription: '当前任务队列里的总 Agent 与子 Agent 动态。',
+    liveAgentsTitle: '运行中的 Agent',
     artifactReview: '产物审阅',
     artifactReviewDescription: '脱敏后的路径语言，作为安全审阅入口。',
     artifactReviewEmptyBody: '先从已观察到的运行中选择产物，或在 replay evidence 加载后返回。',
@@ -499,7 +519,10 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     liveActionsLabel: '实时动作',
     liveActionsValue: '受限 operator 白名单',
     missionControlTitle: '派活工作台',
+    missionInputPreviewBody:
+      '当前预览会派发一条受限内部试用任务；自由输入给总 Agent 的真实任务会在 planner 契约落地后开启。',
     recentProgressLabel: '最近进展',
+    recentProgressDescription: '桌面壳已经能稳定观察到的近期进度。',
     pathExposurePolicyTitle: '路径暴露策略',
     pathExposurePolicyDescription: '本 shell 中本地绝对路径保持隐藏。',
     pathExposureDisplayLabel: '显示路径',

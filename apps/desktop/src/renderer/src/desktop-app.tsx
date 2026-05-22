@@ -617,7 +617,7 @@ function HomeView({
         <AgentSummaryStrip copy={copy} missionControl={model.missionControl} />
         <div className="mission-control-columns">
           <div className="content-stack">
-            <LiveAgentList missionControl={model.missionControl} />
+            <LiveAgentList copy={copy} missionControl={model.missionControl} />
             <RecentProgressPanel copy={copy} missionControl={model.missionControl} />
           </div>
           <div className="content-stack">
@@ -635,15 +635,7 @@ function HomeView({
         </div>
       </section>
 
-      <HomeSafetyRail
-        copy={copy}
-        onRunInternalTrial={onRunInternalTrial}
-        runtime={model.runtime}
-        status={status}
-        statusError={statusError}
-        statusLoading={statusLoading}
-        trialResult={trialResult}
-      />
+      <HomeSafetyRail copy={copy} runtime={model.runtime} />
     </div>
   );
 }
@@ -683,7 +675,7 @@ function MissionControlHero({
             value=""
           />
           <Button
-            data-smoke-id="dispatch-mission"
+            data-smoke-id="run-internal-trial"
             disabled={!coreAvailable || !isHealthy}
             loading={statusLoading}
             onClick={() => {
@@ -693,9 +685,9 @@ function MissionControlHero({
             {copy.dispatchMissionLabel}
           </Button>
         </div>
-        <p className="mission-hero-note">{copy.runInternalTrialEmptyBody}</p>
+        <p className="mission-hero-note">{copy.missionInputPreviewBody}</p>
       </div>
-      <Card className="mission-hero-status">
+      <Card className="mission-hero-status workspace-core-panel">
         <CardHeader>
           <div className="card-title-row">
             <div>
@@ -776,15 +768,17 @@ function AgentSummaryStrip({
 }
 
 function LiveAgentList({
+  copy,
   missionControl,
 }: {
+  readonly copy: DesktopLocaleStrings;
   readonly missionControl: LocalizedDesktopModel['missionControl'];
 }) {
   return (
-    <section className="content-stack" aria-label="Live agents">
+    <section className="content-stack" aria-label={copy.liveAgentsTitle}>
       <div className="section-heading">
-        <h3>Live agents</h3>
-        <p>Current supervisor and worker activity across the mission queue.</p>
+        <h3>{copy.liveAgentsTitle}</h3>
+        <p>{copy.liveAgentsDescription}</p>
       </div>
       <div className="live-agent-grid">
         {missionControl.liveAgents.map((agent) => (
@@ -795,7 +789,10 @@ function LiveAgentList({
                   <p className="live-agent-label">{agent.agentId}</p>
                   <h4>{agent.title}</h4>
                 </div>
-                <StatusBadge label={agent.status} tone={toMissionAgentTone(agent.status)} />
+                <StatusBadge
+                  label={toMissionAgentStatusLabel(agent.status, copy)}
+                  tone={toMissionAgentTone(agent.status)}
+                />
               </div>
               <p className="live-agent-summary">{agent.summary}</p>
             </CardContent>
@@ -817,9 +814,7 @@ function RecentProgressPanel({
     <Card>
       <CardHeader>
         <CardTitle>{copy.recentProgressLabel}</CardTitle>
-        <CardDescription>
-          Small but durable changes the desktop shell can already observe.
-        </CardDescription>
+        <CardDescription>{copy.recentProgressDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="recent-progress-list">
@@ -837,131 +832,17 @@ function RecentProgressPanel({
 
 function HomeSafetyRail({
   copy,
-  onRunInternalTrial,
   runtime,
-  status,
-  statusError,
-  statusLoading,
-  trialResult,
 }: {
   readonly copy: DesktopLocaleStrings;
-  readonly onRunInternalTrial: () => Promise<void>;
   readonly runtime: LocalizedDesktopModel['runtime'];
-  readonly status?: WorkspaceCoreStatus | undefined;
-  readonly statusError?: string | undefined;
-  readonly statusLoading: boolean;
-  readonly trialResult?: WorkspaceCoreTrialResult | undefined;
 }) {
   return (
     <aside className="content-stack home-safety-rail">
       <RuntimeHealthCard {...runtime} />
-      <WorkspaceCorePanel
-        copy={copy}
-        onRunInternalTrial={onRunInternalTrial}
-        status={status}
-        statusError={statusError}
-        statusLoading={statusLoading}
-        trialResult={trialResult}
-      />
       <SafetyDefaultsCard copy={copy} />
       <NextSafeStepCard copy={copy} />
     </aside>
-  );
-}
-
-interface WorkspaceCorePanelProps {
-  readonly copy: DesktopLocaleStrings;
-  readonly onRunInternalTrial: () => Promise<void>;
-  readonly status?: WorkspaceCoreStatus | undefined;
-  readonly statusError?: string | undefined;
-  readonly statusLoading: boolean;
-  readonly trialResult?: WorkspaceCoreTrialResult | undefined;
-}
-
-function WorkspaceCorePanel({
-  copy,
-  onRunInternalTrial,
-  status,
-  statusError,
-  statusLoading,
-  trialResult,
-}: WorkspaceCorePanelProps) {
-  const coreAvailable = window.cairnDesktop?.workspaceCore !== undefined;
-  const isHealthy = status?.state === 'healthy';
-
-  return (
-    <Card className="workspace-core-panel">
-      <CardHeader>
-        <div className="card-title-row">
-          <div>
-            <CardTitle>{copy.workspaceCorePanelTitle}</CardTitle>
-            <CardDescription>{copy.workspaceCorePanelDescription}</CardDescription>
-          </div>
-          <StatusBadge
-            label={status?.service ?? 'workspace-core'}
-            metadata={status?.state ?? 'checking'}
-            tone={toStatusTone(status?.state)}
-          />
-        </div>
-      </CardHeader>
-      <CardContent className="content-stack">
-        {statusError === undefined ? undefined : (
-          <InlineAlert
-            data-smoke-id="workspace-core-action-error"
-            tone="danger"
-            title={copy.workspaceCorePanelTitle}
-          >
-            {statusError}
-          </InlineAlert>
-        )}
-
-        <MetadataList
-          items={[
-            {
-              label: copy.connectionLabel,
-              value: status?.connectionLabel ?? copy.connectionPending,
-            },
-            { label: copy.processLabel, value: status?.pid ?? copy.serviceChecking },
-            { label: copy.lastErrorLabel, value: status?.lastError ?? copy.lastErrorNone },
-            { label: copy.runtimeLabel, value: status?.runtime ?? copy.serviceChecking },
-          ]}
-        />
-
-        <div className="button-row">
-          <Button
-            data-smoke-id="run-internal-trial"
-            disabled={!coreAvailable || !isHealthy}
-            loading={statusLoading}
-            onClick={() => {
-              void onRunInternalTrial();
-            }}
-          >
-            {copy.runInternalTrial}
-          </Button>
-        </div>
-
-        {trialResult === undefined ? (
-          <div className="empty-state-panel compact">
-            <span aria-hidden="true">✓</span>
-            <p>{copy.runInternalTrialEmptyBody}</p>
-          </div>
-        ) : (
-          <MetadataList
-            items={[
-              { label: copy.runLabel, value: `${trialResult.runId} · ${trialResult.runStatus}` },
-              { label: copy.taskLabel, value: `${trialResult.taskId} · ${trialResult.taskStatus}` },
-              { label: copy.agentRunsLabel, value: trialResult.agentRunStatuses.join(', ') },
-              {
-                label: copy.artifactsLabel,
-                value: `${trialResult.artifactCount.toString()} · ${trialResult.artifactRoles.join(', ')}`,
-              },
-              { label: copy.traceEventsLabel, value: trialResult.traceCount },
-              { label: copy.finalResponseLabel, value: trialResult.finalResponseRef ?? 'none' },
-            ]}
-          />
-        )}
-      </CardContent>
-    </Card>
   );
 }
 
@@ -1826,6 +1707,25 @@ function toMissionAgentTone(
   }
 
   return 'neutral';
+}
+
+function toMissionAgentStatusLabel(
+  status: LocalizedDesktopModel['missionControl']['liveAgents'][number]['status'],
+  copy: DesktopLocaleStrings,
+): string {
+  if (status === 'blocked') {
+    return copy.agentBlockedLabel;
+  }
+
+  if (status === 'completed') {
+    return copy.agentCompletedLabel;
+  }
+
+  if (status === 'idle') {
+    return copy.agentIdleLabel;
+  }
+
+  return copy.agentWorkingLabel;
 }
 
 function toErrorMessage(error: unknown): string {

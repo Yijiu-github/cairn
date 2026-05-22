@@ -88,44 +88,43 @@ export const desktopShellModel: DesktopShellModel = {
     title: 'Artifact Review placeholder',
   },
   missionControl: {
-    activeAgentCount: 2,
+    activeAgentCount: 1,
     blockedAgentCount: 1,
-    completedAgentCount: 3,
+    completedAgentCount: 1,
     liveAgents: [
       {
         agentId: 'agent-supervisor',
         status: 'working',
-        summary:
-          'Orchestrates the current mission and dispatches follow-up work to the right agent.',
-        title: 'Supervisor / Desktop',
+        summary: '拆分当前目标，并把后续工作派给合适的子 Agent。',
+        title: '总 Agent',
       },
       {
         agentId: 'agent-runtime',
-        status: 'idle',
-        summary: 'Waiting on the sidecar contract before it can start any live integration work.',
-        title: 'Runtime agent',
+        status: 'completed',
+        summary: '已完成默认 mock sidecar 与真实 Codex opt-in 边界检查。',
+        title: '运行时 Agent',
       },
       {
         agentId: 'agent-review',
         status: 'blocked',
-        summary: 'Holding until the artifact review gate is ready for a safe next step.',
-        title: 'Review agent',
+        summary: '等待产物审阅入口收口后，再推进下一步安全确认。',
+        title: '审阅 Agent',
       },
     ],
     recentProgressItems: [
       {
-        detail: 'Mission control data now shows the current dispatch queue and live agent state.',
+        detail: '首页数据已经能表达派活队列、Agent 状态和近期进展。',
         itemId: 'progress-mission-control-model',
-        title: 'Mission control model added',
+        title: '派活工作台数据已接入',
       },
       {
-        detail: 'Desktop locale copy is ready for the first-run home screen.',
+        detail: '默认简中文案已经覆盖首页的核心派活和 Agent 总览入口。',
         itemId: 'progress-mission-control-locale',
-        title: 'Locale copy prepared',
+        title: '首屏简中文案已准备',
       },
     ],
-    taskComposerPlaceholder: 'Describe the next mission to dispatch to the supervisor agent...',
-    totalAgentCount: 6,
+    taskComposerPlaceholder: '描述要交给总 Agent 的下一步目标...',
+    totalAgentCount: 3,
   },
   handoffs: [
     {
