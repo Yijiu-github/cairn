@@ -385,13 +385,12 @@ async function requestWorkspaceCoreJson<T>(input: {
     throw new Error(formatWorkspaceCoreTransportError(error));
   }
 
-  const payload = (await response.json().catch(() => undefined)) as
-    | { error?: { code?: string; message?: string } }
-    | undefined;
+  const payload = (await response.json().catch(() => undefined)) as unknown;
 
   if (!response.ok) {
-    const message = payload?.error?.message;
-    const code = normalizeWorkspaceCoreErrorCode(payload?.error?.code);
+    const errorPayload = parseWorkspaceCoreErrorPayload(payload);
+    const message = errorPayload?.message;
+    const code = normalizeWorkspaceCoreErrorCode(errorPayload?.code);
     const redactedMessage =
       message === undefined ? undefined : redactWorkspaceCoreBridgeMessage(message);
     throw new Error(formatWorkspaceCoreActionError(response.status, code, redactedMessage));
@@ -409,6 +408,28 @@ async function requestWorkspaceCoreJson<T>(input: {
   }
 
   return parsedPayload.data;
+}
+
+function parseWorkspaceCoreErrorPayload(
+  payload: unknown,
+): { readonly code?: string; readonly message?: string } | undefined {
+  if (typeof payload !== 'object' || payload === null || !('error' in payload)) {
+    return undefined;
+  }
+
+  const error = payload.error;
+  if (typeof error !== 'object' || error === null) {
+    return undefined;
+  }
+
+  const code = 'code' in error && typeof error.code === 'string' ? error.code : undefined;
+  const message =
+    'message' in error && typeof error.message === 'string' ? error.message : undefined;
+
+  return {
+    ...(code === undefined ? {} : { code }),
+    ...(message === undefined ? {} : { message }),
+  };
 }
 
 function formatWorkspaceCoreActionError(

@@ -570,6 +570,42 @@ describe('desktop main startup', () => {
     expect(message).not.toContain('127.0.0.1:4321');
   });
 
+  it('handles malformed Workspace Core action error payloads without leaking raw bridge details', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(() =>
+        Promise.resolve(
+          jsonResponse(500, {
+            error: {
+              code: 123,
+              message: {
+                detail:
+                  'Bad token=desktop-launch-token at /Users/alice/Code/cairn and http://127.0.0.1:4321',
+              },
+            },
+          }),
+        ),
+      ),
+    );
+
+    const handlers = await loadIpcHandlers();
+    const cancelRunHandler = getIpcHandler(handlers, 'workspace-core:cancel-run');
+
+    let thrownError: unknown;
+    try {
+      await cancelRunHandler(undefined, '01J000000000000000000000R0', 'Operator stopped it.');
+    } catch (error) {
+      thrownError = error;
+    }
+
+    expect(thrownError).toBeInstanceOf(Error);
+    const message = thrownError instanceof Error ? thrownError.message : '';
+    expect(message).toBe('Workspace Core request failed with 500.');
+    expect(message).not.toContain('desktop-launch-token');
+    expect(message).not.toContain('/Users/');
+    expect(message).not.toContain('127.0.0.1:4321');
+  });
+
   it('redacts sensitive fragments from Workspace Core transport errors before returning them across Desktop bridge', async () => {
     vi.stubGlobal(
       'fetch',

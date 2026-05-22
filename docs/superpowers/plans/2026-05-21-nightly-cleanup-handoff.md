@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 06:32 CST
+> 最后更新：2026-05-22 08:04 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 06:32 CST 复核：
+2026-05-22 08:04 CST 复核：
 
-- `git status --short`：本轮从干净工作区开始；改动为 Desktop preload/main allowlist 与 renderer 文案一致性复核后的文档事实对齐。
-- `git diff --name-only`：本轮只覆盖 `docs/STATUS.md`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- `git status --short`：本轮从干净工作区开始；改动为 Desktop main bridge action error payload hardening、对应 spec、CHANGELOG 与 handoff。
+- `git diff --name-only`：本轮只覆盖 `apps/desktop/src/main/index.ts`、`apps/desktop/src/main/index.spec.ts`、`CHANGELOG.md`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -179,6 +179,14 @@
 - 发现运行时代码与 README 已对齐：preload 暴露 status / internal trial / replay / bounded payload / cancel / retry / rerun / operator note；STATUS 与 changelog 中仍有旧口径或遗漏。
 - 本轮仅同步文档事实，不改运行时代码。
 
+2026-05-22 08:04 CST Desktop bridge malformed error payload 验证：
+
+- 红灯：新增 `apps/desktop/src/main/index.spec.ts` 用例后，
+  `pnpm --filter @cairn/desktop test -- --run src/main/index.spec.ts`
+  因畸形 error payload 触发 `code?.trim is not a function` 失败。
+- 绿灯：`apps/desktop/src/main/index.ts` 在格式化 Workspace Core action error 前先把 error payload 从
+  `unknown` 收窄，只接受字符串 `code` / `message`；同一 spec 通过，28 个测试。
+
 ---
 
 ## 6. 最新完成
@@ -274,6 +282,15 @@
 
 本轮提交：`8b3aefc` `docs(desktop): 对齐预加载桥接口径 / align preload bridge docs`。
 
+2026-05-22 08:04 CST 本轮完成：
+
+- 补强 Desktop main bridge 的 Workspace Core action error 解析：错误响应体先按 `unknown`
+  收窄，只接受字符串 `code` / `message`，畸形错误体走通用安全错误。
+- 新增 targeted regression，锁住畸形 error payload 不再把内部 TypeError 或原始 token/path/url 细节穿过 Desktop bridge。
+- 同步 `CHANGELOG.md` 修复项；没有扩大 operator action allowlist，也没有改变成功响应 schema。
+
+本轮提交：待提交。
+
 ---
 
 ---
@@ -284,7 +301,7 @@
 
 1. **真实 Codex 手动 smoke 复核**：按 runbook 再跑一条短任务，记录当前 Codex CLI / Node / OS 证据，只使用合成 prompt。
    2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
-2. **Desktop renderer / bridge 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard、operator action sequence guard、Run Detail 空 evidence / metadata-only 文案与 allowlist 文档口径已补；下一轮优先继续找 ui-preview / desktop-model 静态数据旧口径，或做 Desktop preload/main action response schema 小复核，不要重复做同一 guard/copy。
+2. **Desktop renderer / bridge 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard、operator action sequence guard、Run Detail 空 evidence / metadata-only 文案、allowlist 文档口径与 action error payload 收窄已补；下一轮优先继续找 ui-preview / desktop-model 静态数据旧口径，或复核 Desktop bridge 其它只读路径的畸形错误体处理，不要重复做同一 guard/copy。
 3. **UI preview 静态数据收口**：本轮已修正 artifact review hero title；下一轮可继续找其它残留旧口径，但不要大改布局或样式。
 4. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
 5. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。

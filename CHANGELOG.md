@@ -102,6 +102,9 @@
 
 ### Fixed
 
+- **Desktop bridge errors**：main process 在格式化 Workspace Core action 错误前会先收窄
+  error payload，只接受字符串 code / message；畸形错误体会返回通用安全错误，不再抛出
+  `code?.trim` 之类的内部 TypeError。
 - **Desktop Run Detail copy**：空 replay / 空 task / 空 artifact / metadata-only artifact 文案改为明确的
   read-only evidence 口径，避免把刷新误解为重新执行或把 metadata-only 误解为 UI 故障。
 - **Desktop allowlist docs**：STATUS 与 changelog 的 Desktop preload 口径对齐当前实现，明确
