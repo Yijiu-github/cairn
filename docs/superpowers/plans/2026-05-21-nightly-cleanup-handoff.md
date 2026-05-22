@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-22 11:02 CST
+> 最后更新：2026-05-22 11:24 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,10 +35,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-22 11:02 CST 复核：
+2026-05-22 11:24 CST 复核：
 
-- `git status --short`：已提交 Desktop Workspace Core client transport error redaction；当前仅 handoff 记录 commit hash。
-- `git diff --name-only`：当前只覆盖 `docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- `git status --short`：当前仅 Desktop Workspace Core client 非 2xx 回放响应 characterizing spec 与 handoff 记录待提交。
+- `git diff --name-only`：当前只覆盖 `apps/desktop/src/main/workspace-core-client.spec.ts`、`docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
 - 之前的 Desktop/Core/Runtime/UI-preview 主线改动已拆分为小提交。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
@@ -205,6 +205,13 @@
 - 绿灯：`apps/desktop/src/main/workspace-core-client.ts` 在 `requestJson` transport 边界捕获
   `fetch` reject，并脱敏 URL、Bearer/token 字段和本地路径；同一 spec 通过，12 个测试。
 
+2026-05-22 11:24 CST Desktop Workspace Core client non-2xx replay response 验证：
+
+- 结论：非 2xx 响应分支只返回 `request.method` / `request.path` / `response.status`，不读取
+  response body，因此不会把 Workspace Core 响应体里的 URL、token 或本地路径带过 Desktop bridge。
+- 新增 characterization spec 锁住 replay-source 非 2xx 响应只暴露状态码，不回传 JSON body。
+- 这一轮没有修改运行时代码，只把边界写成可重复验证的测试。
+
 ---
 
 ## 6. 最新完成
@@ -318,14 +325,13 @@
 
 本轮提交：`a63abe0` `fix(ui-preview): 收口静态标题口径 / align static titles`。
 
-2026-05-22 10:56 CST 本轮完成：
+2026-05-22 11:24 CST 本轮完成：
 
-- 补强 Desktop Workspace Core client 的只读路径 transport error 处理：replay / payload /
-  internal-trial 共用的 `requestJson` 不再把 `fetch` reject 原样穿过 bridge。
-- 新增 targeted regression，锁住 replay-source transport failure 不泄露 sidecar URL、launch token 或本机路径。
-- 同步 `CHANGELOG.md` 修复项；没有扩大 preload allowlist、operator action 范围或 runtime 默认行为。
+- 确认 Desktop Workspace Core client 的只读 replay 路径在非 2xx 分支不会泄露响应体。
+- 新增 targeted characterization regression，锁住 replay-source 非 2xx 响应只暴露状态码。
+- 本轮没有修改运行时代码，也没有扩大 preload allowlist、operator action 范围或 runtime 默认行为。
 
-本轮提交：`f14f1fe` `fix(desktop): 脱敏只读桥接传输错误 / redact readonly bridge transport errors`。
+本轮提交：待提交。
 
 ---
 
@@ -337,10 +343,9 @@
 
 1. **真实 Codex 手动 smoke 复核**：按 runbook 再跑一条短任务，记录当前 Codex CLI / Node / OS 证据，只使用合成 prompt。
    2026-05-22 03:36 CST 已复核通过；下一轮除非 Codex/Node/OS 变化或需要复测，不要重复刷同一手动证据。
-2. **Desktop renderer / bridge 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard、operator action sequence guard、Run Detail 空 evidence / metadata-only 文案、allowlist 文档口径、action error payload 收窄与 client transport error 脱敏已补；下一轮可复核只读路径非 2xx 响应错误是否需要同等脱敏，但不要重复做同一 guard/copy。
-3. **UI preview 静态数据收口**：本轮已收口 Run Detail / Artifact Review 的静态标题旧口径；下一轮继续找其他残留旧口径，但不要大改布局或样式。
-4. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
-5. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。
+2. **Desktop renderer / bridge 主线小补强**：payload loader request sequence guard、replay-loader 空白 run id guard、operator action sequence guard、Run Detail 空 evidence / metadata-only 文案、allowlist 文档口径、action error payload 收窄、client transport error 脱敏与 replay 非 2xx 边界已补；下一轮可转去评估真实 Codex window-level e2e 的可行边界，但不要重复做同一 guard/copy。
+3. **Runbook 结果记录模板**：如手动 smoke 仍频繁执行，可把记录模板单独压成短表格，避免 runbook 再次膨胀。
+4. **真实 Codex window-level e2e 方案**：只做设计/风险评估，不默认纳入 CI，避免凭据、CLI 版本和平台差异导致 flaky gate。
 
 ---
 

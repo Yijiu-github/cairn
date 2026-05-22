@@ -379,6 +379,39 @@ describe('workspace-core client', () => {
     expect(message).not.toContain('127.0.0.1:51324');
   });
 
+  it('keeps non-2xx replay response bodies out of Desktop bridge errors', async () => {
+    const fetchImpl: typeof fetch = () =>
+      Promise.resolve(
+        jsonResponse(500, {
+          code: 'internal_error',
+          message:
+            'failed at http://127.0.0.1:51324 with token=desktop-launch-token in /Users/alice/Code/cairn',
+        }),
+      );
+
+    let thrownError: unknown;
+    try {
+      await getWorkspaceCoreRunReplaySource({
+        authToken: 'desktop-launch-token',
+        baseUrl: 'http://127.0.0.1:51324',
+        fetch: fetchImpl,
+        runId: '01J000000000000000000000R0',
+      });
+    } catch (error) {
+      thrownError = error;
+    }
+
+    expect(thrownError).toBeInstanceOf(Error);
+    const message = thrownError instanceof Error ? thrownError.message : '';
+    expect(message).toBe(
+      'Workspace Core request GET /v1/runs/01J000000000000000000000R0/replay-source failed with 500.',
+    );
+    expect(message).not.toContain('internal_error');
+    expect(message).not.toContain('desktop-launch-token');
+    expect(message).not.toContain('/Users/');
+    expect(message).not.toContain('127.0.0.1:51324');
+  });
+
   it('reads bounded artifact payload text through the fixed Workspace Core endpoint', async () => {
     const requests: { authorization?: string | undefined; method: string; url: string }[] = [];
     const fetchImpl: typeof fetch = async (url, init) => {
