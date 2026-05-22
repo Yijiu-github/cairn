@@ -300,7 +300,7 @@ export function DesktopApp() {
               />
               <StatusBadge
                 label={copy.workspaceCoreLabel}
-                metadata={workspaceCoreStatus?.state ?? 'checking'}
+                metadata={toWorkspaceCoreStateLabel(workspaceCoreStatus?.state, copy)}
                 tone={toStatusTone(workspaceCoreStatus?.state)}
               />
             </div>
@@ -496,16 +496,20 @@ function createLocalizedDesktopModel(copy: DesktopLocaleStrings): LocalizedDeskt
         : index === 0
           ? {
               ...handoff,
+              action: { ...handoff.action, label: '审阅' },
               description: '确认第一版桌面壳在 sidecar / IPC 工作开始前仍保持预览安全边界。',
-              sourceLabel: 'Desktop skeleton PR',
+              agentLabel: '主管 / Desktop',
+              sourceLabel: '桌面壳骨架 PR',
               title: '审阅桌面壳安全文案',
               waitedFor: 'operator review',
             }
           : {
               ...handoff,
+              action: { ...handoff.action, label: '计划门禁' },
               description:
                 '未来 Workspace Core 连接需要明确的 preload allowlist 与 sidecar 生命周期契约。',
-              sourceLabel: 'Workspace Core integration',
+              agentLabel: '运行时 Agent',
+              sourceLabel: 'Workspace Core 集成',
               title: 'Sidecar 连接仍有意受限',
               waitedFor: 'contract design',
             },
@@ -722,7 +726,7 @@ function MissionControlHero({
             </div>
             <StatusBadge
               label={status?.service ?? 'workspace-core'}
-              metadata={status?.state ?? 'checking'}
+              metadata={toWorkspaceCoreStateLabel(status?.state, copy)}
               tone={toStatusTone(status?.state)}
             />
           </div>
@@ -741,7 +745,7 @@ function MissionControlHero({
             items={[
               {
                 label: copy.connectionLabel,
-                value: status?.connectionLabel ?? copy.connectionPending,
+                value: toWorkspaceCoreConnectionLabel(status?.connectionLabel, copy),
               },
               { label: copy.processLabel, value: status?.pid ?? copy.serviceChecking },
               { label: copy.lastErrorLabel, value: status?.lastError ?? copy.lastErrorNone },
@@ -1715,6 +1719,52 @@ function toStatusTone(
   }
 
   return 'danger';
+}
+
+function toWorkspaceCoreConnectionLabel(
+  connectionLabel: string | undefined,
+  copy: DesktopLocaleStrings,
+): string {
+  if (connectionLabel === undefined) {
+    return copy.connectionPending;
+  }
+
+  if (connectionLabel === 'local sidecar' && readStoredDesktopLocale() === 'zh-CN') {
+    return '本地 sidecar';
+  }
+
+  return connectionLabel;
+}
+
+function toWorkspaceCoreStateLabel(
+  state: WorkspaceCoreStatus['state'] | undefined,
+  copy: DesktopLocaleStrings,
+): string {
+  if (state === undefined) {
+    return copy.serviceChecking;
+  }
+
+  if (readStoredDesktopLocale() !== 'zh-CN') {
+    return state;
+  }
+
+  if (state === 'healthy') {
+    return '就绪';
+  }
+
+  if (state === 'starting') {
+    return '启动中';
+  }
+
+  if (state === 'stopping') {
+    return '停止中';
+  }
+
+  if (state === 'stopped') {
+    return '已停止';
+  }
+
+  return '检查中';
 }
 
 function toMissionAgentTone(

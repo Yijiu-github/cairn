@@ -72,6 +72,16 @@ describe('DesktopApp home screen', () => {
     expect(markup).not.toContain('Live agents');
     expect(markup).not.toContain('Current supervisor and worker activity');
     expect(markup).not.toContain('Small but durable changes');
+    expect(markup).not.toContain('Design agent');
+    expect(markup).not.toContain('Runtime agent');
+    expect(markup).not.toContain('Review agent');
+    expect(markup).not.toContain('Shell IA alignment');
+    expect(markup).not.toContain('Waiting for sidecar contract');
+    expect(markup).not.toContain('Artifact approval gate');
+    expect(markup).not.toContain('Desktop minimal skeleton');
+    expect(markup).not.toContain('Artifact review safety copy');
+    expect(markup).not.toContain('healthy');
+    expect(markup).not.toContain('local sidecar');
   });
 
   it('keeps mission dispatch as the primary smoke path without duplicate Core error selectors', () => {
