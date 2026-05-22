@@ -85,6 +85,9 @@
 
 ### Changed
 
+- Desktop Run Detail / Artifact payload / Settings 的默认简中文案继续收口：将已观察运行、回放证据、
+  task/artifact 空态、payload 可加载状态与设置页源目录提示改为用户可读口径；仍保留 evidence
+  / safety 边界，不改变默认 mock sidecar、真实 Codex env opt-in 或 bounded internal-trial 执行边界。
 - Desktop 默认简体中文首轮体验继续收口：Home sidecar panel、Run Detail replay 提示、Artifact
   payload / path exposure policy、Settings source-root 空态与安全卡片文案改为使用 renderer
   locale copy，仍不引入完整 i18n 框架。

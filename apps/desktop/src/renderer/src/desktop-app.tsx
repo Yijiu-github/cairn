@@ -33,12 +33,6 @@ import {
 import { desktopShellModel } from './desktop-model';
 import { validateMissionDraft } from './mission-draft';
 import { runOperatorAction as runOperatorActionRequest } from './operator-action-runner';
-import {
-  artifactEmptyCopy,
-  metadataOnlyArtifactCopy,
-  replayUnavailableCopy,
-  taskTreeEmptyCopy,
-} from './run-detail-copy';
 import { loadRunReplaySource as loadRunReplaySourceRequest } from './run-replay-loader';
 
 import type { DesktopLocale, DesktopLocaleStrings } from './desktop-locale';
@@ -996,11 +990,6 @@ function RunDetailView({
   const canRetryTask = retryableTaskId !== undefined && replaySource !== undefined && !terminalRun;
   const canRerun = replaySource !== undefined && terminalRun;
   const canCancel = replaySource !== undefined && !terminalRun;
-  const replayUnavailable = replayUnavailableCopy({
-    loading: replayLoading,
-    runId: observedRunId,
-  });
-
   return (
     <div className="content-grid">
       <section className="content-stack">
@@ -1042,13 +1031,17 @@ function RunDetailView({
         {run === undefined ? (
           <Card>
             <CardHeader>
-              <CardTitle>{replayUnavailable.title}</CardTitle>
-              <CardDescription>{replayUnavailable.description}</CardDescription>
+              <CardTitle>{copy.replayUnavailableTitle}</CardTitle>
+              <CardDescription>{copy.replayUnavailableDescription}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="empty-state-panel">
                 <span aria-hidden="true">{replayLoading ? '…' : '!'}</span>
-                <p>{replayUnavailable.body}</p>
+                <p>
+                  {replayLoading
+                    ? copy.replayUnavailableLoadingBody(observedRunId)
+                    : copy.replayUnavailableBody(observedRunId)}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -1064,13 +1057,13 @@ function RunDetailView({
         {taskItems === undefined ? (
           <Card>
             <CardHeader>
-              <CardTitle>{taskTreeEmptyCopy.title}</CardTitle>
+              <CardTitle>{copy.taskTreeEmptyTitle}</CardTitle>
               <CardDescription>{copy.taskTreeEmptyDescription}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="empty-state-panel compact">
                 <span aria-hidden="true">⋯</span>
-                <p>{taskTreeEmptyCopy.body}</p>
+                <p>{copy.taskTreeEmptyBody}</p>
               </div>
             </CardContent>
           </Card>
@@ -1100,7 +1093,10 @@ function RunDetailView({
               items={[
                 { label: copy.observedRunLabel, value: activeRunId },
                 { label: copy.retryableTaskLabel, value: retryableTaskId ?? copy.runIdUnknown },
-                { label: copy.runStateLabel, value: replaySource?.run.status ?? 'loading' },
+                {
+                  label: copy.runStateLabel,
+                  value: replaySource?.run.status ?? copy.runStateLoadingLabel,
+                },
               ]}
             />
             <div className="button-row">
@@ -1228,17 +1224,23 @@ function ReplayInspectorCard({
       <CardContent data-smoke-id="replay-inspector">
         <MetadataList
           items={[
-            { label: 'Tasks', value: inspector.taskCount },
-            { label: 'Agent runs', value: inspector.agentRunCount },
+            { label: copy.taskCountLabel, value: inspector.taskCount },
+            { label: copy.agentRunsLabel, value: inspector.agentRunCount },
             { label: copy.artifactsLabel, value: inspector.artifactCount },
             {
               label: copy.traceEventsLabel,
               value: <span data-smoke-id="trace-event-count">{inspector.traceEventCount}</span>,
             },
-            { label: 'Warnings', value: inspector.warningEventCount },
-            { label: 'Errors', value: inspector.errorEventCount },
-            { label: 'First failure', value: inspector.firstFailureEventType ?? 'none' },
-            { label: 'Final artifact', value: inspector.finalArtifactId ?? 'none' },
+            { label: copy.warningCountLabel, value: inspector.warningEventCount },
+            { label: copy.errorCountLabel, value: inspector.errorEventCount },
+            {
+              label: copy.firstFailureLabel,
+              value: inspector.firstFailureEventType ?? copy.lastErrorNone,
+            },
+            {
+              label: copy.finalArtifactLabel,
+              value: inspector.finalArtifactId ?? copy.lastErrorNone,
+            },
           ]}
         />
       </CardContent>
@@ -1259,19 +1261,23 @@ function RunObservationCard({
     <Card>
       <CardHeader>
         <CardTitle>{copy.observedRunTitle}</CardTitle>
-        <CardDescription>
-          Desktop stores one bounded run id and refreshes replay evidence from it.
-        </CardDescription>
+        <CardDescription>{copy.observedRunDescription}</CardDescription>
       </CardHeader>
       <CardContent>
         <MetadataList
           items={[
             {
-              label: 'Observed run id',
-              value: <span data-smoke-id="observed-run-id">{observedRunId ?? 'none'}</span>,
+              label: copy.runIdLabel,
+              value: (
+                <span data-smoke-id="observed-run-id">{observedRunId ?? copy.lastErrorNone}</span>
+              ),
             },
-            { label: copy.replayLoadedLabel, value: replaySource === undefined ? 'no' : 'yes' },
-            { label: copy.runStateLabel, value: replaySource?.run.status ?? 'unknown' },
+            {
+              label: copy.replayLoadedLabel,
+              value:
+                replaySource === undefined ? copy.replayNotLoadedValue : copy.replayLoadedValue,
+            },
+            { label: copy.runStateLabel, value: replaySource?.run.status ?? copy.runIdUnknown },
           ]}
         />
       </CardContent>
@@ -1311,7 +1317,7 @@ function ArtifactSummaryCard({
         {replaySource.artifacts.length === 0 ? (
           <div className="empty-state-panel compact">
             <span aria-hidden="true">∅</span>
-            <p>{artifactEmptyCopy.body}</p>
+            <p>{copy.artifactSummaryEmptyBody}</p>
           </div>
         ) : (
           <div className="artifact-summary-list">
@@ -1331,7 +1337,9 @@ function ArtifactSummaryCard({
                     summary={toArtifactSummary(artifact)}
                     title={`${artifact.artifactRole} · ${artifact.kind}`}
                     verification={
-                      payloadAvailable ? 'payload available' : metadataOnlyArtifactCopy.verification
+                      payloadAvailable
+                        ? copy.artifactPayloadAvailableLabel
+                        : copy.metadataOnlyVerification
                     }
                   />
                   {payloadAvailable ? (
@@ -1360,7 +1368,7 @@ function ArtifactSummaryCard({
                     </div>
                   ) : (
                     <div className="artifact-payload-preview">
-                      <p>{metadataOnlyArtifactCopy.body}</p>
+                      <p>{copy.metadataOnlyBody}</p>
                     </div>
                   )}
                 </div>

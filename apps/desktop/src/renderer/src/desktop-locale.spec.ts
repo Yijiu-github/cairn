@@ -56,7 +56,11 @@ describe('desktop locale', () => {
     expect(copy.runInternalTrialEmptyBody).toContain('点击“运行内部试用”');
     expect(copy.agentRunsLabel).toBe('AgentRuns');
     expect(copy.processLabel).toBe('进程');
-    expect(copy.replaySourceBody('01J_RUN')).toBe('正在显示 01J_RUN 的脱敏 Workspace Core 证据。');
+    expect(copy.replaySourceBody('01J_RUN')).toBe('正在显示 01J_RUN 的脱敏本地运行证据。');
+    expect(copy.runIdLabel).toBe('运行编号');
+    expect(copy.replayUnavailableTitle).toBe('回放证据尚未加载');
+    expect(copy.replayNotLoadedValue).toBe('否');
+    expect(copy.runStateLoadingLabel).toBe('加载中');
     expect(copy.sourceRootsEmptyTitle).toBe('还没有连接源目录');
     expect(copy.safetyLocalPathRevealValue).toBe('默认隐藏');
     expect(copy.preloadAllowlistLabel).toBe('桌面桥接范围');

@@ -124,10 +124,40 @@ describe('DesktopApp home screen', () => {
     expect(markup.match(/data-smoke-id="run-internal-trial"/g) ?? []).toHaveLength(1);
     expect(markup.match(/data-smoke-id="workspace-core-action-error"/g) ?? []).toHaveLength(0);
   });
+
+  it('keeps the observed run detail surface free of obvious English runtime labels in zh-CN', () => {
+    globalThis.window = {
+      cairnDesktop: {
+        app: {
+          mode: 'desktop-observer',
+          name: 'Cairn Desktop',
+        },
+      },
+      localStorage: createStorage({
+        'cairn.desktop.activeView': 'run-detail',
+        'cairn.desktop.observedRunId': '01J_RUN',
+      }),
+    } as unknown as Window & typeof globalThis;
+
+    const markup = renderToStaticMarkup(createElement(DesktopApp));
+
+    expect(markup).toContain('运行编号');
+    expect(markup).toContain('回放证据尚未加载');
+    expect(markup).toContain('使用“刷新证据”获取 01J_RUN 的最新回放证据。');
+    expect(markup).toContain('本地服务');
+    expect(markup).toContain('加载中');
+    expect(markup).not.toContain('Workspace Core run id');
+    expect(markup).not.toContain('Workspace Core 运行');
+    expect(markup).not.toContain('Replay inspector');
+    expect(markup).not.toContain('Workspace Core');
+    expect(markup).not.toContain('Observed run id');
+    expect(markup).not.toContain('source-root');
+    expect(markup).not.toContain('loading');
+  });
 });
 
-function createStorage(): Storage {
-  const store = new Map<string, string>();
+function createStorage(initialValues: Readonly<Record<string, string>> = {}): Storage {
+  const store = new Map(Object.entries(initialValues));
 
   return {
     clear() {

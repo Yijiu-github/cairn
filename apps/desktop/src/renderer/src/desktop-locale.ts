@@ -18,11 +18,13 @@ export interface DesktopLocaleStrings {
   readonly artifactReviewTitle: string;
   readonly artifactSummaryDescription: string;
   readonly artifactSummaryEmpty: string;
+  readonly artifactSummaryEmptyBody: string;
   readonly artifactSummaryLoadPayload: string;
   readonly artifactSummaryReadOnlyBody: string;
   readonly artifactSummaryTitle: string;
   readonly artifactSummaryVerificationLabel: string;
   readonly artifactPayloadErrorTitle: string;
+  readonly artifactPayloadAvailableLabel: string;
   readonly artifactPayloadHiddenBody: string;
   readonly artifactPayloadLoadPrompt: string;
   readonly artifactPayloadNotLoaded: string;
@@ -63,6 +65,7 @@ export interface DesktopLocaleStrings {
   readonly metadataOnlyVerification: string;
   readonly modeLabel: string;
   readonly observeRun: string;
+  readonly observedRunDescription: string;
   readonly observedRunLabel: string;
   readonly observedRunTitle: string;
   readonly operatorActionApplied: string;
@@ -82,9 +85,15 @@ export interface DesktopLocaleStrings {
   readonly replayInspectorDescription: string;
   readonly replayInspectorTitle: string;
   readonly replayLoadedLabel: string;
+  readonly replayLoadedValue: string;
   readonly replayLoadingBody: (runId: string) => string;
+  readonly replayNotLoadedValue: string;
   readonly replaySourceBody: (runId: string) => string;
   readonly replaySourceLabel: string;
+  readonly replayUnavailableBody: (runId: string) => string;
+  readonly replayUnavailableDescription: string;
+  readonly replayUnavailableLoadingBody: (runId: string) => string;
+  readonly replayUnavailableTitle: string;
   readonly retryableTaskLabel: string;
   readonly retryTask: string;
   readonly rerun: string;
@@ -107,6 +116,7 @@ export interface DesktopLocaleStrings {
   readonly runEvidenceFailedTitle: string;
   readonly runLabel: string;
   readonly runStateLabel: string;
+  readonly runStateLoadingLabel: string;
   readonly runTitle: string;
   readonly runtimeLabel: string;
   readonly serviceChecking: string;
@@ -187,6 +197,8 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     artifactSummaryDescription:
       'Read-only artifact metadata and bounded payload text for the observed run.',
     artifactSummaryEmpty: 'No artifact metadata recorded',
+    artifactSummaryEmptyBody:
+      'Replay source loaded with no artifact metadata. Trace events may still explain what happened.',
     artifactSummaryLoadPayload: 'Load payload',
     artifactSummaryReadOnlyBody:
       'This artifact only exposes metadata in Run Detail. No bounded payload reference is available, and Desktop keeps storage paths hidden.',
@@ -222,6 +234,8 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     metadataOnlyVerification: 'metadata only',
     modeLabel: 'Mode',
     observeRun: 'Observe Run',
+    observedRunDescription:
+      'Desktop stores one bounded run id and refreshes replay evidence from it.',
     observedRunLabel: 'Observed run',
     observedRunTitle: 'Observed run',
     operatorActionApplied: 'Operator action applied',
@@ -243,9 +257,18 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     replayInspectorDescription: 'Read-only summary derived from Workspace Core replay source.',
     replayInspectorTitle: 'Replay inspector',
     replayLoadedLabel: 'Replay loaded',
+    replayLoadedValue: 'yes',
     replayLoadingBody: (runId: string) =>
       `Reading sanitized replay evidence for ${runId}. This does not rerun the task or reveal local files.`,
+    replayNotLoadedValue: 'no',
     replaySourceLabel: 'Live replay source',
+    replayUnavailableBody: (runId: string) =>
+      `Use Refresh Evidence to fetch the current replay source for ${runId}. Refresh is read-only and does not execute the run again.`,
+    replayUnavailableDescription:
+      'Desktop has an observed run id, but the read-only replay source has not been loaded yet.',
+    replayUnavailableLoadingBody: (runId: string) =>
+      `Reading sanitized replay evidence for ${runId}. This does not rerun the task or reveal local files.`,
+    replayUnavailableTitle: 'Replay evidence not loaded',
     retryTask: 'Retry task',
     rerun: 'Rerun',
     runDetail: 'Run Detail',
@@ -276,6 +299,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     traceEventsLabel: 'Trace events',
     workspaceCoreLabel: 'Workspace Core',
     artifactPayloadErrorTitle: 'Artifact payload failed to load',
+    artifactPayloadAvailableLabel: 'payload available',
     artifactPayloadHiddenBody:
       'Payload text is fetched on demand through Workspace Core. Local storage paths stay hidden.',
     artifactPayloadLoadPrompt: 'Load payload',
@@ -305,6 +329,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     runCardTitle: (status: string) => `Workspace Core run · ${status}`,
     runEvidenceFailedTitle: 'Run evidence failed to load',
     runLabel: 'Run',
+    runStateLoadingLabel: 'loading',
     serviceChecking: 'checking',
     sourceRootsDescription:
       'Settings are read-only until source-root contracts and explicit folder approval are ready.',
@@ -368,13 +393,14 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     liveAgentsTitle: '运行中的 Agent',
     artifactReview: '产物审阅',
     artifactReviewDescription: '脱敏后的路径语言，作为安全审阅入口。',
-    artifactReviewEmptyBody: '先从已观察到的运行中选择产物，或在 replay evidence 加载后返回。',
+    artifactReviewEmptyBody: '先从已观察到的运行中选择产物，或在回放证据加载后返回。',
     artifactReviewTitle: '产物审阅占位页',
-    artifactSummaryDescription: '当前运行的只读产物元数据与受限 payload 文本。',
+    artifactSummaryDescription: '当前运行的只读产物元数据与受限负载文本。',
     artifactSummaryEmpty: '未记录产物元数据',
+    artifactSummaryEmptyBody: '回放证据已加载，但没有产物元数据。Trace 事件仍可能解释发生了什么。',
     artifactSummaryLoadPayload: '加载负载',
     artifactSummaryReadOnlyBody:
-      '这个产物在 Run Detail 里只暴露元数据。没有受限 payload 引用，Desktop 也会继续隐藏存储路径。',
+      '这个产物在运行详情里只暴露元数据。没有受限负载引用，桌面也会继续隐藏存储路径。',
     artifactSummaryTitle: '产物摘要',
     artifactSummaryVerificationLabel: '仅元数据',
     artifactsLabel: '产物',
@@ -387,7 +413,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     desktopWorkspaceLabel: 'Cairn 本地工作区',
     desktopWorkspaceMode: '派活工作台',
     desktopWorkspaceSummary:
-      '用于派发任务、观察进度、查看 replay 证据的内部试用工作台，安全边界仍然保留。',
+      '用于派发任务、观察进度、查看回放证据的内部试用工作台，安全边界仍然保留。',
     dispatchMissionLabel: '派发给总 Agent',
     englishLabel: 'English',
     evidenceTimelineLabel: '证据时间线',
@@ -399,66 +425,74 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     inspectTitle: '查看证据',
     languageSwitcherLabel: '界面语言',
     lastErrorLabel: '最近错误',
-    loadReplayTitle: '加载 replay 证据',
+    loadReplayTitle: '加载回放证据',
     localStorageError: '语言偏好只保存在当前浏览器会话的本地存储中。',
     metadataOnlyBody:
-      '这个产物在 Run Detail 里只暴露元数据。没有受限 payload 引用，Desktop 也会继续隐藏存储路径。',
+      '这个产物在运行详情里只暴露元数据。没有受限负载引用，桌面也会继续隐藏存储路径。',
     metadataOnlyVerification: '仅元数据',
     modeLabel: '模式',
     observeRun: '观察运行',
+    observedRunDescription: '桌面端会保存一个受限运行编号，并基于它刷新只读回放证据。',
     observedRunLabel: '已观察运行',
     observedRunTitle: '已观察运行',
     operatorActionApplied: '接管动作已应用',
     operatorActionFailed: '接管动作失败',
     operatorControlsDescription:
-      '仅内部试用动作：取消运行、重试失败任务、rerun，以及记录 operator note。',
+      '仅内部试用动作：取消运行、重试失败任务、重新运行，以及记录接管备注。',
     operatorControlsTitle: '接管控制',
     operatorNoteRecorded: (messageId: string) => `Operator note 已记录为 ${messageId}。`,
     previewSafeLabel: '运行安全',
     previewSafeStatus: '静态',
     processLabel: '进程',
-    readOnlyReplayDescription: '基于 Workspace Core replay source 的只读摘要。',
+    readOnlyReplayDescription: '基于本地运行证据的只读摘要。',
     refreshCore: '刷新 Core',
     refreshEvidence: '刷新证据',
-    replayEmptyBody: 'replay source 已加载，但这个运行还没有任务记录。',
-    replayEmptyDescription: 'Desktop 已有观察到的 run id，但只读 replay source 还没加载。',
-    replayEmptyTitle: 'replay source 中没有任务记录',
-    replayInspectorDescription: '基于 Workspace Core replay source 的只读摘要。',
-    replayInspectorTitle: 'Replay inspector',
-    replayLoadedLabel: '已加载 replay',
+    replayEmptyBody: '回放证据已加载，但这个运行还没有任务记录。',
+    replayEmptyDescription: '桌面端已有观察到的运行编号，但只读回放证据还没加载。',
+    replayEmptyTitle: '回放证据中没有任务记录',
+    replayInspectorDescription: '基于本地运行证据的只读摘要。',
+    replayInspectorTitle: '回放检查器',
+    replayLoadedLabel: '已加载回放',
+    replayLoadedValue: '是',
     replayLoadingBody: (runId: string) =>
-      `正在读取 ${runId} 的脱敏 replay 证据。这不会重新执行任务，也不会暴露本地文件。`,
-    replaySourceLabel: '实时 replay source',
+      `正在读取 ${runId} 的脱敏回放证据。这不会重新执行任务，也不会暴露本地文件。`,
+    replayNotLoadedValue: '否',
+    replaySourceLabel: '实时回放证据',
+    replayUnavailableBody: (runId: string) =>
+      `使用“刷新证据”获取 ${runId} 的最新回放证据。刷新是只读动作，不会重新执行运行。`,
+    replayUnavailableDescription: '桌面端已有观察到的运行编号，但只读回放证据还没加载。',
+    replayUnavailableLoadingBody: (runId: string) =>
+      `正在读取 ${runId} 的脱敏回放证据。这不会重新执行任务，也不会暴露本地文件。`,
+    replayUnavailableTitle: '回放证据尚未加载',
     retryTask: '重试任务',
     rerun: '重新运行',
     runDetail: '运行详情',
-    runDetailOnlyRealEvidenceBody:
-      'Run Detail 只渲染真实 Workspace Core replay 证据。当前还没有可观察的运行。',
-    runDetailOnlyRealEvidenceDescription:
-      '可以从首页启动内部试用，或粘贴 API smoke 路径里的 run id。',
+    runDetailOnlyRealEvidenceBody: '运行详情只渲染真实本地运行证据。当前还没有可观察的运行。',
+    runDetailOnlyRealEvidenceDescription: '可以从首页启动内部试用，或粘贴已有运行编号。',
     runDetailOnlyRealEvidenceTitle: '还没有可观察的运行',
     runDetailTabDescription: '所选运行的时间线与接管上下文。',
     runDetailTabLabel: '运行详情',
-    runIdLabel: 'Workspace Core run id',
+    runIdLabel: '运行编号',
     runStateLabel: '运行状态',
-    runTitle: 'Workspace Core 运行',
+    runTitle: '本地运行',
     runtimeLabel: '运行时',
     settingsTabDescription: '源目录与桌面壳配置占位。',
     settingsTabLabel: '设置',
     shellStatusLabel: '壳状态',
     shellStatusStatic: '静态',
     shellTitle: '桌面内容',
-    sourceRootsTitle: '源目录占位',
+    sourceRootsTitle: '源目录',
     statusLabel: '状态',
     summaryLabel: '摘要',
     taskLabel: '任务',
-    taskTreeEmptyBody: 'replay source 已加载，但这个运行还没有任务记录。',
-    taskTreeEmptyDescription: '任务详情来自只读 replay evidence。',
-    taskTreeEmptyTitle: 'replay source 中没有任务记录',
-    traceEventsLabel: 'Trace events',
+    taskTreeEmptyBody: '回放证据已加载，但这个运行还没有任务记录。',
+    taskTreeEmptyDescription: '任务详情来自只读回放证据。',
+    taskTreeEmptyTitle: '回放证据中没有任务记录',
+    traceEventsLabel: 'Trace 事件',
     workspaceCoreLabel: '本地服务',
     artifactPayloadErrorTitle: '产物负载加载失败',
-    artifactPayloadHiddenBody: '负载文本会按需通过 Workspace Core 获取。本地存储路径保持隐藏。',
+    artifactPayloadAvailableLabel: '负载可加载',
+    artifactPayloadHiddenBody: '负载文本会按需加载。本地存储路径保持隐藏。',
     artifactPayloadLoadPrompt: '加载负载',
     artifactPayloadNotLoaded: '负载未加载',
     artifactPayloadStorageHidden: '产物存储位置在桌面渲染器里保持隐藏。',
@@ -471,7 +505,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     finalArtifactLabel: '最终产物',
     firstFailureLabel: '首次失败',
     lastErrorNone: '无',
-    replaySourceBody: (runId: string) => `正在显示 ${runId} 的脱敏 Workspace Core 证据。`,
+    replaySourceBody: (runId: string) => `正在显示 ${runId} 的脱敏本地运行证据。`,
     retryableTaskLabel: '可重试任务',
     runIdRequiredError: '需要 run id',
     runIdUnknown: '未知',
@@ -485,16 +519,17 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     runCardTitle: (status: string) => `运行 · ${status}`,
     runEvidenceFailedTitle: '运行证据加载失败',
     runLabel: '运行',
+    runStateLoadingLabel: '加载中',
     serviceChecking: '检查中',
     sourceRootsDescription: '在源目录契约与明确的文件夹批准准备好之前，设置页只读。',
     sourceRootsEmptyBody: '选择文件夹、索引元数据与路径揭示都暂时不可用。',
     sourceRootsEmptyDescription: '未来桌面构建在索引任何本地文件夹前都应请求显式用户批准。',
     sourceRootsEmptyTitle: '还没有连接源目录',
     taskCountLabel: '任务',
-    traceDescriptionInlineEmpty: '已记录内联 payload。',
+    traceDescriptionInlineEmpty: '已记录内联负载。',
     traceDescriptionInlineKeys: (keys: readonly string[]) =>
-      keys.length === 0 ? '已记录内联 payload。' : `内联 payload 键: ${keys.join(', ')}。`,
-    traceDescriptionPayload: (payloadRef: string) => `Payload 存储在产物 ${payloadRef} 中。`,
+      keys.length === 0 ? '已记录内联负载。' : `内联负载键: ${keys.join(', ')}。`,
+    traceDescriptionPayload: (payloadRef: string) => `负载存储在产物 ${payloadRef} 中。`,
     traceDescriptionUnavailable: '未附加 payload。',
     warningCountLabel: '警告',
     workspaceCorePanelDescription: '本地服务会把运行状态、只读证据和受限接力入口放在一起。',
@@ -507,7 +542,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     totalAgentCountLabel: 'Agent 总数',
     runInternalTrial: '运行内部试用',
     runInternalTrialEmptyBody:
-      '点击“运行内部试用”会走受限路径，创建 Workspace Core 运行并读取产物、trace 和 replay 证据。',
+      '点击“运行内部试用”会走受限路径，创建本地运行并读取产物、Trace 和回放证据。',
     safetyIpcActionsLabel: '接管动作',
     safetyIpcActionsValue: '受限白名单',
     safetyLocalPathRevealLabel: '本地路径揭示',
