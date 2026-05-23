@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-23 07:43 CST
+> 最后更新：2026-05-23 12:30 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,20 +35,11 @@
 
 ## 3. 当前工作区状态
 
-2026-05-23 03:45 CST 复核：
+2026-05-23 12:30 CST 复核：
 
-- `git status --short`：开始时已有上一轮 UI 改造未提交变更，集中在
-  `apps/desktop/src/renderer/src/desktop-app.tsx`、
-  `apps/desktop/src/renderer/src/desktop-app.spec.ts`、
-  `apps/desktop/src/renderer/src/desktop-locale.ts`、
-  `apps/desktop/src/renderer/src/desktop-locale.spec.ts`、
-  `apps/desktop/src/renderer/src/desktop-model.ts` 与
-  `apps/desktop/src/renderer/src/styles.css`；本轮继续收口同一子块，并新增 `CHANGELOG.md`
-  与本 handoff。
-- `git diff --name-only`：开始时为上述 Desktop renderer / style 文件；代码提交后工作区干净；
-  更新 handoff 后仅本文件 dirty。
-- 本轮主线子块为 Mission Control 首屏继续减法：把 Agent 总览、运行中的 Agent 与最近进展
-  合并为一个 Agent 动态面板，减少首屏重复信息与多层卡片堆叠。
+- `git status --short` / `git diff --name-only`：本轮开始时工作区干净；代码提交 `a1108bb` 后工作区再次干净；更新 handoff 后仅本文件 dirty。
+- 本轮主线子块为 Desktop Mission Control 首屏右栏继续减法：把 `已固定运行` 从 RunCard 大卡片改为轻量可复开摘要，避免它和 `下一步 / 待处理` 抢主注意力。
+- 本轮只修改 Desktop renderer / locale / style、对应 spec、`CHANGELOG.md` 与 `docs/STATUS.md`；没有触碰 Workspace Core、Desktop bridge、sidecar runtime 或 runbook 启动方式。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
 
@@ -81,6 +72,8 @@
 - `b86cb23` `fix(desktop): 收紧 mission control 首页体验 / tighten mission control home UX`
 - `6590e36` `feat(desktop): 简化首屏 Agent 状态 / simplify home agent status`
 - `9fb8d02` `feat(desktop): 合并首页 Agent 动态 / merge home agent activity`
+- `6145775` `feat(desktop): 压缩首页待处理摘要 / compress home pending summary`
+- `a1108bb` `feat(desktop): 压缩首页固定运行摘要 / compress pinned runs summary`
 
 归档说明：
 
@@ -634,29 +627,35 @@
 - 风险：右栏虽然已压成摘要卡，但仍可能在小屏或更复杂状态下显得偏满；下一轮可以考虑把 `已固定运行` 改成更短的摘要或折叠式区块，继续减少首屏认知负担。
 - 下一轮优先任务：继续压缩首页右栏，优先判断 `已固定运行` 是否还能再短一层，或是否适合折叠成轻量辅助区。
 
+2026-05-23 12:30 CST 本轮完成：
+
+- Desktop Mission Control 首屏继续压缩右栏：把 `已固定运行` 从共享 `RunCard` 大卡片改为更轻的两条可复开摘要行，保留标题、run id、状态、负责 Agent 与关键 metric。
+- `下一步 / 待处理` 摘要保持主行动区，`已固定运行` 降为辅助区；首页层级继续维持为：派活工作台 -> Agent 动态 -> 待处理摘要 -> 固定运行轻摘要。
+- 新增 pinned run 状态 / 显示数量 locale copy，补充 renderer / locale regression，并清理同范围旧 `.run-list` 样式残留。
+- 同步 `docs/STATUS.md` / `CHANGELOG.md`：这仍只是 internal trial 首屏信息收口，不是完整产品 UI、真实 planner、自由文本 Supervisor dispatch 或 `apps/web`。
+- 保持边界：没有创建 `apps/web`，没有接真实 planner，没有改变 Desktop sidecar 默认 mock 或真实 Codex env opt-in 边界，`data-smoke-id="run-internal-trial"` 仍保持稳定。
+- 验证：`pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.spec.ts`、`pnpm --filter @cairn/desktop typecheck`、`pnpm --filter @cairn/desktop lint`、`pnpm --filter @cairn/desktop build`、`pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-app.spec.ts apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts apps/desktop/src/renderer/src/styles.css CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`、`pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`、`pnpm run docs:lint`、`git diff --check`。
+- 本轮代码/正式文档提交：`a1108bb` `feat(desktop): 压缩首页固定运行摘要 / compress pinned runs summary`。
+- 风险：首屏右栏已经从信息墙继续变轻；下一轮不应继续在首页堆新卡片，优先转向真实上手路径里的 artifact payload 加载文案与 operator note 成功反馈。
+- 下一轮优先任务：默认 mock Desktop 中走 Run Detail -> artifact payload -> operator note，确认用户是否能看懂“产物负载已加载 / 备注已记录”的反馈。
+
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **继续首屏 UI 改造的下一小块：把 `已固定运行` 再压一层**。
-   当前右栏已经收成 `待处理摘要` 与 `已固定运行`；下一轮优先判断是否把固定运行改成更短的辅助区、
-   摘要行或折叠样式，让首屏更像一个清晰的操作面而不是信息墙。
-2. **补默认 mock 上手路径的 artifact payload 实操证据**：在 Desktop UI 中点“加载负载”，确认 payload
-   文本加载后的简中状态是否清楚；若只暴露英文 media/truncated 等低价值技术词，优先做最小文案
-   / 状态收口。
-3. **补 operator note 后的反馈可理解性**：继续用默认 mock Desktop 添加备注后，确认成功提示和
-   trace 计数变化是否足够让用户知道“备注已记录”；只修真实卡点，不扩完整 operator cockpit。
-4. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。
-   若改可见文案，保持 `data-smoke-id` hook 稳定。
+1. **补默认 mock 上手路径的 artifact payload 实操证据**：在 Desktop UI 中点“加载负载”，确认 payload 文本加载后的简中状态是否清楚；若只暴露英文 media / truncated 等低价值技术词，优先做最小文案 / 状态收口。
+2. **补 operator note 后的反馈可理解性**：继续用默认 mock Desktop 添加备注后，确认成功提示和 trace 计数变化是否足够让用户知道“备注已记录”；只修真实卡点，不扩完整 operator cockpit。
+3. **轻量复核首屏密度**：右栏已完成 `待处理摘要` 与固定运行轻摘要，不再继续加卡片；如还有拥挤，只做间距 / 文案长度微调，不重新打开完整首屏重构。
+4. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
 
 ## 8. 风险与阻塞
 
 - Mission Control 首屏已经能让用户输入草稿、派发 bounded internal trial，并顺着 Run Detail 读取
   replay / artifact / operator note，说明“可初步体验”路径已成立；本轮默认 mock Desktop 已手动烟测
-  可走通；本轮进一步移除了首屏服务诊断噪音，但 artifact payload 加载后的文案和 operator note
+  可走通；本轮进一步降低右栏固定运行权重，但 artifact payload 加载后的文案和 operator note
   成功反馈仍值得下一轮继续细看。
 - 首页左侧现在已把 Agent 总览、运行中 Agent 与最近进展合并，右栏也已收成 `待处理摘要`
-  与 `已固定运行`；但首页仍可能偏满，下一轮应优先压缩固定运行而不是扩大新功能。
+  与固定运行轻摘要；首屏后续只做微调，不应再扩大新功能或重新堆卡片。
 - 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
 - Mission Control 首页当前仍是静态/半静态首轮体验壳；任务草稿只在 renderer 本地保存，“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
 - 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。
