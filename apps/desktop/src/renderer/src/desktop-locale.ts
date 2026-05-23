@@ -187,6 +187,16 @@ export interface DesktopLocaleStrings {
   readonly nextStepTaskLabel: string;
   readonly nextStepTaskValue: string;
   readonly nextStepTitle: string;
+  readonly pendingApprovalLabel: string;
+  readonly pendingBlockedLabel: string;
+  readonly pendingClarificationLabel: string;
+  readonly pendingDiagnosticLabel: string;
+  readonly pendingQueueDescription: (handoffCount: number) => string;
+  readonly pendingQueueAgentLabel: string;
+  readonly pendingQueueSourceLabel: string;
+  readonly pendingQueueTitle: string;
+  readonly pendingQueueWaitLabel: string;
+  readonly pendingReviewLabel: string;
   readonly pathExposurePolicyTitle: string;
   readonly pathExposurePolicyDescription: string;
   readonly pathExposureDisplayLabel: string;
@@ -412,6 +422,17 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     nextStepTaskLabel: 'Task focus',
     nextStepTaskValue: 'one goal at a time',
     nextStepTitle: 'Next step / Pending',
+    pendingApprovalLabel: 'Awaiting approval',
+    pendingBlockedLabel: 'Blocked',
+    pendingClarificationLabel: 'Needs clarification',
+    pendingDiagnosticLabel: 'Diagnostic',
+    pendingQueueDescription: (handoffCount: number) =>
+      `${handoffCount.toString()} pending item(s) remain in the first-run surface.`,
+    pendingQueueAgentLabel: 'Agent',
+    pendingQueueSourceLabel: 'Source',
+    pendingQueueTitle: 'Pending queue',
+    pendingQueueWaitLabel: 'Waiting for',
+    pendingReviewLabel: 'Waiting for review',
     pathExposurePolicyTitle: 'Path exposure policy',
     pathExposurePolicyDescription: 'Local absolute paths remain hidden in this shell.',
     pathExposureDisplayLabel: 'Display path',
@@ -617,6 +638,17 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     nextStepTaskLabel: '任务关注点',
     nextStepTaskValue: '一次只看一个目标',
     nextStepTitle: '下一步 / 待处理',
+    pendingApprovalLabel: '等待批准',
+    pendingBlockedLabel: '阻塞',
+    pendingClarificationLabel: '需要澄清',
+    pendingDiagnosticLabel: '诊断请求',
+    pendingQueueDescription: (handoffCount: number) =>
+      `首轮体验里还有 ${handoffCount.toString()} 个待处理项。`,
+    pendingQueueAgentLabel: 'Agent',
+    pendingQueueSourceLabel: '来源',
+    pendingQueueTitle: '待处理队列',
+    pendingQueueWaitLabel: '等待',
+    pendingReviewLabel: '等待审阅',
     pathExposurePolicyTitle: '路径暴露策略',
     pathExposurePolicyDescription: '本 shell 中本地绝对路径保持隐藏。',
     pathExposureDisplayLabel: '显示路径',

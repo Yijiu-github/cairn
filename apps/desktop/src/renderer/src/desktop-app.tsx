@@ -12,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
   EvidenceTimeline,
-  HandoffQueueItem,
   Input,
   InlineAlert,
   MetadataList,
@@ -432,6 +431,8 @@ type WorkspaceCoreTrialResult = Awaited<
   ReturnType<NonNullable<typeof window.cairnDesktop>['workspaceCore']['runInternalTrial']>
 >;
 
+type DesktopHandoff = (typeof desktopShellModel.handoffs)[number];
+
 interface LocalizedDesktopModel {
   readonly artifactReview: typeof desktopShellModel.artifactReview;
   readonly handoffs: typeof desktopShellModel.handoffs;
@@ -658,35 +659,7 @@ function HomeView({
             <AgentActivityPanel copy={copy} missionControl={model.missionControl} />
           </div>
           <div className="content-stack">
-            <section className="content-stack" aria-label={copy.nextStepTitle}>
-              <Card className="next-step-panel">
-                <CardHeader>
-                  <CardTitle>{copy.nextStepTitle}</CardTitle>
-                  <CardDescription>{copy.nextStepDescription}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MetadataList
-                    items={[
-                      {
-                        label: copy.nextStepDispatchLabel,
-                        value: copy.nextStepDispatchValue,
-                      },
-                      {
-                        label: copy.nextStepAgentsLabel,
-                        value: copy.nextStepAgentsValue,
-                      },
-                      {
-                        label: copy.nextStepTaskLabel,
-                        value: copy.nextStepTaskValue,
-                      },
-                    ]}
-                  />
-                </CardContent>
-              </Card>
-              {model.handoffs.map((handoff) => (
-                <HandoffQueueItem key={`${handoff.sourceLabel}-${handoff.title}`} {...handoff} />
-              ))}
-            </section>
+            <PendingQueueSummary copy={copy} handoffs={model.handoffs} />
             <div className="run-list">
               <div className="run-list-heading">
                 <p>{copy.pinnedRunsTitle}</p>
@@ -879,6 +852,59 @@ function AgentActivityPanel({
             <article key={item.itemId} className="recent-progress-item">
               <p>{item.title}</p>
               <span>{item.detail}</span>
+            </article>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PendingQueueSummary({
+  copy,
+  handoffs,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly handoffs: readonly DesktopHandoff[];
+}) {
+  return (
+    <Card className="pending-queue-panel" variant="handoff">
+      <CardHeader>
+        <CardTitle>{copy.nextStepTitle}</CardTitle>
+        <CardDescription>{copy.pendingQueueDescription(handoffs.length)}</CardDescription>
+      </CardHeader>
+      <CardContent className="content-stack">
+        <MetadataList
+          items={[
+            { label: copy.nextStepDispatchLabel, value: copy.nextStepDispatchValue },
+            { label: copy.nextStepAgentsLabel, value: copy.nextStepAgentsValue },
+            { label: copy.nextStepTaskLabel, value: copy.nextStepTaskValue },
+          ]}
+        />
+        <div className="pending-queue-summary-list" aria-label={copy.pendingQueueTitle}>
+          {handoffs.map((handoff) => (
+            <article key={`${handoff.sourceLabel}-${handoff.title}`} className="pending-queue-card">
+              <div className="pending-queue-card-header">
+                <StatusBadge label={toPendingQueueKindLabel(handoff.kind, copy)} tone="warning" />
+                {handoff.action === undefined ? undefined : (
+                  <span className="pending-queue-card-action">{handoff.action.label}</span>
+                )}
+              </div>
+              <div className="pending-queue-card-title">{handoff.title}</div>
+              <p className="pending-queue-card-description">{handoff.description}</p>
+              <div className="pending-queue-card-meta">
+                <span>
+                  {copy.pendingQueueSourceLabel}：{handoff.sourceLabel}
+                </span>
+                <span>
+                  {copy.pendingQueueAgentLabel}：{handoff.agentLabel}
+                </span>
+                {handoff.waitedFor === undefined ? undefined : (
+                  <span>
+                    {copy.pendingQueueWaitLabel} {handoff.waitedFor}
+                  </span>
+                )}
+              </div>
             </article>
           ))}
         </div>
@@ -1629,6 +1655,26 @@ function toArtifactCardKind(
   }
 
   return 'other';
+}
+
+function toPendingQueueKindLabel(kind: DesktopHandoff['kind'], copy: DesktopLocaleStrings): string {
+  if (kind === 'approval') {
+    return copy.pendingApprovalLabel;
+  }
+
+  if (kind === 'blocked') {
+    return copy.pendingBlockedLabel;
+  }
+
+  if (kind === 'clarification') {
+    return copy.pendingClarificationLabel;
+  }
+
+  if (kind === 'diagnostic') {
+    return copy.pendingDiagnosticLabel;
+  }
+
+  return copy.pendingReviewLabel;
 }
 
 function toArtifactSummary(artifact: RunReplaySource['artifacts'][number]): string {
