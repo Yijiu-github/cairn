@@ -86,6 +86,11 @@
 
 ### Changed
 
+- Desktop Home 首屏做了一轮 visual-v1 视觉落地：Desktop renderer 现在补齐共享 UI class
+  vocabulary 的本地 CSS 映射，首页使用深色侧栏、渐变工作面板、派活 hero、Agent 状态卡和
+  首屏入场动效；默认 1280px Electron 窗口下 Mission Control 主工作台优先显示，不再把用户先带到
+  信息墙或被侧栏/右栏挤压。仍不改变 bounded internal-trial、默认 mock sidecar、真实 Codex env
+  opt-in、自由文本 Supervisor dispatch 或 `apps/web` 边界。
 - Desktop Run Detail 的 artifact 卡片继续收口：标题和摘要不再直接露出 `output · text`、
   `kind text`、`visibility operator_only` 等 replay 内部字段，而是通过 renderer locale/helper 显示
   用户可读的产物角色、类型、可见范围与大小；不改变 Artifact schema、payload API、路径隐藏或

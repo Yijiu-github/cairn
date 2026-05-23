@@ -648,8 +648,8 @@ function HomeView({
   trialResult,
 }: HomeViewProps) {
   return (
-    <div className="mission-control-layout">
-      <section className="content-stack">
+    <div className="mission-control-layout visual-v1-home">
+      <section className="content-stack mission-command-center">
         <MissionControlHero
           copy={copy}
           missionControl={model.missionControl}
@@ -962,7 +962,7 @@ function PinnedRunsSummary({
 
 function HomeSafetyRail({ copy }: { readonly copy: DesktopLocaleStrings }) {
   return (
-    <aside className="content-stack home-safety-rail">
+    <aside className="content-stack home-safety-rail operator-status-rail">
       <ExperienceGuideCard copy={copy} />
       <SafetyDefaultsCard copy={copy} />
       <NextSafeStepCard copy={copy} />

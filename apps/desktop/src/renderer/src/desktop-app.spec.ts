@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
+import { readFileSync } from 'node:fs';
+
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -45,6 +47,41 @@ describe('DesktopApp home screen', () => {
     expect(markup).toContain('待处理队列');
     expect(markup).not.toContain('Agent 总览');
     expect(markup).not.toContain('<h3>最近进展</h3>');
+  });
+
+  it('marks the home surface with the visual-v1 control-room layout classes', () => {
+    globalThis.window = {
+      cairnDesktop: {
+        app: {
+          mode: 'desktop-observer',
+          name: 'Cairn Desktop',
+        },
+      },
+      localStorage: createStorage(),
+    } as unknown as Window & typeof globalThis;
+
+    const markup = renderToStaticMarkup(createElement(DesktopApp));
+
+    expect(markup).toContain('visual-v1-home');
+    expect(markup).toContain('mission-command-center');
+    expect(markup).toContain('operator-status-rail');
+  });
+
+  it('prioritizes the command center before the sidebar on narrow desktop surfaces', () => {
+    const styles = readFileSync(new URL('./styles.css', import.meta.url), 'utf8');
+
+    expect(styles).toContain('@media (max-width: 1100px)');
+    expect(styles).toContain('.desktop-main {\n    order: -1;');
+    expect(styles).toContain('.desktop-sidebar {\n    min-height: auto;');
+    expect(styles).toContain('.nav-list {\n    grid-template-columns: repeat(2, minmax(0, 1fr));');
+  });
+
+  it('keeps the mission command center from sharing narrow desktop width with the status rail', () => {
+    const styles = readFileSync(new URL('./styles.css', import.meta.url), 'utf8');
+
+    expect(styles).toContain('@media (max-width: 1360px)');
+    expect(styles).toContain('.mission-control-layout {\n    grid-template-columns: 1fr;');
+    expect(styles).toContain('.mission-hero h3 {\n    max-width: none;');
   });
 
   it('keeps mission-control counts aligned with the visible agent roster', () => {

@@ -1,7 +1,7 @@
 # 项目状态 / Project Status
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-22
+> 最后更新：2026-05-23
 > 目的：给人类与多 agent 协作提供当前事实基线，减少“我以为已经有 Desktop/Web”的误判。
 > 协作口径：自 2026-05-20 起，Cairn 当前按产品裁剪人 + Codex 两方推进；旧的白霓 / 海棠固定角色分工不再作为项目计划依据。
 
@@ -78,6 +78,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - 当前包含 main / preload / renderer、Mission Control 风格 Home 首屏、Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
 - Renderer 壳新增简体中文 / English 切换，默认 `zh-CN`，语言偏好只保存在本地 `localStorage`；当前是 Desktop 内部试用壳的轻量实现，不代表 `apps/web` 已创建。
 - Home 首屏已从内部观察面板调整为更面向用户的“派活工作台”：突出“派发给总 Agent”、Agent 统计、运行中的 Agent 与最近进展；右侧继续收口为“下一步 / 待处理”主区与更轻的“已固定运行”摘要，任务草稿目前只保存在 renderer 本地，按钮仍触发 bounded internal-trial 路径，不是自由文本 Supervisor 执行入口。
+- Home 首屏已接入 visual-v1 风格的 Desktop renderer CSS：深色侧栏、浅色渐变工作面板、派活 hero、Agent 状态卡、共享 UI class vocabulary 的本地样式映射和默认窗口宽度下的主工作台优先布局已落地；这仍是 internal trial 首屏体验壳，不代表完整产品 UI 或真实 planner 已完成。
 - 默认简中已将 Home 与第一轮 Run Detail / Artifact payload / Settings 会看到的主要状态词收敛为“本地运行服务 / 运行安全 / 回放证据 / 运行编号 / 桌面桥接范围”等用户可读口径；artifact payload 加载成功会提示“负载已加载、本地路径仍隐藏”，operator note 成功反馈会指向右侧“回放检查器”的 `Trace 事件` 计数。底层仍是 Workspace Core dev sidecar bridge，不代表完整产品 UI 或真实自由文本派发已完成。
 - Run Detail 的 artifact 卡片已把 replay 内部字段映射为用户可读文案：标题显示产物角色与类型，摘要显示可见范围和大小，不再直接展示 `output · text`、`kind text` 或 `visibility operator_only` 这类字段名；Artifact schema、payload API、本地路径隐藏与 Desktop bridge 边界未改变。
 - Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runInternalTrial()`、`workspaceCore.getRunReplaySource(runId)`、`workspaceCore.getArtifactPayload(artifactId)` 与最小 operator action allowlist（cancel / retry / rerun / operator note）。

@@ -35,14 +35,17 @@
 
 ## 3. 当前工作区状态
 
-2026-05-23 14:12 CST 复核：
+2026-05-23 16:55 CST 复核：
 
-- `git status --short` / `git diff --name-only`：本轮开始时仅有 Desktop locale copy 与对应
-  locale spec diff；没有其他未提交工作区改动。
-- 本轮主线子块为默认 mock Desktop Run Detail operator note 成功反馈：添加备注后，成功提示直接指向
-  右侧“回放检查器”的 `Trace 事件` 计数，帮助用户理解备注已写入本地 evidence 链路并找到计数变化。
+- `git status --short` / `git diff --name-only`：本轮开始时仅有 Desktop renderer
+  首页 visual-v1 相关 diff；没有其他未提交工作区改动。
+- 本轮主线子块切回 Desktop UI 页面改造：让默认 mock Desktop Home 首屏真正接近 visual-v1
+  mockup，而不是继续只做文案/信息层级微调。
+- 本轮已确认此前 Electron 空白窗口不是 renderer 代码崩溃：Vite renderer 在
+  `http://localhost:5173/` 无 console error，重启 `pnpm --filter @cairn/desktop dev` 后
+  Electron 窗口恢复并显示新版首页。
 - 本轮没有触碰 Workspace Core、Desktop bridge、preload allowlist、operator action API、ReplaySource
-  shape、Artifact schema、payload API、路径隐藏、sidecar runtime、首页布局或 runbook 启动方式。
+  shape、Artifact schema、payload API、路径隐藏、sidecar runtime 或真实 Codex env opt-in。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
 
@@ -51,6 +54,9 @@
 - Desktop Home 已转向 Mission Control 风格首轮体验壳，突出“派发给总 Agent”、Agent 总览、
   运行中 Agent 与最近进展；当前可输入任务草稿，但草稿只保存在 renderer 本地，dispatch 仍是
   bounded internal-trial 入口，不是自由文本 Supervisor 执行入口，也不是完整 operator cockpit。
+- Desktop Home 已补上 visual-v1 风格的 CSS 落地：深色侧栏、浅色渐变工作面板、派活 hero、
+  Agent 状态卡、共享 UI class vocabulary 本地映射和默认窗口下主工作台优先布局已可在
+  Electron 开发窗口中看到。
 - Run Detail / Artifact payload / Settings 的默认简中 surface 已进一步收口，已观察运行、运行编号、
   回放证据、任务/产物空态、payload 状态和设置页源目录提示都走 `desktop-locale.ts`。
 - Run Detail 的 operator note 成功提示已与右侧 replay inspector 的 `Trace 事件` 计数建立明确文案关联。
@@ -331,6 +337,27 @@
 - `pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
 - `pnpm run docs:lint`
 - `git diff --check`
+
+2026-05-23 16:55 CST Desktop Home visual-v1 首屏验证：
+
+- 红灯：新增 `desktop-app.spec.ts` 的 visual-v1 / 响应式断言后，
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-app.spec.ts`
+  先因首页缺少 `visual-v1-home` / `mission-command-center` / `operator-status-rail`
+  布局标记失败；随后又因 1100px 以下主工作台未优先显示、默认窗口宽度下状态栏与 hero
+  抢宽失败。
+- 绿灯：`desktop-app.tsx` 增加首页 visual-v1 布局 class，`styles.css` 补齐 Desktop renderer
+  的共享 UI class vocabulary 映射、深色侧栏、渐变工作面板、派活 hero、Agent 状态卡、
+  右栏状态卡与响应式布局；同一 spec 通过，10 个测试。
+- 手动视觉验证：`pnpm --filter @cairn/desktop dev` 重启后，Electron 窗口不再空白，并显示
+  visual-v1 风格首页；in-app browser 访问 `http://localhost:5173/` 也无 console error。
+- 已通过：`pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.spec.ts`
+  ，2 个文件 15 个测试。
+- 已通过：`pnpm --filter @cairn/desktop typecheck`。
+- 已通过：`pnpm --filter @cairn/desktop lint`。
+- 已通过：`pnpm --filter @cairn/desktop build`。
+- 已通过：`pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- 已通过：`git diff --check`。
+- `pnpm exec prettier --check ...` 首次因 `styles.css` 格式失败，已用 Prettier 写回；最终复核结果见本轮提交前验证记录。
 
 ---
 
@@ -709,23 +736,56 @@
 - 风险：文案已经建立提示关联，但本轮未重新启动真实 Desktop 窗口做人工点击确认；下一轮应先走默认 mock Desktop 手动上手烟测，确认用户是否能实际看见计数变化位置，再决定是否需要轻量视觉锚点。
 - 下一轮优先任务：启动默认 mock Desktop，按“派发 internal trial -> 进入 Run Detail -> 添加 operator note -> 查看右侧 `Trace 事件` 计数变化”走一遍；若仍不够明显，只做 Replay inspector 局部高亮 / 提示位置微调，不扩完整 operator cockpit。
 
+2026-05-23 16:55 CST 本轮完成：
+
+- Desktop Home 首屏做了一轮 visual-v1 视觉落地：`styles.css` 补齐共享 UI class vocabulary 的
+  本地映射，让 `@cairn/ui` primitives 在 Desktop renderer 里不再像裸 HTML。
+- 首页 shell 改为更接近视觉参考的控制室气质：深色侧栏、浅色渐变工作面板、派活 hero、
+  Agent 状态卡、待处理/固定运行/安全提示卡片都有明确的圆角、层级、渐变与 hover 状态。
+- 默认 Electron 窗口宽度下，Mission Control 主工作台不再和右侧状态栏抢宽；窄宽度下主工作台
+  会排在侧栏之前，避免用户第一屏只看到导航/信息墙。
+- 新增 renderer SSR / CSS regression，锁住 `visual-v1-home`、`mission-command-center`、
+  `operator-status-rail` 以及 1100px / 1360px 两档响应式行为。
+- 手动排查并恢复 Electron 空白窗口：Vite browser 页面无 console error，重启
+  `pnpm --filter @cairn/desktop dev` 后 Electron 窗口正常显示新版首页；该问题判断为 dev
+  进程/HMR 状态，不是本轮 renderer crash。
+- 同步 `CHANGELOG.md` 与 `docs/STATUS.md`，明确这是 Desktop Home visual-v1 首屏体验壳，
+  不是完整产品 UI、真实 planner、自由文本 Supervisor dispatch 或 `apps/web`。
+- 保持边界：没有改变 `data-smoke-id="run-internal-trial"`，没有接真实 planner，没有改变
+  Desktop sidecar 默认 mock、真实 Codex env opt-in、Desktop bridge、Artifact schema、payload API、
+  operator action API 或本地路径隐藏。
+- 验证：`pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.spec.ts`
+  已通过，2 个文件 15 个测试。
+- 验证：`pnpm --filter @cairn/desktop typecheck` 已通过。
+- 验证：`pnpm --filter @cairn/desktop lint` 已通过。
+- 验证：`pnpm --filter @cairn/desktop build` 已通过。
+- 验证：`pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  已通过。
+- 验证：`git diff --check` 已通过。
+- 提交前仍需最终复跑 Prettier / docs lint / diff check 并回填本轮 commit hash。
+
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **默认 mock Desktop 手动上手烟测**：优先启动 Desktop，按“派发 internal trial -> 进入 Run Detail -> 添加 operator note -> 查看右侧 `Trace 事件` 计数变化”走一遍，确认文案是否真的帮助用户找到计数变化。
-2. **Replay inspector 局部微调**：如果手动烟测仍不够明显，只做局部视觉锚点、位置提示或短文案微调；不扩完整 operator cockpit，不改变 operator action API / ReplaySource shape / Desktop bridge。
-3. **Run Detail 其他可读性微调**：artifact card 标题 / summary、payload 加载成功反馈和 operator note 成功反馈都已完成；下一轮只处理真实上手路径里仍明显影响理解的低风险文案或位置问题。
+1. **Desktop Home 真实窗口视觉烟测**：优先在默认 mock Desktop 里走首屏路径，确认 visual-v1
+   首页在 1280px 默认窗口与较窄窗口下都能自然显示派活 hero、Agent 状态、Agent 动态和下一步区域。
+2. **首屏细节微调**：只处理真实窗口里仍明显影响理解的视觉问题，例如标题挤压、右栏过密、按钮层级不清或
+   共享 UI primitive class 漏映射；不要继续堆新功能或重写信息架构。
+3. **Run Detail 手动上手烟测**：随后再回到“派发 internal trial -> 进入 Run Detail -> 添加 operator note -> 查看右侧 `Trace 事件` 计数变化”的路径，判断是否需要 Replay inspector 局部高亮。
 4. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
 
 ## 8. 风险与阻塞
 
 - Mission Control 首屏已经能让用户输入草稿、派发 bounded internal trial，并顺着 Run Detail 读取
-  replay / artifact / operator note，说明“可初步体验”路径已成立；Run Detail 的 payload/note 成功态与 artifact card 标题 / summary 都已收成用户可读口径。
+  replay / artifact / operator note，说明“可初步体验”路径已成立；本轮 visual-v1 首屏样式让它更像可用产品，
+  但当前仍是 internal trial 体验壳。
+- Desktop renderer 现在依赖本地 CSS 映射一批 `@cairn/ui` / Tailwind-like class vocabulary；
+  后续新增共享 UI primitive class 时，需要补映射或引入正式 token/class 构建方案，否则可能再次出现裸样式。
 - Run Detail artifact card 现在不再直接露出 `artifactRole`、`kind`、`visibility` 字段名；operator note
   成功提示也已指向右侧 replay inspector 的 `Trace 事件` 计数。剩余风险转为真实窗口里该计数位置是否足够显眼，需要下一轮手动上手烟测确认。
 - 首页左侧现在已把 Agent 总览、运行中 Agent 与最近进展合并，右栏也已收成 `待处理摘要`
-  与固定运行轻摘要；首屏后续只做微调，不应再扩大新功能或重新堆卡片。
+  与固定运行轻摘要；本轮只做视觉落地和响应式收口，后续首屏仍只做真实窗口发现的微调，不应再扩大新功能或重新堆卡片。
 - 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
 - Mission Control 首页当前仍是静态/半静态首轮体验壳；任务草稿只在 renderer 本地保存，“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
 - 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。
