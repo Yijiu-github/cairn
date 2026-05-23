@@ -103,6 +103,27 @@ docker run -d --name cairn-pg \
 echo "DATABASE_URL=postgres://postgres:devpass@localhost:5432/cairn" >> .env
 ```
 
+### 内网共享 MySQL（记录用）
+
+团队内网当前有一台共享 MySQL 可用于后续连接实验：
+
+| 字段 | 值            |
+| ---- | ------------- |
+| Host | `192.168.1.6` |
+| Port | `3306`        |
+| User | `tsy`         |
+
+当前代码仍是 SQLite first / PostgreSQL-ready，尚未实现 MySQL storage adapter；不要把它写成
+`DATABASE_URL` 或默认运行配置。真实密码不要提交到仓库，如需本机实验，放在不入库的 `.env.local`
+或本机 `.env`：
+
+```bash
+CAIRN_DEV_SHARED_MYSQL_HOST=192.168.1.6
+CAIRN_DEV_SHARED_MYSQL_PORT=3306
+CAIRN_DEV_SHARED_MYSQL_USER=tsy
+CAIRN_DEV_SHARED_MYSQL_PASSWORD=<ask-team-owner>
+```
+
 ### 迁移
 
 ```bash
