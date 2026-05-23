@@ -6,6 +6,8 @@ import { ArtifactId } from '@cairn/shared-contracts';
 import { getDesktopLocaleStrings } from './desktop-locale.js';
 import {
   artifactEmptyCopy,
+  formatArtifactCardSummary,
+  formatArtifactCardTitle,
   formatArtifactPayloadStatus,
   metadataOnlyArtifactCopy,
   replayUnavailableCopy,
@@ -66,5 +68,25 @@ describe('Run Detail copy helpers', () => {
         copy,
       ),
     ).toBe('负载已加载，本地路径仍隐藏；内容已截断。');
+  });
+
+  it('formats artifact cards as user-facing copy instead of raw replay fields', () => {
+    const copy = getDesktopLocaleStrings('zh-CN');
+    const artifact = {
+      artifactRole: 'output',
+      kind: 'text',
+      sizeBytes: 42,
+      visibility: 'operator_only',
+    } as const;
+
+    const title = formatArtifactCardTitle(artifact, copy);
+    const summary = formatArtifactCardSummary(artifact, copy);
+
+    expect(title).toBe('输出产物 · 文本');
+    expect(summary).toBe('仅接管者可见 · 42 字节');
+    expect(`${title} ${summary}`).not.toContain('output · text');
+    expect(summary).not.toContain('kind text');
+    expect(summary).not.toContain('visibility operator_only');
+    expect(summary).not.toContain('visibility internal');
   });
 });

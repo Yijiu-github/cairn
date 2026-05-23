@@ -34,6 +34,20 @@ export interface DesktopLocaleStrings {
   readonly artifactPayloadNotLoaded: string;
   readonly artifactPayloadStorageHidden: string;
   readonly artifactPayloadTruncatedLabel: string;
+  readonly artifactCardInputRoleLabel: string;
+  readonly artifactCardIntermediateRoleLabel: string;
+  readonly artifactCardOutputRoleLabel: string;
+  readonly artifactCardSummaryRoleLabel: string;
+  readonly artifactCardTraceRoleLabel: string;
+  readonly artifactCardTextKindLabel: string;
+  readonly artifactCardPatchKindLabel: string;
+  readonly artifactCardLogKindLabel: string;
+  readonly artifactCardSnapshotKindLabel: string;
+  readonly artifactCardJsonKindLabel: string;
+  readonly artifactCardBinaryKindLabel: string;
+  readonly artifactCardVisibilityPublicLabel: string;
+  readonly artifactCardVisibilityOperatorOnlyLabel: string;
+  readonly artifactCardSizeBytesLabel: string;
   readonly artifactsLabel: string;
   readonly cancelRun: string;
   readonly connectionLabel: string;
@@ -350,6 +364,20 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
       'Artifact storage location remains hidden in the desktop renderer.',
     artifactPayloadTruncatedLabel:
       'Payload loaded. Local storage paths remain hidden; content is truncated.',
+    artifactCardInputRoleLabel: 'Input artifact',
+    artifactCardIntermediateRoleLabel: 'Working artifact',
+    artifactCardOutputRoleLabel: 'Output artifact',
+    artifactCardSummaryRoleLabel: 'Read-only artifact',
+    artifactCardTraceRoleLabel: 'Trace artifact',
+    artifactCardTextKindLabel: 'text',
+    artifactCardPatchKindLabel: 'patch',
+    artifactCardLogKindLabel: 'log',
+    artifactCardSnapshotKindLabel: 'file snapshot',
+    artifactCardJsonKindLabel: 'JSON',
+    artifactCardBinaryKindLabel: 'binary',
+    artifactCardVisibilityPublicLabel: 'visible to this workspace',
+    artifactCardVisibilityOperatorOnlyLabel: 'operator-only evidence',
+    artifactCardSizeBytesLabel: 'bytes',
     connectionPending: 'checking sidecar',
     errorCountLabel: 'Errors',
     exportShareLabel: 'Export / share',
@@ -581,6 +609,20 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     artifactPayloadNotLoaded: '负载未加载',
     artifactPayloadStorageHidden: '产物存储位置在桌面渲染器里保持隐藏。',
     artifactPayloadTruncatedLabel: '负载已加载，本地路径仍隐藏；内容已截断。',
+    artifactCardInputRoleLabel: '输入产物',
+    artifactCardIntermediateRoleLabel: '处理中产物',
+    artifactCardOutputRoleLabel: '输出产物',
+    artifactCardSummaryRoleLabel: '只读产物',
+    artifactCardTraceRoleLabel: 'Trace 产物',
+    artifactCardTextKindLabel: '文本',
+    artifactCardPatchKindLabel: '补丁',
+    artifactCardLogKindLabel: '日志',
+    artifactCardSnapshotKindLabel: '文件快照',
+    artifactCardJsonKindLabel: 'JSON',
+    artifactCardBinaryKindLabel: '二进制',
+    artifactCardVisibilityPublicLabel: '工作区可见',
+    artifactCardVisibilityOperatorOnlyLabel: '仅接管者可见',
+    artifactCardSizeBytesLabel: '字节',
     connectionPending: '正在检查本地服务',
     errorCountLabel: '错误',
     exportShareLabel: '导出 / 分享',

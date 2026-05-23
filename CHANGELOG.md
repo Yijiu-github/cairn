@@ -86,6 +86,10 @@
 
 ### Changed
 
+- Desktop Run Detail 的 artifact 卡片继续收口：标题和摘要不再直接露出 `output · text`、
+  `kind text`、`visibility operator_only` 等 replay 内部字段，而是通过 renderer locale/helper 显示
+  用户可读的产物角色、类型、可见范围与大小；不改变 Artifact schema、payload API、路径隐藏或
+  Desktop bridge。
 - Desktop Run Detail 的上手反馈继续收口：产物负载加载成功后不再显示 `mediaType` /
   `truncated` 等内部字段，而是提示“负载已加载、本地路径仍隐藏”；添加备注成功后明确说明备注已写入本地运行证据并刷新回放证据 / 证据事件计数。
 - Desktop Mission Control 首屏继续做信息层级收敛：把 Agent 总览、运行中的 Agent 与最近

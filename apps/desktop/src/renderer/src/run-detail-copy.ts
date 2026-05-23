@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { DesktopLocaleStrings } from './desktop-locale.js';
 import type { ArtifactPayloadResponse } from '@cairn/shared-contracts';
+import type { RunReplaySource } from '@cairn/shared-contracts';
 
 export interface EmptyStateCopy {
   readonly body: string;
@@ -31,6 +32,35 @@ export const metadataOnlyArtifactCopy: MetadataOnlyArtifactCopy = {
   verification: 'metadata only',
 };
 
+type ArtifactCardSource = Pick<
+  RunReplaySource['artifacts'][number],
+  'artifactRole' | 'kind' | 'sizeBytes' | 'visibility'
+>;
+
+export function formatArtifactCardTitle(
+  artifact: ArtifactCardSource,
+  copy: DesktopLocaleStrings,
+): string {
+  return `${toArtifactRoleLabel(artifact.artifactRole, copy)} · ${toArtifactKindLabel(
+    artifact.kind,
+    copy,
+  )}`;
+}
+
+export function formatArtifactCardSummary(
+  artifact: ArtifactCardSource,
+  copy: DesktopLocaleStrings,
+): string {
+  return [
+    toArtifactVisibilityLabel(artifact.visibility, copy),
+    artifact.sizeBytes === undefined
+      ? undefined
+      : `${artifact.sizeBytes.toString()} ${copy.artifactCardSizeBytesLabel}`,
+  ]
+    .filter((value): value is string => value !== undefined)
+    .join(' · ');
+}
+
 export function formatArtifactPayloadStatus(
   payload: ArtifactPayloadResponse,
   copy: DesktopLocaleStrings,
@@ -53,4 +83,62 @@ export function replayUnavailableCopy({
       'Desktop has an observed run id, but the read-only replay source has not been loaded yet.',
     title: 'Replay evidence not loaded',
   };
+}
+
+function toArtifactRoleLabel(
+  role: ArtifactCardSource['artifactRole'],
+  copy: DesktopLocaleStrings,
+): string {
+  if (role === 'input') {
+    return copy.artifactCardInputRoleLabel;
+  }
+
+  if (role === 'intermediate') {
+    return copy.artifactCardIntermediateRoleLabel;
+  }
+
+  if (role === 'output') {
+    return copy.artifactCardOutputRoleLabel;
+  }
+
+  if (role === 'summary') {
+    return copy.artifactCardSummaryRoleLabel;
+  }
+
+  return copy.artifactCardTraceRoleLabel;
+}
+
+function toArtifactKindLabel(kind: ArtifactCardSource['kind'], copy: DesktopLocaleStrings): string {
+  if (kind === 'text') {
+    return copy.artifactCardTextKindLabel;
+  }
+
+  if (kind === 'patch') {
+    return copy.artifactCardPatchKindLabel;
+  }
+
+  if (kind === 'log') {
+    return copy.artifactCardLogKindLabel;
+  }
+
+  if (kind === 'file_snapshot') {
+    return copy.artifactCardSnapshotKindLabel;
+  }
+
+  if (kind === 'json') {
+    return copy.artifactCardJsonKindLabel;
+  }
+
+  return copy.artifactCardBinaryKindLabel;
+}
+
+function toArtifactVisibilityLabel(
+  visibility: ArtifactCardSource['visibility'],
+  copy: DesktopLocaleStrings,
+): string {
+  if (visibility === 'public') {
+    return copy.artifactCardVisibilityPublicLabel;
+  }
+
+  return copy.artifactCardVisibilityOperatorOnlyLabel;
 }

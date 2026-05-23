@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-23 12:45 CST
+> 最后更新：2026-05-23 13:58 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,13 +35,14 @@
 
 ## 3. 当前工作区状态
 
-2026-05-23 12:45 CST 复核：
+2026-05-23 13:58 CST 复核：
 
-- `git status --short` / `git diff --name-only`：本轮开始时工作区干净；本轮修改集中在 Desktop
-  renderer Run Detail 文案 / helper / spec、`CHANGELOG.md`、`docs/STATUS.md` 与本 handoff。
-- 本轮主线子块为默认 mock Desktop 上手路径的 Run Detail 反馈收口：artifact payload 加载成功后
-  不再显示 `mediaType` / `truncated`，operator note 成功反馈改成用户可读的“备注已记录 / 回放证据和证据事件计数已刷新”。
-- 本轮没有触碰 Workspace Core、Desktop bridge、preload allowlist、sidecar runtime、首页布局或 runbook 启动方式。
+- `git status --short` / `git diff --name-only`：本轮开始时已有 Desktop Run Detail artifact card
+  文案映射改动和一处 MySQL 明文密码未提交 diff；已复核并移除 MySQL 明文密码 diff，保留上一提交的安全
+  host/port/user 记录口径。
+- 本轮主线子块为默认 mock Desktop Run Detail artifact card 可读性收口：artifact card 标题 / summary
+  不再直接显示 `output · text`、`kind text`、`visibility operator_only` 等 replay 内部字段，改为用户可读的产物角色、类型、可见范围和大小。
+- 本轮没有触碰 Workspace Core、Desktop bridge、preload allowlist、Artifact schema、payload API、路径隐藏、sidecar runtime、首页布局或 runbook 启动方式。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
 
@@ -77,6 +78,7 @@
 - `6145775` `feat(desktop): 压缩首页待处理摘要 / compress home pending summary`
 - `a1108bb` `feat(desktop): 压缩首页固定运行摘要 / compress pinned runs summary`
 - `b4cfce7` `fix(desktop): 收口运行详情反馈 / clarify run detail feedback`
+- `PENDING_THIS_ROUND` `fix(desktop): 收口产物卡片文案 / clarify artifact card copy`
 
 归档说明：
 
@@ -660,25 +662,41 @@
 - 下一轮优先任务：继续 Run Detail 真实上手路径小块，优先收口 artifact card 标题 / summary 的
   `artifactRole`、`kind`、`visibility` 等内部字段；只做用户可读文案映射，不改变 payload API 或 path reveal 边界。
 
+2026-05-23 13:58 CST 本轮完成：
+
+- 继续 Run Detail 真实上手路径小块，收口 artifact card 标题 / summary 的可读性，不继续扩首页。
+- `ArtifactSummaryCard` 改用 `run-detail-copy.ts` 中的 `formatArtifactCardTitle` /
+  `formatArtifactCardSummary` helper，把 replay artifact 的 `artifactRole`、`kind`、`visibility`
+  映射为用户可读文案；summary 只显示可见范围与大小，不再暴露 content type 或原始字段名。
+- 新增 regression 覆盖 `输出产物 · 文本` / `仅接管者可见 · 42 字节`，并锁住不再出现
+  `output · text`、`kind text`、`visibility operator_only`、`visibility internal`。
+- 同步 `CHANGELOG.md` 与 `docs/STATUS.md`，明确这只是 renderer locale/helper 文案映射，不改变
+  Artifact schema、payload API、路径隐藏或 Desktop bridge。
+- 复核此前 MySQL 记录：上一提交已安全记录 host/port/user，未提交 diff 中的明文密码已移除；本轮 UI
+  提交不包含 MySQL 文档变更。
+- 保持边界：没有创建 `apps/web`，没有接真实 planner，没有开放自由文本执行，没有改变
+  Desktop sidecar 默认 mock 或真实 Codex env opt-in，`data-smoke-id="run-internal-trial"` 仍保持稳定。
+- 验证：`pnpm --filter @cairn/desktop test -- --run src/renderer/src/run-detail-copy.spec.ts src/renderer/src/desktop-locale.spec.ts src/renderer/src/desktop-app.spec.ts`、`pnpm --filter @cairn/desktop typecheck`、`pnpm --filter @cairn/desktop lint`、`pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/run-detail-copy.ts apps/desktop/src/renderer/src/run-detail-copy.spec.ts docs/engineering/local-dev-setup.md`、`pnpm exec markdownlint-cli2 docs/engineering/local-dev-setup.md`、`pnpm run docs:lint`、`git diff --check`。
+- 本轮代码/正式文档提交：`PENDING_THIS_ROUND` `fix(desktop): 收口产物卡片文案 / clarify artifact card copy`。
+- 风险：Run Detail artifact card 的字段名噪音已收口；下一轮应优先轻量复核 operator note 成功反馈后，用户是否能快速找到“证据事件计数”的变化，只改文案或位置提示，不扩完整 operator cockpit。
+- 下一轮优先任务：Run Detail 中点击添加备注后，检查成功提示与 replay inspector 的 `Trace 事件` 计数是否形成清楚的视觉关联；必要时只做低风险文案 / 锚点提示，不改变 operator action API 或 replay data shape。
+
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **收口 Run Detail artifact card 可读性**：优先检查 payload 区域上方的 artifact card 标题 /
-   summary 是否仍显示 `output · text`、`kind text`、`visibility internal` 等内部字段；如影响理解，
-   只做 locale mapping / helper 文案，不改变 Artifact schema、payload API 或本地路径隐藏边界。
-2. **复核 operator note 后证据计数是否足够显眼**：本轮成功反馈已说明“证据事件计数已刷新”；
-   下一轮可轻量确认 trace count 是否在视觉上能被用户找到，只改文案或位置提示，不扩完整 operator cockpit。
+1. **复核 operator note 后证据计数是否足够显眼**：成功反馈已说明“证据事件计数已刷新”；
+   下一轮轻量确认 replay inspector 里的 `Trace 事件` 计数是否容易被用户找到，必要时只改文案或位置提示，不扩完整 operator cockpit。
+2. **Run Detail 可读性微调**：artifact card 标题 / summary 已完成原始字段映射；下一轮只处理真实上手路径里仍明显影响理解的低风险文案或位置问题，不再扩大 Artifact schema / payload / bridge 范围。
 3. **轻量复核首屏密度**：右栏已完成 `待处理摘要` 与固定运行轻摘要，不再继续加卡片；如还有拥挤，只做间距 / 文案长度微调，不重新打开完整首屏重构。
 4. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
 
 ## 8. 风险与阻塞
 
 - Mission Control 首屏已经能让用户输入草稿、派发 bounded internal trial，并顺着 Run Detail 读取
-  replay / artifact / operator note，说明“可初步体验”路径已成立；本轮默认 mock Desktop 已手动烟测
-  可走通；Run Detail 的 artifact payload 加载成功态与 operator note 成功反馈已收成用户可读口径。
-- Run Detail 的 artifact card 标题 / summary 仍可能露出领域字段（如 artifactRole、kind、visibility）；
-  这属于下一轮最小 UI 文案映射候选，不是 schema 或 payload API 变更。
+  replay / artifact / operator note，说明“可初步体验”路径已成立；Run Detail 的 payload/note 成功态与 artifact card 标题 / summary 都已收成用户可读口径。
+- Run Detail artifact card 现在不再直接露出 `artifactRole`、`kind`、`visibility` 字段名；剩余风险转为
+  operator note 成功后，用户是否能快速定位 replay inspector 的 `Trace 事件` 计数变化。
 - 首页左侧现在已把 Agent 总览、运行中 Agent 与最近进展合并，右栏也已收成 `待处理摘要`
   与固定运行轻摘要；首屏后续只做微调，不应再扩大新功能或重新堆卡片。
 - 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。

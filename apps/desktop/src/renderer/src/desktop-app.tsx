@@ -32,7 +32,11 @@ import {
 import { desktopShellModel } from './desktop-model';
 import { validateMissionDraft } from './mission-draft';
 import { runOperatorAction as runOperatorActionRequest } from './operator-action-runner';
-import { formatArtifactPayloadStatus } from './run-detail-copy';
+import {
+  formatArtifactCardSummary,
+  formatArtifactCardTitle,
+  formatArtifactPayloadStatus,
+} from './run-detail-copy';
 import { loadRunReplaySource as loadRunReplaySourceRequest } from './run-replay-loader';
 
 import type { DesktopLocale, DesktopLocaleStrings } from './desktop-locale';
@@ -1421,8 +1425,8 @@ function ArtifactSummaryCard({
                     redactionLabel={copy.artifactPayloadStorageHidden}
                     reviewState="draft"
                     sensitivity={artifact.sensitivity}
-                    summary={toArtifactSummary(artifact)}
-                    title={`${artifact.artifactRole} · ${artifact.kind}`}
+                    summary={formatArtifactCardSummary(artifact, copy)}
+                    title={formatArtifactCardTitle(artifact, copy)}
                     verification={
                       payloadAvailable
                         ? copy.artifactPayloadAvailableLabel
@@ -1774,17 +1778,6 @@ function toPinnedRunMetricSummary(
         ? `${metric.label} ${metric.value.toString()}`
         : metric.label,
     )
-    .join(' · ');
-}
-
-function toArtifactSummary(artifact: RunReplaySource['artifacts'][number]): string {
-  return [
-    `kind ${artifact.kind}`,
-    `visibility ${artifact.visibility}`,
-    artifact.contentType === undefined ? undefined : `content ${artifact.contentType}`,
-    artifact.sizeBytes === undefined ? undefined : `${artifact.sizeBytes.toString()} bytes`,
-  ]
-    .filter((value): value is string => value !== undefined)
     .join(' · ');
 }
 
