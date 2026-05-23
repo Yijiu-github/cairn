@@ -75,7 +75,7 @@ describe('desktop locale', () => {
     expect(copy.liveActionsValue).toBe('受限接管动作');
     expect(copy.operatorActionApplied).toBe('接管动作已完成');
     expect(copy.operatorNoteRecorded('01J_NOTE')).toBe(
-      '备注已记录到本地运行证据；回放证据和证据事件计数已刷新。记录编号：01J_NOTE。',
+      '备注已记录到本地运行证据；右侧“回放检查器”的“Trace 事件”计数已刷新。记录编号：01J_NOTE。',
     );
   });
 });

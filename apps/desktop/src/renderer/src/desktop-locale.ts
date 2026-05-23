@@ -298,7 +298,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
       'Internal-trial actions only: cancel run, retry failed task, rerun, and record an operator note.',
     operatorControlsTitle: 'Operator controls',
     operatorNoteRecorded: (messageId: string) =>
-      `Note recorded in local run evidence; replay evidence and trace counts were refreshed. Message id: ${messageId}.`,
+      `Note recorded in local run evidence; the Trace events count in Replay inspector was refreshed. Message id: ${messageId}.`,
     previewSafeLabel: 'Preview-safe',
     previewSafeStatus: 'static',
     processLabel: 'Process',
@@ -551,7 +551,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
       '仅内部试用动作：取消运行、重试失败任务、重新运行，以及记录接管备注。',
     operatorControlsTitle: '接管控制',
     operatorNoteRecorded: (messageId: string) =>
-      `备注已记录到本地运行证据；回放证据和证据事件计数已刷新。记录编号：${messageId}。`,
+      `备注已记录到本地运行证据；右侧“回放检查器”的“Trace 事件”计数已刷新。记录编号：${messageId}。`,
     previewSafeLabel: '运行安全',
     previewSafeStatus: '静态',
     processLabel: '进程',
