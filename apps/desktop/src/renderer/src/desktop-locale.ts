@@ -201,8 +201,14 @@ export interface DesktopLocaleStrings {
   readonly pathExposurePolicyDescription: string;
   readonly pathExposureDisplayLabel: string;
   readonly pathExposureDisplayValue: string;
+  readonly pinnedRunBlockedLabel: string;
+  readonly pinnedRunCompletedLabel: string;
+  readonly pinnedRunFailedLabel: string;
+  readonly pinnedRunIdleLabel: string;
+  readonly pinnedRunRunningLabel: string;
   readonly pinnedRunsDescription: string;
   readonly pinnedRunsTitle: string;
+  readonly pinnedRunsVisibleCountLabel: (visibleCount: number) => string;
   readonly reviewActionApproveExport: string;
   readonly reviewActionReject: string;
 }
@@ -437,8 +443,14 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     pathExposurePolicyDescription: 'Local absolute paths remain hidden in this shell.',
     pathExposureDisplayLabel: 'Display path',
     pathExposureDisplayValue: 'redacted',
+    pinnedRunBlockedLabel: 'Blocked',
+    pinnedRunCompletedLabel: 'Completed',
+    pinnedRunFailedLabel: 'Failed',
+    pinnedRunIdleLabel: 'Idle',
+    pinnedRunRunningLabel: 'Running',
     pinnedRunsDescription: 'Runs you can reopen without losing the current view.',
     pinnedRunsTitle: 'Pinned runs',
+    pinnedRunsVisibleCountLabel: (visibleCount: number) => `${visibleCount.toString()} shown`,
     reviewActionApproveExport: 'Approve export',
     reviewActionReject: 'Reject',
   },
@@ -653,8 +665,14 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     pathExposurePolicyDescription: '本 shell 中本地绝对路径保持隐藏。',
     pathExposureDisplayLabel: '显示路径',
     pathExposureDisplayValue: '已脱敏',
+    pinnedRunBlockedLabel: '阻塞',
+    pinnedRunCompletedLabel: '已完成',
+    pinnedRunFailedLabel: '失败',
+    pinnedRunIdleLabel: '空闲',
+    pinnedRunRunningLabel: '进行中',
     pinnedRunsDescription: '可重新打开而不丢失当前视图的运行。',
     pinnedRunsTitle: '已固定运行',
+    pinnedRunsVisibleCountLabel: (visibleCount: number) => `显示 ${visibleCount.toString()} 项`,
     reviewActionApproveExport: '批准导出',
     reviewActionReject: '拒绝',
   },

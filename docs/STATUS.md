@@ -77,7 +77,7 @@ Cairn 现在处于 **R1 工程基线 + Workspace Core 最小闭环建设阶段**
 - `apps/desktop` 已提供 Electron 最小 shell 骨架。
 - 当前包含 main / preload / renderer、Mission Control 风格 Home 首屏、Run Detail / Artifact Review / Settings 壳视图，以及最小 Workspace Core dev sidecar bridge。
 - Renderer 壳新增简体中文 / English 切换，默认 `zh-CN`，语言偏好只保存在本地 `localStorage`；当前是 Desktop 内部试用壳的轻量实现，不代表 `apps/web` 已创建。
-- Home 首屏已从内部观察面板调整为更面向用户的“派活工作台”：突出“派发给总 Agent”、Agent 统计、运行中的 Agent 与最近进展；右侧继续收口为“下一步 / 待处理”与“已固定运行”，任务草稿目前只保存在 renderer 本地，按钮仍触发 bounded internal-trial 路径，不是自由文本 Supervisor 执行入口。
+- Home 首屏已从内部观察面板调整为更面向用户的“派活工作台”：突出“派发给总 Agent”、Agent 统计、运行中的 Agent 与最近进展；右侧继续收口为“下一步 / 待处理”主区与更轻的“已固定运行”摘要，任务草稿目前只保存在 renderer 本地，按钮仍触发 bounded internal-trial 路径，不是自由文本 Supervisor 执行入口。
 - 默认简中已将 Home 与第一轮 Run Detail / Artifact payload / Settings 会看到的主要状态词收敛为“本地运行服务 / 运行安全 / 回放证据 / 运行编号 / 桌面桥接范围”等用户可读口径；底层仍是 Workspace Core dev sidecar bridge，不代表完整产品 UI 或真实自由文本派发已完成。
 - Desktop main 可用 per-launch token 启动 loopback Workspace Core sidecar，并在创建窗口后后台等待 sidecar 健康检查；preload 暴露 `workspaceCore.getStatus()`、`workspaceCore.runInternalTrial()`、`workspaceCore.getRunReplaySource(runId)`、`workspaceCore.getArtifactPayload(artifactId)` 与最小 operator action allowlist（cancel / retry / rerun / operator note）。
 - Renderer 可通过 internal-trial 入口创建 run、读取 task、提交 AgentRun、drain runtime，在 Run Detail 按需读取 bounded payload text，并调用最小 operator action allowlist。默认 sidecar 走 mock runtime；`CAIRN_DESKTOP_SIDECAR_RUNTIME=codex` 仅用于观察 Codex-backed Workspace Core sidecar 产生的真实 run evidence。

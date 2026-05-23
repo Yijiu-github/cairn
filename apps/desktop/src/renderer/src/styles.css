@@ -232,7 +232,6 @@ h2 {
 }
 
 .content-stack,
-.run-list,
 .artifact-list,
 .artifact-summary-list,
 .pending-queue-summary-list {
@@ -467,23 +466,68 @@ h2 {
   line-height: 1.45;
 }
 
-.run-list-heading {
+.pinned-runs-panel {
+  background: rgb(255 255 255 / 78%);
+  border: 1px solid rgb(226 232 240 / 88%);
+}
+
+.pinned-run-summary-list {
   display: grid;
-  gap: 4px;
-  padding: 2px 4px;
+  gap: 10px;
 }
 
-.run-list-heading p {
-  font-size: 13px;
+.pinned-run-summary {
+  background: linear-gradient(180deg, rgb(248 250 252 / 92%) 0%, rgb(255 255 255 / 90%) 100%);
+  border: 1px solid var(--desktop-border);
+  border-radius: 16px;
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+}
+
+.pinned-run-summary-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.pinned-run-summary-title-group {
+  min-width: 0;
+}
+
+.pinned-run-summary h4 {
+  font-size: 15px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  margin: 0;
 }
 
-.run-list-heading span {
+.pinned-run-summary-run-id,
+.pinned-run-summary-meta {
   color: var(--desktop-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.pinned-run-summary-run-id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pinned-run-summary-description {
+  color: var(--desktop-subtle);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.55;
+}
+
+.pinned-run-summary-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
 }
 
 .home-safety-rail {

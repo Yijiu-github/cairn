@@ -51,6 +51,8 @@ describe('desktop locale', () => {
     expect(copy.agentWorkingLabel).toBe('工作中');
     expect(copy.recentProgressLabel).toBe('最近进展');
     expect(copy.liveAgentsTitle).toBe('运行中的 Agent');
+    expect(copy.pinnedRunRunningLabel).toBe('进行中');
+    expect(copy.pinnedRunsVisibleCountLabel(2)).toBe('显示 2 项');
     expect(copy.missionInputPreviewBody).toContain('任务草稿只保存在当前 renderer');
     expect(copy.missionDraftRequiredError).toContain('先写下');
     expect(copy.workspaceCorePanelTitle).toBe('本地运行服务');

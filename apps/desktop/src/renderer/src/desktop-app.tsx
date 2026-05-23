@@ -660,15 +660,7 @@ function HomeView({
           </div>
           <div className="content-stack">
             <PendingQueueSummary copy={copy} handoffs={model.handoffs} />
-            <div className="run-list">
-              <div className="run-list-heading">
-                <p>{copy.pinnedRunsTitle}</p>
-                <span>{copy.pinnedRunsDescription}</span>
-              </div>
-              {model.pinnedRuns.map((run) => (
-                <RunCard key={run.runId} {...run} />
-              ))}
-            </div>
+            <PinnedRunsSummary copy={copy} pinnedRuns={model.pinnedRuns} />
           </div>
         </div>
       </section>
@@ -904,6 +896,56 @@ function PendingQueueSummary({
                     {copy.pendingQueueWaitLabel} {handoff.waitedFor}
                   </span>
                 )}
+              </div>
+            </article>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PinnedRunsSummary({
+  copy,
+  pinnedRuns,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly pinnedRuns: LocalizedDesktopModel['pinnedRuns'];
+}) {
+  const visiblePinnedRuns = pinnedRuns.slice(0, 2);
+
+  return (
+    <Card className="pinned-runs-panel">
+      <CardHeader>
+        <div className="card-title-row">
+          <div>
+            <CardTitle>{copy.pinnedRunsTitle}</CardTitle>
+            <CardDescription>{copy.pinnedRunsDescription}</CardDescription>
+          </div>
+          <StatusBadge
+            label={copy.pinnedRunsVisibleCountLabel(visiblePinnedRuns.length)}
+            tone="neutral"
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="content-stack">
+        <div className="pinned-run-summary-list" aria-label={copy.pinnedRunsTitle}>
+          {visiblePinnedRuns.map((run) => (
+            <article className="pinned-run-summary" key={run.runId}>
+              <div className="pinned-run-summary-header">
+                <div className="pinned-run-summary-title-group">
+                  <h4>{run.title}</h4>
+                  <div className="pinned-run-summary-run-id">{run.runId}</div>
+                </div>
+                <StatusBadge
+                  label={toPinnedRunStatusLabel(run.status, copy)}
+                  tone={toPinnedRunTone(run.status)}
+                />
+              </div>
+              <p className="pinned-run-summary-description">{run.description}</p>
+              <div className="pinned-run-summary-meta">
+                <span>{run.agentLabel}</span>
+                <span>{toPinnedRunMetricSummary(run.metrics)}</span>
               </div>
             </article>
           ))}
@@ -1675,6 +1717,63 @@ function toPendingQueueKindLabel(kind: DesktopHandoff['kind'], copy: DesktopLoca
   }
 
   return copy.pendingReviewLabel;
+}
+
+function toPinnedRunTone(
+  status: LocalizedDesktopModel['pinnedRuns'][number]['status'],
+): 'neutral' | 'info' | 'success' | 'warning' | 'danger' {
+  if (status === 'running') {
+    return 'info';
+  }
+
+  if (status === 'blocked') {
+    return 'warning';
+  }
+
+  if (status === 'completed') {
+    return 'success';
+  }
+
+  if (status === 'failed') {
+    return 'danger';
+  }
+
+  return 'neutral';
+}
+
+function toPinnedRunStatusLabel(
+  status: LocalizedDesktopModel['pinnedRuns'][number]['status'],
+  copy: DesktopLocaleStrings,
+): string {
+  if (status === 'running') {
+    return copy.pinnedRunRunningLabel;
+  }
+
+  if (status === 'blocked') {
+    return copy.pinnedRunBlockedLabel;
+  }
+
+  if (status === 'completed') {
+    return copy.pinnedRunCompletedLabel;
+  }
+
+  if (status === 'failed') {
+    return copy.pinnedRunFailedLabel;
+  }
+
+  return copy.pinnedRunIdleLabel;
+}
+
+function toPinnedRunMetricSummary(
+  metrics: LocalizedDesktopModel['pinnedRuns'][number]['metrics'],
+): string {
+  return (metrics ?? [])
+    .map((metric) =>
+      typeof metric.value === 'string' || typeof metric.value === 'number'
+        ? `${metric.label} ${metric.value.toString()}`
+        : metric.label,
+    )
+    .join(' · ');
 }
 
 function toArtifactSummary(artifact: RunReplaySource['artifacts'][number]): string {
