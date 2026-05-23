@@ -58,6 +58,8 @@ describe('desktop locale', () => {
     expect(copy.workspaceCorePanelTitle).toBe('本地运行服务');
     expect(copy.runInternalTrial).toBe('运行内部试用');
     expect(copy.runInternalTrialEmptyBody).toContain('点击“运行内部试用”');
+    expect(copy.artifactPayloadLoadedLabel).toBe('负载已加载，本地路径仍隐藏。');
+    expect(copy.artifactPayloadTruncatedLabel).toBe('负载已加载，本地路径仍隐藏；内容已截断。');
     expect(copy.agentRunsLabel).toBe('AgentRuns');
     expect(copy.processLabel).toBe('进程');
     expect(copy.replaySourceBody('01J_RUN')).toBe('正在显示 01J_RUN 的脱敏本地运行证据。');
@@ -71,6 +73,10 @@ describe('desktop locale', () => {
     expect(copy.safetyLocalPathRevealValue).toBe('默认隐藏');
     expect(copy.preloadAllowlistLabel).toBe('桌面桥接范围');
     expect(copy.liveActionsValue).toBe('受限接管动作');
+    expect(copy.operatorActionApplied).toBe('接管动作已完成');
+    expect(copy.operatorNoteRecorded('01J_NOTE')).toBe(
+      '备注已记录到本地运行证据；回放证据和证据事件计数已刷新。记录编号：01J_NOTE。',
+    );
   });
 });
 

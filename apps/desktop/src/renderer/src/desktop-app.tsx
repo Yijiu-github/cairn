@@ -32,6 +32,7 @@ import {
 import { desktopShellModel } from './desktop-model';
 import { validateMissionDraft } from './mission-draft';
 import { runOperatorAction as runOperatorActionRequest } from './operator-action-runner';
+import { formatArtifactPayloadStatus } from './run-detail-copy';
 import { loadRunReplaySource as loadRunReplaySourceRequest } from './run-replay-loader';
 
 import type { DesktopLocale, DesktopLocaleStrings } from './desktop-locale';
@@ -1434,7 +1435,7 @@ function ArtifactSummaryCard({
                         <span>
                           {payload === undefined
                             ? copy.artifactPayloadNotLoaded
-                            : `${payload.mediaType}${payload.truncated ? ' · truncated' : ''}`}
+                            : formatArtifactPayloadStatus(payload, copy)}
                         </span>
                         <Button
                           loading={artifactPayloadLoadingId === artifact.artifactId}

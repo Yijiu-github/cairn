@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
+import type { DesktopLocaleStrings } from './desktop-locale.js';
+import type { ArtifactPayloadResponse } from '@cairn/shared-contracts';
 
 export interface EmptyStateCopy {
   readonly body: string;
@@ -28,6 +30,13 @@ export const metadataOnlyArtifactCopy: MetadataOnlyArtifactCopy = {
   body: 'This artifact only exposes metadata in Run Detail. No bounded payload reference is available, and Desktop keeps storage paths hidden.',
   verification: 'metadata only',
 };
+
+export function formatArtifactPayloadStatus(
+  payload: ArtifactPayloadResponse,
+  copy: DesktopLocaleStrings,
+): string {
+  return payload.truncated ? copy.artifactPayloadTruncatedLabel : copy.artifactPayloadLoadedLabel;
+}
 
 export function replayUnavailableCopy({
   loading,

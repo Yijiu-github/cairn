@@ -29,9 +29,11 @@ export interface DesktopLocaleStrings {
   readonly artifactPayloadErrorTitle: string;
   readonly artifactPayloadAvailableLabel: string;
   readonly artifactPayloadHiddenBody: string;
+  readonly artifactPayloadLoadedLabel: string;
   readonly artifactPayloadLoadPrompt: string;
   readonly artifactPayloadNotLoaded: string;
   readonly artifactPayloadStorageHidden: string;
+  readonly artifactPayloadTruncatedLabel: string;
   readonly artifactsLabel: string;
   readonly cancelRun: string;
   readonly connectionLabel: string;
@@ -276,12 +278,13 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
       'Desktop stores one bounded run id and refreshes replay evidence from it.',
     observedRunLabel: 'Observed run',
     observedRunTitle: 'Observed run',
-    operatorActionApplied: 'Operator action applied',
+    operatorActionApplied: 'Operator action completed',
     operatorActionFailed: 'Operator action failed',
     operatorControlsDescription:
       'Internal-trial actions only: cancel run, retry failed task, rerun, and record an operator note.',
     operatorControlsTitle: 'Operator controls',
-    operatorNoteRecorded: (messageId: string) => `Operator note recorded as ${messageId}.`,
+    operatorNoteRecorded: (messageId: string) =>
+      `Note recorded in local run evidence; replay evidence and trace counts were refreshed. Message id: ${messageId}.`,
     previewSafeLabel: 'Preview-safe',
     previewSafeStatus: 'static',
     processLabel: 'Process',
@@ -340,10 +343,13 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     artifactPayloadAvailableLabel: 'payload available',
     artifactPayloadHiddenBody:
       'Payload text is fetched on demand through Workspace Core. Local storage paths stay hidden.',
+    artifactPayloadLoadedLabel: 'Payload loaded. Local storage paths remain hidden.',
     artifactPayloadLoadPrompt: 'Load payload',
     artifactPayloadNotLoaded: 'Payload not loaded',
     artifactPayloadStorageHidden:
       'Artifact storage location remains hidden in the desktop renderer.',
+    artifactPayloadTruncatedLabel:
+      'Payload loaded. Local storage paths remain hidden; content is truncated.',
     connectionPending: 'checking sidecar',
     errorCountLabel: 'Errors',
     exportShareLabel: 'Export / share',
@@ -511,12 +517,13 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     observedRunDescription: '桌面端会保存一个受限运行编号，并基于它刷新只读回放证据。',
     observedRunLabel: '已观察运行',
     observedRunTitle: '已观察运行',
-    operatorActionApplied: '接管动作已应用',
+    operatorActionApplied: '接管动作已完成',
     operatorActionFailed: '接管动作失败',
     operatorControlsDescription:
       '仅内部试用动作：取消运行、重试失败任务、重新运行，以及记录接管备注。',
     operatorControlsTitle: '接管控制',
-    operatorNoteRecorded: (messageId: string) => `Operator note 已记录为 ${messageId}。`,
+    operatorNoteRecorded: (messageId: string) =>
+      `备注已记录到本地运行证据；回放证据和证据事件计数已刷新。记录编号：${messageId}。`,
     previewSafeLabel: '运行安全',
     previewSafeStatus: '静态',
     processLabel: '进程',
@@ -569,9 +576,11 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     artifactPayloadErrorTitle: '产物负载加载失败',
     artifactPayloadAvailableLabel: '负载可加载',
     artifactPayloadHiddenBody: '负载文本会按需加载。本地存储路径保持隐藏。',
+    artifactPayloadLoadedLabel: '负载已加载，本地路径仍隐藏。',
     artifactPayloadLoadPrompt: '加载负载',
     artifactPayloadNotLoaded: '负载未加载',
     artifactPayloadStorageHidden: '产物存储位置在桌面渲染器里保持隐藏。',
+    artifactPayloadTruncatedLabel: '负载已加载，本地路径仍隐藏；内容已截断。',
     connectionPending: '正在检查本地服务',
     errorCountLabel: '错误',
     exportShareLabel: '导出 / 分享',

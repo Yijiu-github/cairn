@@ -86,6 +86,8 @@
 
 ### Changed
 
+- Desktop Run Detail 的上手反馈继续收口：产物负载加载成功后不再显示 `mediaType` /
+  `truncated` 等内部字段，而是提示“负载已加载、本地路径仍隐藏”；添加备注成功后明确说明备注已写入本地运行证据并刷新回放证据 / 证据事件计数。
 - Desktop Mission Control 首屏继续做信息层级收敛：把 Agent 总览、运行中的 Agent 与最近
   进展合并为一个 Agent 动态面板，并把“写下目标 → 派发给总 Agent → 查看 Agent 进展”的
   体验指引保留在旁侧；不改变 bounded internal-trial、默认 mock sidecar 或真实 Codex env opt-in 边界。

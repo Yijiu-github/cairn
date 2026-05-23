@@ -1,8 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, expect, it } from 'vitest';
 
+import { ArtifactId } from '@cairn/shared-contracts';
+
+import { getDesktopLocaleStrings } from './desktop-locale.js';
 import {
   artifactEmptyCopy,
+  formatArtifactPayloadStatus,
   metadataOnlyArtifactCopy,
   replayUnavailableCopy,
   taskTreeEmptyCopy,
@@ -35,5 +39,32 @@ describe('Run Detail copy helpers', () => {
       'This artifact only exposes metadata in Run Detail. No bounded payload reference is available, and Desktop keeps storage paths hidden.',
     );
     expect(metadataOnlyArtifactCopy.verification).toBe('metadata only');
+  });
+
+  it('summarizes loaded artifact payloads without exposing media internals in zh-CN', () => {
+    const copy = getDesktopLocaleStrings('zh-CN');
+
+    expect(
+      formatArtifactPayloadStatus(
+        {
+          artifactId: ArtifactId.parse('01J000000000000000000000F0'),
+          mediaType: 'text/plain',
+          text: 'bounded payload',
+          truncated: false,
+        },
+        copy,
+      ),
+    ).toBe('负载已加载，本地路径仍隐藏。');
+    expect(
+      formatArtifactPayloadStatus(
+        {
+          artifactId: ArtifactId.parse('01J000000000000000000000F0'),
+          mediaType: 'application/json',
+          text: '{"ok":true}',
+          truncated: true,
+        },
+        copy,
+      ),
+    ).toBe('负载已加载，本地路径仍隐藏；内容已截断。');
   });
 });
