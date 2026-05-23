@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-23 13:58 CST
+> 最后更新：2026-05-23 14:12 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -35,14 +35,14 @@
 
 ## 3. 当前工作区状态
 
-2026-05-23 13:58 CST 复核：
+2026-05-23 14:12 CST 复核：
 
-- `git status --short` / `git diff --name-only`：本轮开始时已有 Desktop Run Detail artifact card
-  文案映射改动和一处 MySQL 明文密码未提交 diff；已复核并移除 MySQL 明文密码 diff，保留上一提交的安全
-  host/port/user 记录口径。
-- 本轮主线子块为默认 mock Desktop Run Detail artifact card 可读性收口：artifact card 标题 / summary
-  不再直接显示 `output · text`、`kind text`、`visibility operator_only` 等 replay 内部字段，改为用户可读的产物角色、类型、可见范围和大小。
-- 本轮没有触碰 Workspace Core、Desktop bridge、preload allowlist、Artifact schema、payload API、路径隐藏、sidecar runtime、首页布局或 runbook 启动方式。
+- `git status --short` / `git diff --name-only`：本轮开始时仅有 Desktop locale copy 与对应
+  locale spec diff；没有其他未提交工作区改动。
+- 本轮主线子块为默认 mock Desktop Run Detail operator note 成功反馈：添加备注后，成功提示直接指向
+  右侧“回放检查器”的 `Trace 事件` 计数，帮助用户理解备注已写入本地 evidence 链路并找到计数变化。
+- 本轮没有触碰 Workspace Core、Desktop bridge、preload allowlist、operator action API、ReplaySource
+  shape、Artifact schema、payload API、路径隐藏、sidecar runtime、首页布局或 runbook 启动方式。
 
 当前已知未完成主线不在“泛化整理”，而在 internal trial 后续硬化：
 
@@ -53,6 +53,7 @@
   bounded internal-trial 入口，不是自由文本 Supervisor 执行入口，也不是完整 operator cockpit。
 - Run Detail / Artifact payload / Settings 的默认简中 surface 已进一步收口，已观察运行、运行编号、
   回放证据、任务/产物空态、payload 状态和设置页源目录提示都走 `desktop-locale.ts`。
+- Run Detail 的 operator note 成功提示已与右侧 replay inspector 的 `Trace 事件` 计数建立明确文案关联。
 - 长任务、复杂 payload、跨平台取消链路仍需后续额外证据。
 
 ---
@@ -79,6 +80,7 @@
 - `a1108bb` `feat(desktop): 压缩首页固定运行摘要 / compress pinned runs summary`
 - `b4cfce7` `fix(desktop): 收口运行详情反馈 / clarify run detail feedback`
 - `31d05e6` `fix(desktop): 收口产物卡片文案 / clarify artifact card copy`
+- `3a0807a` `fix(desktop): 强化备注反馈指引 / clarify note feedback`
 
 归档说明：
 
@@ -312,6 +314,21 @@
 - `pnpm --filter @cairn/desktop test:e2e`
 - `pnpm exec prettier --check apps/desktop/scripts/window-smoke.mjs apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-app.spec.ts apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts apps/desktop/src/renderer/src/mission-draft.ts apps/desktop/src/renderer/src/mission-draft.spec.ts CHANGELOG.md apps/desktop/README.md docs/STATUS.md docs/ops/internal-trial-runbook.md`
 - `pnpm exec markdownlint-cli2 CHANGELOG.md apps/desktop/README.md docs/STATUS.md docs/ops/internal-trial-runbook.md`
+- `pnpm run docs:lint`
+- `git diff --check`
+
+2026-05-23 14:12 CST Run Detail operator note 反馈验证通过：
+
+- 红灯：上一轮新增 locale 断言后，
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-locale.spec.ts`
+  因 operator note 成功文案仍未指向右侧 replay inspector 的 `Trace 事件` 计数失败。
+- 绿灯：更新 `desktop-locale.ts` 的 zh-CN / en-US operator note 成功文案后，
+  `pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-locale.spec.ts src/renderer/src/desktop-app.spec.ts src/renderer/src/operator-action-runner.spec.ts`
+  通过，3 个文件 14 个测试。
+- `pnpm --filter @cairn/desktop typecheck`
+- `pnpm --filter @cairn/desktop lint`
+- `pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+- `pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
 - `pnpm run docs:lint`
 - `git diff --check`
 
@@ -681,22 +698,32 @@
 - 风险：Run Detail artifact card 的字段名噪音已收口；下一轮应优先轻量复核 operator note 成功反馈后，用户是否能快速找到“证据事件计数”的变化，只改文案或位置提示，不扩完整 operator cockpit。
 - 下一轮优先任务：Run Detail 中点击添加备注后，检查成功提示与 replay inspector 的 `Trace 事件` 计数是否形成清楚的视觉关联；必要时只做低风险文案 / 锚点提示，不改变 operator action API 或 replay data shape。
 
+2026-05-23 14:12 CST 本轮完成：
+
+- 继续 Run Detail 真实上手路径小块，聚焦 operator note 成功反馈与 replay inspector 计数之间的视觉关联。
+- `desktop-locale.ts` 的 zh-CN / en-US operator note 成功文案已从“回放证据和证据事件计数已刷新”改为直接指向右侧“回放检查器”的 `Trace 事件` 计数，帮助用户找到备注写入后的 evidence 变化。
+- 扩展 `desktop-locale.spec.ts`，锁住新的简中文案；同步 `CHANGELOG.md` 与 `docs/STATUS.md` 的状态口径。
+- 保持边界：没有改变 operator action API、ReplaySource shape、Desktop bridge、Artifact schema、payload API、本地路径隐藏、默认 mock sidecar 或真实 Codex env opt-in；没有接真实 planner，没有开放自由文本执行，`data-smoke-id="run-internal-trial"` 仍保持稳定。
+- 验证：`pnpm --filter @cairn/desktop test -- --run src/renderer/src/desktop-locale.spec.ts src/renderer/src/desktop-app.spec.ts src/renderer/src/operator-action-runner.spec.ts`、`pnpm --filter @cairn/desktop typecheck`、`pnpm --filter @cairn/desktop lint`、`pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/desktop-locale.spec.ts CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`、`pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`、`pnpm run docs:lint`、`git diff --check`。
+- 本轮代码/正式文档提交：`3a0807a` `fix(desktop): 强化备注反馈指引 / clarify note feedback`。
+- 风险：文案已经建立提示关联，但本轮未重新启动真实 Desktop 窗口做人工点击确认；下一轮应先走默认 mock Desktop 手动上手烟测，确认用户是否能实际看见计数变化位置，再决定是否需要轻量视觉锚点。
+- 下一轮优先任务：启动默认 mock Desktop，按“派发 internal trial -> 进入 Run Detail -> 添加 operator note -> 查看右侧 `Trace 事件` 计数变化”走一遍；若仍不够明显，只做 Replay inspector 局部高亮 / 提示位置微调，不扩完整 operator cockpit。
+
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **复核 operator note 后证据计数是否足够显眼**：成功反馈已说明“证据事件计数已刷新”；
-   下一轮轻量确认 replay inspector 里的 `Trace 事件` 计数是否容易被用户找到，必要时只改文案或位置提示，不扩完整 operator cockpit。
-2. **Run Detail 可读性微调**：artifact card 标题 / summary 已完成原始字段映射；下一轮只处理真实上手路径里仍明显影响理解的低风险文案或位置问题，不再扩大 Artifact schema / payload / bridge 范围。
-3. **轻量复核首屏密度**：右栏已完成 `待处理摘要` 与固定运行轻摘要，不再继续加卡片；如还有拥挤，只做间距 / 文案长度微调，不重新打开完整首屏重构。
+1. **默认 mock Desktop 手动上手烟测**：优先启动 Desktop，按“派发 internal trial -> 进入 Run Detail -> 添加 operator note -> 查看右侧 `Trace 事件` 计数变化”走一遍，确认文案是否真的帮助用户找到计数变化。
+2. **Replay inspector 局部微调**：如果手动烟测仍不够明显，只做局部视觉锚点、位置提示或短文案微调；不扩完整 operator cockpit，不改变 operator action API / ReplaySource shape / Desktop bridge。
+3. **Run Detail 其他可读性微调**：artifact card 标题 / summary、payload 加载成功反馈和 operator note 成功反馈都已完成；下一轮只处理真实上手路径里仍明显影响理解的低风险文案或位置问题。
 4. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
 
 ## 8. 风险与阻塞
 
 - Mission Control 首屏已经能让用户输入草稿、派发 bounded internal trial，并顺着 Run Detail 读取
   replay / artifact / operator note，说明“可初步体验”路径已成立；Run Detail 的 payload/note 成功态与 artifact card 标题 / summary 都已收成用户可读口径。
-- Run Detail artifact card 现在不再直接露出 `artifactRole`、`kind`、`visibility` 字段名；剩余风险转为
-  operator note 成功后，用户是否能快速定位 replay inspector 的 `Trace 事件` 计数变化。
+- Run Detail artifact card 现在不再直接露出 `artifactRole`、`kind`、`visibility` 字段名；operator note
+  成功提示也已指向右侧 replay inspector 的 `Trace 事件` 计数。剩余风险转为真实窗口里该计数位置是否足够显眼，需要下一轮手动上手烟测确认。
 - 首页左侧现在已把 Agent 总览、运行中 Agent 与最近进展合并，右栏也已收成 `待处理摘要`
   与固定运行轻摘要；首屏后续只做微调，不应再扩大新功能或重新堆卡片。
 - 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
