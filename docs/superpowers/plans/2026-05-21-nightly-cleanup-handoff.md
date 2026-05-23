@@ -762,7 +762,7 @@
 - 验证：`pnpm exec markdownlint-cli2 CHANGELOG.md docs/STATUS.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
   已通过。
 - 验证：`git diff --check` 已通过。
-- 提交前仍需最终复跑 Prettier / docs lint / diff check 并回填本轮 commit hash。
+- 本轮代码/正式文档提交：`d808fb7` `feat(desktop): 落地首页视觉基线 / land home visual baseline`。
 
 ## 7. 下一轮任务
 
