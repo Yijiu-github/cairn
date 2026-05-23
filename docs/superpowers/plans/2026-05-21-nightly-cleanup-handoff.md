@@ -78,7 +78,7 @@
 - `6145775` `feat(desktop): 压缩首页待处理摘要 / compress home pending summary`
 - `a1108bb` `feat(desktop): 压缩首页固定运行摘要 / compress pinned runs summary`
 - `b4cfce7` `fix(desktop): 收口运行详情反馈 / clarify run detail feedback`
-- `PENDING_THIS_ROUND` `fix(desktop): 收口产物卡片文案 / clarify artifact card copy`
+- `31d05e6` `fix(desktop): 收口产物卡片文案 / clarify artifact card copy`
 
 归档说明：
 
@@ -677,7 +677,7 @@
 - 保持边界：没有创建 `apps/web`，没有接真实 planner，没有开放自由文本执行，没有改变
   Desktop sidecar 默认 mock 或真实 Codex env opt-in，`data-smoke-id="run-internal-trial"` 仍保持稳定。
 - 验证：`pnpm --filter @cairn/desktop test -- --run src/renderer/src/run-detail-copy.spec.ts src/renderer/src/desktop-locale.spec.ts src/renderer/src/desktop-app.spec.ts`、`pnpm --filter @cairn/desktop typecheck`、`pnpm --filter @cairn/desktop lint`、`pnpm exec prettier --check apps/desktop/src/renderer/src/desktop-app.tsx apps/desktop/src/renderer/src/desktop-locale.ts apps/desktop/src/renderer/src/run-detail-copy.ts apps/desktop/src/renderer/src/run-detail-copy.spec.ts docs/engineering/local-dev-setup.md`、`pnpm exec markdownlint-cli2 docs/engineering/local-dev-setup.md`、`pnpm run docs:lint`、`git diff --check`。
-- 本轮代码/正式文档提交：`PENDING_THIS_ROUND` `fix(desktop): 收口产物卡片文案 / clarify artifact card copy`。
+- 本轮代码/正式文档提交：`31d05e6` `fix(desktop): 收口产物卡片文案 / clarify artifact card copy`。
 - 风险：Run Detail artifact card 的字段名噪音已收口；下一轮应优先轻量复核 operator note 成功反馈后，用户是否能快速找到“证据事件计数”的变化，只改文案或位置提示，不扩完整 operator cockpit。
 - 下一轮优先任务：Run Detail 中点击添加备注后，检查成功提示与 replay inspector 的 `Trace 事件` 计数是否形成清楚的视觉关联；必要时只做低风险文案 / 锚点提示，不改变 operator action API 或 replay data shape。
 
