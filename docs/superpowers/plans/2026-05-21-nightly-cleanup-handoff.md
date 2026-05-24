@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-24 09:22 CST
+> 最后更新：2026-05-24 09:55 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -37,9 +37,10 @@
 
 ## 3. 当前工作区状态
 
-2026-05-24 09:22 CST 复核：
+2026-05-24 09:55 CST 复核：
 
-- 本轮开始时，`docs/superpowers/README.md` 尚未存在；当前已补出短主索引并把 recurring mainline workstream 收束到 [`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)。
+- 主线短索引 [`../README.md`](../README.md) 与主题轨道 [`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)
+  仍是下一轮第一入口；[`../../STATUS.md`](../../STATUS.md) 已压回事实基线和下一轮入口，不再保存逐轮日志。
 
 - 本轮开始时 `HEAD` / `refs/heads/codex/cairn-mainline-ui` 为 `4e8fb87`
   `docs(superpowers): 收口主线索引与接力 / consolidate mainline index and handoff`。
@@ -50,7 +51,7 @@
   `git --git-dir=/Users/taosiyu/Code/cairn/.git update-ref` 移动分支，成功绕过该 gitdir 的
   `index.lock` / `HEAD.lock` 写权限限制并创建本地提交。普通 `git add`、当前 worktree 语境下的
   `git commit` / `git update-ref` 仍会因 linked-worktree gitdir 不可写失败。
-- `git diff HEAD --name-only` 在本轮开始时为空；不要用普通 `git status` 判断真实剩余 diff。
+- 临时 index 从 `HEAD` 重建后可正确判断真实 diff；不要用普通 `git status` 判断真实剩余 diff。
 - 当前文档主线已切到 Desktop UI 信息架构收口：主导航只保留 Home / Inbox、Runs、
   Runtime Status、Settings；Run Detail、Artifact Detail、Activity Timeline、Task Explorer 与
   Replay View 都是二级页面或观察面。
@@ -124,6 +125,8 @@
 - `2de3889` `docs(status): 收口 GUI 注册记录 / close gui registration notes`
 - `4c0c8dc` `docs(superpowers): 收口主线索引 / tighten mainline index`
 - `4e8fb87` `docs(superpowers): 收口主线索引与接力 / consolidate mainline index and handoff`
+- `51a7c19` `docs(trial): 校准接力提交状态 / align handoff commit state`
+- `e70388b` `docs(trial): 记录接力提交哈希 / record handoff commit hash`
 
 归档说明：
 
@@ -937,6 +940,18 @@
   `[ERROR] fetch failed`，因此本轮采用本地 binary 的 Markdown lint 结果，不重复 Electron / Chromium
   smoke。
 - 本轮文档提交：`51a7c19` `docs(trial): 校准接力提交状态 / align handoff commit state`。
+
+2026-05-24 09:55 CST 本轮完成：
+
+- 只处理文档结构收口：把 [`../../STATUS.md`](../../STATUS.md) 的“最近推进”从逐轮日志压缩成当前事实摘要，并把“本轮记录”改成下一轮入口。
+- 同步 [`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)，明确 `docs/STATUS.md` 不再保存逐轮验证日志；逐轮细节保留在本 handoff。
+- 没有修改 Desktop UI、Workspace Core、Desktop bridge、preload allowlist、runtime adapter、状态机或产品边界；没有重复 Electron / Chromium smoke。
+- 验证：`./node_modules/.bin/prettier --check docs/STATUS.md docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  通过；`./node_modules/.bin/markdownlint-cli2 docs/STATUS.md docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  通过；`git diff --check -- docs/STATUS.md docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  通过；临时 index 从 `HEAD` 重建后只看到本轮三份文档改动。`pnpm run docs:lint` 仍在入口层返回已知的
+  `[ERROR] fetch failed`。
+- 本轮文档提交：提交后补记。
 
 ## 7. 下一轮任务
 

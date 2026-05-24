@@ -16,6 +16,7 @@
 - `Run Detail`、`Artifact Detail`、`Activity Timeline`、`Task Explorer`、`Replay View` 都只作为二级观察面。
 - `docs/design/ux/` 里的信息架构、线框和视觉参考已经对齐到这套主导航。
 - `docs/STATUS.md` 已记录当前 GUI smoke 的真实阻塞，不再把 `ready-to-show` 超时写成唯一故障点。
+- `docs/STATUS.md` 已压回事实基线和下一轮入口，不再保留逐轮验证日志；逐轮细节留在当前 handoff。
 
 ## 3. 还要继续盯住的东西
 
@@ -33,4 +34,4 @@
 
 ## 5. 下一小步
 
-等 GUI 证据路径恢复后，只针对新截图里真正出现的 1280px 与窄窗口差异做最小修正，然后把结论写回 `docs/STATUS.md` 和主索引。
+如果继续做文档收口，优先把当前 handoff 的“最新完成 / 风险阻塞”压短到只保留可复用事实；不要新建每轮记录文件。等 GUI 证据路径恢复后，只针对新截图里真正出现的 1280px 与窄窗口差异做最小修正，然后把结论写回 `docs/STATUS.md` 和本主题轨道。
