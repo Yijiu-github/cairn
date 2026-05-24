@@ -71,6 +71,7 @@ describe('desktop locale', () => {
     expect(copy.runStateLoadingLabel).toBe('加载中');
     expect(copy.sourceRootsEmptyTitle).toBe('还没有连接源目录');
     expect(copy.safetyLocalPathRevealValue).toBe('默认隐藏');
+    expect(copy.shellMetadataLabel).toBe('桌面壳元数据');
     expect(copy.preloadAllowlistLabel).toBe('桌面桥接范围');
     expect(copy.liveActionsValue).toBe('受限接管动作');
     expect(copy.operatorActionApplied).toBe('接管动作已完成');

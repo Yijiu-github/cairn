@@ -223,6 +223,23 @@ describe('DesktopApp home screen', () => {
     expect(markup).not.toContain('aria-label="Primary"');
   });
 
+  it('localizes sidebar metadata accessibility labels on the default zh-CN shell', () => {
+    globalThis.window = {
+      cairnDesktop: {
+        app: {
+          mode: 'desktop-observer',
+          name: 'Cairn Desktop',
+        },
+      },
+      localStorage: createStorage(),
+    } as unknown as Window & typeof globalThis;
+
+    const markup = renderToStaticMarkup(createElement(DesktopApp));
+
+    expect(markup).toContain('aria-label="桌面壳元数据"');
+    expect(markup).not.toContain('aria-label="Shell metadata"');
+  });
+
   it('does not keep hard-coded English empty run-id errors in renderer code', () => {
     const appSource = readFileSync(new URL('./desktop-app.tsx', import.meta.url), 'utf8');
     const loaderSource = readFileSync(new URL('./run-replay-loader.ts', import.meta.url), 'utf8');

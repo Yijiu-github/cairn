@@ -142,6 +142,7 @@ export interface DesktopLocaleStrings {
   readonly serviceChecking: string;
   readonly settingsTabDescription: string;
   readonly settingsTabLabel: string;
+  readonly shellMetadataLabel: string;
   readonly shellStatusLabel: string;
   readonly shellStatusStatic: string;
   readonly shellTitle: string;
@@ -343,6 +344,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     runtimeLabel: 'Runtime',
     settingsTabDescription: 'Source roots and desktop shell configuration placeholders.',
     settingsTabLabel: 'Settings',
+    shellMetadataLabel: 'Shell metadata',
     shellStatusLabel: 'Shell status',
     shellStatusStatic: 'static',
     shellTitle: 'Desktop content',
@@ -594,6 +596,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     runtimeLabel: '运行时',
     settingsTabDescription: '源目录与桌面壳配置占位。',
     settingsTabLabel: '设置',
+    shellMetadataLabel: '桌面壳元数据',
     shellStatusLabel: '壳状态',
     shellStatusStatic: '静态',
     shellTitle: '桌面内容',

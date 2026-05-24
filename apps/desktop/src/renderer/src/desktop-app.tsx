@@ -269,7 +269,7 @@ export function DesktopApp() {
           {copy.desktopSummary}
         </InlineAlert>
 
-        <div className="sidebar-footer" aria-label="Shell metadata">
+        <div className="sidebar-footer" aria-label={copy.shellMetadataLabel}>
           <span>
             {copy.modeLabel}: {window.cairnDesktop?.app.mode ?? 'static-preview'}
           </span>
