@@ -936,7 +936,7 @@
   临时 index 从 `HEAD` 重建后只看到本 handoff 文件改动。`pnpm run docs:lint` 仍在入口层返回已知的
   `[ERROR] fetch failed`，因此本轮采用本地 binary 的 Markdown lint 结果，不重复 Electron / Chromium
   smoke。
-- 本轮提交：本段 handoff 事实收口提交，最终 hash 见自动化 memory / final。
+- 本轮文档提交：`51a7c19` `docs(trial): 校准接力提交状态 / align handoff commit state`。
 
 ## 7. 下一轮任务
 
