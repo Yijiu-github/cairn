@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-24 10:30 CST
+> 最后更新：2026-05-24 10:52 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -37,13 +37,13 @@
 
 ## 3. 当前工作区状态
 
-2026-05-24 10:22 CST 复核：
+2026-05-24 10:52 CST 复核：
 
 - 主线短索引 [`../README.md`](../README.md) 与主题轨道 [`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)
   仍是下一轮第一入口；[`../../STATUS.md`](../../STATUS.md) 已压回事实基线和下一轮入口，不再保存逐轮日志。
 
-- 本轮开始时 `HEAD` / `refs/heads/codex/cairn-mainline-ui` 为 `6f8c48b`
-  `docs(trial): 记录状态页收口提交 / record status cleanup commit`。
+- 本轮开始时 `HEAD` / `refs/heads/codex/cairn-mainline-ui` 为 `9c83db9`
+  `docs(trial): 记录接力压缩提交 / record handoff compression commit`。
 - `git status --short` 仍会显示多份 UX 文档 / SVG 的 staged / unstaged mismatch；这是因为当前沙箱仍无法写
   `/Users/taosiyu/Code/cairn/.git/worktrees/codex-cairn-mainline-ui`，真实 linked-worktree index
   无法刷新。不要把这组 `MM` 误判为未提交 UX 工作。
@@ -425,6 +425,8 @@
 - `3c1fcc9`、`6f8c48b`：把 `docs/STATUS.md` 从逐轮日志压回事实基线，并记录该提交已落地。
 - `a80c712` `docs(trial): 压缩接力记录 / compress handoff log`：把本 handoff 的“最新完成 / 风险阻塞”
   从逐轮长日志压成当前可复用结论、最近接力记录和短风险清单。
+- `9c83db9` `docs(trial): 记录接力压缩提交 / record handoff compression commit`：记录上一次 handoff
+  压缩提交，当前普通 `git status` 仍不可信，继续以临时 index 判断真实 diff。
 
 ## 7. 下一轮任务
 
