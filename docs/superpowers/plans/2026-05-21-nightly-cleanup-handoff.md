@@ -172,7 +172,7 @@
 
 - 复核 `docs/superpowers/README.md`、`docs/superpowers/tracks/mainline-ui.md`、`docs/STATUS.md`；短索引、主题轨道和状态基线没有新漂移。
 - 没有重复普通 Electron / Chromium smoke，也没有把缺证据的视觉猜测写成事实。
-- 本轮提交：待记录。
+- 本轮提交：`0814bca4554c2e413881691fc50496d4167ccaef` `docs(trial): 记录主线复核 / record mainline recheck`。
 
 2026-05-22 02:35 CST 本轮文档整理验证通过：
 
