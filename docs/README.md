@@ -8,15 +8,15 @@
 
 ```text
 docs/
-├─ product/      ← 1. 为什么做 / 给谁做 / 做到什么程度
-├─ reference/    ← 2. 外部项目参考、术语、命名约定等长期参照
-├─ design/       ← 3. 系统怎么设计（领域模型、状态机、安全、分发、回放）
-├─ adr/          ← 4. 关键决策的不可变记录（Architecture Decision Records）
-├─ contracts/    ← 5. 对外/对内的协议契约（API、事件、adapter 接口）
-├─ engineering/  ← 6. 怎么开发、怎么测、怎么发布
-├─ ops/          ← 7. 给最终用户的安装与使用文档
-├─ legal/        ← 8. 隐私、数据本地化、第三方依赖声明
-└─ reference/    ← 9. 术语表、命名约定、复盘模板等长期参照
+├─ product/      ← 为什么做 / 给谁做 / 做到什么程度
+├─ reference/    ← 外部项目参考、术语、命名约定等长期参照
+├─ design/       ← 系统怎么设计（领域模型、状态机、安全、分发、回放）
+├─ adr/          ← 关键决策的不可变记录（Architecture Decision Records）
+├─ contracts/    ← 对外/对内的协议契约（API、事件、adapter 接口）
+├─ engineering/  ← 怎么开发、怎么测、怎么发布
+├─ superpowers/  ← 主线自动化索引 / 主题轨道 / 接力记录
+├─ ops/          ← 给最终用户的安装与使用文档
+└─ legal/        ← 隐私、数据本地化、第三方依赖声明
 ```
 
 ## 怎么用

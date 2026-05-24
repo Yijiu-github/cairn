@@ -83,10 +83,10 @@ Web Shell 仍未创建；第一轮内部开发者试用仍只验证 `Desktop + e
 ## 8. 本轮记录
 
 - 完成：把 `docs/superpowers/README.md` 设为短主索引，并把主线工作收束到 `docs/superpowers/tracks/mainline-ui.md`；后续 recurring 轮次先看这两个文件，再看 `docs/STATUS.md`。
-- 验证：待本轮文档格式与 diff 检查完成后补写。
+- 验证：`./node_modules/.bin/prettier --check docs/README.md docs/STATUS.md docs/superpowers/README.md docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 通过；`./node_modules/.bin/markdownlint-cli2 docs/README.md docs/STATUS.md docs/superpowers/README.md docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 通过；`git diff --check -- docs/README.md docs/STATUS.md docs/superpowers/README.md docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 通过。
 - 阻塞：当前 GUI app registration 阻塞仍在，普通 Electron / Chromium smoke 继续不作为本轮新证据。
 - 风险：当前 handoff 仍保留较长历史记录，只是入口已迁移到更短的主索引和主题轨道。
-- Commit：待本轮提交后补写。
+- Commit：`4c0c8dc40c06d0afc045d08d7bc3d1c760ad2ba3` `docs(superpowers): 收口主线索引 / tighten mainline index`
 - 下一轮：只在有新 GUI 证据时再做 Desktop UI 的最小视觉 / 信息架构修正。
 
 - 完成：复核 Desktop visual smoke 的环境边界，确认当前阻塞同时影响 Electron 与 Playwright Chromium，不是 Cairn renderer / `ready-to-show` 链路的单点问题。

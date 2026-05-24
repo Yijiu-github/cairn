@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-24 08:01 CST
+> 最后更新：2026-05-24 08:14 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -37,7 +37,7 @@
 
 ## 3. 当前工作区状态
 
-2026-05-24 07:26 CST 复核：
+2026-05-24 08:14 CST 复核：
 
 - 本轮开始时，`docs/superpowers/README.md` 尚未存在；当前已补出短主索引并把 recurring mainline workstream 收束到 [`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)。
 
