@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-24 08:14 CST
+> 最后更新：2026-05-24 09:22 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -37,12 +37,12 @@
 
 ## 3. 当前工作区状态
 
-2026-05-24 08:14 CST 复核：
+2026-05-24 09:22 CST 复核：
 
 - 本轮开始时，`docs/superpowers/README.md` 尚未存在；当前已补出短主索引并把 recurring mainline workstream 收束到 [`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)。
 
-- 当前 `HEAD` / `refs/heads/codex/cairn-mainline-ui` 为 `9540181`
-  `docs(status): 记录窗口烟测诊断提交 / record window smoke diagnostics commit`。
+- 本轮开始时 `HEAD` / `refs/heads/codex/cairn-mainline-ui` 为 `4e8fb87`
+  `docs(superpowers): 收口主线索引与接力 / consolidate mainline index and handoff`。
 - `git status --short` 仍会显示多份 UX 文档 / SVG 的 staged / unstaged mismatch；这是因为当前沙箱仍无法写
   `/Users/taosiyu/Code/cairn/.git/worktrees/codex-cairn-mainline-ui`，真实 linked-worktree index
   无法刷新。不要把这组 `MM` 误判为未提交 UX 工作。
@@ -121,6 +121,9 @@
 - `647a6c9` `test(desktop): 收紧窗口烟测诊断 / clarify window smoke diagnostics`
 - `9540181` `docs(status): 记录窗口烟测诊断提交 / record window smoke diagnostics commit`
 - `4aa70ea` `docs(status): 记录 GUI 注册阻塞 / record gui registration blocker`
+- `2de3889` `docs(status): 收口 GUI 注册记录 / close gui registration notes`
+- `4c0c8dc` `docs(superpowers): 收口主线索引 / tighten mainline index`
+- `4e8fb87` `docs(superpowers): 收口主线索引与接力 / consolidate mainline index and handoff`
 
 归档说明：
 
@@ -919,6 +922,21 @@
 - 验证：`../../node_modules/.bin/vitest run scripts/window-smoke-runner.spec.mjs --config vitest.config.ts`
   通过；`node scripts/window-smoke.mjs` 按预期失败并输出真实早退 signal；Playwright Chromium probe 按预期失败并给出 Mach bootstrap 权限证据。
 - 本轮提交：`4aa70ea` `docs(status): 记录 GUI 注册阻塞 / record gui registration blocker`。
+
+2026-05-24 09:22 CST 本轮完成：
+
+- 只处理接力文档事实漂移：复核临时 index 后确认真实 worktree 相对 `HEAD` 无剩余 diff，普通 `git status`
+  的 delete/add 与 `MM` 仍是 linked-worktree index stale 噪音。
+- 将当前 handoff 的 `HEAD` 记录从过期的 `9540181` 更新为本轮开始时的 `4e8fb87`，并把
+  `2de3889`、`4c0c8dc`、`4e8fb87` 补进近期主线提交列表。
+- 没有修改 Desktop UI、Workspace Core、Desktop bridge、preload allowlist、runtime adapter、状态机或产品边界。
+- 验证：`./node_modules/.bin/prettier --check docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  通过；`./node_modules/.bin/markdownlint-cli2 docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+  通过；`git diff --check -- docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 通过；
+  临时 index 从 `HEAD` 重建后只看到本 handoff 文件改动。`pnpm run docs:lint` 仍在入口层返回已知的
+  `[ERROR] fetch failed`，因此本轮采用本地 binary 的 Markdown lint 结果，不重复 Electron / Chromium
+  smoke。
+- 本轮提交：本段 handoff 事实收口提交，最终 hash 见自动化 memory / final。
 
 ## 7. 下一轮任务
 
