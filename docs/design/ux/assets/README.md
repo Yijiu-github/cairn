@@ -1,7 +1,7 @@
 # Design Assets
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-15
+> 最后更新：2026-05-24
 
 本目录存放 Cairn UX 相关轻量视觉资产。
 
@@ -17,9 +17,9 @@
 | [`ui-v1-run-detail.svg`](visual-v1/ui-v1-run-detail.svg)                      | 视觉参考 V1 | 手写 SVG，未使用 image2 | Run Detail 控制台方向             |
 | [`ui-v1-artifact-detail.svg`](visual-v1/ui-v1-artifact-detail.svg)            | 视觉参考 V1 | 手写 SVG，未使用 image2 | Artifact review / provenance 方向 |
 | [`ui-v1-run-list-zh.svg`](visual-v1/ui-v1-run-list-zh.svg)                    | 视觉参考 V1 | 手写 SVG，未使用 image2 | Run List 中文主界面参考           |
-| [`ui-v1-activity-timeline-zh.svg`](visual-v1/ui-v1-activity-timeline-zh.svg)  | 视觉参考 V1 | 手写 SVG，未使用 image2 | Activity Timeline 中文主界面参考  |
-| [`ui-v1-task-explorer-zh.svg`](visual-v1/ui-v1-task-explorer-zh.svg)          | 视觉参考 V1 | 手写 SVG，未使用 image2 | Task Explorer 中文主界面参考      |
-| [`ui-v1-replay-view-zh.svg`](visual-v1/ui-v1-replay-view-zh.svg)              | 视觉参考 V1 | 手写 SVG，未使用 image2 | Replay View 中文主界面参考        |
+| [`ui-v1-activity-timeline-zh.svg`](visual-v1/ui-v1-activity-timeline-zh.svg)  | 视觉参考 V1 | 手写 SVG，未使用 image2 | Activity Timeline 二级观察面参考  |
+| [`ui-v1-task-explorer-zh.svg`](visual-v1/ui-v1-task-explorer-zh.svg)          | 视觉参考 V1 | 手写 SVG，未使用 image2 | Task Explorer 二级观察面参考      |
+| [`ui-v1-replay-view-zh.svg`](visual-v1/ui-v1-replay-view-zh.svg)              | 视觉参考 V1 | 手写 SVG，未使用 image2 | Replay View 二级观察面参考        |
 | [`ui-v1-settings-zh.svg`](visual-v1/ui-v1-settings-zh.svg)                    | 视觉参考 V1 | 手写 SVG，未使用 image2 | Settings 中文主界面参考           |
 | [`ui-v1-component-states-zh.svg`](components/ui-v1-component-states-zh.svg)   | 视觉参考 V1 | 手写 SVG，未使用 image2 | 组件状态、空错态与危险确认参考    |
 | [`ui-v1-command-menu-zh.svg`](detail-themes/ui-v1-command-menu-zh.svg)        | 视觉参考 V1 | 手写 SVG，未使用 image2 | 命令菜单细节参考                  |     | [`ui-v1-protected-action-zh.svg`](detail-themes/ui-v1-protected-action-zh.svg) | 视觉参考 V1 | 手写 SVG，未使用 image2 | 受保护动作确认参考 |     | [`ui-v1-diagnostic-export-zh.svg`](detail-themes/ui-v1-diagnostic-export-zh.svg) | 视觉参考 V1 | 手写 SVG，未使用 image2 | 诊断导出细节参考 |     | [`ui-v1-appearance-language-zh.svg`](detail-themes/ui-v1-appearance-language-zh.svg) | 视觉参考 V1 | 手写 SVG，未使用 image2 | 外观与语言主题参考 |     | [`ui-v1-empty-error-detail-zh.svg`](detail-themes/ui-v1-empty-error-detail-zh.svg) | 视觉参考 V1 | 手写 SVG，未使用 image2 | 空错态细节参考 |

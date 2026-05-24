@@ -9,7 +9,7 @@
 ```text
 docs/
 ├─ product/      ← 1. 为什么做 / 给谁做 / 做到什么程度
-├─ research/     ← 2. 外部调研、产品模式、技术趋势与对 Cairn 的映射
+├─ reference/    ← 2. 外部项目参考、术语、命名约定等长期参照
 ├─ design/       ← 3. 系统怎么设计（领域模型、状态机、安全、分发、回放）
 ├─ adr/          ← 4. 关键决策的不可变记录（Architecture Decision Records）
 ├─ contracts/    ← 5. 对外/对内的协议契约（API、事件、adapter 接口）
@@ -24,10 +24,11 @@ docs/
 | 我的角色                     | 先读这里                                                                                            |
 | ---------------------------- | --------------------------------------------------------------------------------------------------- |
 | **新协作者**                 | `product/positioning-and-boundaries.md` → `design/设计文档V0.1.0.md` → `engineering/repo-layout.md` |
-| **产品 / 设计**              | `product/` 全部 + `research/` + `design/ux/`                                                        |
-| **要看外部调研**             | `research/README.md` → `research/agent-workspace-product-patterns-2026-05.md`                       |
+| **产品 / 设计**              | `product/` 全部 + `reference/` + `design/ux/`                                                       |
+| **要看外部项目参考**         | `reference/README.md` → `reference/external-project-radar.md`                                       |
 | **后端 / 架构**              | `design/` + `adr/` + `contracts/`                                                                   |
 | **AI 编码协作 / review**     | `engineering/agent-collaboration.md`                                                                |
+| **要看主线自动化接力**       | `superpowers/README.md`                                                                             |
 | **要确认当前项目状态**       | `STATUS.md`                                                                                         |
 | **要做 runtime 接入**        | `contracts/runtime-adapter.md`，R1 Codex 闭环见 `design/r1-codex-e2e-artifact-trace.md`             |
 | **要做代码上下文索引**       | `design/code-context-index.md`                                                                      |
@@ -41,7 +42,7 @@ docs/
 
 - 所有 Markdown 文件统一使用简体中文为主，英文术语保留原文（首次出现给中文译名）
 - 每份文档头部应有：标题、状态（Draft / Accepted / Superseded / Archived）、最后更新日期
-- `research/` 是调研输入，不是实现规范；被采纳的结论必须同步到 `product/`、`design/`、`contracts/`、`adr/`、`legal/` 或 `ops/`
+- `reference/` 是长期参照，不是实现规范；被采纳的结论必须同步到 `product/`、`design/`、`contracts/`、`adr/`、`legal/` 或 `ops/`
 - 跨文档引用使用相对路径，不使用绝对 URL
 - 删除文档前先标记为 `Archived`，保留 6 个月再移除
 - 重大变更必须更新 [`CHANGELOG.md`](../CHANGELOG.md)

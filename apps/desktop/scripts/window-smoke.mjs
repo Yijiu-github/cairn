@@ -6,8 +6,9 @@ import { tmpdir } from 'node:os';
 import process from 'node:process';
 import { dirname, join } from 'node:path';
 import { clearTimeout, setTimeout } from 'node:timers';
-import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath, URL } from 'node:url';
+
+import { waitForDesktopSmokeSignal } from './window-smoke-runner.mjs';
 
 const expectedEvent = 'main-window-ready-to-show';
 const timeoutMs = 20_000;
@@ -33,7 +34,6 @@ const child = spawn(electronBin, ['.'], {
 
 let stdout = '';
 let stderr = '';
-let spawnError;
 child.stdout.setEncoding('utf8');
 child.stderr.setEncoding('utf8');
 child.stdout.on('data', (chunk) => {
@@ -41,9 +41,6 @@ child.stdout.on('data', (chunk) => {
 });
 child.stderr.on('data', (chunk) => {
   stderr += chunk;
-});
-child.once('error', (error) => {
-  spawnError = error;
 });
 
 try {
@@ -63,24 +60,14 @@ try {
 }
 
 async function waitForSignal() {
-  const deadline = Date.now() + timeoutMs;
-
-  while (Date.now() < deadline) {
-    if (spawnError !== undefined) {
-      throw spawnError;
-    }
-
-    const signal = await readSignal();
-    if (signal?.event === expectedEvent) {
-      return;
-    }
-
-    await delay(pollIntervalMs);
-  }
-
-  throw new Error(
-    `Timed out waiting for Desktop window smoke event ${expectedEvent}.\n${formatOutput()}`,
-  );
+  return waitForDesktopSmokeSignal({
+    child,
+    expectedEvent,
+    formatOutput,
+    pollIntervalMs,
+    readSignal,
+    timeoutMs,
+  });
 }
 
 async function findElectronBin(packageRoot) {

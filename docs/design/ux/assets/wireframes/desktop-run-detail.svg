@@ -7,8 +7,8 @@
   <text x="96" y="30" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#5c6573">Personal Workspace ▾</text>
   <rect x="0" y="48" width="80" height="772" fill="#ffffff" stroke="#d9dde3"/>
   <text x="24" y="96" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#334155">Runs</text>
-  <text x="24" y="136" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#94a3b8">Tasks</text>
-  <text x="24" y="176" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#94a3b8">Files</text>
+  <text x="24" y="136" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#94a3b8">Detail</text>
+  <text x="24" y="176" font-family="Inter, system-ui, sans-serif" font-size="13" fill="#94a3b8">Evidence</text>
 
   <rect x="80" y="48" width="280" height="772" fill="#fbfcfe" stroke="#d9dde3"/>
   <text x="108" y="92" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="700" fill="#111827">Task Tree</text>

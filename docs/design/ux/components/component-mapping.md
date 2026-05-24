@@ -1,8 +1,8 @@
 # UX 到工程实现映射 / UX to Implementation Mapping
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-15
-> 范围：把 R1 UX 文档落到 `packages/ui`、`apps/desktop`、未来 `apps/web` 与 core contracts 的实现边界。
+> 最后更新：2026-05-24
+> 范围：把 R1 UX 文档落到 `packages/ui`、`apps/desktop`、未来 `apps/web` 与 core contracts 的实现边界；R1 主导航以 Home / Inbox、Runs、Runtime Status、Settings 为准。
 
 ---
 
@@ -18,15 +18,17 @@
 
 ## 2. 页面到实现映射
 
-| UX 页面             | 路由                     | 页面容器             | 共享组件                                                                                                         | 桌面专属依赖                                      | 数据来源                                                                                  |
-| ------------------- | ------------------------ | -------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| First Launch Wizard | `/first-launch`          | `FirstLaunchPage`    | `WizardShell`, `RuntimeHealthCard`, `PathField`                                                                  | folder picker、启动 core、打开日志                | `workspace.initialize`, `core.health`, `runtime.detect`                                   |
-| Home / Inbox        | `/`                      | `HomePage`           | `NewRunComposer`, `HandoffQueue`, `AttentionCard`, `RunCard`, `RuntimeMiniStatus`                                | working directory picker、文件附件 picker         | `runs.listRecent`, `interventions.listOpen`, `artifactReviews.listOpen`, `runtime.status` |
-| Run List            | `/runs`                  | `RunListPage`        | `RunFilterBar`, `RunCard`, `StatusBadge`, `ErrorSummary`                                                         | 无；打开本地目录动作隐藏在 artifact               | `runs.list`                                                                               |
-| Run Detail          | `/runs/:runId`           | `RunDetailPage`      | `RunHeader`, `TaskTree`, `AgentRunLog`, `TraceTimeline`, `EvidencePanel`, `ArtifactRail`, `InterventionComposer` | reveal artifact、系统通知入口                     | `runs.get`, `trace.stream`, `artifacts.listForRun`                                        |
-| Artifact Detail     | `/artifacts/:artifactId` | `ArtifactDetailPage` | `ArtifactPreview`, `ProvenancePanel`, `TraceLinkList`                                                            | open external、reveal in Finder/Explorer          | `artifacts.get`, `trace.listByArtifact`                                                   |
-| Runtime Status      | `/agents`                | `RuntimeStatusPage`  | `RuntimeHealthCard`, `CoreHealthCard`, `DiagnosticPanel`                                                         | restart core、open logs、export diagnostic bundle | `core.health`, `runtime.healthCheck`, `queue.status`                                      |
-| Settings            | `/settings/*`            | `SettingsPage`       | `SettingsSection`, `DangerZone`, `PermissionHistory`                                                             | keychain bridge、update checker、local paths      | `settings.get/update`, `security.audit`                                                   |
+| UX 页面             | 入口 / 路由              | 层级     | 页面容器             | 共享组件                                                                                                         | 桌面专属依赖                                      | 数据来源                                                                                  |
+| ------------------- | ------------------------ | -------- | -------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| First Launch Wizard | `/first-launch`          | 启动流程 | `FirstLaunchPage`    | `WizardShell`, `RuntimeHealthCard`, `PathField`                                                                  | folder picker、启动 core、打开日志                | `workspace.initialize`, `core.health`, `runtime.detect`                                   |
+| Home / Inbox        | `/`                      | 主入口   | `HomePage`           | `NewRunComposer`, `HandoffQueue`, `AttentionCard`, `RunCard`, `RuntimeMiniStatus`                                | working directory picker、文件附件 picker         | `runs.listRecent`, `interventions.listOpen`, `artifactReviews.listOpen`, `runtime.status` |
+| Run List            | `/runs`                  | 主入口   | `RunListPage`        | `RunFilterBar`, `RunCard`, `StatusBadge`, `ErrorSummary`                                                         | 无；打开本地目录动作隐藏在 artifact               | `runs.list`                                                                               |
+| Runtime Status      | `/runtime`               | 主入口   | `RuntimeStatusPage`  | `RuntimeHealthCard`, `CoreHealthCard`, `DiagnosticPanel`                                                         | restart core、open logs、export diagnostic bundle | `core.health`, `runtime.healthCheck`, `queue.status`                                      |
+| Settings            | `/settings/*`            | 主入口   | `SettingsPage`       | `SettingsSection`, `DangerZone`, `PermissionHistory`                                                             | keychain bridge、update checker、local paths      | `settings.get/update`, `security.audit`                                                   |
+| Run Detail          | `/runs/:runId`           | 二级页面 | `RunDetailPage`      | `RunHeader`, `TaskTree`, `AgentRunLog`, `TraceTimeline`, `EvidencePanel`, `ArtifactRail`, `InterventionComposer` | reveal artifact、系统通知入口                     | `runs.get`, `trace.stream`, `artifacts.listForRun`                                        |
+| Artifact Detail     | `/artifacts/:artifactId` | 二级页面 | `ArtifactDetailPage` | `ArtifactPreview`, `ProvenancePanel`, `TraceLinkList`                                                            | open external、reveal in Finder/Explorer          | `artifacts.get`, `trace.listByArtifact`                                                   |
+
+`Task Explorer`、`Activity Timeline` 与 `Replay View` 当前作为 Run Detail 内的二级观察面或从 run 上下文进入的只读页面实现；不要把它们重新提升为 R1 Desktop 主导航项。若代码或原型仍保留 `/agents` 等历史 route id，用户可见文案必须映射为 `Runtime Status`，且不把 `Agents` 作为主入口名称。
 
 ## 3. 核心组件契约草案
 
@@ -124,6 +126,7 @@
 
 ## 6. 变更历史
 
-| 日期       | 变更 |
-| ---------- | ---- |
-| 2026-05-15 | 初版 |
+| 日期       | 变更                                                        |
+| ---------- | ----------------------------------------------------------- |
+| 2026-05-24 | 对齐 R1 主导航与二级观察面，Runtime Status 改用当前路由口径 |
+| 2026-05-15 | 初版                                                        |

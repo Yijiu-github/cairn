@@ -15,8 +15,8 @@
 | `replay-and-recovery.md`         | "回放"的明确定义 + 桌面崩溃恢复机制 + heartbeat/lease 字段                       | 🟡 Draft    |
 | `code-context-index.md`          | 本地优先的轻量代码上下文索引、ContextPack 与索引隐私边界                         | 🟡 Draft    |
 | `r1-codex-e2e-artifact-trace.md` | R1 Codex E2E + Artifact / Trace 最小闭环设计                                     | 🟡 Draft    |
-| `ux/`                            | 信息架构、关键流程、屏幕清单                                                     | ⚪ TODO     |
-| `../research/`                   | 外部调研输入；仅作为设计来源，采纳后必须落入本目录或 ADR / contracts             | 🟡 Draft    |
+| `ux/`                            | 信息架构、关键流程、屏幕清单                                                     | 🟡 Draft    |
+| `../reference/external-project-radar.md` | 外部项目参考输入；仅作为设计来源，采纳后必须落入本目录或 ADR / contracts | 🟡 Draft    |
 
 ## R1 设计硬规则（由调研提升）
 

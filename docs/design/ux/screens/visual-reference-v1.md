@@ -1,7 +1,7 @@
 # UI 视觉参考 V1 / Visual Reference V1
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-15
+> 最后更新：2026-05-24
 > 来源：手写 SVG，未使用 image2。
 > 语言策略：中文为主，英文可切换；现有英文图作为英文 locale 参考。
 
@@ -90,13 +90,13 @@
 
 ![Activity Timeline](../assets/visual-v1/ui-v1-activity-timeline-zh.svg)
 
-重点：跨运行事件复盘、审计与来源跳转，不替代 Run Detail。
+重点：跨运行事件复盘、审计与来源跳转，不替代 Run Detail，也不作为 R1 Desktop 主导航入口。
 
 ### 3.8 Task Explorer
 
 ![Task Explorer](../assets/visual-v1/ui-v1-task-explorer-zh.svg)
 
-重点：跨 run 查任务、看依赖与 attempt，快速回到来源 run。
+重点：从 Run Detail 或 run 上下文进入，跨 run 查任务、看依赖与 attempt，快速回到来源 run。
 
 ### 3.9 Replay View
 
@@ -157,6 +157,7 @@
 
 ## 6. 变更历史
 
-| 日期       | 变更                                                                                     |
-| ---------- | ---------------------------------------------------------------------------------------- |
-| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十七张视觉参考 SVG |
+| 日期       | 变更                                                                                            |
+| ---------- | ----------------------------------------------------------------------------------------------- |
+| 2026-05-24 | 同步主导航命名：Home / Inbox、Runs、Runtime Status、Settings，明确 Activity / Task 为二级观察面 |
+| 2026-05-15 | 初版：Home、Run Detail、Artifact Detail、First Launch、Runtime Status 十七张视觉参考 SVG        |

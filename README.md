@@ -32,18 +32,13 @@ Cairn 不试图替代 Codex、Claude Code、Cursor 或 Windsurf 的代码生成�
 
 ## 当前状态
 
-> **Pre-Release / 工程基线建设阶段**
+> **Pre-Release / Desktop UI 收口阶段**
 
-- ✅ 设计文档 V0.1.0 已定稿，并补充 runtime 控制面 / 证据层定位语义（见 [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)）
-- ✅ Monorepo 工程基线、共享契约、领域持久化 schema、SQLite storage、Runtime Gateway 与 Application 编排基线已启动
-- ✅ Workspace Core 最小服务骨架已启动：Fastify 入口、健康检查、R1 run/task/agent-run 基础 HTTP 闭环与 mock runtime 验证
-- 🚧 Desktop 已有最小 Electron shell、静态 UI 壳视图与 Workspace Core dev sidecar bridge；默认 sidecar runtime 仍为 mock，真实 Codex 需显式 opt-in
-- 🚧 当前正在收口第一轮**内部开发者试用**：目标是验证 `Desktop + embedded Workspace Core + Codex runtime` 的最小真实闭环；这不是外部 alpha，也不包含 `apps/web`、安装器、签名或公证
+- ✅ 设计文档 V0.1.0 已定稿（见 [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)）
+- 📌 当前事实基线与下一轮入口见 [`docs/STATUS.md`](docs/STATUS.md)
 - 🗓 Release 1 目标：Personal Desktop Edition（Windows + macOS Apple Silicon）
 
-详情见 [`docs/product/roadmap.md`](docs/product/roadmap.md)。
-
-内部试用范围、前提、smoke path、排障与最终 gate 见 [`docs/ops/internal-trial-runbook.md`](docs/ops/internal-trial-runbook.md)。
+详情见 [`docs/product/roadmap.md`](docs/product/roadmap.md) 与 [`docs/ops/internal-trial-runbook.md`](docs/ops/internal-trial-runbook.md)。
 
 ---
 
@@ -51,10 +46,11 @@ Cairn 不试图替代 Codex、Claude Code、Cursor 或 Windsurf 的代码生成�
 
 | 我想……                                   | 去看                                                                       |
 | ---------------------------------------- | -------------------------------------------------------------------------- |
+| 看当前主线状态与最近推进                 | [`docs/STATUS.md`](docs/STATUS.md)                                         |
 | 了解产品愿景与定位                       | [`docs/product/`](docs/product/)                                           |
 | 看完整的设计主稿                         | [`docs/design/设计文档V0.1.0.md`](docs/design/设计文档V0.1.0.md)           |
 | 看领域模型 / 状态机 / 安全模型等设计细节 | [`docs/design/`](docs/design/)                                             |
-| 看外部调研与产品模式参考                 | [`docs/research/`](docs/research/)                                         |
+| 看外部项目参考                           | [`docs/reference/`](docs/reference/)                                       |
 | 了解为什么选 Electron / Node / SQLite 等 | [`docs/adr/`](docs/adr/)                                                   |
 | 接入新的 runtime adapter                 | [`docs/contracts/runtime-adapter.md`](docs/contracts/runtime-adapter.md)   |
 | 了解仓库结构、代码风格、测试策略         | [`docs/engineering/`](docs/engineering/)                                   |

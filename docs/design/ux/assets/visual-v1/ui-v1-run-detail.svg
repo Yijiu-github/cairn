@@ -43,8 +43,8 @@
 
   <rect x="54" y="118" width="84" height="788" fill="#ffffff" stroke="#e2e8f0"/>
   <text x="78" y="170" class="ui blue" font-size="13" font-weight="700">Runs</text>
-  <text x="78" y="222" class="ui soft" font-size="13">Tasks</text>
-  <text x="78" y="274" class="ui soft" font-size="13">Files</text>
+  <text x="78" y="222" class="ui soft" font-size="13">Detail</text>
+  <text x="78" y="274" class="ui soft" font-size="13">Evidence</text>
 
   <rect x="138" y="118" width="304" height="788" fill="#fbfdff" stroke="#e2e8f0"/>
   <text x="174" y="168" class="ui title" font-size="18">Task tree</text>

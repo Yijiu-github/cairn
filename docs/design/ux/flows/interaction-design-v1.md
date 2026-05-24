@@ -1,7 +1,7 @@
 # Interaction Design V1
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-15
+> 最后更新：2026-05-24
 > 范围：Cairn R1 桌面端主要页面交互；中文为主，英文可切换。
 
 ---
@@ -28,6 +28,8 @@
 
 ## 3. 页面级交互
 
+R1 Desktop 主导航只保留 Home / Inbox、Runs、Runtime Status、Settings。Activity Timeline、Task Explorer 与 Replay View 是 Run Detail 或 run 上下文里的二级观察面，交互设计只定义它们的局部行为，不把它们提升为独立主入口。
+
 ### 3.1 Run List
 
 - 默认排序：blocked / failed / running / queued / completed。
@@ -36,22 +38,25 @@
 - 状态筛选支持键盘左右切换。
 - 批量操作 R1 不做，避免误操作。
 
-### 3.2 Activity Timeline
+### 3.2 Activity Timeline（二级观察面）
 
-- 点击事件打开来源对象。
+- 默认从 Run Detail 打开，只展示当前 run 的事件；跨 run 全局时间线不进 R1 主导航。
+- 点击事件打开来源对象或在 Run Detail 中定位对应 task / artifact / agent run。
 - Shift 点击固定 Inspector，方便对照多个事件。
 - 支持复制脱敏事件摘要。
 - 默认隐藏 raw metadata，展开后提示可能包含本地路径。
 
-### 3.3 Task Explorer
+### 3.3 Task Explorer（二级观察面）
 
-- 单击选择任务，Enter 打开任务对应的 Run Detail。
+- 默认嵌在 Run Detail 的任务树 / 任务详情区域，不作为 `/tasks` 主入口。
+- 单击选择任务，Enter 定位到当前 Run Detail 中的任务详情。
 - 任务预览显示依赖、attempt、最近 trace 和产物。
 - `Retry task` 只对 retryable task 出现。
 - `Add instruction` 默认 effect 为 `applies_next`。
 
-### 3.4 Replay View
+### 3.4 Replay View（二级页面）
 
+- 从 Run Detail 进入，只回放当前 run 的关键事件。
 - Space 播放/暂停。
 - 左右键跳转上一个/下一个事件。
 - 拖动时间轴预览事件，不改变当前 run 状态。
@@ -81,4 +86,5 @@
 
 | 日期       | 变更                                                                  |
 | ---------- | --------------------------------------------------------------------- |
+| 2026-05-24 | 对齐主导航与二级观察面，Activity / Task / Replay 不再作为主入口       |
 | 2026-05-15 | 初版：补 Run List、Activity、Task Explorer、Replay、Settings 页面交互 |

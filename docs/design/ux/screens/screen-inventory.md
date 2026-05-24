@@ -1,29 +1,31 @@
 # 屏幕清单 / Screen Inventory
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-15
+> 最后更新：2026-05-24
 > 范围：Release 1 Personal Desktop Edition；标注 Web Shell 复用差异。
 
 ---
 
 ## 1. 屏幕分组
 
-| 分组       | 屏幕                   | 优先级 | Release |
-| ---------- | ---------------------- | ------ | ------- |
-| Onboarding | First Launch Wizard    | P0     | R1      |
-| Core Work  | Home / Inbox           | P0     | R1      |
-| Core Work  | Run List               | P0     | R1      |
-| Core Work  | Run Detail             | P0     | R1      |
-| Core Work  | Artifact Detail        | P0     | R1      |
-| Core Work  | Runtime Status         | P0     | R1      |
-| Observe    | Activity Timeline      | P1     | R1      |
-| Observe    | Task Explorer          | P1     | R1      |
-| Observe    | Replay View            | P1     | R1      |
-| Settings   | Workspace Settings     | P0     | R1      |
-| Settings   | Runtime Settings       | P0     | R1      |
-| Settings   | Security & Permissions | P1     | R1      |
-| Settings   | Updates                | P1     | R1      |
-| Settings   | Privacy & Data         | P1     | R1      |
+| 分组               | 屏幕 / 观察面          | 层级     | 优先级 | Release |
+| ------------------ | ---------------------- | -------- | ------ | ------- |
+| Onboarding         | First Launch Wizard    | 启动流程 | P0     | R1      |
+| Core Work          | Home / Inbox           | 主入口   | P0     | R1      |
+| Core Work          | Run List               | 主入口   | P0     | R1      |
+| Core Work          | Runtime Status         | 主入口   | P0     | R1      |
+| Core Work          | Run Detail             | 二级页面 | P0     | R1      |
+| Core Work          | Artifact Detail        | 二级页面 | P0     | R1      |
+| Run Detail Observe | Activity Timeline      | 二级面板 | P1     | R1      |
+| Run Detail Observe | Task Explorer          | 二级面板 | P1     | R1      |
+| Run Detail Observe | Replay View            | 二级页面 | P1     | R1      |
+| Settings           | Workspace Settings     | 主入口   | P0     | R1      |
+| Settings           | Runtime Settings       | 主入口   | P0     | R1      |
+| Settings           | Security & Permissions | 设置分组 | P1     | R1      |
+| Settings           | Updates                | 设置分组 | P1     | R1      |
+| Settings           | Privacy & Data         | 设置分组 | P1     | R1      |
+
+R1 Desktop 主导航只保留 Home / Inbox、Runs、Runtime Status、Settings。Activity Timeline、Task Explorer 与 Replay View 都从 Run Detail 或 run 上下文进入，不作为侧栏主入口。
 
 ## 2. P0 屏幕详述
 
@@ -167,27 +169,27 @@
 
 **桌面特有状态**：
 
-| 状态                  | 用户看到                        | 主操作                      |
-| --------------------- | ------------------------------- | --------------------------- |
-| Core starting         | 正在启动本地 core，显示启动阶段 | 等待 / Open logs            |
-| Core unhealthy        | 最近错误 + 日志入口             | Restart core / diagnostics  |
-| Runtime not found     | Codex CLI 未找到                | Browse path / setup guide   |
-| Runtime auth required | Codex 需要登录                  | Open terminal guide         |
-| Queue stuck           | 队列有任务但无推进              | Open Activity / diagnostics |
+| 状态                  | 用户看到                        | 主操作                          |
+| --------------------- | ------------------------------- | ------------------------------- |
+| Core starting         | 正在启动本地 core，显示启动阶段 | 等待 / Open logs                |
+| Core unhealthy        | 最近错误 + 日志入口             | Restart core / diagnostics      |
+| Runtime not found     | Codex CLI 未找到                | Browse path / setup guide       |
+| Runtime auth required | Codex 需要登录                  | Open terminal guide             |
+| Queue stuck           | 队列有任务但无推进              | Open run timeline / diagnostics |
 
 ## 3. P1 屏幕简述
 
 ### 3.1 Activity Timeline
 
-全局 trace 视图。用于排查系统级问题，而不是替代 Run Detail 的 trace。默认按时间倒序，支持对象过滤。
+Run Detail 内的 trace / activity 二级观察面。用于排查当前 run 的事件、失败与接管记录，而不是替代 Run Detail，也不作为 R1 Desktop 主导航。默认按时间倒序，支持按 task、agent run、artifact 与 operator action 过滤。
 
 ### 3.2 Task Explorer
 
-跨 run 的 task 查询。适合用户回看“上次那个失败的迁移任务”。R1 可先做只读列表。
+Run Detail 内的 task tree / task explorer 二级观察面。R1 先覆盖当前 run 内任务、依赖、attempt、最近 trace 与相关产物；跨 run 搜索保留为后续能力，不作为 R1 主入口。
 
 ### 3.3 Replay View
 
-按时间轴重播 run 的关键事件。R1 先做事件时间线 + artifact 快照；未来再做视觉化回放。
+从 Run Detail 进入的只读回放页。R1 先做当前 run 的事件时间线 + artifact 快照；未来再做视觉化回放。Replay 只从 TraceEvent 重建 UI，不重新执行历史步骤。
 
 ### 3.4 Settings
 
@@ -226,6 +228,7 @@
 
 ## 7. 变更历史
 
-| 日期       | 变更 |
-| ---------- | ---- |
-| 2026-05-15 | 初版 |
+| 日期       | 变更                                                            |
+| ---------- | --------------------------------------------------------------- |
+| 2026-05-24 | 对齐主导航与二级观察面，Activity / Task / Replay 不再作为主入口 |
+| 2026-05-15 | 初版                                                            |

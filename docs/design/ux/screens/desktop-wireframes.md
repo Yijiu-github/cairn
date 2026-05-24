@@ -1,7 +1,7 @@
 # 桌面端线框稿 / Desktop Wireframes
 
 > 状态：🟡 Draft
-> 最后更新：2026-05-18
+> 最后更新：2026-05-24
 > 范围：Release 1 Personal Desktop Edition。本文是工程可落地的低保真设计稿；后续 Figma/高保真稿应以此为信息结构基线。
 
 ---
@@ -26,12 +26,9 @@ Cairn 的桌面端应像“工程任务控制台”和 runtime 控制面，而�
 ┌────────────────────────────────────────────────────────────────────────────┐
 │ Cairn  ▾ Personal Workspace        ⌘K Search / Command      Core: Healthy │
 ├──────────────┬─────────────────────────────────────────────────────────────┤
-│ Inbox        │                                                             │
+│ Home / Inbox │                                                             │
 │ Runs         │  Content Region                                             │
-│ Tasks        │                                                             │
-│ Artifacts    │                                                             │
-│ Agents       │                                                             │
-│ Activity     │                                                             │
+│ Runtime Status │                                                            │
 │ Settings     │                                                             │
 │              │                                                             │
 │              │                                                             │
@@ -44,9 +41,11 @@ Cairn 的桌面端应像“工程任务控制台”和 runtime 控制面，而�
 宽度：`220px`。内容：
 
 - Workspace name
-- primary navigation
+- primary navigation：Home / Inbox、Runs、Runtime Status、Settings
 - 当前运行摘要：running / blocked / failed
 - runtime/core health mini status
+
+R1 的顶层导航只保留主入口；`Run Detail`、`Artifact Detail`、`Activity Timeline`、`Task Explorer`、`Replay View` 作为内容区内的二级页面或观察面，不单独占用主导航。
 
 ### 2.2 顶部栏
 
@@ -106,13 +105,13 @@ Cairn 的桌面端应像“工程任务控制台”和 runtime 控制面，而�
 
 ```text
 ┌──────────────┬─────────────────────────────────────────────────────────────┐
-│ Inbox        │ Good evening. What should Cairn work on?                   │
+│ Home / Inbox │ Good evening. What should Cairn work on?                   │
 │ Runs         │ ┌─────────────────────────────────────────────────────────┐ │
-│ Tasks        │ │ Describe the engineering task…                          │ │
-│ Artifacts    │ │                                                         │ │
-│ Agents       │ └─────────────────────────────────────────────────────────┘ │
-│ Activity     │ Context: [Working dir] [Attach files] [Acceptance criteria]│
-│ Settings     │ Runtime: Codex default                       [Create Run] │
+│ Runtime      │ │ Describe the engineering task…                          │ │
+│ Settings     │ │                                                         │ │
+│              │ └─────────────────────────────────────────────────────────┘ │
+│              │ Context: [Working dir] [Attach files] [Acceptance criteria]│
+│              │ Runtime: Codex default                       [Create Run] │
 │              │                                                             │
 │              │ Handoff queue                                              │
 │              │ ┌──────────────────────┐ ┌──────────────────────┐          │
@@ -229,9 +228,11 @@ Cairn 的桌面端应像“工程任务控制台”和 runtime 控制面，而�
 
 ## 7. Artifact Detail
 
+Artifact Detail 不进入主导航；用户从 Run Detail 的 evidence / artifact rail、Home / Inbox 的待审阅卡片或 Run List 的产物摘要进入。它只回答“这个产物是什么、从哪里来、是否可审阅/复用”。
+
 ```text
 ┌──────────────┬──────────────────────────────────────────────┬──────────────┐
-│ Artifacts    │ patch.diff                                   │ Provenance   │
+│ Runs         │ patch.diff                                   │ Provenance   │
 │              │ Kind: patch · From run Refactor scheduler     │              │
 │              │ [Copy] [Open external] [Reveal in Finder]     │ AgentRun     │
 │              │                                              │ ag_01…       │
@@ -248,7 +249,7 @@ Cairn 的桌面端应像“工程任务控制台”和 runtime 控制面，而�
 
 ```text
 ┌──────────────┬─────────────────────────────────────────────────────────────┐
-│ Agents       │ Runtime & Local Core                                       │
+│ Runtime Status │ Runtime & Local Core                                     │
 │              │                                                             │
 │              │ Workspace Core                                              │
 │              │ ┌─────────────────────────────────────────────────────────┐ │
@@ -343,8 +344,10 @@ R1 需要的核心 UI 组件（工程映射见 [`component-mapping.md`](../compo
 - WorkspaceSwitcher
 - CommandCenter
 - StatusBadge
+- HandoffQueue
 - RunCard
 - RunHeader
+- ArtifactRail
 - TaskTree
 - AgentRunLog
 - TraceTimeline
@@ -368,6 +371,7 @@ R1 需要的核心 UI 组件（工程映射见 [`component-mapping.md`](../compo
 
 ## 14. 变更历史
 
-| 日期       | 变更 |
-| ---------- | ---- |
-| 2026-05-15 | 初版 |
+| 日期       | 变更                                                           |
+| ---------- | -------------------------------------------------------------- |
+| 2026-05-24 | 收口主导航命名与 Runtime Status 口径，明确二级观察面不进主导航 |
+| 2026-05-15 | 初版                                                           |

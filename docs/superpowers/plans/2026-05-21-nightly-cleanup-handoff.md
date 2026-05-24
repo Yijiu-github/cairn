@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-23 14:12 CST
+> 最后更新：2026-05-24 08:01 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -10,6 +10,8 @@
 ## 1. 用途
 
 这份文件是跨轮自动化/子 agent 的接力入口。它不是正式产品文档，也不是完整历史日志。每轮开始前必须读本文件，结束前必须更新本文件，记录本轮事实、验证、阻塞、风险、commit hash 与下一轮任务。
+
+新的短主索引在 [`../README.md`](../README.md)，主题轨道在 [`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)。本文件保留当前接力和较长历史，不再承担唯一入口职责。
 
 当前正式事实口径以这些文件为准：
 
@@ -35,15 +37,23 @@
 
 ## 3. 当前工作区状态
 
-2026-05-23 16:55 CST 复核：
+2026-05-24 07:26 CST 复核：
 
-- `git status --short` / `git diff --name-only`：本轮开始时仅有 Desktop renderer
-  首页 visual-v1 相关 diff；没有其他未提交工作区改动。
-- 本轮主线子块切回 Desktop UI 页面改造：让默认 mock Desktop Home 首屏真正接近 visual-v1
-  mockup，而不是继续只做文案/信息层级微调。
-- 本轮已确认此前 Electron 空白窗口不是 renderer 代码崩溃：Vite renderer 在
-  `http://localhost:5173/` 无 console error，重启 `pnpm --filter @cairn/desktop dev` 后
-  Electron 窗口恢复并显示新版首页。
+- 本轮开始时，`docs/superpowers/README.md` 尚未存在；当前已补出短主索引并把 recurring mainline workstream 收束到 [`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)。
+
+- 当前 `HEAD` / `refs/heads/codex/cairn-mainline-ui` 为 `9540181`
+  `docs(status): 记录窗口烟测诊断提交 / record window smoke diagnostics commit`。
+- `git status --short` 仍会显示多份 UX 文档 / SVG 的 staged / unstaged mismatch；这是因为当前沙箱仍无法写
+  `/Users/taosiyu/Code/cairn/.git/worktrees/codex-cairn-mainline-ui`，真实 linked-worktree index
+  无法刷新。不要把这组 `MM` 误判为未提交 UX 工作。
+- 本轮通过临时 index 从 `HEAD` 重建树，并用 common gitdir 形式
+  `git --git-dir=/Users/taosiyu/Code/cairn/.git update-ref` 移动分支，成功绕过该 gitdir 的
+  `index.lock` / `HEAD.lock` 写权限限制并创建本地提交。普通 `git add`、当前 worktree 语境下的
+  `git commit` / `git update-ref` 仍会因 linked-worktree gitdir 不可写失败。
+- `git diff HEAD --name-only` 在本轮开始时为空；不要用普通 `git status` 判断真实剩余 diff。
+- 当前文档主线已切到 Desktop UI 信息架构收口：主导航只保留 Home / Inbox、Runs、
+  Runtime Status、Settings；Run Detail、Artifact Detail、Activity Timeline、Task Explorer 与
+  Replay View 都是二级页面或观察面。
 - 本轮没有触碰 Workspace Core、Desktop bridge、preload allowlist、operator action API、ReplaySource
   shape、Artifact schema、payload API、路径隐藏、sidecar runtime 或真实 Codex env opt-in。
 
@@ -60,6 +70,24 @@
 - Run Detail / Artifact payload / Settings 的默认简中 surface 已进一步收口，已观察运行、运行编号、
   回放证据、任务/产物空态、payload 状态和设置页源目录提示都走 `desktop-locale.ts`。
 - Run Detail 的 operator note 成功提示已与右侧 replay inspector 的 `Trace 事件` 计数建立明确文案关联。
+- UX 主题文档正在收敛主导航与二级观察面口径；不要把旧 `/agents`、`/tasks`、`/artifacts`、
+  `/activity` 或侧栏 `Agents` / `Artifacts` / `Activity` 重新写成 R1 Desktop 主入口。
+- `visual-reference-v1.md` 与 `docs/design/ux/assets/` 已复查：视觉参考与 SVG 侧栏主入口统一为
+  Home / Inbox、Runs、Runtime Status、Settings；Activity Timeline、Task Explorer、Replay View 保留为
+  二级观察面参考，不再作为 R1 Desktop 主入口。
+- 本轮尝试执行默认 mock Desktop Home 视觉烟测，但当前环境没有得到可信截图证据：
+  `../../node_modules/.bin/electron-vite build` 可直接通过，`pnpm` 入口提前返回 `fetch failed`，
+  `node scripts/window-smoke.mjs` 超时等待 `main-window-ready-to-show`，in-app Browser 按安全策略阻止
+  `file://` renderer 预览。因此本轮没有修改 Desktop UI。
+- 本轮已把默认 mock window smoke 的失败点从“等待 `main-window-ready-to-show` 超时”收窄为：
+  当前 macOS / Codex 会话下 Electron 在 app registration 阶段 `SIGABRT` 退出，Cairn main module 尚未写出
+  `main-process-loaded` signal。`window-smoke.mjs` 现在会在 Electron 提前退出时直接报告 code / signal，
+  不再等满超时。
+- 本轮继续复核视觉烟测阻塞：同一 Codex/macOS 会话下 Playwright Chromium headless 也在 Mach bootstrap
+  registration 阶段因 `bootstrap_check_in ... Permission denied` / `SIGTRAP` 崩溃，Electron 最新 `.ips`
+  仍指向 `_RegisterApplication` / `GetCurrentProcess` 早期 abort。Electron 与 Chromium binary 仍带
+  `com.apple.provenance`，复制到 `/private/tmp` 后 `xattr -cr` 仍未能移除该属性。本轮因此仍不修改
+  Desktop UI。
 - 长任务、复杂 payload、跨平台取消链路仍需后续额外证据。
 
 ---
@@ -87,6 +115,12 @@
 - `b4cfce7` `fix(desktop): 收口运行详情反馈 / clarify run detail feedback`
 - `31d05e6` `fix(desktop): 收口产物卡片文案 / clarify artifact card copy`
 - `3a0807a` `fix(desktop): 强化备注反馈指引 / clarify note feedback`
+- `b42e5b0` `docs(ux): 统一桌面主导航文档 / align desktop nav docs`
+- `7ce344b` `docs(status): 记录 UX 提交与下一轮烟测 / record ux commit and smoke next`
+- `260b795` `docs(status): 记录视觉烟测阻塞 / record visual smoke blocker`
+- `647a6c9` `test(desktop): 收紧窗口烟测诊断 / clarify window smoke diagnostics`
+- `9540181` `docs(status): 记录窗口烟测诊断提交 / record window smoke diagnostics commit`
+- `4aa70ea` `docs(status): 记录 GUI 注册阻塞 / record gui registration blocker`
 
 归档说明：
 
@@ -764,16 +798,144 @@
 - 验证：`git diff --check` 已通过。
 - 本轮代码/正式文档提交：`d808fb7` `feat(desktop): 落地首页视觉基线 / land home visual baseline`。
 
+2026-05-24 04:57 CST 本轮完成：
+
+- 处理当前 worktree 的 staged / unstaged mismatch：已确认 mismatch 是前一轮暂存的中间态与后续未暂存
+  修正叠加；当前文件内容应以 worktree 版本为准。
+- 收口 `docs/design/ux/screens/screen-inventory.md`：屏幕清单增加“层级”列，主入口限定为
+  Home / Inbox、Runs、Runtime Status、Settings，Activity Timeline / Task Explorer / Replay View
+  改为 Run Detail 或 run 上下文中的二级观察面。
+- 收口 `docs/design/ux/flows/interaction-design-v1.md`：页面级交互补充主导航边界，Activity Timeline
+  仅展示当前 run 事件，Task Explorer 嵌在 Run Detail，Replay View 从 Run Detail 进入且只读回放。
+- 同步 `docs/STATUS.md`，把下一轮入口从继续整理这两份文档切换为先处理 gitdir 写权限 / 暂存阻塞，再复查
+  视觉参考与 SVG 资产里的旧侧栏标签。
+- 保持边界：没有创建 `apps/web`，没有改 Desktop runtime / bridge / API / schema，没有进入 installer、
+  signing、notarization、marketplace、workflow builder 或企业治理。
+- 验证：`git diff --check -- docs/STATUS.md docs/design/ux/screens/desktop-wireframes.md docs/design/ux/foundations/information-architecture.md docs/design/ux/components/component-mapping.md docs/design/ux/screens/screen-inventory.md docs/design/ux/flows/interaction-design-v1.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 通过。
+- 验证：`./node_modules/.bin/prettier --check docs/STATUS.md docs/design/ux/screens/desktop-wireframes.md docs/design/ux/foundations/information-architecture.md docs/design/ux/components/component-mapping.md docs/design/ux/screens/screen-inventory.md docs/design/ux/flows/interaction-design-v1.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 通过。
+- 验证：`./node_modules/.bin/markdownlint-cli2 docs/STATUS.md docs/design/ux/screens/desktop-wireframes.md docs/design/ux/foundations/information-architecture.md docs/design/ux/components/component-mapping.md docs/design/ux/screens/screen-inventory.md docs/design/ux/flows/interaction-design-v1.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 通过。
+- 验证：`./node_modules/.bin/markdownlint-cli2 "docs/**/*.md" "*.md"` 通过，149 个 Markdown 文件 0 error。
+- 说明：`pnpm exec` / `pnpm run docs:lint` 在当前环境返回 `fetch failed`，因此本轮使用仓库本地二进制做等价验证。
+- 本轮提交：无提交；`git add` 仍因无法创建
+  `/Users/taosiyu/Code/cairn/.git/worktrees/codex-cairn-mainline-ui/index.lock` 返回
+  `Operation not permitted`。
+
+2026-05-24 05:26 CST 本轮完成：
+
+- 复查 `docs/design/ux/screens/visual-reference-v1.md` 与 `docs/design/ux/assets/`，把视觉参考、
+  中文/英文 V1 SVG 和低保真 wireframe 中的侧栏主入口统一到 Home / Inbox、Runs、Runtime Status、Settings。
+- 同步 `docs/design/ux/assets/README.md` 与 `visual-reference-v1.md`，明确 Activity Timeline、
+  Task Explorer、Replay View 是二级观察面参考，不是 R1 Desktop 主导航入口。
+- 保留正常领域对象和内容区标签：Run Detail 里的 Task Tree、Artifacts/evidence rail、筛选器里的产物/运行时
+  仍按领域语义保留，没有把 Artifact / Task / Trace 从产品对象中删除。
+- 保持边界：没有创建 `apps/web`，没有改 Desktop runtime / bridge / API / schema，没有进入 installer、
+  signing、notarization、marketplace、workflow builder 或企业治理。
+- 验证：`./node_modules/.bin/prettier --check docs/STATUS.md docs/design/ux/screens/visual-reference-v1.md docs/design/ux/assets/README.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 通过。
+- 验证：`./node_modules/.bin/markdownlint-cli2 docs/STATUS.md docs/design/ux/screens/visual-reference-v1.md docs/design/ux/assets/README.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 通过。
+- 验证：`ruby -r rexml/document` 解析本轮修改的 12 个 SVG 通过。
+- 验证：目标文件 `git diff --check` 通过。
+- 验证：侧栏旧标签扫描仅剩 Activity Timeline 筛选器、Settings 分类和 Run Detail Artifacts/evidence heading，
+  均不是主导航入口。
+- 本轮提交：无提交；`git add` 仍因无法创建
+  `/Users/taosiyu/Code/cairn/.git/worktrees/codex-cairn-mainline-ui/index.lock` 返回
+  `Operation not permitted`。
+
+2026-05-24 06:04 CST 本轮完成：
+
+- 先定位提交阻塞根因：当前沙箱不能写 linked-worktree gitdir，`touch` 该目录仍返回
+  `Operation not permitted`；但 common gitdir `/Users/taosiyu/Code/cairn/.git` 可写。
+- 验证临时 index 可正常 `git add` 当前 UX 文档与 SVG 资产；当前 worktree 语境下的 `git update-ref`
+  会尝试创建 linked-worktree `HEAD.lock` 并失败，common gitdir 形式 `git --git-dir=... update-ref`
+  可成功移动分支。
+- 创建本地提交 `b42e5b0` `docs(ux): 统一桌面主导航文档 / align desktop nav docs`，收录
+  `docs/design/ux/**` 下的信息架构、线框、屏幕清单、交互、视觉参考与 SVG 资产收口。
+- 复核提交后 `HEAD` 与 `refs/heads/codex/cairn-mainline-ui` 均指向 `b42e5b0`；用临时 index 从
+  `HEAD` 检查，UX 文档 / SVG 已无真实剩余 diff，普通 `git status` 的 `MM` 来自不可刷新的真实 index。
+- 保持边界：没有创建 `apps/web`，没有改 Desktop runtime / bridge / API / schema，没有进入 installer、
+  signing、notarization、marketplace、workflow builder 或企业治理。
+- 验证：`./node_modules/.bin/prettier --check docs/design/ux/assets/README.md docs/design/ux/components/component-mapping.md docs/design/ux/flows/interaction-design-v1.md docs/design/ux/foundations/information-architecture.md docs/design/ux/screens/desktop-wireframes.md docs/design/ux/screens/screen-inventory.md docs/design/ux/screens/visual-reference-v1.md` 通过。
+- 验证：`./node_modules/.bin/markdownlint-cli2 docs/design/ux/assets/README.md docs/design/ux/components/component-mapping.md docs/design/ux/flows/interaction-design-v1.md docs/design/ux/foundations/information-architecture.md docs/design/ux/screens/desktop-wireframes.md docs/design/ux/screens/screen-inventory.md docs/design/ux/screens/visual-reference-v1.md` 通过。
+- 验证：`ruby -r rexml/document` 解析本轮修改的 12 个 SVG 通过。
+- 验证：目标 UX 文件 `git diff --check` 通过。
+
+2026-05-24 06:31 CST 本轮完成：
+
+- 尝试按下一轮方向做默认 mock Desktop visual-v1 Home 视觉烟测，范围限定为 1280px 默认窗口与较窄窗口下的派活 hero、Agent 状态、Agent 动态和下一步区域。
+- 复核相邻代码和现有 smoke 路径：`apps/desktop/src/renderer/src/desktop-app.tsx`、`styles.css`、`desktop-app.spec.ts`、`apps/desktop/scripts/window-smoke.mjs`、`apps/desktop/src/main/index.ts` 与 Desktop README。
+- 真实 diff 开始为空：`git diff HEAD --name-only` 无输出；普通 `git status` 仍不可信。
+- 直接构建路径可用：在 `apps/desktop` 下执行 `../../node_modules/.bin/electron-vite build` 通过。
+- 默认 mock window smoke 未拿到窗口证据：`node scripts/window-smoke.mjs` 超时等待
+  `main-window-ready-to-show`，stdout/stderr 为空。
+- Browser 视觉路径不可用：in-app Browser 按安全策略阻止访问
+  `file:///.../apps/desktop/out/renderer/index.html`，并明确不应绕过该策略。
+- 结论：本轮无法完成可信视觉烟测，因此不做 Desktop UI 低风险修复，避免用静态 CSS 推断替代视觉证据。
+- 保持边界：没有创建 `apps/web`，没有改 Desktop runtime / bridge / API / schema，没有接真实 planner，
+  没有进入 installer、signing、notarization、marketplace、workflow builder 或企业治理。
+- 验证/证据：
+  `../../node_modules/.bin/electron-vite build` 通过；
+  `node scripts/window-smoke.mjs` 失败且记录为环境阻塞；
+  `git diff HEAD --name-only` 初始为空。
+- 本轮提交：仅提交本记录与 `docs/STATUS.md`；无 UI / 代码提交。最终 hash 见自动化 memory / final
+  汇总。
+
+2026-05-24 07:09 CST 本轮完成：
+
+- 继续只处理默认 Desktop 视觉烟测路径，没有修改 Desktop UI 或扩大产品范围。
+- 复现 `node scripts/window-smoke.mjs` 失败，并通过保留 signal file / crash report 确认 Electron 在
+  app registration 阶段 `SIGABRT`，Cairn main module 尚未写出 `main-process-loaded`。
+- 直接 `../../node_modules/.bin/electron-vite build` 通过，`../../node_modules/.bin/electron-builder --dir`
+  也能产出 `release/mac-arm64/Cairn.app`；但直接运行 packaged app 仍同样在 app registration 阶段
+  `SIGABRT`。
+- `open` 尝试打开 vendored Electron app 与 packaged Cairn app 均返回
+  `kLSNoExecutableErr: The executable is missing`；localhost renderer fallback 因 `listen EPERM 127.0.0.1`
+  不可用。
+- 新增 `apps/desktop/scripts/window-smoke-runner.mjs` 与 spec，把 smoke runner 的等待逻辑拆出并覆盖
+  “Electron 提前退出时快速失败”分支；`apps/desktop/scripts/window-smoke.mjs` 现在报告
+  `Electron exited before Desktop window smoke event main-window-ready-to-show with code null and signal SIGABRT`。
+- 验证：`../../node_modules/.bin/vitest run scripts/window-smoke-runner.spec.mjs --config vitest.config.ts`
+  通过；`node scripts/window-smoke.mjs` 失败但已输出真实早退 signal；直接 Electron / packaged app
+  smoke 仍阻塞；完整验证见自动化 memory / final 汇总。
+- 本轮提交：`647a6c9` `test(desktop): 收紧窗口烟测诊断 / clarify window smoke diagnostics`。
+
+2026-05-24 07:26 CST 本轮完成：
+
+- 继续只处理 Desktop visual smoke 阻塞，没有修改 Desktop UI、Desktop bridge、preload allowlist、
+  Workspace Core、runtime adapter 或产品边界。
+- 复核真实剩余 diff：`git diff HEAD --name-only` 起初只显示 stale linked-index 相关的
+  `window-smoke-runner` 两文件；临时 index 从 `HEAD` 重建后 `git status --short` 为空，说明工作树真实内容与
+  `HEAD` 对齐。
+- 复现 `node scripts/window-smoke.mjs`：仍快速失败为
+  `Electron exited before Desktop window smoke event main-window-ready-to-show with code null and signal SIGABRT`。
+- 复核 Playwright Chromium：`chromium.launch()` 在同一 Codex/macOS 会话下失败，日志包含
+  `bootstrap_check_in org.chromium.Chromium.MachPortRendezvousServer... Permission denied`，并产生
+  `chrome-headless-shell-2026-05-24-072453.ips`。
+- 复核 Electron crash：最新 `Electron-2026-05-24-072409.ips` 的 fault frame 仍在
+  `_RegisterApplication` / `GetCurrentProcess`，说明 Cairn main module 尚未进入。
+- 复核属性/签名：`xattr -lr` 显示 Electron 与 Chromium binary 仍带 `com.apple.provenance`；
+  复制 Electron app 到 `/private/tmp` 后 `xattr -cr` 仍未能移除该属性，`codesign` 显示 Electron 为 ad-hoc
+  signature，`spctl` 返回 Code Signing subsystem internal error。
+- 结论：当前视觉烟测阻塞是 Codex/macOS 会话下 GUI app registration / provenance 类环境问题，不应据此修改
+  Cairn renderer 视觉。
+- 验证：`../../node_modules/.bin/vitest run scripts/window-smoke-runner.spec.mjs --config vitest.config.ts`
+  通过；`node scripts/window-smoke.mjs` 按预期失败并输出真实早退 signal；Playwright Chromium probe 按预期失败并给出 Mach bootstrap 权限证据。
+- 本轮提交：`4aa70ea` `docs(status): 记录 GUI 注册阻塞 / record gui registration blocker`。
+
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **Desktop Home 真实窗口视觉烟测**：优先在默认 mock Desktop 里走首屏路径，确认 visual-v1
-   首页在 1280px 默认窗口与较窄窗口下都能自然显示派活 hero、Agent 状态、Agent 动态和下一步区域。
-2. **首屏细节微调**：只处理真实窗口里仍明显影响理解的视觉问题，例如标题挤压、右栏过密、按钮层级不清或
-   共享 UI primitive class 漏映射；不要继续堆新功能或重写信息架构。
-3. **Run Detail 手动上手烟测**：随后再回到“派发 internal trial -> 进入 Run Detail -> 添加 operator note -> 查看右侧 `Trace 事件` 计数变化”的路径，判断是否需要 Replay inspector 局部高亮。
-4. **`smoke:codex` 轻量维护**：仅在 Codex / Node / OS 变化或 runner 失败时复测；不要重复实现 runner。若改可见文案，保持 `data-smoke-id` hook 稳定。
+1. **先在当前 Codex coalition 外验证 GUI app registration**：当前失败同时影响 Electron 和 Playwright
+   Chromium，下一轮不要先重复 UI smoke；优先用普通终端/新会话复核 vendored Electron 或 Chromium 能否启动，或处理
+   `com.apple.provenance`、quarantine、LaunchServices / app registration 权限。
+2. **若 GUI app 仍不可用，设计非 GUI 截图证据路径**：目标是拿到可重复的 1280px 与较窄窗口视觉证据，但不要依赖
+   Browser 插件 `file://`、localhost 监听、Electron 或 Playwright Chromium。
+3. **Desktop Home 真实窗口视觉烟测**：拿到可重复窗口证据后，再确认 visual-v1 首页在 1280px 默认窗口与较窄窗口下都能自然显示派活 hero、Agent 状态、Agent 动态和下一步区域。
+4. **只处理视觉烟测发现的低风险问题**：优先标题挤压、右栏过密、按钮层级不清或共享 UI primitive class
+   漏映射，不扩新功能、不重写信息架构。
+5. **Run Detail 手动上手烟测**：随后再走“派发 internal trial -> 进入 Run Detail -> 添加 operator note ->
+   查看右侧 `Trace 事件` 计数变化”的路径，判断是否需要 Replay inspector 局部高亮。
+6. **Git 状态判断注意事项**：普通 `git status` 仍可能因真实 linked-worktree index 不可写显示 stale `MM`；
+   先用 `git diff HEAD --name-only` 或临时 index 复核真实剩余 diff，再决定是否需要提交。
 
 ## 8. 风险与阻塞
 
@@ -787,6 +949,9 @@
 - 首页左侧现在已把 Agent 总览、运行中 Agent 与最近进展合并，右栏也已收成 `待处理摘要`
   与固定运行轻摘要；本轮只做视觉落地和响应式收口，后续首屏仍只做真实窗口发现的微调，不应再扩大新功能或重新堆卡片。
 - 当前默认自动化 e2e 仍只覆盖 mock sidecar window-level smoke；真实 Codex window-level coverage 已有 opt-in `smoke:codex` runner，但不能进入默认 CI。
+- 当前环境下默认 mock window smoke 在 Electron app registration 阶段 `SIGABRT`，Playwright Chromium
+  headless 也在 Mach bootstrap registration 阶段 `SIGTRAP`，且 in-app Browser 阻止 `file://` renderer
+  预览，localhost 监听也被 `EPERM` 拦住；下一轮必须先恢复视觉证据路径，再做 UI 修复。
 - Mission Control 首页当前仍是静态/半静态首轮体验壳；任务草稿只在 renderer 本地保存，“派发给总 Agent”按钮真实执行的是 bounded internal-trial path，自由文本 Supervisor dispatch、自动创建多子 Agent 和真实 planner 仍未完成。
 - 本轮 `test:e2e` 验证确认默认 mock window smoke 可通过；若后续 Electron/Node 包装器行为变化，优先检查 `window-smoke.mjs` 的真实 binary 解析、signal 后 SIGTERM/SIGKILL 清理链路。
 - 本轮真实 Codex runner 覆盖 Desktop 自拉起 Codex sidecar 的观察路径；仍依赖本机 Codex 登录态、CLI 版本和响应时延。
@@ -796,3 +961,6 @@
 - 真实 Codex CLI 行为可能随本机版本变化；默认测试仍必须依赖 mock / fixture。
 - Accepted ADR 不直接修改；Codex transport refinement 优先使用 Proposed ADR-0018 或新 ADR。
 - 文档中凡提到 `apps/web`、installer、signing、notarization、公测/公开 alpha，都要明确为未完成或非本轮目标。
+- 当前自动化 worktree 的文件可写，但 linked-worktree gitdir 仍不可写；普通 `git add` / `git commit`
+  可能继续失败。若必须提交，可继续使用“临时 index + common gitdir `update-ref`”方式，但要先用
+  `git show` / `git diff HEAD` 复核提交树，不要被 stale `git status` 误导。
