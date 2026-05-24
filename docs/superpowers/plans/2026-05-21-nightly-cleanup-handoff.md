@@ -37,6 +37,16 @@
 
 ## 3. 当前工作区状态
 
+2026-05-25 03:58 CST 复核：
+
+- 本轮选择 Desktop smoke diagnostics 收口轨道；真实全树 diff 用临时 index 从 `HEAD` 重建后为空，普通 index
+  里的 `window-smoke-runner` / 主线索引删除和一批 UX `MM` 仍是 stale linked-worktree 噪音。
+- 保留并扩展 `apps/desktop/scripts/window-smoke-runner.mjs` 的 helper：当 Electron 早退或等待超时时，错误信息会带上最后观察到的非目标 smoke signal，例如
+  `main-process-loaded`，用于区分“main module 已加载但未到 ready-to-show”和“app registration 前即崩溃”。
+- 新增 targeted spec 覆盖 early exit 时带出最后观察到的 smoke signal；没有重复普通 Electron / Chromium smoke，也没有修改 Desktop UI。
+- `pnpm --filter @cairn/desktop test -- --run scripts/window-smoke-runner.spec.mjs` 在脚本启动前仍返回 `[ERROR] fetch failed`；
+  本轮改用已安装的本地二进制完成同等 targeted 验证。
+
 2026-05-24 12:26 CST 复核：
 
 - 重新读了 `docs/superpowers/README.md`、`docs/superpowers/tracks/mainline-ui.md` 与 `docs/STATUS.md`；短主索引、主题轨道和状态基线仍一致，没有新的主线事实漂移。
@@ -173,6 +183,21 @@
 - 复核 `docs/superpowers/README.md`、`docs/superpowers/tracks/mainline-ui.md`、`docs/STATUS.md`；短索引、主题轨道和状态基线没有新漂移。
 - 没有重复普通 Electron / Chromium smoke，也没有把缺证据的视觉猜测写成事实。
 - 本轮提交：`0814bca4554c2e413881691fc50496d4167ccaef` `docs(trial): 记录主线复核 / record mainline recheck`。
+
+2026-05-25 03:58 CST Desktop smoke diagnostics 验证：
+
+- 红灯：新增 `apps/desktop/scripts/window-smoke-runner.spec.mjs` 用例后，
+  `../../node_modules/.bin/vitest run scripts/window-smoke-runner.spec.mjs` 因 early exit 错误没有包含
+  `Last observed Desktop window smoke signal: main-process-loaded` 失败。
+- 绿灯：`window-smoke-runner.mjs` 记录最后观察到的非目标 signal，并在 early exit / timeout 诊断中输出；同一 spec
+  通过，1 个文件 2 个测试。
+- 已通过：`../../node_modules/.bin/vitest run scripts/window-smoke-runner.spec.mjs`
+- 已通过：`../../node_modules/.bin/tsc --noEmit`
+- 已通过：`../../node_modules/.bin/eslint src electron.vite.config.ts`
+- 已通过：
+  `./node_modules/.bin/prettier --check apps/desktop/scripts/window-smoke-runner.mjs apps/desktop/scripts/window-smoke-runner.spec.mjs docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+- 预期失败：`pnpm --filter @cairn/desktop test -- --run scripts/window-smoke-runner.spec.mjs` 在进入 Vitest 前返回
+  `[ERROR] fetch failed`。
 
 2026-05-22 02:35 CST 本轮文档整理验证通过：
 
@@ -463,6 +488,8 @@
 
 ### 6.2 最近接力记录
 
+- 本轮待提交：Desktop window smoke runner 会在 Electron early exit / timeout 诊断中带出最后观察到的 smoke signal；
+  这只提升非 GUI 诊断质量，不恢复 GUI 证据路径。
 - `647a6c9` `test(desktop): 收紧窗口烟测诊断 / clarify window smoke diagnostics`：窗口烟测在 Electron 提前退出时直接报告 code / signal，不再伪装成 ready-to-show 超时。
 - `4aa70ea` `docs(status): 记录 GUI 注册阻塞 / record gui registration blocker` 与 `2de3889` `docs(status): 收口 GUI 注册记录 / close gui registration notes`：确认 Electron / Chromium GUI 阻塞属于当前 Codex/macOS 会话层面的 app registration / provenance 类问题。
 - `4c0c8dc`、`4e8fb87`：建立短主索引与主题轨道，把自动化入口从长 handoff 迁到 `docs/superpowers/README.md`。
@@ -481,17 +508,19 @@
 
 1. **先复核事实漂移**：读取 [`../README.md`](../README.md)、[`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)
    与 [`../../STATUS.md`](../../STATUS.md)；若短索引、状态页、主题轨道和本 handoff 已一致，不要为了记录而继续改文档。
-2. **再在当前 Codex coalition 外验证 GUI app registration**：当前失败同时影响 Electron 和 Playwright
+2. **优先利用新增 smoke signal 诊断复核失败层级**：下一次只在修诊断输出质量时运行 `window-smoke.mjs`；看错误中最后观察到的 signal
+   是 `main-process-loaded` 还是没有任何 signal，再决定是否值得继续追 Electron app registration。
+3. **再在当前 Codex coalition 外验证 GUI app registration**：当前失败同时影响 Electron 和 Playwright
    Chromium，下一轮不要先重复 UI smoke；优先用普通终端/新会话复核 vendored Electron 或 Chromium 能否启动，或处理
    `com.apple.provenance`、quarantine、LaunchServices / app registration 权限。
-3. **若 GUI app 仍不可用，设计非 GUI 截图证据路径**：目标是拿到可重复的 1280px 与较窄窗口视觉证据，但不要依赖
+4. **若 GUI app 仍不可用，设计非 GUI 截图证据路径**：目标是拿到可重复的 1280px 与较窄窗口视觉证据，但不要依赖
    Browser 插件 `file://`、localhost 监听、Electron 或 Playwright Chromium。
-4. **Desktop Home 真实窗口视觉烟测**：拿到可重复窗口证据后，再确认 visual-v1 首页在 1280px 默认窗口与较窄窗口下都能自然显示派活 hero、Agent 状态、Agent 动态和下一步区域。
-5. **只处理视觉烟测发现的低风险问题**：优先标题挤压、右栏过密、按钮层级不清或共享 UI primitive class
+5. **Desktop Home 真实窗口视觉烟测**：拿到可重复窗口证据后，再确认 visual-v1 首页在 1280px 默认窗口与较窄窗口下都能自然显示派活 hero、Agent 状态、Agent 动态和下一步区域。
+6. **只处理视觉烟测发现的低风险问题**：优先标题挤压、右栏过密、按钮层级不清或共享 UI primitive class
    漏映射，不扩新功能、不重写信息架构。
-6. **Run Detail 手动上手烟测**：随后再走“派发 internal trial -> 进入 Run Detail -> 添加 operator note ->
+7. **Run Detail 手动上手烟测**：随后再走“派发 internal trial -> 进入 Run Detail -> 添加 operator note ->
    查看右侧 `Trace 事件` 计数变化”的路径，判断是否需要 Replay inspector 局部高亮。
-7. **Git 状态判断注意事项**：普通 `git status` 仍可能因真实 linked-worktree index 不可写显示 stale `MM`；
+8. **Git 状态判断注意事项**：普通 `git status` 仍可能因真实 linked-worktree index 不可写显示 stale `MM`；
    先用 `git diff HEAD --name-only` 或临时 index 复核真实剩余 diff，再决定是否需要提交。
 
 ## 8. 风险与阻塞

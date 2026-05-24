@@ -11,6 +11,7 @@ export async function waitForDesktopSmokeSignal({
 }) {
   let spawnError;
   let exitResult;
+  let lastObservedSignal;
 
   child.once('error', (error) => {
     spawnError = error;
@@ -30,9 +31,12 @@ export async function waitForDesktopSmokeSignal({
     if (signal?.event === expectedEvent) {
       return;
     }
+    if (signal?.event !== undefined) {
+      lastObservedSignal = signal;
+    }
 
     if (exitResult !== undefined) {
-      throw formatEarlyExitError(expectedEvent, exitResult, formatOutput);
+      throw formatEarlyExitError(expectedEvent, exitResult, formatOutput, lastObservedSignal);
     }
 
     await delay(pollIntervalMs);
@@ -42,18 +46,30 @@ export async function waitForDesktopSmokeSignal({
     throw spawnError;
   }
   if (exitResult !== undefined) {
-    throw formatEarlyExitError(expectedEvent, exitResult, formatOutput);
+    throw formatEarlyExitError(expectedEvent, exitResult, formatOutput, lastObservedSignal);
   }
 
   throw new Error(
-    `Timed out waiting for Desktop window smoke event ${expectedEvent}.\n${formatOutput()}`,
+    `Timed out waiting for Desktop window smoke event ${expectedEvent}.\n${formatObservedSignal(
+      lastObservedSignal,
+    )}${formatOutput()}`,
   );
 }
 
-function formatEarlyExitError(expectedEvent, exitResult, formatOutput) {
+function formatEarlyExitError(expectedEvent, exitResult, formatOutput, lastObservedSignal) {
   return new Error(
     `Electron exited before Desktop window smoke event ${expectedEvent} with code ${String(
       exitResult.code,
-    )} and signal ${String(exitResult.signal)}.\n${formatOutput()}`,
+    )} and signal ${String(exitResult.signal)}.\n${formatObservedSignal(
+      lastObservedSignal,
+    )}${formatOutput()}`,
   );
+}
+
+function formatObservedSignal(lastObservedSignal) {
+  if (lastObservedSignal?.event === undefined) {
+    return '';
+  }
+
+  return `Last observed Desktop window smoke signal: ${String(lastObservedSignal.event)}\n`;
 }

@@ -35,6 +35,28 @@ describe('window smoke runner', () => {
       /Electron exited before Desktop window smoke event main-window-ready-to-show with code null and signal SIGABRT/u,
     );
   });
+
+  it('includes the last observed smoke signal when Electron exits early', async () => {
+    const child = new EventEmitter();
+    child.stdout = createReadableEmitter();
+    child.stderr = createReadableEmitter();
+    child.kill = () => true;
+
+    const wait = waitForDesktopSmokeSignal({
+      child,
+      expectedEvent: 'main-window-ready-to-show',
+      formatOutput: () => '--- smoke output ---',
+      pollIntervalMs: 5,
+      readSignal: () => Promise.resolve({ event: 'main-process-loaded' }),
+      timeoutMs: 500,
+    });
+
+    child.emit('exit', null, 'SIGABRT');
+
+    await expect(wait).rejects.toThrow(
+      /Last observed Desktop window smoke signal: main-process-loaded/u,
+    );
+  });
 });
 
 function createReadableEmitter() {
