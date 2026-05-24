@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-24 10:52 CST
+> 最后更新：2026-05-24 10:56 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -401,6 +401,18 @@
 - 已通过：`git diff --check`。
 - `pnpm exec prettier --check ...` 首次因 `styles.css` 格式失败，已用 Prettier 写回；最终复核结果见本轮提交前验证记录。
 
+2026-05-24 10:56 CST 主线接力状态校准验证：
+
+- 本轮只同步 [`../tracks/mainline-ui.md`](../tracks/mainline-ui.md) 与本 handoff 的当前状态；没有修改
+  Desktop UI、Workspace Core、Desktop bridge、runtime adapter、schema、Web Shell、installer、signing 或
+  notarization 相关内容。
+- 已通过：`./node_modules/.bin/prettier --check docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+- 已通过：`./node_modules/.bin/markdownlint-cli2 docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+- 已通过：临时 index 下的
+  `git diff --check -- docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
+- 预期失败：`pnpm run docs:lint` 仍在脚本启动前返回 `[ERROR] fetch failed`；本轮编辑文件已由本地
+  markdownlint 与 diff check 覆盖。
+
 ---
 
 ## 6. 最新完成
@@ -427,22 +439,26 @@
   从逐轮长日志压成当前可复用结论、最近接力记录和短风险清单。
 - `9c83db9` `docs(trial): 记录接力压缩提交 / record handoff compression commit`：记录上一次 handoff
   压缩提交，当前普通 `git status` 仍不可信，继续以临时 index 判断真实 diff。
+- `c848a63` `docs(superpowers): 校准主线接力状态 / align mainline handoff state`：把主题轨道下一步从已完成的
+  handoff 压缩改为事实漂移校准，并把本 handoff 的当前 HEAD 记录推进到 `9c83db9`。
 
 ## 7. 下一轮任务
 
 优先级从高到低：
 
-1. **先在当前 Codex coalition 外验证 GUI app registration**：当前失败同时影响 Electron 和 Playwright
+1. **先复核事实漂移**：读取 [`../README.md`](../README.md)、[`../tracks/mainline-ui.md`](../tracks/mainline-ui.md)
+   与 [`../../STATUS.md`](../../STATUS.md)；若短索引、状态页、主题轨道和本 handoff 已一致，不要为了记录而继续改文档。
+2. **再在当前 Codex coalition 外验证 GUI app registration**：当前失败同时影响 Electron 和 Playwright
    Chromium，下一轮不要先重复 UI smoke；优先用普通终端/新会话复核 vendored Electron 或 Chromium 能否启动，或处理
    `com.apple.provenance`、quarantine、LaunchServices / app registration 权限。
-2. **若 GUI app 仍不可用，设计非 GUI 截图证据路径**：目标是拿到可重复的 1280px 与较窄窗口视觉证据，但不要依赖
+3. **若 GUI app 仍不可用，设计非 GUI 截图证据路径**：目标是拿到可重复的 1280px 与较窄窗口视觉证据，但不要依赖
    Browser 插件 `file://`、localhost 监听、Electron 或 Playwright Chromium。
-3. **Desktop Home 真实窗口视觉烟测**：拿到可重复窗口证据后，再确认 visual-v1 首页在 1280px 默认窗口与较窄窗口下都能自然显示派活 hero、Agent 状态、Agent 动态和下一步区域。
-4. **只处理视觉烟测发现的低风险问题**：优先标题挤压、右栏过密、按钮层级不清或共享 UI primitive class
+4. **Desktop Home 真实窗口视觉烟测**：拿到可重复窗口证据后，再确认 visual-v1 首页在 1280px 默认窗口与较窄窗口下都能自然显示派活 hero、Agent 状态、Agent 动态和下一步区域。
+5. **只处理视觉烟测发现的低风险问题**：优先标题挤压、右栏过密、按钮层级不清或共享 UI primitive class
    漏映射，不扩新功能、不重写信息架构。
-5. **Run Detail 手动上手烟测**：随后再走“派发 internal trial -> 进入 Run Detail -> 添加 operator note ->
+6. **Run Detail 手动上手烟测**：随后再走“派发 internal trial -> 进入 Run Detail -> 添加 operator note ->
    查看右侧 `Trace 事件` 计数变化”的路径，判断是否需要 Replay inspector 局部高亮。
-6. **Git 状态判断注意事项**：普通 `git status` 仍可能因真实 linked-worktree index 不可写显示 stale `MM`；
+7. **Git 状态判断注意事项**：普通 `git status` 仍可能因真实 linked-worktree index 不可写显示 stale `MM`；
    先用 `git diff HEAD --name-only` 或临时 index 复核真实剩余 diff，再决定是否需要提交。
 
 ## 8. 风险与阻塞
