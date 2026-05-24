@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-24 10:22 CST
+> 最后更新：2026-05-24 10:30 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -423,6 +423,8 @@
 - `4c0c8dc`、`4e8fb87`：建立短主索引与主题轨道，把自动化入口从长 handoff 迁到 `docs/superpowers/README.md`。
 - `51a7c19`、`e70388b`：校准 handoff 的当前 HEAD 记录，继续提醒普通 `git status` 不可信。
 - `3c1fcc9`、`6f8c48b`：把 `docs/STATUS.md` 从逐轮日志压回事实基线，并记录该提交已落地。
+- `a80c712` `docs(trial): 压缩接力记录 / compress handoff log`：把本 handoff 的“最新完成 / 风险阻塞”
+  从逐轮长日志压成当前可复用结论、最近接力记录和短风险清单。
 
 ## 7. 下一轮任务
 
