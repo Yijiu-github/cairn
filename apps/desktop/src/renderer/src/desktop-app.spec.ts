@@ -223,6 +223,15 @@ describe('DesktopApp home screen', () => {
     expect(markup).not.toContain('aria-label="Primary"');
   });
 
+  it('does not keep hard-coded English empty run-id errors in renderer code', () => {
+    const appSource = readFileSync(new URL('./desktop-app.tsx', import.meta.url), 'utf8');
+    const loaderSource = readFileSync(new URL('./run-replay-loader.ts', import.meta.url), 'utf8');
+
+    expect(`${appSource}\n${loaderSource}`).not.toContain(
+      'Enter a Workspace Core run id to observe.',
+    );
+  });
+
   it('keeps the observed run detail surface free of obvious English runtime labels in zh-CN', () => {
     globalThis.window = {
       cairnDesktop: {

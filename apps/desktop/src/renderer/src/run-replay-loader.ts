@@ -12,6 +12,7 @@ export interface RunReplayLoadDependencies<TWorkspaceCoreStatus> {
   readonly setRunReplayError: (value: string | undefined) => void;
   readonly setRunReplaySource: (value: RunReplaySource | undefined) => void;
   readonly setWorkspaceCoreStatus: (value: TWorkspaceCoreStatus) => void;
+  readonly runIdRequiredError: string;
   readonly toErrorMessage: (error: unknown) => string;
 }
 
@@ -27,7 +28,7 @@ export async function loadRunReplaySource<TWorkspaceCoreStatus>(
     if (options.replaceCurrentSource === true) {
       dependencies.setRunReplaySource(undefined);
     }
-    dependencies.setRunReplayError('Enter a Workspace Core run id to observe.');
+    dependencies.setRunReplayError(dependencies.runIdRequiredError);
     return;
   }
 

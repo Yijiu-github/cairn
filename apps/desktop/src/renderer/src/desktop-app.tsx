@@ -169,6 +169,7 @@ export function DesktopApp() {
       {
         getRunReplaySource: window.cairnDesktop.workspaceCore.getRunReplaySource,
         getStatus: window.cairnDesktop.workspaceCore.getStatus,
+        runIdRequiredError: copy.runIdRequiredError,
         setRunReplayError,
         setRunReplayLoading,
         setRunReplaySource,
@@ -183,7 +184,7 @@ export function DesktopApp() {
   async function observeRunId(runId: string) {
     const trimmedRunId = runId.trim();
     if (trimmedRunId.length === 0) {
-      setRunReplayError('Enter a Workspace Core run id to observe.');
+      setRunReplayError(copy.runIdRequiredError);
       return;
     }
 

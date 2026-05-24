@@ -46,6 +46,14 @@
 - `DesktopApp` 改为从 locale copy 读取侧栏和主导航 `aria-label`；`desktop-locale.ts` 同步补齐 `zh-CN` 与 `en-US`
   文案。没有修改布局、CSS、Desktop bridge、Electron smoke 或产品范围。
 
+2026-05-25 05:53 CST 复核：
+
+- 本轮选择 Desktop UI 非 GUI 可验证小块；临时 index 显示真实 pre-existing diff 为空，普通 `git diff HEAD --name-only`
+  仍混有 stale smoke diagnostics / 主线索引噪音。
+- `loadRunReplaySource` 的空 run id 错误改由调用方传入 locale copy，默认 `zh-CN` 不再显示
+  `Enter a Workspace Core run id to observe.`；`DesktopApp.observeRunId` 也复用 `copy.runIdRequiredError`。
+- 新增 helper 红绿用例和 renderer 静态回归检查，锁住这类硬编码英文错误不回流；没有运行 Electron / Chromium / Browser / localhost smoke。
+
 2026-05-25 03:58 CST 复核：
 
 - 本轮选择 Desktop smoke diagnostics 收口轨道；真实全树 diff 用临时 index 从 `HEAD` 重建后为空，普通 index
@@ -220,6 +228,18 @@
 - 已通过：`../../node_modules/.bin/eslint src electron.vite.config.ts`
 - 已通过：
   `../../node_modules/.bin/prettier --check src/renderer/src/desktop-app.tsx src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.ts`
+
+2026-05-25 05:53 CST Desktop renderer empty run id copy 验证：
+
+- 红灯：`../../node_modules/.bin/vitest run src/renderer/src/run-replay-loader.spec.ts` 新增默认简中空 run id 用例后，仍收到
+  `Enter a Workspace Core run id to observe.`。
+- 绿灯：`loadRunReplaySource` 接受 `runIdRequiredError` 依赖，`DesktopApp` 两个空 run id 分支都改用 locale copy。
+- 已通过：
+  `../../node_modules/.bin/vitest run src/renderer/src/run-replay-loader.spec.ts src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.spec.ts`
+- 已通过：`../../node_modules/.bin/tsc --noEmit`
+- 已通过：`../../node_modules/.bin/eslint src electron.vite.config.ts`
+- 已通过：
+  `../../node_modules/.bin/prettier --check src/renderer/src/desktop-app.tsx src/renderer/src/desktop-app.spec.ts src/renderer/src/run-replay-loader.ts src/renderer/src/run-replay-loader.spec.ts`
 
 2026-05-22 02:35 CST 本轮文档整理验证通过：
 
@@ -507,13 +527,17 @@
 - Desktop renderer 已有 request sequence guard、空态 guard、bounded payload read、最小 operator actions、默认简中 copy 与 locale-neutral smoke hooks；这些都不代表完整 operator cockpit、完整 Artifact workspace 或 Web Shell 已完成。
 - Desktop renderer 默认简中壳的侧栏与主导航 accessibility label 已由 locale copy 驱动，可通过 SSR markup 测试非 GUI
   验证；这只是 a11y 文案收口，不代表视觉证据路径恢复。
+- Desktop renderer 的空运行编号错误已从硬编码英文改为 locale copy，`zh-CN` 默认壳可用 helper / static source
+  测试验证该错误不会回流。
 - 默认 mock Desktop visual smoke 的代码诊断已收窄到 Electron app registration `SIGABRT`，同一会话下 Playwright Chromium 也因 Mach bootstrap 权限失败；当前不能用这条环境里的 GUI 失败推断 renderer 视觉问题。
 - `docs/STATUS.md` 已压回事实基线和下一轮入口；长期约束写主题轨道，逐轮执行事实只留在本 handoff 的短摘要里。
 
 ### 6.2 最近接力记录
 
-- 本轮待提交：Desktop renderer 默认简中壳的侧栏与主导航 `aria-label` 改为 locale copy 输出，并用 SSR markup
-  测试锁住；这只收口非 GUI 可验证 a11y 文案，不恢复 GUI 证据路径。
+- 本轮待提交：Desktop renderer 空 run id 错误改为 locale copy 输出，并用 helper 红绿测试与 renderer 静态检查锁住；
+  这只收口非 GUI 可验证文案，不恢复 GUI 证据路径。
+- `aa59d21` `fix(desktop): 本地化导航可访问标签 / localize navigation a11y labels`：Desktop renderer 默认简中壳的侧栏与主导航
+  `aria-label` 改为 locale copy 输出，并用 SSR markup 测试锁住。
 - `1d8e42e` `test(desktop): 增强窗口烟测诊断 / improve window smoke diagnostics`：窗口烟测 early exit /
   timeout 诊断会带出最后观察到的非目标 smoke signal。
 - `647a6c9` `test(desktop): 收紧窗口烟测诊断 / clarify window smoke diagnostics`：窗口烟测在 Electron 提前退出时直接报告 code / signal，不再伪装成 ready-to-show 超时。

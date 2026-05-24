@@ -28,6 +28,7 @@ describe('loadRunReplaySource', () => {
         setWorkspaceCoreStatus,
         toErrorMessage: (error: unknown) =>
           error instanceof Error ? error.message : 'Unknown desktop bridge error.',
+        runIdRequiredError: '需要 run id',
       },
       '   ',
       { replaceCurrentSource: true },
@@ -36,7 +37,7 @@ describe('loadRunReplaySource', () => {
     expect(getRunReplaySource).not.toHaveBeenCalled();
     expect(getStatus).not.toHaveBeenCalled();
     expect(setRunReplaySource).toHaveBeenCalledWith(undefined);
-    expect(setRunReplayError).toHaveBeenCalledWith('Enter a Workspace Core run id to observe.');
+    expect(setRunReplayError).toHaveBeenCalledWith('需要 run id');
     expect(setRunReplayLoading).not.toHaveBeenCalled();
     expect(setWorkspaceCoreStatus).not.toHaveBeenCalled();
   });
@@ -63,6 +64,7 @@ describe('loadRunReplaySource', () => {
         setRunReplayLoading: vi.fn(),
         setRunReplaySource,
         setWorkspaceCoreStatus,
+        runIdRequiredError: 'Run id is required',
         toErrorMessage: (error: unknown) =>
           error instanceof Error ? error.message : 'Unknown desktop bridge error.',
       },
@@ -108,6 +110,7 @@ describe('loadRunReplaySource', () => {
         setRunReplayLoading,
         setRunReplaySource,
         setWorkspaceCoreStatus,
+        runIdRequiredError: 'Run id is required',
         toErrorMessage: (error: unknown) =>
           error instanceof Error ? error.message : 'Unknown desktop bridge error.',
       },
@@ -128,6 +131,7 @@ describe('loadRunReplaySource', () => {
         setRunReplayLoading,
         setRunReplaySource,
         setWorkspaceCoreStatus,
+        runIdRequiredError: 'Run id is required',
         toErrorMessage: (error: unknown) =>
           error instanceof Error ? error.message : 'Unknown desktop bridge error.',
       },
@@ -174,6 +178,7 @@ describe('loadRunReplaySource', () => {
         setRunReplayLoading,
         setRunReplaySource,
         setWorkspaceCoreStatus,
+        runIdRequiredError: 'Run id is required',
         toErrorMessage: (error: unknown) =>
           error instanceof Error ? error.message : 'Unknown desktop bridge error.',
       },
@@ -190,6 +195,7 @@ describe('loadRunReplaySource', () => {
         setRunReplayLoading,
         setRunReplaySource,
         setWorkspaceCoreStatus,
+        runIdRequiredError: 'Run id is required',
         toErrorMessage: (error: unknown) =>
           error instanceof Error ? error.message : 'Unknown desktop bridge error.',
       },
