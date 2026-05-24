@@ -127,6 +127,7 @@
 - `4e8fb87` `docs(superpowers): 收口主线索引与接力 / consolidate mainline index and handoff`
 - `51a7c19` `docs(trial): 校准接力提交状态 / align handoff commit state`
 - `e70388b` `docs(trial): 记录接力提交哈希 / record handoff commit hash`
+- `3c1fcc9` `docs(status): 收口状态页日志 / compress status log`
 
 归档说明：
 
@@ -951,7 +952,7 @@
   通过；`git diff --check -- docs/STATUS.md docs/superpowers/tracks/mainline-ui.md docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
   通过；临时 index 从 `HEAD` 重建后只看到本轮三份文档改动。`pnpm run docs:lint` 仍在入口层返回已知的
   `[ERROR] fetch failed`。
-- 本轮文档提交：提交后补记。
+- 本轮文档提交：`3c1fcc9` `docs(status): 收口状态页日志 / compress status log`。
 
 ## 7. 下一轮任务
 
