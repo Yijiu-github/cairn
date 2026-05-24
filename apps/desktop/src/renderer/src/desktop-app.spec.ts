@@ -204,6 +204,25 @@ describe('DesktopApp home screen', () => {
     expect(markup.match(/data-smoke-id="workspace-core-action-error"/g) ?? []).toHaveLength(0);
   });
 
+  it('localizes navigation accessibility labels on the default zh-CN shell', () => {
+    globalThis.window = {
+      cairnDesktop: {
+        app: {
+          mode: 'desktop-observer',
+          name: 'Cairn Desktop',
+        },
+      },
+      localStorage: createStorage(),
+    } as unknown as Window & typeof globalThis;
+
+    const markup = renderToStaticMarkup(createElement(DesktopApp));
+
+    expect(markup).toContain('aria-label="桌面导航"');
+    expect(markup).toContain('aria-label="主导航"');
+    expect(markup).not.toContain('aria-label="Desktop navigation"');
+    expect(markup).not.toContain('aria-label="Primary"');
+  });
+
   it('keeps the observed run detail surface free of obvious English runtime labels in zh-CN', () => {
     globalThis.window = {
       cairnDesktop: {

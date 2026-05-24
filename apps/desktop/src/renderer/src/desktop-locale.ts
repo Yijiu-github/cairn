@@ -83,6 +83,7 @@ export interface DesktopLocaleStrings {
   readonly metadataOnlyBody: string;
   readonly metadataOnlyVerification: string;
   readonly modeLabel: string;
+  readonly navigationLabel: string;
   readonly observeRun: string;
   readonly observedRunDescription: string;
   readonly observedRunLabel: string;
@@ -225,6 +226,7 @@ export interface DesktopLocaleStrings {
   readonly pinnedRunsDescription: string;
   readonly pinnedRunsTitle: string;
   readonly pinnedRunsVisibleCountLabel: (visibleCount: number) => string;
+  readonly primaryNavigationLabel: string;
   readonly reviewActionApproveExport: string;
   readonly reviewActionReject: string;
 }
@@ -287,6 +289,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
       'This artifact only exposes metadata in Run Detail. No bounded payload reference is available, and Desktop keeps storage paths hidden.',
     metadataOnlyVerification: 'metadata only',
     modeLabel: 'Mode',
+    navigationLabel: 'Desktop navigation',
     observeRun: 'Observe Run',
     observedRunDescription:
       'Desktop stores one bounded run id and refreshes replay evidence from it.',
@@ -485,6 +488,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     pinnedRunsDescription: 'Runs you can reopen without losing the current view.',
     pinnedRunsTitle: 'Pinned runs',
     pinnedRunsVisibleCountLabel: (visibleCount: number) => `${visibleCount.toString()} shown`,
+    primaryNavigationLabel: 'Primary navigation',
     reviewActionApproveExport: 'Approve export',
     reviewActionReject: 'Reject',
   },
@@ -541,6 +545,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
       '这个产物在运行详情里只暴露元数据。没有受限负载引用，桌面也会继续隐藏存储路径。',
     metadataOnlyVerification: '仅元数据',
     modeLabel: '模式',
+    navigationLabel: '桌面导航',
     observeRun: '观察运行',
     observedRunDescription: '桌面端会保存一个受限运行编号，并基于它刷新只读回放证据。',
     observedRunLabel: '已观察运行',
@@ -724,6 +729,7 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     pinnedRunsDescription: '可重新打开而不丢失当前视图的运行。',
     pinnedRunsTitle: '已固定运行',
     pinnedRunsVisibleCountLabel: (visibleCount: number) => `显示 ${visibleCount.toString()} 项`,
+    primaryNavigationLabel: '主导航',
     reviewActionApproveExport: '批准导出',
     reviewActionReject: '拒绝',
   },

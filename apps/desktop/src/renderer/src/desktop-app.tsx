@@ -237,7 +237,7 @@ export function DesktopApp() {
 
   return (
     <main className="desktop-shell">
-      <aside className="desktop-sidebar" aria-label="Desktop navigation">
+      <aside className="desktop-sidebar" aria-label={copy.navigationLabel}>
         <div className="brand-block">
           <div className="brand-mark">C</div>
           <div>
@@ -246,7 +246,7 @@ export function DesktopApp() {
           </div>
         </div>
 
-        <nav className="nav-list" aria-label="Primary">
+        <nav className="nav-list" aria-label={copy.primaryNavigationLabel}>
           {localizedModel.navItems.map((item) => (
             <button
               key={item.id}

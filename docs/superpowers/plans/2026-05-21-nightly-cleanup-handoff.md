@@ -37,6 +37,15 @@
 
 ## 3. 当前工作区状态
 
+2026-05-25 04:58 CST 复核：
+
+- 本轮选择 Desktop UI 非 GUI 可验证小块；真实全树 diff 先用临时 index 从 `HEAD` 重建确认为空，普通 index
+  里的删除和 UX `MM` 仍是 stale linked-worktree 噪音。
+- 新增 SSR markup 回归覆盖默认 `zh-CN` 桌面壳导航 accessibility label，锁住侧栏 `aria-label="桌面导航"` 与主导航
+  `aria-label="主导航"`，避免无视觉环境时继续残留英文 `Desktop navigation` / `Primary`。
+- `DesktopApp` 改为从 locale copy 读取侧栏和主导航 `aria-label`；`desktop-locale.ts` 同步补齐 `zh-CN` 与 `en-US`
+  文案。没有修改布局、CSS、Desktop bridge、Electron smoke 或产品范围。
+
 2026-05-25 03:58 CST 复核：
 
 - 本轮选择 Desktop smoke diagnostics 收口轨道；真实全树 diff 用临时 index 从 `HEAD` 重建后为空，普通 index
@@ -198,6 +207,19 @@
   `./node_modules/.bin/prettier --check apps/desktop/scripts/window-smoke-runner.mjs apps/desktop/scripts/window-smoke-runner.spec.mjs docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`
 - 预期失败：`pnpm --filter @cairn/desktop test -- --run scripts/window-smoke-runner.spec.mjs` 在进入 Vitest 前返回
   `[ERROR] fetch failed`。
+
+2026-05-25 04:58 CST Desktop renderer navigation a11y label 验证：
+
+- 红灯：新增 `apps/desktop/src/renderer/src/desktop-app.spec.ts` SSR markup 用例后，
+  `../../node_modules/.bin/vitest run src/renderer/src/desktop-app.spec.ts` 因默认 `zh-CN` 输出仍包含
+  `aria-label="Desktop navigation"` / `aria-label="Primary"` 失败。
+- 绿灯：`desktop-app.tsx` 改为使用 locale copy 输出侧栏和主导航 `aria-label`，`desktop-locale.ts` 补齐
+  `navigationLabel` / `primaryNavigationLabel` 后，同组 renderer spec 通过。
+- 已通过：`../../node_modules/.bin/vitest run src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.spec.ts`
+- 已通过：`../../node_modules/.bin/tsc --noEmit`
+- 已通过：`../../node_modules/.bin/eslint src electron.vite.config.ts`
+- 已通过：
+  `../../node_modules/.bin/prettier --check src/renderer/src/desktop-app.tsx src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.ts`
 
 2026-05-22 02:35 CST 本轮文档整理验证通过：
 
@@ -483,13 +505,17 @@
 - Desktop 主导航事实已统一：R1 主入口只保留 Home / Inbox、Runs、Runtime Status、Settings；Run Detail、Artifact Detail、Activity Timeline、Task Explorer、Replay View 都是二级观察面。
 - Desktop internal-trial 体验壳已能表达 bounded 路径：Home 可输入本地草稿并派发 internal trial；Run Detail 可读 replay evidence、artifact payload 和 operator note 反馈；草稿仍不进入真实 Supervisor dispatch。
 - Desktop renderer 已有 request sequence guard、空态 guard、bounded payload read、最小 operator actions、默认简中 copy 与 locale-neutral smoke hooks；这些都不代表完整 operator cockpit、完整 Artifact workspace 或 Web Shell 已完成。
+- Desktop renderer 默认简中壳的侧栏与主导航 accessibility label 已由 locale copy 驱动，可通过 SSR markup 测试非 GUI
+  验证；这只是 a11y 文案收口，不代表视觉证据路径恢复。
 - 默认 mock Desktop visual smoke 的代码诊断已收窄到 Electron app registration `SIGABRT`，同一会话下 Playwright Chromium 也因 Mach bootstrap 权限失败；当前不能用这条环境里的 GUI 失败推断 renderer 视觉问题。
 - `docs/STATUS.md` 已压回事实基线和下一轮入口；长期约束写主题轨道，逐轮执行事实只留在本 handoff 的短摘要里。
 
 ### 6.2 最近接力记录
 
-- 本轮待提交：Desktop window smoke runner 会在 Electron early exit / timeout 诊断中带出最后观察到的 smoke signal；
-  这只提升非 GUI 诊断质量，不恢复 GUI 证据路径。
+- 本轮待提交：Desktop renderer 默认简中壳的侧栏与主导航 `aria-label` 改为 locale copy 输出，并用 SSR markup
+  测试锁住；这只收口非 GUI 可验证 a11y 文案，不恢复 GUI 证据路径。
+- `1d8e42e` `test(desktop): 增强窗口烟测诊断 / improve window smoke diagnostics`：窗口烟测 early exit /
+  timeout 诊断会带出最后观察到的非目标 smoke signal。
 - `647a6c9` `test(desktop): 收紧窗口烟测诊断 / clarify window smoke diagnostics`：窗口烟测在 Electron 提前退出时直接报告 code / signal，不再伪装成 ready-to-show 超时。
 - `4aa70ea` `docs(status): 记录 GUI 注册阻塞 / record gui registration blocker` 与 `2de3889` `docs(status): 收口 GUI 注册记录 / close gui registration notes`：确认 Electron / Chromium GUI 阻塞属于当前 Codex/macOS 会话层面的 app registration / provenance 类问题。
 - `4c0c8dc`、`4e8fb87`：建立短主索引与主题轨道，把自动化入口从长 handoff 迁到 `docs/superpowers/README.md`。
@@ -510,17 +536,19 @@
    与 [`../../STATUS.md`](../../STATUS.md)；若短索引、状态页、主题轨道和本 handoff 已一致，不要为了记录而继续改文档。
 2. **优先利用新增 smoke signal 诊断复核失败层级**：下一次只在修诊断输出质量时运行 `window-smoke.mjs`；看错误中最后观察到的 signal
    是 `main-process-loaded` 还是没有任何 signal，再决定是否值得继续追 Electron app registration。
-3. **再在当前 Codex coalition 外验证 GUI app registration**：当前失败同时影响 Electron 和 Playwright
+3. **继续选择非 GUI 可验证 Desktop UI 小块**：若 GUI 证据仍不可用，优先找 SSR markup、copy helper、class mapping
+   或响应式 CSS 这类可由 Vitest / typecheck / lint 证明的小改动；不要凭视觉猜测改页面。
+4. **再在当前 Codex coalition 外验证 GUI app registration**：当前失败同时影响 Electron 和 Playwright
    Chromium，下一轮不要先重复 UI smoke；优先用普通终端/新会话复核 vendored Electron 或 Chromium 能否启动，或处理
    `com.apple.provenance`、quarantine、LaunchServices / app registration 权限。
-4. **若 GUI app 仍不可用，设计非 GUI 截图证据路径**：目标是拿到可重复的 1280px 与较窄窗口视觉证据，但不要依赖
+5. **若 GUI app 仍不可用，设计非 GUI 截图证据路径**：目标是拿到可重复的 1280px 与较窄窗口视觉证据，但不要依赖
    Browser 插件 `file://`、localhost 监听、Electron 或 Playwright Chromium。
-5. **Desktop Home 真实窗口视觉烟测**：拿到可重复窗口证据后，再确认 visual-v1 首页在 1280px 默认窗口与较窄窗口下都能自然显示派活 hero、Agent 状态、Agent 动态和下一步区域。
-6. **只处理视觉烟测发现的低风险问题**：优先标题挤压、右栏过密、按钮层级不清或共享 UI primitive class
+6. **Desktop Home 真实窗口视觉烟测**：拿到可重复窗口证据后，再确认 visual-v1 首页在 1280px 默认窗口与较窄窗口下都能自然显示派活 hero、Agent 状态、Agent 动态和下一步区域。
+7. **只处理视觉烟测发现的低风险问题**：优先标题挤压、右栏过密、按钮层级不清或共享 UI primitive class
    漏映射，不扩新功能、不重写信息架构。
-7. **Run Detail 手动上手烟测**：随后再走“派发 internal trial -> 进入 Run Detail -> 添加 operator note ->
+8. **Run Detail 手动上手烟测**：随后再走“派发 internal trial -> 进入 Run Detail -> 添加 operator note ->
    查看右侧 `Trace 事件` 计数变化”的路径，判断是否需要 Replay inspector 局部高亮。
-8. **Git 状态判断注意事项**：普通 `git status` 仍可能因真实 linked-worktree index 不可写显示 stale `MM`；
+9. **Git 状态判断注意事项**：普通 `git status` 仍可能因真实 linked-worktree index 不可写显示 stale `MM`；
    先用 `git diff HEAD --name-only` 或临时 index 复核真实剩余 diff，再决定是否需要提交。
 
 ## 8. 风险与阻塞
