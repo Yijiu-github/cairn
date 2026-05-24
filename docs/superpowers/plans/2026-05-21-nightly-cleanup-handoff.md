@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-24 10:56 CST
+> 最后更新：2026-05-24 11:29 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -36,6 +36,15 @@
 ---
 
 ## 3. 当前工作区状态
+
+2026-05-24 11:29 CST 复核：
+
+- 复读了 `docs/superpowers/README.md`、`docs/superpowers/tracks/mainline-ui.md`、`docs/STATUS.md`
+  与产品主锚点；这轮确认主线索引、主题轨道、状态基线和 handoff 本身都没有新的事实漂移。
+- `docs/STATUS.md`、`docs/superpowers/README.md`、`docs/superpowers/tracks/mainline-ui.md`、
+  `docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md` 与 `HEAD` 字节一致；这轮没有产品口径改动。
+- 继续把普通 `git status` 当作不可信信号；linked-worktree 索引还是会吐 stale mismatch 噪音。
+- 下一轮如果没有新的事实变化，就不要再做 docs-only bookkeeping；优先转去 GUI 证据路径恢复，或等有 1280px / 窄窗口截图后再修 Desktop 的最小视觉差异。
 
 2026-05-24 10:52 CST 复核：
 
