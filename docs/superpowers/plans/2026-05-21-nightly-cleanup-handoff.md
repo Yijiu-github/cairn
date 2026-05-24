@@ -42,6 +42,9 @@
 - 重新读了 `docs/superpowers/README.md`、`docs/superpowers/tracks/mainline-ui.md`、`docs/STATUS.md`
   与 `docs/design/ux/foundations/information-architecture.md`；当前主线索引、主题轨道、状态基线与 IA 口径仍一致，没有新的事实漂移。
 - `git hash-object` / `git rev-parse HEAD:<path>` 复核显示这四个关键文件都仍与 `HEAD` 对齐；这轮没有新的 repo diff，也没有形成可保留变更。
+- 为避免下一轮重复同一轮事实复核，最终只更新了本 handoff 的运行记录；没有修改产品、UX、Desktop UI 或 runtime 内容。
+- 验证通过：`./node_modules/.bin/prettier --check docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`、`./node_modules/.bin/markdownlint-cli2 docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`、`git diff --check -- docs/superpowers/plans/2026-05-21-nightly-cleanup-handoff.md`。
+- 本轮提交：`484ab93` `docs(trial): 记录主线复核 / record mainline recheck`。
 - 继续把普通 `git status` 当作不可信信号；linked-worktree 索引还是会吐 stale mismatch 噪音。
 - 下一轮如果没有新的事实变化，就不要再做 docs-only bookkeeping；优先转去 GUI 证据路径恢复，或等有 1280px / 窄窗口截图后再修 Desktop 的最小视觉差异。
 
