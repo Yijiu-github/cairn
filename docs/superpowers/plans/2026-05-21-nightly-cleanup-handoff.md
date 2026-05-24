@@ -1,7 +1,7 @@
 # Internal Trial Mainline Handoff
 
 > 状态：🟡 Active
-> 最后更新：2026-05-24 12:23 CST
+> 最后更新：2026-05-24 12:26 CST
 > 工作区：`/Users/taosiyu/Code/cairn`
 > 当前主线：推进第一轮内部开发者试用，不再做泛化 nightly cleanup
 
@@ -36,6 +36,13 @@
 ---
 
 ## 3. 当前工作区状态
+
+2026-05-24 12:26 CST 复核：
+
+- 重新读了 `docs/superpowers/README.md`、`docs/superpowers/tracks/mainline-ui.md` 与 `docs/STATUS.md`；短主索引、主题轨道和状态基线仍一致，没有新的主线事实漂移。
+- 本轮只做了复核和接力记录更新，没有新的 Desktop / Web 结论，也没有新的产品范围变化。
+- 继续把普通 `git status` 视为不可信信号；linked-worktree 的 stale mismatch 噪音还在。
+- 下一轮如果仍无新事实变化，就不要再做 docs-only bookkeeping；优先转去 GUI 证据路径恢复，或等有 1280px / 窄窗口截图后再修 Desktop 的最小视觉差异。
 
 2026-05-24 12:23 CST 复核：
 
@@ -160,6 +167,12 @@
 ---
 
 ## 5. 最近验证记录
+
+2026-05-24 12:26 CST 本轮主线复核：
+
+- 复核 `docs/superpowers/README.md`、`docs/superpowers/tracks/mainline-ui.md`、`docs/STATUS.md`；短索引、主题轨道和状态基线没有新漂移。
+- 没有重复普通 Electron / Chromium smoke，也没有把缺证据的视觉猜测写成事实。
+- 本轮提交：待记录。
 
 2026-05-22 02:35 CST 本轮文档整理验证通过：
 
