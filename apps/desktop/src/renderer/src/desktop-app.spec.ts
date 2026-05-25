@@ -249,6 +249,14 @@ describe('DesktopApp home screen', () => {
     );
   });
 
+  it('does not keep hard-coded English operator success feedback in renderer code', () => {
+    const appSource = readFileSync(new URL('./desktop-app.tsx', import.meta.url), 'utf8');
+
+    expect(appSource).not.toContain('was cancelled.');
+    expect(appSource).not.toContain('Created rerun');
+    expect(appSource).not.toContain('advanced to attempt');
+  });
+
   it('keeps the observed run detail surface free of obvious English runtime labels in zh-CN', () => {
     globalThis.window = {
       cairnDesktop: {

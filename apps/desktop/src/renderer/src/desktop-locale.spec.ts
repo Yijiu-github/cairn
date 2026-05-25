@@ -78,6 +78,11 @@ describe('desktop locale', () => {
     expect(copy.operatorNoteRecorded('01J_NOTE')).toBe(
       '备注已记录到本地运行证据；右侧“回放检查器”的“Trace 事件”计数已刷新。记录编号：01J_NOTE。',
     );
+    expect(copy.operatorRunCancelled('01J_RUN')).toBe('运行 01J_RUN 已取消。');
+    expect(copy.operatorRerunCreated('01J_RERUN', '01J_RUN')).toBe(
+      '已从 01J_RUN 创建重新运行 01J_RERUN。',
+    );
+    expect(copy.operatorTaskRetried('01J_TASK', 2)).toBe('任务 01J_TASK 已进入第 2 次尝试。');
   });
 });
 

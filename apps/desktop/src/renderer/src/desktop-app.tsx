@@ -371,7 +371,7 @@ export function DesktopApp() {
                 if (!isCurrent()) {
                   return;
                 }
-                return `Run ${runId} was cancelled.`;
+                return copy.operatorRunCancelled(runId);
               });
             }}
             onLoadArtifactPayload={loadArtifactPayload}
@@ -390,7 +390,7 @@ export function DesktopApp() {
                 setArtifactPayloads({});
                 setArtifactPayloadError(undefined);
                 setObservedRunId(rerun.orchestrationRunId);
-                return `Created rerun ${rerun.orchestrationRunId} from ${runId}.`;
+                return copy.operatorRerunCreated(rerun.orchestrationRunId, runId);
               });
             }}
             onRetryTask={async (taskId) => {
@@ -409,7 +409,7 @@ export function DesktopApp() {
                 if (!isCurrent()) {
                   return;
                 }
-                return `Task ${result.taskId} advanced to attempt ${String(result.newAttempt)}.`;
+                return copy.operatorTaskRetried(result.taskId, result.newAttempt);
               });
             }}
             replayError={runReplayError}

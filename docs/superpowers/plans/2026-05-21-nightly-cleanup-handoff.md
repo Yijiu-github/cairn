@@ -37,6 +37,14 @@
 
 ## 3. 当前工作区状态
 
+2026-05-25 08:55 CST 复核：
+
+- 本轮选择 Desktop UI 非 GUI 可验证小块；临时 index 从 `HEAD` 重建后确认真实 pre-existing diff 为空，
+  普通 `git diff HEAD --name-only` 仍显示 stale smoke diagnostics / 主线索引噪音。
+- Run Detail 的 `cancel / rerun / retry` 成功反馈从 renderer 内硬编码英文模板改为 locale copy helper；
+  默认 `zh-CN` 现在输出“运行已取消 / 已创建重新运行 / 已进入第 N 次尝试”的中文反馈。没有修改布局、CSS、
+  Desktop bridge、Electron smoke 或产品范围。
+
 2026-05-25 06:52 CST 复核：
 
 - 本轮选择 Desktop UI 非 GUI 可验证小块；临时 index 从 `HEAD` 重建后确认真实 pre-existing diff 为空，
@@ -201,6 +209,21 @@
 ---
 
 ## 5. 最近验证记录
+
+2026-05-25 08:55 CST Desktop renderer operator feedback copy 验证：
+
+- 红灯：新增 `apps/desktop/src/renderer/src/desktop-locale.spec.ts` locale helper 用例与
+  `apps/desktop/src/renderer/src/desktop-app.spec.ts` 静态源码回归后，
+  `../../node_modules/.bin/vitest run src/renderer/src/desktop-locale.spec.ts src/renderer/src/desktop-app.spec.ts`
+  因 `copy.operatorRunCancelled is not a function` 且 `DesktopApp` 仍包含 `was cancelled.` 英文模板失败。
+- 绿灯：`desktop-locale.ts` 补齐 `operatorRunCancelled` / `operatorRerunCreated` /
+  `operatorTaskRetried`，`DesktopApp` 的 cancel / rerun / retry 成功反馈改用 locale copy。
+- 已通过：
+  `../../node_modules/.bin/vitest run src/renderer/src/desktop-locale.spec.ts src/renderer/src/desktop-app.spec.ts`
+- 已通过：`../../node_modules/.bin/tsc --noEmit`
+- 已通过：`../../node_modules/.bin/eslint src electron.vite.config.ts`
+- 已通过：
+  `../../node_modules/.bin/prettier --check src/renderer/src/desktop-app.tsx src/renderer/src/desktop-app.spec.ts src/renderer/src/desktop-locale.ts src/renderer/src/desktop-locale.spec.ts`
 
 2026-05-25 06:52 CST Desktop renderer sidebar metadata a11y label 验证：
 

@@ -93,6 +93,9 @@ export interface DesktopLocaleStrings {
   readonly operatorControlsDescription: string;
   readonly operatorControlsTitle: string;
   readonly operatorNoteRecorded: (messageId: string) => string;
+  readonly operatorRerunCreated: (newRunId: string, sourceRunId: string) => string;
+  readonly operatorRunCancelled: (runId: string) => string;
+  readonly operatorTaskRetried: (taskId: string, newAttempt: number) => string;
   readonly previewSafeLabel: string;
   readonly previewSafeStatus: string;
   readonly processLabel: string;
@@ -303,6 +306,11 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     operatorControlsTitle: 'Operator controls',
     operatorNoteRecorded: (messageId: string) =>
       `Note recorded in local run evidence; the Trace events count in Replay inspector was refreshed. Message id: ${messageId}.`,
+    operatorRerunCreated: (newRunId: string, sourceRunId: string) =>
+      `Created rerun ${newRunId} from ${sourceRunId}.`,
+    operatorRunCancelled: (runId: string) => `Run ${runId} was cancelled.`,
+    operatorTaskRetried: (taskId: string, newAttempt: number) =>
+      `Task ${taskId} advanced to attempt ${newAttempt.toString()}.`,
     previewSafeLabel: 'Preview-safe',
     previewSafeStatus: 'static',
     processLabel: 'Process',
@@ -559,6 +567,11 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     operatorControlsTitle: '接管控制',
     operatorNoteRecorded: (messageId: string) =>
       `备注已记录到本地运行证据；右侧“回放检查器”的“Trace 事件”计数已刷新。记录编号：${messageId}。`,
+    operatorRerunCreated: (newRunId: string, sourceRunId: string) =>
+      `已从 ${sourceRunId} 创建重新运行 ${newRunId}。`,
+    operatorRunCancelled: (runId: string) => `运行 ${runId} 已取消。`,
+    operatorTaskRetried: (taskId: string, newAttempt: number) =>
+      `任务 ${taskId} 已进入第 ${newAttempt.toString()} 次尝试。`,
     previewSafeLabel: '运行安全',
     previewSafeStatus: '静态',
     processLabel: '进程',
