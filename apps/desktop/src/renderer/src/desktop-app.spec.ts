@@ -16,7 +16,7 @@ import {
   WorkspaceId,
 } from '@cairn/shared-contracts';
 
-import { DesktopApp, RunDetailView } from './desktop-app.js';
+import { ArtifactReviewView, DesktopApp, RunDetailView } from './desktop-app.js';
 import { getDesktopLocaleStrings } from './desktop-locale.js';
 import { desktopShellModel } from './desktop-model.js';
 
@@ -362,6 +362,27 @@ describe('DesktopApp home screen', () => {
     expect(markup).toContain('接管入口');
     expect(markup).toContain('可记录备注');
   });
+
+  it('uses replay artifacts in Artifact Review when run evidence is available', () => {
+    const copy = getDesktopLocaleStrings('zh-CN');
+    const replaySource = createReplaySource();
+    const markup = renderToStaticMarkup(
+      createElement(ArtifactReviewView, {
+        copy,
+        model: createArtifactReviewModel(copy),
+        replaySource,
+      }),
+    );
+
+    expect(markup).toContain('data-smoke-id="artifact-review-replay-source"');
+    expect(markup).toContain('来自回放证据');
+    expect(markup).toContain('01HZZZZZZZZZZZZZZZZZZZZZF0');
+    expect(markup).toContain('输出产物 · 文本');
+    expect(markup).toContain('工作区可见 · 42 字节');
+    expect(markup).toContain('负载可加载');
+    expect(markup).not.toContain('artifact://preview/redacted-diff-001');
+    expect(markup).not.toContain('Desktop renderer shell patch');
+  });
 });
 
 function createStorage(initialValues: Readonly<Record<string, string>> = {}): Storage {
@@ -395,6 +416,32 @@ function noop(): void {
 
 function noopAsync(): Promise<void> {
   return Promise.resolve();
+}
+
+function createArtifactReviewModel(
+  copy: ReturnType<typeof getDesktopLocaleStrings>,
+): Parameters<typeof ArtifactReviewView>[0]['model'] {
+  return {
+    artifactReview: {
+      artifacts: [],
+      artifactId: 'artifact://preview/redacted-diff-001',
+      note: '',
+      title: copy.artifactReviewTitle,
+    },
+    handoffs: [],
+    missionControl: desktopShellModel.missionControl,
+    navItems: [],
+    pinnedRuns: [],
+    runtime: desktopShellModel.runtime,
+    statusStrip: [],
+    viewTitle: {
+      'artifact-review': copy.artifactReview,
+      'home': copy.homeTabLabel,
+      'run-detail': copy.runDetailTabLabel,
+      'settings': copy.settingsTabLabel,
+    },
+    workspace: desktopShellModel.workspace,
+  };
 }
 
 function createReplaySource(): RunReplaySource {

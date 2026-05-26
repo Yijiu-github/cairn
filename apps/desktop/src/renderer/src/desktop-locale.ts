@@ -18,6 +18,8 @@ export interface DesktopLocaleStrings {
   readonly artifactReview: string;
   readonly artifactReviewDescription: string;
   readonly artifactReviewEmptyBody: string;
+  readonly artifactReviewReplaySourceBody: (artifactCount: number) => string;
+  readonly artifactReviewReplaySourceTitle: string;
   readonly artifactReviewTitle: string;
   readonly artifactSummaryDescription: string;
   readonly artifactSummaryEmpty: string;
@@ -258,6 +260,9 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     artifactReviewDescription: 'Safe review entry point with redacted path language.',
     artifactReviewEmptyBody:
       'Choose an artifact from the observed run or switch back after replay evidence loads.',
+    artifactReviewReplaySourceBody: (artifactCount: number) =>
+      `Reviewing ${artifactCount.toString()} artifact(s) from the loaded replay evidence. Local paths stay hidden.`,
+    artifactReviewReplaySourceTitle: 'From replay evidence',
     artifactReviewTitle: 'Artifact Review placeholder',
     artifactSummaryDescription:
       'Read-only artifact metadata and bounded payload text for the observed run.',
@@ -528,6 +533,9 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     artifactReview: '产物审阅',
     artifactReviewDescription: '脱敏后的路径语言，作为安全审阅入口。',
     artifactReviewEmptyBody: '先从已观察到的运行中选择产物，或在回放证据加载后返回。',
+    artifactReviewReplaySourceBody: (artifactCount: number) =>
+      `正在审阅已加载回放证据中的 ${artifactCount.toString()} 个产物。本地路径仍保持隐藏。`,
+    artifactReviewReplaySourceTitle: '来自回放证据',
     artifactReviewTitle: '产物审阅占位页',
     artifactSummaryDescription: '当前运行的只读产物元数据与受限负载文本。',
     artifactSummaryEmpty: '未记录产物元数据',

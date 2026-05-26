@@ -60,6 +60,10 @@ describe('desktop locale', () => {
     expect(copy.runInternalTrialEmptyBody).toContain('点击“运行内部试用”');
     expect(copy.artifactPayloadLoadedLabel).toBe('负载已加载，本地路径仍隐藏。');
     expect(copy.artifactPayloadTruncatedLabel).toBe('负载已加载，本地路径仍隐藏；内容已截断。');
+    expect(copy.artifactReviewReplaySourceTitle).toBe('来自回放证据');
+    expect(copy.artifactReviewReplaySourceBody(2)).toBe(
+      '正在审阅已加载回放证据中的 2 个产物。本地路径仍保持隐藏。',
+    );
     expect(copy.agentRunsLabel).toBe('AgentRuns');
     expect(copy.processLabel).toBe('进程');
     expect(copy.replaySourceBody('01J_RUN')).toBe('正在显示 01J_RUN 的脱敏本地运行证据。');

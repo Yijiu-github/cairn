@@ -44,6 +44,7 @@ import type { DesktopView } from './desktop-model';
 import type { ArtifactPayloadResponse, RunReplaySource } from '@cairn/shared-contracts';
 import type {
   CairnEvidenceTone,
+  ArtifactCardProps,
   CairnRunStatus,
   CairnTaskStatus,
   EvidenceTimelineItem,
@@ -419,7 +420,7 @@ export function DesktopApp() {
           />
         ) : undefined}
         {activeView === 'artifact-review' ? (
-          <ArtifactReviewView copy={copy} model={localizedModel} />
+          <ArtifactReviewView copy={copy} model={localizedModel} replaySource={runReplaySource} />
         ) : undefined}
         {activeView === 'settings' ? (
           <SettingsView copy={copy} model={localizedModel} />
@@ -1508,13 +1509,21 @@ function ArtifactSummaryCard({
   );
 }
 
-function ArtifactReviewView({
+export function ArtifactReviewView({
   copy,
   model,
+  replaySource,
 }: {
   readonly copy: DesktopLocaleStrings;
   readonly model: LocalizedDesktopModel;
+  readonly replaySource?: RunReplaySource | undefined;
 }) {
+  const replayArtifacts = replaySource?.artifacts.map((artifact) =>
+    toReviewArtifactCardProps(artifact, copy),
+  );
+  const artifactReview = replayArtifacts?.[0] ?? model.artifactReview.artifacts[0];
+  const artifactCards = replayArtifacts ?? model.artifactReview.artifacts;
+
   return (
     <div className="content-grid">
       <section className="content-stack">
@@ -1523,13 +1532,22 @@ function ArtifactReviewView({
             { disabled: true, label: copy.reviewActionApproveExport, tone: 'primary' },
             { disabled: true, label: copy.reviewActionReject, tone: 'danger' },
           ]}
-          artifactId={model.artifactReview.artifactId}
+          artifactId={artifactReview?.artifactId ?? model.artifactReview.artifactId}
           note={model.artifactReview.note}
           reviewState="pending_review"
           title={copy.artifactReviewTitle}
         />
+        {replayArtifacts === undefined ? undefined : (
+          <InlineAlert
+            data-smoke-id="artifact-review-replay-source"
+            tone="success"
+            title={copy.artifactReviewReplaySourceTitle}
+          >
+            {copy.artifactReviewReplaySourceBody(replayArtifacts.length)}
+          </InlineAlert>
+        )}
         <div className="artifact-list">
-          {model.artifactReview.artifacts.map((artifact) => (
+          {artifactCards.map((artifact) => (
             <ArtifactCard key={artifact.artifactId} {...artifact} />
           ))}
         </div>
@@ -1554,6 +1572,27 @@ function ArtifactReviewView({
       </aside>
     </div>
   );
+}
+
+function toReviewArtifactCardProps(
+  artifact: RunReplaySource['artifacts'][number],
+  copy: DesktopLocaleStrings,
+): ArtifactCardProps {
+  return {
+    artifactId: artifact.artifactId,
+    kind: toArtifactCardKind(artifact.kind),
+    path: artifact.uriOrPath,
+    pathDisplayMode: 'hidden',
+    redactionLabel: copy.artifactPayloadStorageHidden,
+    reviewState: 'pending_review',
+    sensitivity: artifact.sensitivity,
+    summary: formatArtifactCardSummary(artifact, copy),
+    title: formatArtifactCardTitle(artifact, copy),
+    verification:
+      artifact.payloadRef === undefined
+        ? copy.metadataOnlyVerification
+        : copy.artifactPayloadAvailableLabel,
+  };
 }
 
 function SettingsView({
