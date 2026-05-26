@@ -1012,7 +1012,7 @@ interface RunDetailViewProps {
   readonly runIdInput: string;
 }
 
-function RunDetailView({
+export function RunDetailView({
   actionBusy,
   actionError,
   actionFeedback,
@@ -1119,6 +1119,9 @@ function RunDetailView({
           >
             {copy.replaySourceBody(replaySource.run.orchestrationRunId)}
           </InlineAlert>
+        )}
+        {replaySource === undefined ? undefined : (
+          <RunDetailReadinessStrip copy={copy} replaySource={replaySource} />
         )}
         {run === undefined ? (
           <Card>
@@ -1257,6 +1260,38 @@ interface RunIdObservationFormProps {
   readonly onRunIdChange: (runId: string) => void;
   readonly onSubmit: (runId: string) => Promise<void>;
   readonly runId: string;
+}
+
+function RunDetailReadinessStrip({
+  copy,
+  replaySource,
+}: {
+  readonly copy: DesktopLocaleStrings;
+  readonly replaySource: RunReplaySource;
+}) {
+  return (
+    <section className="run-detail-readiness-strip" data-smoke-id="run-detail-readiness-strip">
+      <div>
+        <span className="eyebrow">{copy.runDetailReadinessTitle}</span>
+      </div>
+      <MetadataList
+        className="run-detail-readiness-list"
+        items={[
+          {
+            label: copy.runDetailReadinessReplayLabel,
+            value: copy.runDetailReadinessLoadedValue,
+          },
+          { label: copy.taskCountLabel, value: replaySource.inspector.taskCount },
+          { label: copy.artifactsLabel, value: replaySource.inspector.artifactCount },
+          { label: copy.traceEventsLabel, value: replaySource.inspector.traceEventCount },
+          {
+            label: copy.runDetailReadinessOperatorLabel,
+            value: copy.runDetailReadinessOperatorReadyValue,
+          },
+        ]}
+      />
+    </section>
+  );
 }
 
 function RunIdObservationForm({

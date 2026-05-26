@@ -83,6 +83,11 @@ describe('desktop locale', () => {
       '已从 01J_RUN 创建重新运行 01J_RERUN。',
     );
     expect(copy.operatorTaskRetried('01J_TASK', 2)).toBe('任务 01J_TASK 已进入第 2 次尝试。');
+    expect(copy.runDetailReadinessTitle).toBe('演示状态');
+    expect(copy.runDetailReadinessReplayLabel).toBe('回放证据');
+    expect(copy.runDetailReadinessLoadedValue).toBe('已加载');
+    expect(copy.runDetailReadinessOperatorLabel).toBe('接管入口');
+    expect(copy.runDetailReadinessOperatorReadyValue).toBe('可记录备注');
   });
 });
 

@@ -5,8 +5,22 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { DesktopApp } from './desktop-app.js';
+import {
+  AgentRunId,
+  ArtifactId,
+  EventId,
+  OrchestrationRunId,
+  TaskId,
+  TraceEventId,
+  TraceId,
+  WorkspaceId,
+} from '@cairn/shared-contracts';
+
+import { DesktopApp, RunDetailView } from './desktop-app.js';
+import { getDesktopLocaleStrings } from './desktop-locale.js';
 import { desktopShellModel } from './desktop-model.js';
+
+import type { RunReplaySource } from '@cairn/shared-contracts';
 
 describe('DesktopApp home screen', () => {
   const originalWindow = globalThis.window;
@@ -308,6 +322,46 @@ describe('DesktopApp home screen', () => {
     expect(markup).not.toContain('source-root');
     expect(markup).not.toContain('loading');
   });
+
+  it('renders a compact Run Detail readiness strip once replay evidence loads', () => {
+    const markup = renderToStaticMarkup(
+      createElement(RunDetailView, {
+        actionBusy: undefined,
+        actionError: undefined,
+        actionFeedback: undefined,
+        artifactPayloadError: undefined,
+        artifactPayloadLoadingId: undefined,
+        artifactPayloads: {},
+        copy: getDesktopLocaleStrings('zh-CN'),
+        observedRunId: '01HZZZZZZZZZZZZZZZZZZZZZR0',
+        onAddOperatorNote: noopAsync,
+        onCancelRun: noopAsync,
+        onLoadArtifactPayload: noopAsync,
+        onObserveRun: noopAsync,
+        onRefreshReplay: noopAsync,
+        onRerun: noopAsync,
+        onRetryTask: noopAsync,
+        onRunIdChange: noop,
+        replayError: undefined,
+        replayLoading: false,
+        replaySource: createReplaySource(),
+        runIdInput: '01HZZZZZZZZZZZZZZZZZZZZZR0',
+      }),
+    );
+
+    expect(markup).toContain('data-smoke-id="run-detail-readiness-strip"');
+    expect(markup).toContain('演示状态');
+    expect(markup).toContain('回放证据');
+    expect(markup).toContain('已加载');
+    expect(markup).toContain('任务');
+    expect(markup).toContain('1');
+    expect(markup).toContain('产物');
+    expect(markup).toContain('1');
+    expect(markup).toContain('Trace 事件');
+    expect(markup).toContain('2');
+    expect(markup).toContain('接管入口');
+    expect(markup).toContain('可记录备注');
+  });
 });
 
 function createStorage(initialValues: Readonly<Record<string, string>> = {}): Storage {
@@ -332,5 +386,139 @@ function createStorage(initialValues: Readonly<Record<string, string>> = {}): St
     setItem(key, value) {
       store.set(key, value);
     },
+  };
+}
+
+function noop(): void {
+  return undefined;
+}
+
+function noopAsync(): Promise<void> {
+  return Promise.resolve();
+}
+
+function createReplaySource(): RunReplaySource {
+  const workspaceId = WorkspaceId.parse('01HZZZZZZZZZZZZZZZZZZZZZW0');
+  const orchestrationRunId = OrchestrationRunId.parse('01HZZZZZZZZZZZZZZZZZZZZZR0');
+  const originEventId = EventId.parse('01HZZZZZZZZZZZZZZZZZZZZZE0');
+  const taskId = TaskId.parse('01HZZZZZZZZZZZZZZZZZZZZZT0');
+  const agentRunId = AgentRunId.parse('01HZZZZZZZZZZZZZZZZZZZZZA0');
+  const artifactId = ArtifactId.parse('01HZZZZZZZZZZZZZZZZZZZZZF0');
+  const traceEventId = TraceEventId.parse('01HZZZZZZZZZZZZZZZZZZZZZP0');
+  const traceId = TraceId.parse('01HZZZZZZZZZZZZZZZZZZZZZX0');
+
+  return {
+    agentRuns: [
+      {
+        attempt: 1,
+        cancelable: false,
+        createdAt: '2026-05-21T00:00:00.000Z',
+        orchestrationRunId,
+        outputRef: artifactId,
+        retryable: false,
+        runId: agentRunId,
+        runtimeType: 'codex',
+        status: 'succeeded',
+        taskId,
+        traceId,
+        updatedAt: '2026-05-21T00:01:00.000Z',
+        workspaceId,
+      },
+    ],
+    artifacts: [
+      {
+        artifactId,
+        artifactRole: 'output',
+        createdAt: '2026-05-21T00:01:00.000Z',
+        formatVersion: 'text.v1',
+        kind: 'text',
+        orchestrationRunId,
+        payloadRef: 'artifact-payload://workspace/run/runtime-output.txt',
+        producerId: agentRunId,
+        producerType: 'agent',
+        runId: agentRunId,
+        sensitivity: 'none',
+        sizeBytes: 42,
+        taskId,
+        uriOrPath: 'artifact-payload://workspace/run/runtime-output.txt',
+        visibility: 'public',
+        workspaceId,
+      },
+    ],
+    inspector: {
+      agentRunCount: 1,
+      artifactCount: 1,
+      completedAt: '2026-05-21T00:01:00.000Z',
+      durationMs: 60_000,
+      errorEventCount: 0,
+      finalArtifactId: artifactId,
+      firstFailureEventId: undefined,
+      firstFailureEventType: undefined,
+      startedAt: '2026-05-21T00:00:00.000Z',
+      status: 'succeeded',
+      taskCount: 1,
+      traceEventCount: 2,
+      warningEventCount: 0,
+    },
+    run: {
+      completionLevel: 'full',
+      createdAt: '2026-05-21T00:00:00.000Z',
+      executionMode: 'single_worker',
+      finishedAt: '2026-05-21T00:01:00.000Z',
+      hasPartialFailures: false,
+      orchestrationRunId,
+      originEventId,
+      resultCompleteness: 'complete',
+      startedAt: '2026-05-21T00:00:00.000Z',
+      status: 'succeeded',
+      traceId,
+      updatedAt: '2026-05-21T00:01:00.000Z',
+      workspaceId,
+    },
+    tasks: [
+      {
+        attempt: 1,
+        artifactRefs: [artifactId],
+        brief: 'Render the internal-trial run detail path.',
+        contextRefs: [],
+        createdAt: '2026-05-21T00:00:00.000Z',
+        dependsOnTaskIds: [],
+        idempotencyKey: 'desktop-run-detail-demo',
+        orchestrationRunId,
+        priority: 50,
+        status: 'succeeded',
+        taskId,
+        taskKind: 'custom',
+        title: 'Run Detail demo',
+        updatedAt: '2026-05-21T00:01:00.000Z',
+        workspaceId,
+      },
+    ],
+    traceEvents: [
+      {
+        createdAt: '2026-05-21T00:00:30.000Z',
+        eventType: 'task.started',
+        level: 'info',
+        orchestrationRunId,
+        payloadInline: { title: 'Run Detail demo' },
+        runId: agentRunId,
+        taskId,
+        traceEventId,
+        traceId,
+        workspaceId,
+      },
+      {
+        createdAt: '2026-05-21T00:01:00.000Z',
+        eventType: 'task.succeeded',
+        level: 'info',
+        orchestrationRunId,
+        payloadRef: artifactId,
+        runId: agentRunId,
+        taskId,
+        traceEventId: TraceEventId.parse('01HZZZZZZZZZZZZZZZZZZZZZQ0'),
+        traceId,
+        workspaceId,
+      },
+    ],
   };
 }

@@ -624,6 +624,45 @@ h2 {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.run-detail-readiness-strip {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--desktop-border);
+  border-radius: 16px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 12px 14px;
+}
+
+.run-detail-readiness-list {
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.run-detail-readiness-list > div {
+  background: var(--desktop-panel-muted);
+  border: 1px solid var(--desktop-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 3px;
+  grid-template-columns: 1fr;
+  min-width: 0;
+  padding: 9px 10px;
+}
+
+.run-detail-readiness-list dt {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.run-detail-readiness-list dd {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .card-title-row {
   align-items: flex-start;
   display: flex;
@@ -1228,6 +1267,11 @@ h2 {
 
   .nav-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .run-detail-readiness-strip,
+  .run-detail-readiness-list {
+    grid-template-columns: 1fr;
   }
 
   .home-safety-rail {

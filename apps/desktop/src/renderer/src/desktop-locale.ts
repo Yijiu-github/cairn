@@ -136,6 +136,11 @@ export interface DesktopLocaleStrings {
     readonly traceEventCount: number;
   }) => string;
   readonly runCardTitle: (status: string) => string;
+  readonly runDetailReadinessLoadedValue: string;
+  readonly runDetailReadinessOperatorLabel: string;
+  readonly runDetailReadinessOperatorReadyValue: string;
+  readonly runDetailReadinessReplayLabel: string;
+  readonly runDetailReadinessTitle: string;
   readonly runEvidenceFailedTitle: string;
   readonly runLabel: string;
   readonly runStateLabel: string;
@@ -412,6 +417,11 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     }) =>
       `Replay source contains ${input.taskCount.toString()} task(s), ${input.artifactCount.toString()} artifact(s), and ${input.traceEventCount.toString()} trace event(s).`,
     runCardTitle: (status: string) => `Workspace Core run · ${status}`,
+    runDetailReadinessLoadedValue: 'Loaded',
+    runDetailReadinessOperatorLabel: 'Operator entry',
+    runDetailReadinessOperatorReadyValue: 'Note ready',
+    runDetailReadinessReplayLabel: 'Replay evidence',
+    runDetailReadinessTitle: 'Demo readiness',
     runEvidenceFailedTitle: 'Run evidence failed to load',
     runLabel: 'Run',
     runStateLoadingLabel: 'loading',
@@ -665,6 +675,11 @@ const desktopLocaleStrings: Record<DesktopLocale, DesktopLocaleStrings> = {
     }) =>
       `replay source 包含 ${input.taskCount.toString()} 个任务、${input.artifactCount.toString()} 个产物和 ${input.traceEventCount.toString()} 条 trace 事件。`,
     runCardTitle: (status: string) => `运行 · ${status}`,
+    runDetailReadinessLoadedValue: '已加载',
+    runDetailReadinessOperatorLabel: '接管入口',
+    runDetailReadinessOperatorReadyValue: '可记录备注',
+    runDetailReadinessReplayLabel: '回放证据',
+    runDetailReadinessTitle: '演示状态',
     runEvidenceFailedTitle: '运行证据加载失败',
     runLabel: '运行',
     runStateLoadingLabel: '加载中',
