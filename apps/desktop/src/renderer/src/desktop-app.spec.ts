@@ -67,6 +67,28 @@ describe('DesktopApp home screen', () => {
     expect(markup).toContain('operator-status-rail');
   });
 
+  it('keeps first-screen summaries in a dedicated right rail for demo readiness', () => {
+    globalThis.window = {
+      cairnDesktop: {
+        app: {
+          mode: 'desktop-observer',
+          name: 'Cairn Desktop',
+        },
+      },
+      localStorage: createStorage(),
+    } as unknown as Window & typeof globalThis;
+
+    const markup = renderToStaticMarkup(createElement(DesktopApp));
+    const styles = readFileSync(new URL('./styles.css', import.meta.url), 'utf8');
+
+    expect(markup).toContain('mission-main-stack');
+    expect(markup).toContain('mission-right-rail');
+    expect(markup.indexOf('Agent 动态')).toBeLessThan(markup.indexOf('下一步 / 待处理'));
+    expect(markup.indexOf('下一步 / 待处理')).toBeLessThan(markup.indexOf('已固定运行'));
+    expect(styles).toContain('grid-template-columns: minmax(0, 1fr) 340px;');
+    expect(styles).toContain('.mission-right-rail {\n  align-self: start;');
+  });
+
   it('prioritizes the command center before the sidebar on narrow desktop surfaces', () => {
     const styles = readFileSync(new URL('./styles.css', import.meta.url), 'utf8');
 

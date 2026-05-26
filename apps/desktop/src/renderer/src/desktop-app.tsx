@@ -650,7 +650,7 @@ function HomeView({
 }: HomeViewProps) {
   return (
     <div className="mission-control-layout visual-v1-home">
-      <section className="content-stack mission-command-center">
+      <section className="content-stack mission-command-center mission-main-stack">
         <MissionControlHero
           copy={copy}
           missionControl={model.missionControl}
@@ -664,14 +664,14 @@ function HomeView({
           <div className="content-stack">
             <AgentActivityPanel copy={copy} missionControl={model.missionControl} />
           </div>
-          <div className="content-stack">
-            <PendingQueueSummary copy={copy} handoffs={model.handoffs} />
-            <PinnedRunsSummary copy={copy} pinnedRuns={model.pinnedRuns} />
-          </div>
         </div>
       </section>
 
-      <HomeSafetyRail copy={copy} />
+      <aside className="content-stack mission-right-rail">
+        <PendingQueueSummary copy={copy} handoffs={model.handoffs} />
+        <PinnedRunsSummary copy={copy} pinnedRuns={model.pinnedRuns} />
+        <HomeSafetyRail copy={copy} />
+      </aside>
     </div>
   );
 }

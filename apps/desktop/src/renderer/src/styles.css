@@ -583,7 +583,7 @@ h2 {
   align-items: start;
   display: grid;
   gap: 20px;
-  grid-template-columns: minmax(0, 1fr) 292px;
+  grid-template-columns: minmax(0, 1fr) 340px;
 }
 
 .visual-v1-home {
@@ -591,6 +591,15 @@ h2 {
 }
 
 .mission-command-center {
+  min-width: 0;
+}
+
+.mission-main-stack {
+  gap: 16px;
+}
+
+.mission-right-rail {
+  align-self: start;
   min-width: 0;
 }
 
@@ -918,6 +927,7 @@ h2 {
 
 .pending-queue-card-description {
   color: var(--desktop-subtle);
+  font-size: 13px;
   line-height: 1.55;
 }
 
@@ -928,6 +938,19 @@ h2 {
   gap: 10px 14px;
   font-size: 12px;
   line-height: 1.45;
+}
+
+.mission-right-rail .pending-queue-panel .grid-cols-\[9rem_1fr\] {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.mission-right-rail .pending-queue-card {
+  gap: 8px;
+  padding: 14px;
+}
+
+.mission-right-rail .pending-queue-card-meta span:nth-child(2) {
+  display: none;
 }
 
 .pinned-runs-panel {
@@ -1183,6 +1206,7 @@ h2 {
   .desktop-shell,
   .content-grid,
   .mission-control-layout,
+  .mission-right-rail,
   .mission-control-columns,
   .agent-activity-metrics,
   .mission-control-layout > .content-stack > .content-stack {
