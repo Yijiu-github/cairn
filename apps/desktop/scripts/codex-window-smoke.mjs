@@ -74,10 +74,22 @@ try {
     throw new Error('Expected operator note to refresh replay evidence trace counts.');
   }
 
+  await smokeLocator(window, 'nav-artifact-review').click();
+  await smokeLocator(window, 'artifact-review-replay-source').waitFor();
+  const observedArtifactId = await readFirstMatchingText(
+    window,
+    '[class*="font-mono"]',
+    /01[A-Z0-9]{24}/u,
+  );
+  if (observedArtifactId === undefined) {
+    throw new Error('Expected Artifact Review to expose a replay artifact id.');
+  }
+
   process.stdout.write(
     JSON.stringify(
       {
         observedAgentRunId,
+        observedArtifactId,
         observedRunId: observedRunId.trim(),
         observedTaskId,
         traceEventsAfterNote,

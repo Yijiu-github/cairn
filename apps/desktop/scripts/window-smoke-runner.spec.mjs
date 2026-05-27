@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { EventEmitter } from 'node:events';
+import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
@@ -56,6 +58,14 @@ describe('window smoke runner', () => {
     await expect(wait).rejects.toThrow(
       /Last observed Desktop window smoke signal: main-process-loaded/u,
     );
+  });
+
+  it('keeps the opt-in Codex smoke path connected through Artifact Review replay evidence', () => {
+    const source = readFileSync(new URL('./codex-window-smoke.mjs', import.meta.url), 'utf8');
+
+    expect(source).toContain("smokeLocator(window, 'nav-artifact-review').click()");
+    expect(source).toContain("smokeLocator(window, 'artifact-review-replay-source').waitFor()");
+    expect(source).toContain('observedArtifactId');
   });
 });
 
