@@ -181,8 +181,8 @@ pnpm --filter @cairn/desktop smoke:codex
 预期：
 
 - runner 先校验 `CAIRN_DESKTOP_SIDECAR_RUNTIME=codex`
-- 通过现有 Desktop 窗口驱动 internal-trial、replay evidence 与 operator note 口径
-- runner 输出可记录的 observed run / task / agent-run id 与 operator note 后的 trace event count
+- 通过现有 Desktop 窗口驱动 internal-trial、replay evidence、operator note 与 Artifact Review 回放产物口径
+- runner 输出可记录的 observed run / task / agent-run / artifact id 与 operator note 后的 trace event count
 
 不预期：
 
@@ -420,8 +420,9 @@ pnpm --filter @cairn/desktop smoke:codex
 ```
 
 该 runner 会通过现有 Desktop 窗口触发 `workspaceCore.runInternalTrial()`、等待真实
-Codex-backed sidecar 完成 run / task / agent-run、读取 replay evidence，并执行最小
-operator note。它仍不适合进入默认 CI。主要约束是：
+Codex-backed sidecar 完成 run / task / agent-run、读取 replay evidence、执行最小
+operator note，并切到 Artifact Review 验证 replay artifact 已进入审阅入口。它仍不适合进入默认
+CI。主要约束是：
 
 - 依赖本机 Codex 登录态与可用会话，CI 无法默认提供
 - 受 Codex CLI 版本、响应时延与平台环境影响，结果天然更 flaky
@@ -470,7 +471,7 @@ operator note。它仍不适合进入默认 CI。主要约束是：
 - `pnpm test`
 - `pnpm --filter @cairn/ui-preview build`
 - `pnpm --filter @cairn/desktop build`
-- 手动 smoke 完成：触发一条真实 run，读取 replay evidence，验证最小 operator action，确认终态与证据更新
+- 手动 smoke 完成：触发一条真实 run，读取 replay evidence，验证最小 operator action，进入 Artifact Review 查看真实产物，确认终态与证据更新
 
 ### 手动结果记录要求
 
