@@ -1,7 +1,7 @@
 # 主线文档与 Desktop UI 对齐
 
 > 状态：🟡 Active
-> 最后更新：2026-05-25
+> 最后更新：2026-05-27
 > 范围：主索引、状态基线、主题文档和 Desktop UI 事实收口。
 
 ---
@@ -16,7 +16,9 @@
 - `Run Detail`、`Artifact Detail`、`Activity Timeline`、`Task Explorer`、`Replay View` 都只作为二级观察面。
 - `docs/design/ux/` 里的信息架构、线框和视觉参考已经对齐到这套主导航。
 - `docs/STATUS.md` 已压回事实基线和下一轮入口，不再保留逐轮验证日志。
-- Desktop Home 已落地 visual-v1 风格首屏壳；Run Detail 的 artifact card、payload 状态、operator note 反馈和接管反馈已做默认简中文案收口。
+- Desktop Home 已落地 visual-v1 风格首屏壳；首屏右栏已收住待处理、固定运行和运行安全信息。
+- Run Detail 已增加演示状态条，加载 replay source 后集中显示回放证据、任务、产物、Trace 事件和接管入口状态。
+- Artifact Review 已能在已有 replay source 时展示真实 artifact id、用户可读产物标题/摘要和只读来源提示；没有 replay source 时仍保留静态占位。
 - 当前 GUI 证据路径仍不稳定：普通 Electron / Chromium smoke 在当前 Codex/macOS 会话里会受 app registration / browser sandbox 影响；不要把缺截图的视觉猜测写成事实。
 
 ## 3. 还要继续盯住的东西
@@ -25,6 +27,7 @@
 - 主题轨道只保留会反复引用的约束，不保留每轮聊天记录。
 - Desktop UI 只做低风险、可验证的视觉或信息架构收口。
 - 若 GUI 证据仍不可用，优先选择 SSR markup、locale helper、CSS regression、class mapping 等可由测试证明的小块。
+- 下一阶段需要从“页面收口”切到“内部试用验收”：验证 Home → Run Detail → Artifact Review 的最小演示路径，而不是继续局部打磨。
 - 现阶段不引入 Web Shell、installer、signing、公证、企业治理、workflow builder 或 marketplace。
 
 ## 4. 不要重复的事
@@ -37,4 +40,4 @@
 
 ## 5. 下一小步
 
-下一轮先判断是否能拿到可信 GUI 证据。若不能，改做一个非 GUI 可验证的小块；若最近两轮已经只是文案、a11y label 或边界收窄，则不要继续磨同一页面，转向 smoke 诊断、状态文档一致性之外的真实工程小块，或记录 no-change。
+下一轮优先恢复可信 GUI 证据路径，并补一条内部试用验收清单：Home 启动内部试用 → Run Detail 观察 replay / Trace / operator note → Artifact Review 查看真实产物。若 GUI 证据仍不可用，只做非 GUI 可验证的小块；不要连续多轮只磨同一页面文案、a11y label 或边界说明。
